@@ -4,8 +4,8 @@
    REGRA DO TIME: NUNCA use valores de cor, tamanho ou espaçamento
    diretamente no CSS. Use SEMPRE as variáveis definidas aqui.
 
-   ✅  color: var(--color-accent);
-   ❌  color: #c9a84c;
+   ✅  color: var(--color-blue-500);
+   ❌  color: #3080ff;
    ═══════════════════════════════════════════════════════════════════ */
 
 /* 1. Google Fonts */
@@ -13,14 +13,15 @@
 
 /* ─── 2. Design Tokens ───────────────────────────────────────────── */
 :root {
-
   /* ── Tipografia ─────────────────────────────────────────────────
      Use --font-sans ou --font-mono. Nunca defina font-family inline.
   ─────────────────────────────────────────────────────────────── */
-  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  --font-sans:
+    ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
   --font-serif: 'Playfair Display', Georgia, serif;
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
@@ -63,99 +64,103 @@
   --leading-relaxed: 1.625;
 
   /* ── Paleta de Cores — Marca escapa! ────────────────────────────
-     Estas são as cores de identidade visual. Use-as para
-     elementos de marca, CTAs e destaques da plataforma.
+     Identidade visual da plataforma.
   ─────────────────────────────────────────────────────────────── */
-  --color-brand-dark:       #1a1a2e;   /* Azul noite — fundo principal */
-  --color-brand-deep:       #16213e;   /* Azul escuro — sidebar, cards */
-  --color-brand-gold:       #c9a84c;   /* Dourado — destaques, CTAs */
-  --color-brand-gold-light: #e8c97a;   /* Dourado claro — hover */
-  --color-brand-cyan:       #61edff;   /* Ciano — acento secundário, info */
+  --color-brand-dark: #101828; /* Fundo principal */
+  --color-brand-deep: #1e2939; /* Superfícies elevadas, sidebar, cards */
+  --color-brand-gold: #c9a84c; /* Dourado suave */
+  --color-brand-gold-light: #e8c97a;
+  --color-brand-cyan: #61edff; /* Ciano de destaque */
 
-  /* Aliases semânticos de marca (use estes nos componentes) */
-  --color-primary:       var(--color-brand-dark);
-  --color-secondary:     var(--color-brand-deep);
-  --color-accent:        var(--color-brand-gold);
-  --color-accent-light:  var(--color-brand-gold-light);
-  --color-info:          var(--color-brand-cyan);
+  /* Aliases semânticos */
+  --color-primary: var(--color-blue-600);
+  --color-primary-hover: var(--color-blue-500);
+  --color-secondary: var(--color-brand-deep);
+  --color-accent: var(--color-blue-500);
+  --color-accent-light: var(--color-blue-400);
+  --color-info: var(--color-brand-cyan);
 
-  /* ── Paleta de Cores — Sistema (Grays, Azuis, Preto/Branco) ────
-     Baseada em Tailwind/Shadcn. Use para superfícies, textos,
-     bordas e elementos de UI neutros.
-  ─────────────────────────────────────────────────────────────── */
-  --color-white:     #fff;
-  --color-black:     #000;
+  /* ── Paleta de Cores — Blues da Cliente (50 a 950) ─────────────*/
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3080ff;
+  --color-blue-600: #155dfc;
+  --color-blue-700: #1447e6;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #0f172a;
 
-  --color-gray-50:   #f9fafb;
-  --color-gray-100:  #f3f4f6;
-  --color-gray-200:  #e5e7eb;
-  --color-gray-300:  #d1d5dc;
-  --color-gray-400:  #99a1af;
-  --color-gray-500:  #6a7282;
-  --color-gray-600:  #4a5565;
-  --color-gray-700:  #364153;
-  --color-gray-800:  #1e2939;
-  --color-gray-900:  #101828;
+  /* ── Paleta de Cores — Grays e Neutros (50 a 900) ──────────────*/
+  --color-white: #fff;
+  --color-black: #000;
 
-  --color-blue-50:   #eff6ff;
-  --color-blue-500:  #3080ff;
-  --color-blue-600:  #155dfc;
-  --color-blue-700:  #1447e6;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5dc;
+  --color-gray-400: #99a1af;
+  --color-gray-500: #6a7282;
+  --color-gray-600: #4a5565;
+  --color-gray-700: #364153;
+  --color-gray-800: #1e2939;
+  --color-gray-900: #101828;
 
   --color-amber-300: #ffd236;
 
-  /* ── Superfícies (usa os tons de marca) ─────────────────────────*/
-  --color-surface:          #0f0f1a;
-  --color-surface-raised:   #1e1e35;
-  --color-surface-overlay:  rgba(201, 168, 76, 0.08);
-  --color-border:           rgba(255, 255, 255, 0.08);
+  /* ── Superfícies ────────────────────────────────────────────────*/
+  --color-surface: var(--color-gray-900);
+  --color-surface-raised: var(--color-gray-800);
+  --color-surface-overlay: rgba(48, 128, 255, 0.08);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-focus: var(--color-blue-500);
 
   /* ── Cores Semânticas de Texto ──────────────────────────────────*/
-  --color-text-primary:   #f0ece2;
-  --color-text-secondary: #a89f8c;
-  --color-text-muted:     #5e5a52;
+  --color-text-primary: var(--color-gray-50);
+  --color-text-secondary: var(--color-gray-300);
+  --color-text-muted: var(--color-gray-500);
 
   /* ── Status ─────────────────────────────────────────────────────*/
   --color-success: #4caf82;
-  --color-warning: #f0a84c;
-  --color-error:   #e05a5a;
+  --color-warning: var(--color-amber-300);
+  --color-error: #e05a5a;
 
   /* ── Espaçamento ────────────────────────────────────────────────
      Unidade base: --spacing = 0.25rem (4px).
-     Use múltiplos de --spacing ou as variáveis nomeadas.
   ─────────────────────────────────────────────────────────────── */
-  --spacing: 0.25rem;  /* = 4px */
+  --spacing: 0.25rem; /* = 4px */
 
-  /* Atalhos (equivalentes a Tailwind p-1…p-16) */
-  --space-1:  calc(var(--spacing) * 1);   /* 4px  */
-  --space-2:  calc(var(--spacing) * 2);   /* 8px  */
-  --space-3:  calc(var(--spacing) * 3);   /* 12px */
-  --space-4:  calc(var(--spacing) * 4);   /* 16px */
-  --space-6:  calc(var(--spacing) * 6);   /* 24px */
-  --space-8:  calc(var(--spacing) * 8);   /* 32px */
-  --space-12: calc(var(--spacing) * 12);  /* 48px */
-  --space-16: calc(var(--spacing) * 16);  /* 64px */
+  --space-1: calc(var(--spacing) * 1); /* 4px  */
+  --space-2: calc(var(--spacing) * 2); /* 8px  */
+  --space-3: calc(var(--spacing) * 3); /* 12px */
+  --space-4: calc(var(--spacing) * 4); /* 16px */
+  --space-6: calc(var(--spacing) * 6); /* 24px */
+  --space-8: calc(var(--spacing) * 8); /* 32px */
+  --space-12: calc(var(--spacing) * 12); /* 48px */
+  --space-16: calc(var(--spacing) * 16); /* 64px */
 
   /* ── Containers (max-width) ─────────────────────────────────────*/
-  --container-xs:  20rem;   /* 320px  */
-  --container-lg:  32rem;   /* 512px  */
-  --container-3xl: 48rem;   /* 768px  */
-  --container-4xl: 56rem;   /* 896px  */
-  --container-6xl: 72rem;   /* 1152px */
-  --container-7xl: 80rem;   /* 1280px */
+  --container-xs: 20rem; /* 320px  */
+  --container-lg: 32rem; /* 512px  */
+  --container-3xl: 48rem; /* 768px  */
+  --container-4xl: 56rem; /* 896px  */
+  --container-6xl: 72rem; /* 1152px */
+  --container-7xl: 80rem; /* 1280px */
 
   /* ── Border Radius ──────────────────────────────────────────────*/
-  --radius-sm:   4px;
-  --radius-md:   0.375rem;   /* 6px  */
-  --radius-lg:   0.5rem;     /* 8px  */
-  --radius-xl:   0.75rem;    /* 12px */
-  --radius-2xl:  1rem;       /* 16px */
+  --radius-sm: 4px;
+  --radius-md: 0.375rem; /* 6px  */
+  --radius-lg: 0.5rem; /* 8px  */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
   --radius-full: 9999px;
 
   /* ── Sombras ────────────────────────────────────────────────────*/
-  --shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(201, 168, 76, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-glow-blue: 0 0 24px rgba(48, 128, 255, 0.25);
 
   /* ── Blur ───────────────────────────────────────────────────────*/
   --blur-sm: 8px;
@@ -171,10 +176,10 @@
   --transition-slow: 400ms var(--ease-in-out);
 
   /* ── Layout ─────────────────────────────────────────────────────*/
-  --sidebar-width:           260px;
+  --sidebar-width: 260px;
   --sidebar-collapsed-width: 64px;
-  --header-height:           64px;
-  --content-max-width:       var(--container-7xl);
+  --header-height: 64px;
+  --content-max-width: var(--container-7xl);
 }
 
 /* ─── 3. Reset Minimalista ──────────────────────────────────────── */

@@ -2,9 +2,10 @@ import { render, screen } from '@testing-library/react';
 import { Home } from './Home';
 
 describe('Home', () => {
-  it('should render the brand name', () => {
+  it('should render the escapa! logo image', () => {
     render(<Home />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('escapa!');
+    const logo = screen.getByRole('img', { name: /escapa! - plataforma de cursos/i });
+    expect(logo).toBeInTheDocument();
   });
 
   it('should render the subtitle', () => {

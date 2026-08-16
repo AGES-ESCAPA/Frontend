@@ -46,5 +46,5 @@
     "prefer-const": "error",
     "no-var": "error"
   },
-  "ignorePatterns": ["dist/", "node_modules/", "coverage/", "*.cjs"]
+  "ignorePatterns": ["dist/", "node_modules/", "coverage/", "*.cjs", "*.d.ts"]
 }

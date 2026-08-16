@@ -1,5 +1,5 @@
 # GitLab CI/CD — escapa! Frontend
-# Pipeline composta por 3 jobs paralelos: lint, format e test.
+# Pipeline composta por 4 jobs paralelos: lint, stylelint, format e test.
 # Todos rodam na mesma stage "quality" para máxima velocidade.
 
 image: node:20-alpine
@@ -21,7 +21,7 @@ stages:
   before_script:
     - npm ci --prefer-offline
 
-# ── Job 1: ESLint ─────────────────────────────────────────────────────────────
+# ── Job 1: ESLint (TypeScript e React) ────────────────────────────────────────
 lint:
   stage: quality
   <<: *install_deps
@@ -30,8 +30,9 @@ lint:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
-# ── Job 2: Stylelint (valida uso de variáveis CSS, proíbe hex hardcoded) ───────
+# ── Job 2: Stylelint (valida variáveis CSS, proíbe hex hardcoded) ──────────────
 stylelint:
   stage: quality
   <<: *install_deps
@@ -40,8 +41,9 @@ stylelint:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
-# ── Job 3: Prettier (apenas verificação, sem escrita) ─────────────────────────
+# ── Job 3: Prettier (apenas verificação de formatação) ─────────────────────────
 format:
   stage: quality
   <<: *install_deps
@@ -50,8 +52,9 @@ format:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
 
-# ── Job 3: Vitest ─────────────────────────────────────────────────────────────
+# ── Job 4: Vitest (Testes unitários) ──────────────────────────────────────────
 test:
   stage: quality
   <<: *install_deps
@@ -60,13 +63,10 @@ test:
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   artifacts:
     when: always
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage/cobertura-coverage.xml
     paths:
       - coverage/
     expire_in: 7 days
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
