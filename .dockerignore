@@ -1,0 +1,33 @@
+# Ignora do contexto do Docker Build
+# Isso reduz o tamanho do contexto enviado ao daemon e acelera o build.
+
+node_modules/
+dist/
+coverage/
+.git/
+.gitignore
+.husky/
+
+# Arquivos de ambiente (nunca incluir no container)
+.env
+.env.local
+.env.*.local
+
+# Logs e temporários
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.sw?
+
+# macOS
+.DS_Store
+Thumbs.db
+
+# Documentação (não necessária no container)
+*.md
+Claude.md
+AGENTS.md

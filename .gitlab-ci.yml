@@ -1,0 +1,72 @@
+# GitLab CI/CD — escapa! Frontend
+# Pipeline composta por 3 jobs paralelos: lint, format e test.
+# Todos rodam na mesma stage "quality" para máxima velocidade.
+
+image: node:20-alpine
+
+# Cache das dependências entre pipelines para acelerar os jobs
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - node_modules/
+  policy: pull-push
+
+stages:
+  - quality
+
+# Template reutilizável: instala as dependências antes de cada job
+.install_deps: &install_deps
+  before_script:
+    - npm ci --prefer-offline
+
+# ── Job 1: ESLint ─────────────────────────────────────────────────────────────
+lint:
+  stage: quality
+  <<: *install_deps
+  script:
+    - npm run lint
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+# ── Job 2: Stylelint (valida uso de variáveis CSS, proíbe hex hardcoded) ───────
+stylelint:
+  stage: quality
+  <<: *install_deps
+  script:
+    - npm run stylelint
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+# ── Job 3: Prettier (apenas verificação, sem escrita) ─────────────────────────
+format:
+  stage: quality
+  <<: *install_deps
+  script:
+    - npm run format:check
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+# ── Job 3: Vitest ─────────────────────────────────────────────────────────────
+test:
+  stage: quality
+  <<: *install_deps
+  script:
+    - npm run test
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+    expire_in: 7 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

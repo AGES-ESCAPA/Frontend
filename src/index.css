@@ -1,0 +1,238 @@
+/* ═══════════════════════════════════════════════════════════════════
+   escapa! — Design System / Global Styles
+   ═══════════════════════════════════════════════════════════════════
+   REGRA DO TIME: NUNCA use valores de cor, tamanho ou espaçamento
+   diretamente no CSS. Use SEMPRE as variáveis definidas aqui.
+
+   ✅  color: var(--color-accent);
+   ❌  color: #c9a84c;
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
+
+/* ─── 2. Design Tokens ───────────────────────────────────────────── */
+:root {
+
+  /* ── Tipografia ─────────────────────────────────────────────────
+     Use --font-sans ou --font-mono. Nunca defina font-family inline.
+  ─────────────────────────────────────────────────────────────── */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
+
+  /* ── Font Sizes (com line-height embutido) ──────────────────────
+     Sintaxe: var(--text-sm) para tamanho; var(--text-sm--line-height) para lh.
+  ─────────────────────────────────────────────────────────────── */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(2.5 / 2.25);
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1;
+  --text-6xl: 3.75rem;
+  --text-6xl--line-height: 1;
+
+  /* ── Font Weights ───────────────────────────────────────────────*/
+  --font-weight-extralight: 200;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* ── Letter Spacing & Line Height ───────────────────────────────*/
+  --tracking-wide: 0.025em;
+  --leading-tight: 1.25;
+  --leading-relaxed: 1.625;
+
+  /* ── Paleta de Cores — Marca escapa! ────────────────────────────
+     Estas são as cores de identidade visual. Use-as para
+     elementos de marca, CTAs e destaques da plataforma.
+  ─────────────────────────────────────────────────────────────── */
+  --color-brand-dark:       #1a1a2e;   /* Azul noite — fundo principal */
+  --color-brand-deep:       #16213e;   /* Azul escuro — sidebar, cards */
+  --color-brand-gold:       #c9a84c;   /* Dourado — destaques, CTAs */
+  --color-brand-gold-light: #e8c97a;   /* Dourado claro — hover */
+  --color-brand-cyan:       #61edff;   /* Ciano — acento secundário, info */
+
+  /* Aliases semânticos de marca (use estes nos componentes) */
+  --color-primary:       var(--color-brand-dark);
+  --color-secondary:     var(--color-brand-deep);
+  --color-accent:        var(--color-brand-gold);
+  --color-accent-light:  var(--color-brand-gold-light);
+  --color-info:          var(--color-brand-cyan);
+
+  /* ── Paleta de Cores — Sistema (Grays, Azuis, Preto/Branco) ────
+     Baseada em Tailwind/Shadcn. Use para superfícies, textos,
+     bordas e elementos de UI neutros.
+  ─────────────────────────────────────────────────────────────── */
+  --color-white:     #fff;
+  --color-black:     #000;
+
+  --color-gray-50:   #f9fafb;
+  --color-gray-100:  #f3f4f6;
+  --color-gray-200:  #e5e7eb;
+  --color-gray-300:  #d1d5dc;
+  --color-gray-400:  #99a1af;
+  --color-gray-500:  #6a7282;
+  --color-gray-600:  #4a5565;
+  --color-gray-700:  #364153;
+  --color-gray-800:  #1e2939;
+  --color-gray-900:  #101828;
+
+  --color-blue-50:   #eff6ff;
+  --color-blue-500:  #3080ff;
+  --color-blue-600:  #155dfc;
+  --color-blue-700:  #1447e6;
+
+  --color-amber-300: #ffd236;
+
+  /* ── Superfícies (usa os tons de marca) ─────────────────────────*/
+  --color-surface:          #0f0f1a;
+  --color-surface-raised:   #1e1e35;
+  --color-surface-overlay:  rgba(201, 168, 76, 0.08);
+  --color-border:           rgba(255, 255, 255, 0.08);
+
+  /* ── Cores Semânticas de Texto ──────────────────────────────────*/
+  --color-text-primary:   #f0ece2;
+  --color-text-secondary: #a89f8c;
+  --color-text-muted:     #5e5a52;
+
+  /* ── Status ─────────────────────────────────────────────────────*/
+  --color-success: #4caf82;
+  --color-warning: #f0a84c;
+  --color-error:   #e05a5a;
+
+  /* ── Espaçamento ────────────────────────────────────────────────
+     Unidade base: --spacing = 0.25rem (4px).
+     Use múltiplos de --spacing ou as variáveis nomeadas.
+  ─────────────────────────────────────────────────────────────── */
+  --spacing: 0.25rem;  /* = 4px */
+
+  /* Atalhos (equivalentes a Tailwind p-1…p-16) */
+  --space-1:  calc(var(--spacing) * 1);   /* 4px  */
+  --space-2:  calc(var(--spacing) * 2);   /* 8px  */
+  --space-3:  calc(var(--spacing) * 3);   /* 12px */
+  --space-4:  calc(var(--spacing) * 4);   /* 16px */
+  --space-6:  calc(var(--spacing) * 6);   /* 24px */
+  --space-8:  calc(var(--spacing) * 8);   /* 32px */
+  --space-12: calc(var(--spacing) * 12);  /* 48px */
+  --space-16: calc(var(--spacing) * 16);  /* 64px */
+
+  /* ── Containers (max-width) ─────────────────────────────────────*/
+  --container-xs:  20rem;   /* 320px  */
+  --container-lg:  32rem;   /* 512px  */
+  --container-3xl: 48rem;   /* 768px  */
+  --container-4xl: 56rem;   /* 896px  */
+  --container-6xl: 72rem;   /* 1152px */
+  --container-7xl: 80rem;   /* 1280px */
+
+  /* ── Border Radius ──────────────────────────────────────────────*/
+  --radius-sm:   4px;
+  --radius-md:   0.375rem;   /* 6px  */
+  --radius-lg:   0.5rem;     /* 8px  */
+  --radius-xl:   0.75rem;    /* 12px */
+  --radius-2xl:  1rem;       /* 16px */
+  --radius-full: 9999px;
+
+  /* ── Sombras ────────────────────────────────────────────────────*/
+  --shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(201, 168, 76, 0.15);
+
+  /* ── Blur ───────────────────────────────────────────────────────*/
+  --blur-sm: 8px;
+  --blur-md: 12px;
+
+  /* ── Transições e Easing ────────────────────────────────────────*/
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --default-transition-duration: 0.15s;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --transition-fast: 150ms var(--ease-in-out);
+  --transition-base: 250ms var(--ease-in-out);
+  --transition-slow: 400ms var(--ease-in-out);
+
+  /* ── Layout ─────────────────────────────────────────────────────*/
+  --sidebar-width:           260px;
+  --sidebar-collapsed-width: 64px;
+  --header-height:           64px;
+  --content-max-width:       var(--container-7xl);
+}
+
+/* ─── 3. Reset Minimalista ──────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--default-font-family);
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
