@@ -1,4 +1,4 @@
-# Escapa! — Plataforma de Cursos (Frontend)
+# 🌴 escapa! — Plataforma de Cursos (Frontend)
 
 Frontend da plataforma de **Educação Continuada da ESCAPA**, voltada para qualificação profissional em **Turismo e Hospitalidade**.
 
@@ -16,7 +16,7 @@ A plataforma é acessada a partir de um link no website institucional da ESCAPA 
 - [Comandos Disponíveis (Scripts npm)](#-comandos-disponíveis-scripts-npm)
 - [Fluxo de Validação de Tarefas (Evite falhas na CI)](#-fluxo-de-validação-de-tarefas-evite-falhas-na-ci)
 - [Padrão de Commits](#-padrão-de-commits)
-- [Estratégia de Branches](#-estratégia-de-branches)
+- [Estratégia de Branches & Pull Requests](#-estratégia-de-branches--pull-requests)
 - [Regras do Design System (CSS)](#-regras-do-design-system-css)
 - [Containerização com Docker](#-containerização-com-docker)
 
@@ -113,7 +113,7 @@ src/
 - **Testes Unitários**: [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/)
 - **Qualidade de Código**: [ESLint](https://eslint.org/), [Prettier](https://prettier.io/) e [Stylelint](https://stylelint.io/)
 - **Git Hooks**: [Husky](https://typicode.github.io/husky/) + [lint-staged](https://github.com/lint-staged/lint-staged)
-- **CI/CD**: GitLab CI (Pipeline paralela: `lint`, `stylelint`, `format`, `test`)
+- **CI/CD**: [GitHub Actions](https://github.com/features/actions) (Pipeline paralela: `lint`, `stylelint`, `format`, `test`, `build`) e GitLab CI (espelho)
 - **Containerização**: Docker (Multi-stage build Node 20 → Nginx Alpine)
 
 ---
@@ -131,8 +131,8 @@ src/
 
 1. **Clone o repositório:**
    ```bash
-   git clone https://tools.ages.pucrs.br/2026-2/2jk-4jk/escapa/frontend.git
-   cd frontend
+   git clone https://github.com/AGES-ESCAPA/Frontend.git
+   cd Frontend
    ```
 
 2. **Instale as dependências:**
@@ -158,7 +158,7 @@ src/
 | Comando | O que faz? | Quando usar? |
 |---|---|---|
 | `npm run dev` | Inicia o servidor local com Hot Reload na porta `3000`. | Durante todo o desenvolvimento local. |
-| `npm run test` | Executa todos os testes unitários uma vez com o Vitest. | Antes de commitar ou abrir Merge Request. |
+| `npm run test` | Executa todos os testes unitários uma vez com o Vitest. | Antes de commitar ou abrir Pull Request. |
 | `npm run test:watch` | Executa os testes em modo interativo (reexecuta ao salvar). | Enquanto desenvolve ou cria testes. |
 | `npm run test:coverage` | Gera relatório de cobertura de código em `coverage/`. | Para verificar a cobertura de testes do código criado. |
 | `npm run lint` | Valida regras de TypeScript e React com ESLint. | Para identificar erros de tipos e boas práticas. |
@@ -174,7 +174,7 @@ src/
 
 ## ✅ Fluxo de Validação de Tarefas (Evite falhas na CI)
 
-Antes de abrir um **Merge Request** ou dar **push**, execute o checklist no seu terminal. Se todos passarem, a pipeline da CI passará sem problemas:
+Antes de abrir um **Pull Request** ou dar **push**, execute o checklist no seu terminal. Se todos passarem, a pipeline do GitHub Actions passará sem problemas:
 
 ```bash
 # 1. Validação de TypeScript e React
@@ -226,15 +226,15 @@ Utilizamos o padrão **Conventional Commits** com o **ID da tarefa no ClickUp**:
 
 ---
 
-## 🌿 Estratégia de Branches
+## 🌿 Estratégia de Branches & Pull Requests
 
 Adotamos o fluxo com branch de integração **`develop`** e branch de produção **`main`**:
 
 ```
  main (Produção estável)
-   ↑ (Merge Request revisado)
+   ↑ (Pull Request revisado)
  develop (Ambiente de desenvolvimento integrado)
-   ↑ (Merge Request com validação da CI)
+   ↑ (Pull Request com validação do GitHub Actions)
  ├── feat/86a1b2c-catalogo-cursos
  ├── feat/86a1b2d-login-empresa
  └── fix/86a1b2e-progresso-aula
@@ -258,10 +258,10 @@ git checkout -b feat/86a1b2c-catalogo-cursos
 git add .
 git commit -m "feat(86a1b2c): create course catalog layout and cards"
 
-# 4. Envie sua branch para o GitLab
+# 4. Envie sua branch para o repositório
 git push -u origin feat/86a1b2c-catalogo-cursos
 
-# 5. Abra o Merge Request no GitLab apontando como destino a branch DEVELOP
+# 5. Abra o Pull Request no GitHub apontando como destino a branch DEVELOP
 ```
 
 ---

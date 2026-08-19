@@ -20,7 +20,8 @@
 A aplicação é **containerizada** e será publicada em um cluster **k3s** gerenciado por **Terraform**:
 - Build: `Dockerfile` multi-stage (Node 20 Alpine → nginx Alpine)
 - Orquestração local: `docker-compose.yml`
-- CI/CD: GitLab CI (`.gitlab-ci.yml`)
+- CI/CD: **GitHub Actions** (`.github/workflows/ci.yml`) e GitLab CI (`.gitlab-ci.yml`)
+- Templates de PR/MR: `.github/pull_request_template.md` e `.gitlab/merge_request_templates/Default.md`
 
 ## Arquitetura de Pastas e Responsabilidades
 

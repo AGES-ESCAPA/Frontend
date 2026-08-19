@@ -32,5 +32,12 @@ Marque com `[x]` os itens validados:
 - [ ] Foi executado `npm run stylelint` e não há erros de CSS.
 - [ ] Foi executado `npm run test` e todos os testes passaram.
 - [ ] Foi executado `npm run build` e a build compila sem erros.
-- [ ] O Merge Request está apontando para a branch **`develop`**.
+- [ ] O Pull Request está apontando para a branch **`develop`**.
 
+---
+
+## 👥 Checklist do Revisor (Reviewer)
+
+- [ ] Código limpo e de fácil compreensão.
+- [ ] Separação clara de responsabilidades (serviços, páginas, hooks).
+- [ ] Testes cobrem os cenários principais.

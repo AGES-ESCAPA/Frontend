@@ -8,7 +8,8 @@
 - **Página Inicial**: Apresenta a plataforma e o catálogo de cursos disponíveis para compra/inscrição.
 - **Perfis de Usuário**: Alunos individuais e empresas/parceiros comerciais (B2B).
 - **Aulas e Conteúdo**: Vídeos (Vimeo/YouTube), textos, imagens, controle de progresso e certificados digitais.
-- **Painel Administrativo**: Gestão de cursos, módulos, aulas e usuários.
+- **CI/CD**: **GitHub Actions** (`.github/workflows/ci.yml`) e GitLab CI (`.gitlab-ci.yml`)
+- **Templates**: `.github/pull_request_template.md` e `.gitlab/merge_request_templates/Default.md`
 - **Fora do escopo**: cursos ao vivo, fórum, integração com IA, multilíngue, pagamentos integrados.
 
 ---
