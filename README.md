@@ -108,7 +108,8 @@ src/
 
 - **Framework**: [React 18](https://react.dev/) + [Vite](https://vitejs.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - **Roteamento**: [React Router v6](https://reactrouter.com/)
-- **Componentes Base**: [Radix UI](https://www.radix-ui.com/) (primitivas acessíveis)
+- **Componentes Base**: [Radix UI](https://www.radix-ui.com/) (primitivas acessíveis sem estilo fixo)
+- **Ícones Oficiais**: [Lucide React](https://lucide.dev/) (padrão de traço 24x24px, 2px stroke, consistente com o Figma)
 - **Estilização**: CSS Modules com Design System em Variáveis CSS
 - **Testes Unitários**: [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/)
 - **Qualidade de Código**: [ESLint](https://eslint.org/), [Prettier](https://prettier.io/) e [Stylelint](https://stylelint.io/)
@@ -202,11 +203,11 @@ npm run build
 
 ## 📝 Padrão de Commits
 
-Utilizamos o padrão **Conventional Commits** com o **ID da tarefa no ClickUp**:
+Utilizamos o padrão **Conventional Commits** referenciando a **Issue do GitHub**:
 
 ### Formato:
 ```
-<tipo>(<id_clickup>): <descrição clara>
+<tipo>(#<issue_id>): <descrição clara>
 ```
 
 ### Tipos:
@@ -219,10 +220,10 @@ Utilizamos o padrão **Conventional Commits** com o **ID da tarefa no ClickUp**:
 - `chore`: Manutenção de dependências, builds ou configurações.
 
 ### Exemplos:
-- `feat(86a1b2c): add course catalog cards and filters`
-- `feat(86a1b2d): implement company login tab`
-- `fix(86a1b2e): fix video player progress update callback`
-- `test(86a1b2f): add unit tests for formatCurrency helper`
+- `feat(#12): add course catalog cards and filters`
+- `feat(#15): implement company login tab`
+- `fix(#23): fix video player progress update callback`
+- `test(#8): add unit tests for formatCurrency helper`
 
 ---
 
@@ -235,15 +236,20 @@ Adotamos o fluxo com branch de integração **`develop`** e branch de produção
    ↑ (Pull Request revisado)
  develop (Ambiente de desenvolvimento integrado)
    ↑ (Pull Request com validação do GitHub Actions)
- ├── feat/86a1b2c-catalogo-cursos
- ├── feat/86a1b2d-login-empresa
- └── fix/86a1b2e-progresso-aula
+ ├── feat/#12-catalogo-cursos
+ ├── feat/#15-login-empresa
+ └── fix/#23-progresso-aula
 ```
 
 ### Nomenclatura das branches:
 ```
-<tipo>/<id_clickup>-<breve-descricao>
+<tipo>/#<issue_id>-<breve-descricao>
 ```
+
+**Exemplos:**
+- `feat/#12-catalogo-cursos`
+- `feat/#15-login-empresa`
+- `fix/#23-progresso-aula`
 
 ### Passo a passo para desenvolver uma tarefa:
 ```bash
@@ -251,46 +257,151 @@ Adotamos o fluxo com branch de integração **`develop`** e branch de produção
 git checkout develop
 git pull origin develop
 
-# 2. Crie sua branch a partir da develop
-git checkout -b feat/86a1b2c-catalogo-cursos
+# 2. Crie sua branch a partir da develop referenciando a issue
+git checkout -b feat/#12-catalogo-cursos
 
 # 3. Desenvolva, rode os testes e faça os commits
 git add .
-git commit -m "feat(86a1b2c): create course catalog layout and cards"
+git commit -m "feat(#12): create course catalog layout and cards"
 
-# 4. Envie sua branch para o repositório
-git push -u origin feat/86a1b2c-catalogo-cursos
+# 4. Envie sua branch para o GitHub
+git push -u origin feat/#12-catalogo-cursos
 
 # 5. Abra o Pull Request no GitHub apontando como destino a branch DEVELOP
+#    (No PR, coloque "Closes #12" para fechar a issue automaticamente após o merge!)
 ```
 
 ---
 
-## 🎨 Regras do Design System (CSS)
+## 🎨 Regras do Design System (Style Guide Oficial)
 
-> ⚠️ **Atenção:** **NUNCA** utilize valores de cores hexadecimais (`#c9a84c`, `#ffffff`), tamanhos fixos ou espaçamentos arbitrários diretamente nos arquivos `.css` ou `.module.css`.
+> ⚠️ **Atenção:** **NUNCA** utilize valores de cores hexadecimais (`#2b6fe7`, `#ffffff`), tamanhos fixos ou espaçamentos arbitrários diretamente nos arquivos `.css` ou `.module.css`.
 
 Utilize **SEMPRE** as variáveis CSS declaradas em [`src/index.css`](src/index.css). O **Stylelint** bloqueará o commit caso cores hexadecimais sejam inseridas diretamente.
 
 ```css
-/* ✅ CORRETO — utiliza variáveis do design system */
+/* ✅ CORRETO — utiliza variáveis do style guide */
 .button {
-  color: var(--color-primary);
-  background-color: var(--color-accent);
+  color: var(--color-white);
+  background-color: var(--color-primary-500);
   font-size: var(--text-sm);
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-md);
   transition: background-color var(--transition-fast);
 }
 
+.button:hover {
+  background-color: var(--color-primary-400);
+}
+
 /* ❌ PROIBIDO — bloqueado pelo Stylelint */
 .button {
-  color: #1a1a2e;
-  background-color: #c9a84c;
+  color: #ffffff;
+  background-color: #2b6fe7;
   font-size: 14px;
   padding: 12px 24px;
 }
 ```
+
+### 🎨 Tabela de Tokens do Style Guide Oficial
+
+| Categoria | Variáveis CSS Disponíveis | Valores Hex / Descrição |
+|---|---|---|
+| **Primária** | `--color-primary-100` até `--color-primary-900` | `100: #e5efff`, `200: #bdd4ff`, `300: #8ab4ff`, `400: #5290ff`, **`500: #2b6fe7` (base)**, `600: #003aa3`, `700: #1c1c38`, `800: #0f0f1f`, `900: #0c0c1a` |
+| **Secundária** | `--color-secondary-100` até `--color-secondary-900` | `100: #f1ecf9`, `200: #dacdef`, `300: #bea7e2`, `400: #9f7dd4`, **`500: #8d63cc` (base)**, `600: #6739ad`, `700: #49287b`, `800: #2f1a4f`, `900: #170d26` |
+| **Neutros** | `--color-neutral-100` até `--color-neutral-900` | `100: #f4f5f6`, `200: #e3e6e8`, `300: #c7ccd1`, `400: #a5adb6`, `500: #848f9a`, `600: #65707b`, `700: #49525a`, `800: #2e3338`, `900: #17191c` |
+| **Sucesso** | `--color-success-100` até `--color-success-500` | `100: #d5f6e6`, `200: #96e9bf`, `300: #42d78c`, `400: #22a061`, `500: #145d38` |
+| **Info** | `--color-info-100` até `--color-info-500` | `100: #ccf7ff`, `200: #5be5ff`, `300: #1adbff`, `400: #00a3c2`, `500: #005e70` |
+| **Atenção** | `--color-warning-100` até `--color-warning-500` | `100: #f8edd0`, `200: #f5d189`, `300: #eead2b`, `400: #b37c0f`, `500: #684808` |
+| **Erro** | `--color-error-100` até `--color-error-500` | `100: #f9d2d6`, `200: #ef8f97`, `300: #e23645`, `400: #aa1824`, `500: #620e15` |
+| **Base** | `--color-white`, `--color-black` | `#ffffff`, `#000000` |
+
+### ⚡ Aliases Semânticos de Uso Rápido
+- **Superfícies**: `--color-surface` (`#0c0c1a`), `--color-surface-raised` (`#0f0f1f`), `--color-surface-overlay`
+- **Textos**: `--color-text-primary` (`#f4f5f6`), `--color-text-secondary` (`#c7ccd1`), `--color-text-muted` (`#848f9a`)
+- **Bordas**: `--color-border` (`#2e3338`), `--color-border-focus` (`#2b6fe7`)
+- **Ações**: `--color-primary` (`--color-primary-500`), `--color-primary-hover` (`--color-primary-400`), `--color-secondary` (`--color-secondary-500`)
+
+---
+
+## 🔤 Tipografia Oficial (Fonte: Inter)
+
+A fonte padrão da aplicação é a **Inter** (`--font-family-base`). Não utilize fontes arbitrárias ou tamanhos hardcoded.
+
+### 1. Títulos (Headings — Peso Bold 700)
+| Nível | Token CSS | Tamanho | Peso Padrão |
+|---|---|---|---|
+| **Heading 1** | `--text-h1` | `3rem` (48px) | Bold (700) |
+| **Heading 2** | `--text-h2` | `2.5rem` (40px) | Bold (700) |
+| **Heading 3** | `--text-h3` | `2rem` (32px) | Bold (700) |
+| **Heading 4** | `--text-h4` | `1.5rem` (24px) | Bold (700) |
+| **Heading 5** | `--text-h5` | `1.25rem` (20px) | Bold (700) |
+| **Heading 6** | `--text-h6` | `1.125rem` (18px) | Bold (700) |
+
+### 2. Textos de Corpo (Body)
+Cada tamanho de corpo pode ser combinado com os pesos: **Regular (400)**, **Medium (500)**, **Semibold (600)** ou **Bold (700)**.
+
+| Nível | Token CSS | Tamanho |
+|---|---|---|
+| **Body 1** | `--text-body-1` | `1.125rem` (18px) |
+| **Body 2** | `--text-body-2` (Base) | `1rem` (16px) |
+| **Body 3** | `--text-body-3` | `0.875rem` (14px) |
+| **Body 4** | `--text-body-4` | `0.75rem` (12px) |
+| **Body 5 / XSmall** | `--text-body-5` | `0.625rem` (10px) |
+
+### 3. Pesos de Fonte
+- `--font-weight-regular`: `400`
+- `--font-weight-medium`: `500`
+- `--font-weight-semibold`: `600`
+- `--font-weight-bold`: `700`
+
+---
+
+## 📱 Responsividade Obrigatória (Mobile, Tablet, Desktop e Web)
+
+A aplicação deve ser **100% responsiva** e se adaptar perfeitamente a qualquer resolução de tela (smartphones, tablets, notebooks e monitores ultrawide).
+
+### 📐 Breakpoints Padrão
+
+| Dispositivo / Viewport | Breakpoint Token | Largura | Comportamento Esperado |
+|---|---|---|---|
+| **Mobile (Celulares)** | `--breakpoint-mobile` | `< 640px` | Layout em coluna única, menus colapsados (hambúrguer/drawer), botões e toques acessíveis (`min-height: 44px`). |
+| **Tablet** | `--breakpoint-tablet` | `640px` a `1023px` | Grids de 2 colunas, sidebars compactas/recolhíveis, tipografia balanceada. |
+| **Desktop / Laptop** | `--breakpoint-laptop` / `--breakpoint-desktop` | `1024px` a `1280px` | Layout completo com sidebar lateral fixa/expansível, grids de 3 a 4 colunas. |
+| **Wide / Telas Grandes** | `--breakpoint-wide` | `> 1280px` | Conteúdo centralizado com largura máxima delimitada por `--container-7xl` (`1280px`). |
+
+### 💡 Boas Práticas de Responsividade:
+1. **Mobile-First ou Desktop-First consistente**: Use `min-width` ou `max-width` seguindo os breakpoints do design system.
+2. **Imagens e Vídeos**: Sempre com `max-width: 100%` e `height: auto` para evitar quebras horizontais de página.
+3. **Nenhum scroll horizontal indesejado**: Teste sempre os componentes em resoluções de `360px` (mobile) a `1920px` (desktop).
+
+---
+
+## 🎨 Ícones Oficiais (Lucide Icons)
+
+A biblioteca oficial de ícones adotada no projeto é a **[Lucide React](https://lucide.dev/)** (`lucide-react`), que é a mesma utilizada pelo time de design no **Figma**.
+
+### 📐 Padrões de Design dos Ícones:
+- **Grid base**: `24x24px`
+- **Espessura de traço (stroke)**: `2px`
+- **Cantos arredondados (corner radius)**: `2px`
+- **Alinhamento**: Centralizado
+
+### 🚀 Como utilizar nos componentes:
+```tsx
+import { Play, CheckCircle, BookOpen, Lock, User } from 'lucide-react';
+
+export const CourseLessonItem = () => (
+  <div>
+    <BookOpen size={20} color="var(--color-primary-500)" />
+    <span>Introdução à Hospitalidade</span>
+  </div>
+);
+```
+
+### 🤝 Radix UI vs Lucide Icons:
+- **Radix UI**: Fornece os componentes funcionais acessíveis (modais, menus, abas, accordions).
+- **Lucide React**: Fornece os ícones gráficos que são colocados dentro dos botões, menus e cards.
 
 ---
 
