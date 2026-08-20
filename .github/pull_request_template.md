@@ -1,6 +1,6 @@
 ## 📌 Descrição da Tarefa
 
-- **ID do ClickUp:** [Inserir ID ou link da tarefa no ClickUp]
+- **Issue Relacionada:** Closes #[Número da issue no GitHub, ex: 12]
 - **Tipo de Alteração:**
   - [ ] `feat`: Nova funcionalidade
   - [ ] `fix`: Correção de bug
