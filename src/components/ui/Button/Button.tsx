@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
-import { Slot } from '@radix-ui/react-slot';
+import { Slot, Slottable } from '@radix-ui/react-slot';
 import { Loader2 } from 'lucide-react';
 import styles from './Button.module.css';
 
@@ -35,6 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       asChild = false,
       disabled = false,
       className = '',
+      children,
       ...props
     },
     ref,
@@ -63,14 +64,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           aria-label={label}
           {...props}
         >
-          {isLoading ? (
-            <Loader2 className={styles.spinner} size={20} aria-hidden="true" />
-          ) : (
-            <>
-              {icon && <span className={styles.icon}>{icon}</span>}
-              <span className={styles.label}>{label}</span>
-            </>
-          )}
+          {isLoading ? <Loader2 className={styles.spinner} size={20} aria-hidden="true" /> : null}
+          {!isLoading && icon ? <span className={styles.icon}>{icon}</span> : null}
+          {!isLoading && <span className={styles.label}>{label}</span>}
+          {!isLoading && asChild && <Slottable>{children}</Slottable>}
         </Component>
       </div>
     );

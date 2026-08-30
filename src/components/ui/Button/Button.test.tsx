@@ -15,7 +15,9 @@ describe('Button component', () => {
   });
 
   it('should render an icon to the left of the label when provided', () => {
-    render(<Button label="Gestão de Cursos" variant="outlined" icon={<Mail data-testid="icon" />} />);
+    render(
+      <Button label="Gestão de Cursos" variant="outlined" icon={<Mail data-testid="icon" />} />,
+    );
 
     expect(screen.getByTestId('icon')).toBeInTheDocument();
     expect(screen.getByText('Gestão de Cursos')).toBeInTheDocument();
@@ -97,7 +99,7 @@ describe('Button component', () => {
   it('should render as a child element via Radix Slot when asChild is true', () => {
     render(
       <Button label="Login" variant="primary" asChild>
-        <a href="/login">Login</a>
+        <a href="/login" />
       </Button>,
     );
 
