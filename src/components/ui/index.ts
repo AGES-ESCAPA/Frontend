@@ -3,3 +3,6 @@
 // export { Button } from './Button/Button';
 // export { Dialog, DialogContent, DialogTitle } from './Dialog/Dialog';
 // export { Toast, ToastProvider } from './Toast/Toast';
+
+export { Badge } from './Badge';
+export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';

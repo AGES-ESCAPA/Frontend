@@ -5,6 +5,7 @@
   "description": "Plataforma escapa! — turismo de luxo e SaaS de cursos B2B/B2C",
   "type": "module",
   "scripts": {
+    "start": "vite",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
