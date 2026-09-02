@@ -38,11 +38,9 @@ export const Avatar = ({ imageUrl, name, theme = 'light' }: AvatarProps) => {
         />
       ) : null}
 
-      {!shouldShowImage ? (
-        <AvatarPrimitive.Fallback className={styles.fallback} delayMs={0}>
-          {initials}
-        </AvatarPrimitive.Fallback>
-      ) : null}
+      <AvatarPrimitive.Fallback className={styles.fallback} delayMs={0}>
+        {initials}
+      </AvatarPrimitive.Fallback>
     </AvatarPrimitive.Root>
   );
 };
