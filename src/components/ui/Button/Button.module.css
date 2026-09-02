@@ -39,7 +39,7 @@
   border-color: transparent;
 }
 
-.variant-primary:hover:not(.disabled):not(.loading) {
+.variant-primary:hover:not(.disabled, .loading) {
   background-color: var(--color-primary-600);
 }
 
@@ -50,7 +50,7 @@
   border-color: transparent;
 }
 
-.variant-secondary:hover:not(.disabled):not(.loading) {
+.variant-secondary:hover:not(.disabled, .loading) {
   background-color: var(--color-primary-400);
   box-shadow: var(--shadow-glow-primary);
 }
@@ -62,7 +62,7 @@
   border-color: var(--color-primary-500);
 }
 
-.variant-outlined:hover:not(.disabled):not(.loading) {
+.variant-outlined:hover:not(.disabled, .loading) {
   background-color: var(--color-surface-overlay);
 }
 
@@ -73,7 +73,7 @@
   border-color: transparent;
 }
 
-.variant-ghost:hover:not(.disabled):not(.loading) {
+.variant-ghost:hover:not(.disabled, .loading) {
   background-color: var(--color-surface-overlay);
   color: var(--color-text-secondary);
 }
@@ -85,7 +85,7 @@
   border-color: transparent;
 }
 
-.variant-active:hover:not(.disabled):not(.loading) {
+.variant-active:hover:not(.disabled, .loading) {
   opacity: 0.85;
 }
 
