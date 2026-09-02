@@ -1,0 +1,100 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 3.5rem;
+  background: rgba(8, 12, 24, 0.98);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--space-4);
+  box-sizing: border-box;
+}
+
+.leftGroup,
+.rightGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.brandMark {
+  color: var(--color-text-primary);
+  font-size: var(--text-body-2);
+  font-weight: var(--font-weight-semibold);
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.link:hover,
+.link:focus-visible {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.iconButton:hover,
+.iconButton:focus-visible {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: var(--color-border-subtle);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+@media (width <= 640px) {
+  .navbar {
+    padding: 0 var(--space-3);
+  }
+
+  .navLinks {
+    gap: var(--space-1);
+  }
+
+  .link span {
+    display: none;
+  }
+}
