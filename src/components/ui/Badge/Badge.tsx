@@ -6,17 +6,16 @@ export type BadgeVariant =
 
 export type BadgeCategory =
   | 'marketing'
-  | 'inovacao'
-  | 'hospitalidade'
-  | 'ia'
-  | 'inteligencia-artificial'
-  | 'basico'
-  | 'intermediario'
-  | 'avancado'
+  | 'innovation'
+  | 'hospitality'
+  | 'ai'
+  | 'basic'
+  | 'intermediate'
+  | 'advanced'
   | (string & Record<never, never>);
 
 export interface BadgeProps {
-  label: string;
+  label?: string;
 
   category?: BadgeCategory;
 
@@ -29,13 +28,22 @@ export interface BadgeProps {
 
 const CATEGORY_VARIANT_MAP: Record<string, BadgeVariant> = {
   marketing: 'secondary',
-  inovacao: 'info',
-  hospitalidade: 'warning',
-  ia: 'primary',
-  'inteligencia-artificial': 'primary',
-  basico: 'success',
-  intermediario: 'secondary',
-  avancado: 'error',
+  innovation: 'info',
+  hospitality: 'warning',
+  ai: 'primary',
+  basic: 'success',
+  intermediate: 'secondary',
+  advanced: 'error',
+};
+
+const CATEGORY_LABEL_MAP: Record<string, string> = {
+  marketing: 'Marketing',
+  innovation: 'Inovação',
+  hospitality: 'Hospitalidade',
+  ai: 'IA',
+  basic: 'Básico',
+  intermediate: 'Intermediário',
+  advanced: 'Avançado',
 };
 
 const normalizeKey = (value?: string): string => {
@@ -56,15 +64,23 @@ const resolveVariant = (category?: string, variant?: BadgeVariant): BadgeVariant
   return CATEGORY_VARIANT_MAP[key] ?? 'neutral';
 };
 
+const resolveLabel = (category?: string, label?: string): string => {
+  if (label) return label;
+
+  const key = normalizeKey(category);
+  return CATEGORY_LABEL_MAP[key] ?? category ?? '';
+};
+
 export const Badge = ({ label, category, variant, className = '', style }: BadgeProps) => {
   const resolvedVariant = resolveVariant(category, variant);
+  const resolvedLabel = resolveLabel(category, label);
 
   return (
     <span
       className={`${styles.badge} ${styles[`variant-${resolvedVariant}`]} ${className}`.trim()}
       style={style}
     >
-      {label}
+      {resolvedLabel}
     </span>
   );
 };
