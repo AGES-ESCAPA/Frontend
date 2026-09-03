@@ -132,21 +132,25 @@
 }
 
 /* ── Collapsed Icon Mode (Container Query) ─────────────────────────
-   When the button's parent container is narrower than 100px,
-   hide the label and show only the icon (used in collapsed sidebar).
-   The parent element must set `container-type: inline-size`.
-   ──────────────────────────────────────────────────────────────────── */
-.wrapper {
-  container-type: inline-size;
-  display: contents;
-}
+   Quando a div PAI é mais estreita que 100px, botões com ícone escondem o
+   label e mostram apenas o ícone (sidebar colapsada).
 
-@container (max-width: 100px) {
-  .label {
+   A div pai precisa declarar `container-type: inline-size`. Um elemento não
+   consulta a própria largura, e o botão não pode criar esse contêiner por
+   conta própria sem gerar uma caixa de bloco e alterar o layout de quem o
+   usa. No consumidor:
+
+     .sidebarItem { container-type: inline-size; }
+
+   Só botões com ícone colapsam: sem ícone, esconder o label deixaria o
+   botão vazio.
+   ──────────────────────────────────────────────────────────────────── */
+@container (width < 100px) {
+  .hasIcon .label {
     display: none;
   }
 
-  .button {
+  .hasIcon {
     padding: var(--space-3);
   }
 }

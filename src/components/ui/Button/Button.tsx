@@ -46,6 +46,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const classNames = [
       styles.button,
       styles[`variant-${variant}`],
+      icon && styles.hasIcon,
       fullWidth && styles.fullWidth,
       isDisabled && !isLoading && styles.disabled,
       isLoading && styles.loading,
@@ -55,21 +56,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       .join(' ');
 
     return (
-      <div className={styles.wrapper}>
-        <Component
-          ref={ref}
-          className={classNames}
-          disabled={isDisabled}
-          aria-busy={isLoading}
-          aria-label={label}
-          {...props}
-        >
-          {isLoading ? <Loader2 className={styles.spinner} size={20} aria-hidden="true" /> : null}
-          {!isLoading && icon ? <span className={styles.icon}>{icon}</span> : null}
-          {!isLoading && <span className={styles.label}>{label}</span>}
-          {!isLoading && asChild && <Slottable>{children}</Slottable>}
-        </Component>
-      </div>
+      <Component
+        ref={ref}
+        className={classNames}
+        disabled={isDisabled}
+        aria-busy={isLoading}
+        aria-label={label}
+        {...props}
+      >
+        {isLoading ? <Loader2 className={styles.spinner} size={20} aria-hidden="true" /> : null}
+        {!isLoading && icon ? <span className={styles.icon}>{icon}</span> : null}
+        {!isLoading && <span className={styles.label}>{label}</span>}
+        {!isLoading && asChild && <Slottable>{children}</Slottable>}
+      </Component>
     );
   },
 );
