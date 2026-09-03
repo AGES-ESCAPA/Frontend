@@ -5,7 +5,7 @@
 }
 
 .full {
-  padding: var(--space-20) var(--space-12) var(--space-10);
+  padding: var(--space-12) var(--space-12) var(--space-8);
 }
 
 .compact {
@@ -23,7 +23,7 @@
       2,
       minmax(var(--container-xs), 0.5fr)
     );
-  gap: var(--space-16);
+  gap: var(--space-12);
   max-width: var(--breakpoint-wide);
   margin: 0 auto;
 }
@@ -33,7 +33,7 @@
 }
 
 .logo {
-  width: var(--container-xs);
+  width: calc(var(--container-xs) * 0.5);
   max-width: 100%;
   height: auto;
   object-fit: contain;
@@ -50,10 +50,10 @@
 }
 
 .description {
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
   color: var(--color-text-muted);
-  font-size: var(--text-body-2);
-  line-height: var(--leading-relaxed);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
 }
 
 .navSection {
@@ -94,8 +94,8 @@
   justify-content: space-between;
   gap: var(--space-6);
   max-width: var(--breakpoint-wide);
-  margin: var(--space-20) auto 0;
-  padding-top: var(--space-10);
+  margin: var(--space-12) auto 0;
+  padding-top: var(--space-6);
   border-top: 1px solid var(--color-border-subtle);
 }
 
@@ -133,7 +133,7 @@
   }
 
   .logo {
-    width: var(--container-sm);
+    width: calc(var(--container-xs) * 0.5);
   }
 
   .fullBottom {
