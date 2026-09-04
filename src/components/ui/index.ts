@@ -1,7 +1,12 @@
 // Barrel export para primitivas de UI (wrappers sobre Radix UI).
 // Adicione novos componentes conforme forem criados:
+// Barrel export para primitivas de UI (wrappers sobre Radix UI).
+// Adicione novos componentes conforme forem criados:
+
 export { Avatar } from './Avatar/Avatar';
 export type { AvatarProps, AvatarTheme } from './Avatar/Avatar';
+export { Badge } from './Badge';
+export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant } from './Button';
 // export { Dialog, DialogContent, DialogTitle } from './Dialog/Dialog';
