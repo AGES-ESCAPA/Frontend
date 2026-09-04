@@ -6,3 +6,5 @@
 
 export { Badge } from './Badge';
 export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
+export { Avatar } from './Avatar/Avatar';
+export type { AvatarProps, AvatarTheme } from './Avatar/Avatar';
