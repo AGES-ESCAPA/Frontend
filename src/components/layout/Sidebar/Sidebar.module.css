@@ -1,0 +1,242 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Sidebar — CSS Module
+   Component: src/components/layout/Sidebar/Sidebar.tsx
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Casca ─────────────────────────────────────────────────────────── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border-subtle);
+  font-family: var(--font-family-base);
+  overflow: hidden;
+  transition: width var(--transition-base);
+}
+
+/* ── Topo: logo + perfil ───────────────────────────────────────────── */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  padding: var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--color-info-300);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.logo {
+  width: calc(var(--container-xs) * 0.45);
+  max-width: 100%;
+  height: auto;
+  flex-shrink: 0;
+}
+
+/* Marca reduzida, exibida no lugar do logo quando a sidebar está recolhida. */
+.logoIcon {
+  display: none;
+  width: var(--space-8);
+  height: auto;
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+
+.brandDivider {
+  width: 1px;
+  height: var(--space-4);
+  flex-shrink: 0;
+  background-color: var(--color-neutral-600);
+}
+
+.brandSuffix {
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-4--line-height);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.roleLabel {
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Área central: lista de itens ──────────────────────────────────── */
+.nav {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden auto;
+  padding: var(--space-4) var(--space-3);
+}
+
+.menuList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* A container query do Button consulta a largura deste contêiner:
+   abaixo de 100px o label some e sobra apenas o ícone. */
+.menuItem {
+  container-type: inline-size;
+}
+
+.menuButton {
+  justify-content: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Rodapé: identificação do usuário ──────────────────────────────── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-info-300);
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.userText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.userName {
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRole {
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logoutButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-10);
+  height: var(--space-10);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background-color: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.logoutButton:hover,
+.logoutButton:focus-visible {
+  background-color: var(--color-surface-overlay);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+/* ── Estado recolhido: só ícones e Avatar ──────────────────────────── */
+.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.collapsed .header,
+.collapsed .nav,
+.collapsed .footer {
+  padding-left: var(--space-2);
+  padding-right: var(--space-2);
+}
+
+.collapsed .footer,
+.collapsed .menuButton {
+  justify-content: center;
+}
+
+.collapsed .brandDivider,
+.collapsed .brandSuffix,
+.collapsed .roleLabel,
+.collapsed .userText,
+.collapsed .logoutButton,
+.collapsed .logo {
+  display: none;
+}
+
+.collapsed .logoIcon {
+  display: block;
+}
+
+/* ── Responsividade ────────────────────────────────────────────────
+   Tablet e mobile (< 1024px): recolhe automaticamente para caber junto do
+   conteúdo e evitar scroll horizontal. A largura reduzida já dispara a
+   container query do Button, que mantém apenas os ícones.
+   ─────────────────────────────────────────────────────────────────── */
+@media (width < 64rem) {
+  .sidebar {
+    width: var(--sidebar-collapsed-width);
+  }
+
+  .sidebar .header,
+  .sidebar .nav,
+  .sidebar .footer {
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
+  }
+
+  .sidebar .footer,
+  .sidebar .menuButton {
+    justify-content: center;
+  }
+
+  .sidebar .brandDivider,
+  .sidebar .brandSuffix,
+  .sidebar .roleLabel,
+  .sidebar .userText,
+  .sidebar .logoutButton,
+  .sidebar .logo {
+    display: none;
+  }
+
+  .sidebar .logoIcon {
+    display: block;
+  }
+}
