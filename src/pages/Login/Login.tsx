@@ -1,30 +1,34 @@
+import { Navbar } from '@components/layout/Navbar/Navbar';
+
 export const Login = () => {
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--color-surface)',
-        color: 'var(--color-text-primary)',
-        fontFamily: 'var(--font-family-base)',
-      }}
-    >
-      <div
+    <div style={{ minHeight: '100vh', background: 'var(--color-surface)' }}>
+      <Navbar state="register" />
+      <main
         style={{
-          padding: '2rem 3rem',
-          borderRadius: '1rem',
-          background: 'var(--color-surface-raised)',
-          border: '1px solid var(--color-border)',
-          textAlign: 'center',
+          minHeight: 'calc(100vh - 4rem)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--color-text-primary)',
+          fontFamily: 'var(--font-family-base)',
         }}
       >
-        <h1 style={{ fontSize: 'var(--text-h3)', marginBottom: '0.75rem' }}>Login</h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>
-          Página de autenticação em desenvolvimento.
-        </p>
-      </div>
-    </main>
+        <div
+          style={{
+            padding: 'var(--space-8) var(--space-12)',
+            borderRadius: 'var(--radius-xl)',
+            background: 'var(--color-surface-raised)',
+            border: '1px solid var(--color-border)',
+            textAlign: 'center',
+          }}
+        >
+          <h1 style={{ fontSize: 'var(--text-h3)', marginBottom: 'var(--space-3)' }}>Login</h1>
+          <p style={{ color: 'var(--color-text-secondary)' }}>
+            Página de autenticação em desenvolvimento.
+          </p>
+        </div>
+      </main>
+    </div>
   );
 };

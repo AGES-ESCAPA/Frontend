@@ -10,7 +10,16 @@ export const PreviewNavbar = () => {
         fontFamily: 'var(--font-family-base)',
       }}
     >
-      <Navbar />
+      <div style={{ display: 'grid', gap: 'var(--space-6)' }}>
+        <Navbar state="noAuth" />
+        <Navbar state="register" />
+        <Navbar
+          state="user"
+          user={{ name: 'Jorge Amado', role: 'Estudante' }}
+          notificationsCount={3}
+        />
+        <Navbar state="company" user={{ name: 'Escapa', role: 'Empresa' }} />
+      </div>
 
       <div
         style={{

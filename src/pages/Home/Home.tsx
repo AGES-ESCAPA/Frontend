@@ -1,4 +1,5 @@
 import { SearchBar } from '@components/ui';
+import { Navbar } from '@components/layout/Navbar/Navbar';
 import { useState } from 'react';
 import styles from './Home.module.css';
 
@@ -57,16 +58,7 @@ export const Home = () => {
 
   return (
     <div className={styles.pageShell}>
-      <header className={styles.topbar}>
-        <div className={styles.brandGroup}>
-          <span className={styles.brand}>escapa!</span>
-          <span className={styles.brandSecondary}>| cursos</span>
-        </div>
-
-        <a href="/login" className={styles.enterButton} aria-label="Acessar a plataforma">
-          Entrar
-        </a>
-      </header>
+      <Navbar state="noAuth" />
 
       <main className={styles.mainContent}>
         <section className={styles.sectionContainer}>
