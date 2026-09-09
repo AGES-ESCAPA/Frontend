@@ -4,11 +4,13 @@ import { Badge } from '../Badge/Badge';
 import type { BadgeCategory } from '../Badge/Badge';
 import styles from './CourseCard.module.css';
 
+export type CourseLevel = 'basic' | 'intermediate' | 'advanced';
+
 export interface CourseCardProps {
   id: string;
   imageUrl: string;
   category: BadgeCategory;
-  level: BadgeCategory;
+  level: CourseLevel;
   title: string;
   description: string;
   rating?: number;
@@ -67,8 +69,10 @@ export const CourseCard = ({
           />
         )}
 
-        <div className={styles.badges}>
+        <div className={styles.badgeLeft}>
           <Badge category={category} />
+        </div>
+        <div className={styles.badgeRight}>
           <Badge category={level} variant="neutral" />
         </div>
       </div>
@@ -77,48 +81,29 @@ export const CourseCard = ({
         <h3 className={styles.title}>{title}</h3>
         <p className={styles.description}>{description}</p>
 
-        {rating !== undefined && (
-          <div className={styles.rating}>
-            <svg className={styles.star} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.8L10 14.9l-5.2 2.73.99-5.8-4.21-4.1 5.82-.85L10 1.5z" />
-            </svg>
-            <span className={styles.ratingValue}>{rating.toFixed(1)}</span>
-            {reviewsCount !== undefined && (
-              <span className={styles.reviewsCount}>({reviewsCount})</span>
-            )}
-          </div>
-        )}
-
         <div className={styles.meta}>
-          <span className={styles.metaItem}>
-            <svg className={styles.metaIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5" />
-              <path
-                d="M10 6v4l2.5 2.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-            {duration}
-          </span>
-          <span className={styles.metaItem}>
-            <svg className={styles.metaIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path
-                d="M4 4.5A1.5 1.5 0 015.5 3H15v13.5H5.5A1.5 1.5 0 014 15V4.5z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M7 7h5M7 10h5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-            {lessonsCount} aulas
-          </span>
+          {rating !== undefined && (
+            <>
+              <span className={styles.ratingGroup}>
+                <svg
+                  className={styles.star}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.8L10 14.9l-5.2 2.73.99-5.8-4.21-4.1 5.82-.85L10 1.5z" />
+                </svg>
+                <span className={styles.ratingValue}>{rating.toFixed(1)}</span>
+                {reviewsCount !== undefined && (
+                  <span className={styles.reviewsCount}>({reviewsCount})</span>
+                )}
+              </span>
+              <span className={styles.metaDot}>•</span>
+            </>
+          )}
+          <span className={styles.metaItem}>{duration}</span>
+          <span className={styles.metaDot}>•</span>
+          <span className={styles.metaItem}>{lessonsCount} aulas</span>
         </div>
 
         <div className={styles.footer}>

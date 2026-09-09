@@ -44,12 +44,16 @@
   background: linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-secondary-700) 100%);
 }
 
-.badges {
+.badgeLeft {
   position: absolute;
   top: var(--space-3);
   left: var(--space-3);
-  display: flex;
-  gap: var(--space-2);
+}
+
+.badgeRight {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
 }
 
 .content {
@@ -69,7 +73,7 @@
 .description {
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-regular);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -77,7 +81,14 @@
   overflow: hidden;
 }
 
-.rating {
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ratingGroup {
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -86,38 +97,29 @@
 .star {
   width: 14px;
   height: 14px;
-  color: var(--color-warning-300);
+  color: var(--color-info-300);
 }
 
 .ratingValue {
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  color: var(--color-info-300);
 }
 
 .reviewsCount {
   font-size: var(--text-body-4);
   color: var(--color-text-muted);
+  margin-left: var(--space-1);
 }
 
-.meta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
+.metaDot {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
 }
 
 .metaItem {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
   font-size: var(--text-body-4);
   color: var(--color-text-muted);
-}
-
-.metaIcon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
 }
 
 .footer {
@@ -131,11 +133,21 @@
 
 .instructor {
   font-size: var(--text-body-4);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .price {
   font-size: var(--text-body-1);
   font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
+  color: var(--color-info-300);
+}
+
+@media (width <= 640px) {
+  .content {
+    padding: var(--space-3);
+  }
+
+  .title {
+    font-size: var(--text-body-2);
+  }
 }
