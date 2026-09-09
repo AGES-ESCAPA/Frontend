@@ -1,0 +1,93 @@
+.searchBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0 var(--space-4) 0 var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
+  box-sizing: border-box;
+  background-color: var(--color-surface-search-dark);
+}
+
+.searchBar:focus-within {
+  border-color: var(--color-info-300);
+  box-shadow: 0 0 0 1px rgba(26, 219, 255, 0.24);
+}
+
+.searchBar.dark {
+  background-color: var(--color-surface-search-dark);
+  border-color: var(--color-neutral-700);
+}
+
+.searchBar.light {
+  background-color: var(--color-surface-search-light);
+  border-color: var(--color-neutral-200);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--color-neutral-500);
+  margin-right: var(--space-3);
+}
+
+.searchBar:focus-within .searchIcon {
+  color: var(--color-info-300);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-white);
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+  padding: var(--space-3) 0;
+  outline: none;
+}
+
+.searchBar.light .input {
+  color: var(--color-neutral-900);
+}
+
+.input::placeholder {
+  color: var(--color-neutral-500);
+}
+
+.clearButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-neutral-500);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.clearButton:hover,
+.clearButton:focus-visible {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.searchBar.light .clearButton:hover,
+.searchBar.light .clearButton:focus-visible {
+  background-color: rgba(23, 25, 28, 0.06);
+  color: var(--color-neutral-900);
+}

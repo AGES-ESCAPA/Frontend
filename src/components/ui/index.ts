@@ -9,5 +9,7 @@ export { Badge } from './Badge';
 export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant } from './Button';
+export { SearchBar } from './SearchBar/SearchBar';
+export type { SearchBarProps, SearchBarTheme } from './SearchBar/SearchBar';
 // export { Dialog, DialogContent, DialogTitle } from './Dialog/Dialog';
 // export { Toast, ToastProvider } from './Toast/Toast';
