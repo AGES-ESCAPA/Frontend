@@ -196,7 +196,6 @@
 .collapsed .brandSuffix,
 .collapsed .roleLabel,
 .collapsed .userText,
-.collapsed .logoutButton,
 .collapsed .logo {
   display: none;
 }
