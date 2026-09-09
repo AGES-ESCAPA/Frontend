@@ -1,24 +1,46 @@
-import type { FC } from 'react';
+import * as AvatarPrimitive from '@radix-ui/react-avatar';
+import { useEffect, useState } from 'react';
+import { useUserInitials } from '@hooks/useUserInitials';
 import styles from './Avatar.module.css';
 
+export type AvatarTheme = 'light' | 'dark';
+
 export interface AvatarProps {
+  imageUrl?: string;
   name: string;
-  avatarUrl?: string;
-  theme?: 'dark';
+  theme?: AvatarTheme;
 }
 
-const getInitials = (name: string) =>
-  name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
+export const Avatar = ({ imageUrl, name, theme = 'light' }: AvatarProps) => {
+  const initials = useUserInitials(name);
+  const [hasImageError, setHasImageError] = useState(false);
 
-export const Avatar: FC<AvatarProps> = ({ name, avatarUrl, theme = 'dark' }) => {
+  useEffect(() => {
+    setHasImageError(false);
+  }, [imageUrl]);
+
+  const shouldShowImage = Boolean(imageUrl?.trim()) && !hasImageError;
+
+  const handleImageError = () => {
+    setHasImageError(true);
+  };
+
   return (
-    <span className={`${styles.avatar} ${styles[theme]}`} aria-label={name}>
-      {avatarUrl ? <img src={avatarUrl} alt="" /> : getInitials(name)}
-    </span>
+    <AvatarPrimitive.Root
+      className={`${styles.root} ${theme === 'dark' ? styles.dark : styles.light}`}
+    >
+      {shouldShowImage ? (
+        <AvatarPrimitive.Image
+          src={imageUrl}
+          alt={name}
+          className={styles.image}
+          onError={handleImageError}
+        />
+      ) : null}
+
+      <AvatarPrimitive.Fallback className={styles.fallback} delayMs={0}>
+        {initials}
+      </AvatarPrimitive.Fallback>
+    </AvatarPrimitive.Root>
   );
 };

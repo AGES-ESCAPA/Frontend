@@ -7,10 +7,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 // usamos named exports (não default exports).
 
 const Home = lazy(() => import('@pages/Home/Home').then((m) => ({ default: m.Home })));
-const Login = lazy(() => import('@pages/Login/Login').then((m) => ({ default: m.Login })));
-const PreviewNavbar = lazy(() =>
-  import('@pages/PreviewNavbar/PreviewNavbar').then((m) => ({ default: m.PreviewNavbar })),
-);
 
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
@@ -49,28 +45,13 @@ export const AppRouter = () => {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/preview-navbar" element={<PreviewNavbar />} />
 
-          {/* Fallback para rotas inexistentes */}
-          <Route
-            path="*"
-            element={
-              <main
-                style={{
-                  minHeight: '100vh',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'var(--color-surface)',
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family-base)',
-                }}
-              >
-                <div>404 - Página não encontrada</div>
-              </main>
-            }
-          />
+          {/* TODO: Adicionar as demais páginas conforme o desenvolvimento avança:
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/courses/:courseId/lessons/:lessonId" element={<CoursePlayer />} />
+            <Route path="*" element={<NotFound />} />
+          */}
         </Routes>
       </Suspense>
     </BrowserRouter>

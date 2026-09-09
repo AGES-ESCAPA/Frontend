@@ -1,31 +1,76 @@
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, FC } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { forwardRef } from 'react';
+import { Slot, Slottable } from '@radix-ui/react-slot';
+import { Loader2 } from 'lucide-react';
 import styles from './Button.module.css';
 
-export type ButtonVariant = 'ghost' | 'secondary';
+export type ButtonVariant = 'primary' | 'secondary' | 'outlined' | 'ghost' | 'active';
 
-type ButtonCommonProps = {
-  variant?: ButtonVariant;
-  className?: string;
-};
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Text displayed on the button (required). */
+  label: string;
+  /** Icon displayed to the left of the label. If omitted, the button shows only text. */
+  icon?: ReactNode;
+  /** Visual appearance of the button (required). */
+  variant: ButtonVariant;
+  /** If true, the button occupies 100% of the parent container width. */
+  fullWidth?: boolean;
+  /** If true, replaces label and icon with a centered spinner and blocks interaction. */
+  isLoading?: boolean;
+  /**
+   * Merges the button's props onto its immediate child element via Radix Slot.
+   * Useful for rendering the button as a link (`<a>`) or router `<Link>`.
+   */
+  asChild?: boolean;
+}
 
-export type ButtonProps = ButtonCommonProps &
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    | (AnchorHTMLAttributes<HTMLAnchorElement> & { href: string })
-    | (ButtonHTMLAttributes<HTMLButtonElement> & { href?: never })
-  );
+    {
+      label,
+      icon,
+      variant,
+      fullWidth = false,
+      isLoading = false,
+      asChild = false,
+      disabled = false,
+      className = '',
+      children,
+      ...props
+    },
+    ref,
+  ) => {
+    const Component = asChild ? Slot : 'button';
+    const isDisabled = disabled || isLoading;
 
-export const Button: FC<ButtonProps> = (props) => {
-  const { variant = 'secondary', className = '', ...elementProps } = props;
-  const classes = [styles.button, styles[variant], className].filter(Boolean).join(' ');
+    const classNames = [
+      styles.button,
+      styles[`variant-${variant}`],
+      icon && styles.hasIcon,
+      fullWidth && styles.fullWidth,
+      isDisabled && !isLoading && styles.disabled,
+      isLoading && styles.loading,
+      className,
+    ]
+      .filter(Boolean)
+      .join(' ');
 
-  if ('href' in elementProps) {
-    const { href, ...anchorProps } = elementProps as AnchorHTMLAttributes<HTMLAnchorElement> & {
-      href: string;
-    };
-    return <a {...anchorProps} href={href} className={classes} />;
-  }
+    return (
+      <Component
+        ref={ref}
+        className={classNames}
+        disabled={isDisabled}
+        aria-busy={isLoading}
+        aria-label={label}
+        {...props}
+      >
+        {isLoading ? <Loader2 className={styles.spinner} size={20} aria-hidden="true" /> : null}
+        {!isLoading && icon ? <span className={styles.icon}>{icon}</span> : null}
+        {!isLoading && <span className={styles.label}>{label}</span>}
+        {!isLoading && asChild && <Slottable>{children}</Slottable>}
+      </Component>
+    );
+  },
+);
 
-  return (
-    <button {...(elementProps as ButtonHTMLAttributes<HTMLButtonElement>)} className={classes} />
-  );
-};
+Button.displayName = 'Button';
