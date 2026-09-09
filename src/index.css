@@ -175,11 +175,21 @@
   --color-surface-raised: var(--color-primary-800);
   --color-surface-overlay: rgba(43, 111, 231, 0.08);
   --color-surface-search-dark: rgba(23, 25, 28, 0.86);
-  --color-surface-search-light: rgba(244, 245, 246, 0.92);
+  /* Opaco de proposito: com transparencia o fundo do campo claro se mistura
+     com a pagina atras e o contraste do placeholder deixa de ser previsivel
+     (3.91:1 sobre fundo escuro). Opaco, Neutros-600 garante 4.63:1 (AA). */
+  --color-surface-search-light: var(--color-neutral-100);
 
   --color-border: var(--color-neutral-800);
   --color-border-subtle: rgba(255, 255, 255, 0.08);
   --color-border-focus: var(--color-primary-500);
+
+  /* Halo do campo em foco: Info-300 a 24%. */
+  --color-focus-ring-info: rgba(26, 219, 255, 0.24);
+  /* Realce de hover sobre superficie escura: branco a 6%. */
+  --color-overlay-hover-on-dark: rgba(255, 255, 255, 0.06);
+  /* Realce de hover sobre superficie clara: Neutros-900 a 6%. */
+  --color-overlay-hover-on-light: rgba(23, 25, 28, 0.06);
 
   --color-text-primary: var(--color-neutral-100);
   --color-text-secondary: var(--color-neutral-300);
