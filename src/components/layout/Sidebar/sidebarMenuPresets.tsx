@@ -1,13 +1,4 @@
-import {
-  Award,
-  BarChart3,
-  Compass,
-  LayoutPanelLeft,
-  PlayCircle,
-  ShoppingCart,
-  Ticket,
-  Users,
-} from 'lucide-react';
+import { BarChart3, Building2, LayoutDashboard, Play, UserRoundPen, Users } from 'lucide-react';
 import type { SidebarMenuItem, SidebarRole } from './Sidebar';
 
 /** Tamanho padrão dos ícones Lucide dentro da Sidebar (grid 24x24, traço 2px). */
@@ -27,46 +18,59 @@ export const SIDEBAR_ROLE_LABELS: Record<SidebarRole, string> = {
 export const SIDEBAR_MENU_PRESETS: Record<SidebarRole, SidebarMenuItem[]> = {
   student: [
     {
-      icon: <PlayCircle size={SIDEBAR_ICON_SIZE} />,
+      icon: <LayoutDashboard size={SIDEBAR_ICON_SIZE} />,
+      label: 'Cursos',
+      route: '/courses',
+    },
+    {
+      icon: <Play size={SIDEBAR_ICON_SIZE} />,
       label: 'Meus Cursos',
       route: '/meus-cursos',
     },
-    { icon: <Award size={SIDEBAR_ICON_SIZE} />, label: 'Certificados', route: '/certificados' },
-    { icon: <Compass size={SIDEBAR_ICON_SIZE} />, label: 'Explorar Catálogo', route: '/catalogo' },
+    {
+      icon: <UserRoundPen size={SIDEBAR_ICON_SIZE} />,
+      label: 'Meu Perfil',
+      route: '/meu-perfil',
+    },
   ],
   company: [
+    {
+      icon: <LayoutDashboard size={SIDEBAR_ICON_SIZE} />,
+      label: 'Cursos',
+      route: '/empresa/cursos',
+    },
+    {
+      icon: <BarChart3 size={SIDEBAR_ICON_SIZE} />,
+      label: 'Métricas',
+      route: '/empresa/dashboard',
+    },
     {
       icon: <Users size={SIDEBAR_ICON_SIZE} />,
       label: 'Colaboradores',
       route: '/empresa/colaboradores',
     },
     {
-      icon: <Ticket size={SIDEBAR_ICON_SIZE} />,
-      label: 'Assentos Disponíveis',
-      route: '/empresa/assentos',
-    },
-    {
-      icon: <BarChart3 size={SIDEBAR_ICON_SIZE} />,
-      label: 'Relatórios',
-      route: '/empresa/relatorios',
+      icon: <UserRoundPen size={SIDEBAR_ICON_SIZE} />,
+      label: 'Perfil da Empresa',
+      route: '/empresa/perfil',
     },
   ],
   admin: [
     {
-      icon: <LayoutPanelLeft size={SIDEBAR_ICON_SIZE} />,
+      icon: <LayoutDashboard size={SIDEBAR_ICON_SIZE} />,
       label: 'Gestão de Cursos',
       route: '/admin/cursos',
     },
     {
-      icon: <ShoppingCart size={SIDEBAR_ICON_SIZE} />,
-      label: 'Gestão de Compras',
-      route: '/admin/compras',
+      icon: <Building2 size={SIDEBAR_ICON_SIZE} />,
+      label: 'Empresas',
+      route: '/admin/empresas',
     },
     { icon: <Users size={SIDEBAR_ICON_SIZE} />, label: 'Usuários', route: '/admin/usuarios' },
     {
       icon: <BarChart3 size={SIDEBAR_ICON_SIZE} />,
-      label: 'Relatórios / BI',
-      route: '/admin/relatorios',
+      label: 'Métricas',
+      route: '/admin/metricas',
     },
   ],
 };

@@ -1,22 +1,33 @@
 import { render, screen, within } from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
+import type { ReactElement } from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 import { Sidebar } from './Sidebar';
-import type { SidebarMenuItem, SidebarRole, SidebarUser } from './Sidebar';
+import type { SidebarMenuItem, SidebarProps, SidebarRole, SidebarUser } from './Sidebar';
 import { SIDEBAR_MENU_PRESETS } from './sidebarMenuPresets';
 
-const student: SidebarUser = { name: 'Jorge Amado', role: 'Estudante' };
+const student: SidebarUser = { name: 'Jorge Amado', role: 'Aluno' };
 
 const customItems: SidebarMenuItem[] = [
   { icon: <BookOpen data-testid="icon-catalogo" />, label: 'Catálogo', route: '/catalogo' },
   { icon: <BookOpen />, label: 'Trilhas', route: '/trilhas', active: true },
 ];
 
+// Os itens de menu usam o Link do react-router, que exige contexto de Router.
+const renderSidebar = (ui: ReactElement): RenderResult => render(ui, { wrapper: MemoryRouter });
+
+const renderStudent = (props: Partial<Omit<SidebarProps, 'role' | 'items' | 'user'>> = {}) =>
+  renderSidebar(
+    <Sidebar role="student" items={SIDEBAR_MENU_PRESETS.student} user={student} {...props} />,
+  );
+
 describe('Sidebar', () => {
   // ── Estrutura base ───────────────────────────────────────────────
   it('should render logo, menu list and user footer', () => {
-    render(<Sidebar role="student" user={student} />);
+    renderStudent();
 
     const sidebar = screen.getByRole('complementary', { name: /menu lateral — aluno/i });
     expect(sidebar).toBeInTheDocument();
@@ -25,12 +36,14 @@ describe('Sidebar', () => {
     expect(
       screen.getByRole('navigation', { name: /navegação do perfil aluno/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Jorge Amado')).toBeInTheDocument();
-    expect(screen.getByText('Estudante')).toBeInTheDocument();
+    // O perfil também aparece no cabeçalho — aqui interessa o rodapé do usuário.
+    const footer = within(sidebar.querySelector('footer') as HTMLElement);
+    expect(footer.getByText('Jorge Amado')).toBeInTheDocument();
+    expect(footer.getByText('Aluno')).toBeInTheDocument();
   });
 
   it('should render the user initials in the avatar when no avatarUrl is provided', async () => {
-    render(<Sidebar role="student" user={student} />);
+    renderStudent();
 
     expect(await screen.findByText('JA')).toBeInTheDocument();
   });
@@ -40,23 +53,29 @@ describe('Sidebar', () => {
     {
       role: 'student',
       roleLabel: 'Aluno',
-      expectedLabels: ['Meus Cursos', 'Certificados', 'Explorar Catálogo'],
+      expectedLabels: ['Cursos', 'Meus Cursos', 'Meu Perfil'],
     },
     {
       role: 'company',
       roleLabel: 'Empresa',
-      expectedLabels: ['Colaboradores', 'Assentos Disponíveis', 'Relatórios'],
+      expectedLabels: ['Cursos', 'Métricas', 'Colaboradores', 'Perfil da Empresa'],
     },
     {
       role: 'admin',
       roleLabel: 'Admin',
-      expectedLabels: ['Gestão de Cursos', 'Gestão de Compras', 'Usuários', 'Relatórios / BI'],
+      expectedLabels: ['Gestão de Cursos', 'Empresas', 'Usuários', 'Métricas'],
     },
   ];
 
   presetCases.forEach(({ role, roleLabel, expectedLabels }) => {
     it(`should render the default menu preset for role "${role}"`, () => {
-      render(<Sidebar role={role} user={{ name: 'Ana Souza', role: 'Perfil de teste' }} />);
+      renderSidebar(
+        <Sidebar
+          role={role}
+          items={SIDEBAR_MENU_PRESETS[role]}
+          user={{ name: 'Ana Souza', role: 'Perfil de teste' }}
+        />,
+      );
 
       const nav = screen.getByRole('navigation', { name: new RegExp(roleLabel, 'i') });
 
@@ -74,8 +93,8 @@ describe('Sidebar', () => {
     });
   });
 
-  it('should override the preset when items are provided', () => {
-    render(<Sidebar role="student" items={customItems} user={student} />);
+  it('should render the provided items', () => {
+    renderSidebar(<Sidebar role="student" items={customItems} user={student} />);
 
     const nav = screen.getByRole('navigation');
 
@@ -90,7 +109,7 @@ describe('Sidebar', () => {
 
   // ── Item ativo vs. padrão ────────────────────────────────────────
   it('should use the active Button variant and aria-current on the current route', () => {
-    render(<Sidebar role="student" items={customItems} user={student} />);
+    renderSidebar(<Sidebar role="student" items={customItems} user={student} />);
 
     const activeItem = screen.getByRole('link', { name: 'Trilhas' });
     expect(activeItem.className).toMatch(/variant-active/);
@@ -98,16 +117,49 @@ describe('Sidebar', () => {
   });
 
   it('should use the ghost Button variant for non-active items', () => {
-    render(<Sidebar role="student" items={customItems} user={student} />);
+    renderSidebar(<Sidebar role="student" items={customItems} user={student} />);
 
     const inactiveItem = screen.getByRole('link', { name: 'Catálogo' });
     expect(inactiveItem.className).toMatch(/variant-ghost/);
     expect(inactiveItem).not.toHaveAttribute('aria-current');
   });
 
+  // ── Navegação ────────────────────────────────────────────────────
+  it('should navigate client-side without a full page reload', async () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Sidebar role="student" items={customItems} user={student} />
+        <Routes>
+          <Route path="/" element={<p>Início</p>} />
+          <Route path="/catalogo" element={<p>Página do catálogo</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(screen.getByRole('link', { name: 'Catálogo' }));
+
+    expect(await screen.findByText('Página do catálogo')).toBeInTheDocument();
+    expect(screen.queryByText('Início')).not.toBeInTheDocument();
+  });
+
+  it('should accept a custom link component', () => {
+    render(
+      <Sidebar
+        role="student"
+        items={customItems}
+        user={student}
+        linkComponent={({ to, ...props }) => <a href={to} data-testid="custom-link" {...props} />}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: 'Catálogo' });
+    expect(link).toHaveAttribute('data-testid', 'custom-link');
+    expect(link).toHaveAttribute('href', '/catalogo');
+  });
+
   // ── Estado collapsed ─────────────────────────────────────────────
   it('should not be collapsed by default', () => {
-    render(<Sidebar role="student" user={student} />);
+    renderStudent();
 
     const sidebar = screen.getByRole('complementary');
     expect(sidebar).toHaveAttribute('data-collapsed', 'false');
@@ -115,7 +167,7 @@ describe('Sidebar', () => {
   });
 
   it('should apply the collapsed state while keeping the avatar and accessible names', async () => {
-    render(<Sidebar role="student" user={student} collapsed />);
+    renderStudent({ collapsed: true });
 
     const sidebar = screen.getByRole('complementary');
     expect(sidebar).toHaveAttribute('data-collapsed', 'true');
@@ -128,14 +180,14 @@ describe('Sidebar', () => {
 
   // ── Logout ───────────────────────────────────────────────────────
   it('should not render the logout button when onLogout is omitted', () => {
-    render(<Sidebar role="student" user={student} />);
+    renderStudent();
 
     expect(screen.queryByRole('button', { name: /sair da conta/i })).not.toBeInTheDocument();
   });
 
   it('should call onLogout when the logout button is clicked', async () => {
     const handleLogout = vi.fn();
-    render(<Sidebar role="student" user={student} onLogout={handleLogout} />);
+    renderStudent({ onLogout: handleLogout });
 
     await userEvent.click(screen.getByRole('button', { name: /sair da conta/i }));
     expect(handleLogout).toHaveBeenCalledOnce();

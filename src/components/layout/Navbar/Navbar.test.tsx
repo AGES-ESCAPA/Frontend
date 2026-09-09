@@ -25,23 +25,20 @@ describe('Navbar', () => {
 
   it('renders a user profile and notification badge', () => {
     render(
-      <Navbar
-        state="user"
-        user={{ name: 'Jorge Amado', role: 'Estudante' }}
-        notificationsCount={3}
-      />,
+      <Navbar state="user" user={{ name: 'Jorge Amado', role: 'Aluno' }} notificationsCount={3} />,
     );
 
     expect(screen.getByText('Jorge Amado')).toBeInTheDocument();
-    expect(screen.getByText('Estudante')).toBeInTheDocument();
+    expect(screen.getByText('Aluno')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.queryByAltText('escapa!')).not.toBeInTheDocument();
   });
 
   it('caps the notification badge at 99+', () => {
     render(
       <Navbar
         state="user"
-        user={{ name: 'Jorge Amado', role: 'Estudante' }}
+        user={{ name: 'Jorge Amado', role: 'Aluno' }}
         notificationsCount={150}
       />,
     );
@@ -78,7 +75,7 @@ describe('Navbar', () => {
 
   it('closes the collapsible menu on Escape', async () => {
     const user = userEvent.setup();
-    render(<Navbar state="user" user={{ name: 'Jorge Amado', role: 'Estudante' }} />);
+    render(<Navbar state="user" user={{ name: 'Jorge Amado', role: 'Aluno' }} />);
 
     await user.click(screen.getByRole('button', { name: 'Abrir menu' }));
     expect(screen.getByRole('button', { name: 'Fechar menu' })).toBeInTheDocument();

@@ -8,12 +8,14 @@
   display: flex;
   flex-direction: column;
   width: var(--sidebar-width);
-  height: 100vh;
-  position: sticky;
+  height: 100dvh;
+  position: fixed;
   top: 0;
+  left: 0;
+  z-index: 40;
   flex-shrink: 0;
-  background-color: var(--color-surface);
-  border-right: 1px solid var(--color-border-subtle);
+  background-color: var(--color-neutral-900);
+  border-right: 1px solid var(--color-info-300);
   font-family: var(--font-family-base);
   overflow: hidden;
   transition: width var(--transition-base);
@@ -23,10 +25,20 @@
 .header {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  justify-content: flex-end;
   flex-shrink: 0;
-  padding: var(--space-5) var(--space-4);
+  height: var(--header-height);
+  padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--color-info-300);
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  gap: var(--space-1);
+  width: fit-content;
+  max-width: 100%;
 }
 
 .brand {
@@ -37,7 +49,7 @@
 }
 
 .logo {
-  width: calc(var(--container-xs) * 0.45);
+  width: 92px;
   max-width: 100%;
   height: auto;
   flex-shrink: 0;
@@ -60,9 +72,9 @@
 }
 
 .brandSuffix {
-  font-size: var(--text-body-4);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--text-body-4--line-height);
+  font-size: var(--text-body-5);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--text-body-5--line-height);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--color-text-secondary);
@@ -70,8 +82,8 @@
 }
 
 .roleLabel {
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
   font-weight: var(--font-weight-regular);
   color: var(--color-text-muted);
   white-space: nowrap;
@@ -100,9 +112,11 @@
 .menuButton {
   justify-content: flex-start;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  font-weight: var(--font-weight-regular);
   border-radius: var(--radius-lg);
 }
 
@@ -131,8 +145,8 @@
 }
 
 .userName {
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   overflow: hidden;
@@ -141,8 +155,8 @@
 }
 
 .userRole {
-  font-size: var(--text-body-4);
-  line-height: var(--text-body-4--line-height);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
   font-weight: var(--font-weight-regular);
   color: var(--color-neutral-400);
   overflow: hidden;
@@ -196,6 +210,7 @@
 .collapsed .brandSuffix,
 .collapsed .roleLabel,
 .collapsed .userText,
+.collapsed .logoutButton,
 .collapsed .logo {
   display: none;
 }
@@ -205,37 +220,37 @@
 }
 
 /* ── Responsividade ────────────────────────────────────────────────
-   Tablet e mobile (< 1024px): recolhe automaticamente para caber junto do
-   conteúdo e evitar scroll horizontal. A largura reduzida já dispara a
-   container query do Button, que mantém apenas os ícones.
+   Quando `collapsed` não é informado, tablets e celulares (< 1024px)
+   recolhem automaticamente. Um valor explícito da prop sempre prevalece.
+   A largura reduzida dispara a container query do Button.
    ─────────────────────────────────────────────────────────────────── */
 @media (width < 64rem) {
-  .sidebar {
+  .sidebar[data-auto-responsive='true'] {
     width: var(--sidebar-collapsed-width);
   }
 
-  .sidebar .header,
-  .sidebar .nav,
-  .sidebar .footer {
+  .sidebar[data-auto-responsive='true'] .header,
+  .sidebar[data-auto-responsive='true'] .nav,
+  .sidebar[data-auto-responsive='true'] .footer {
     padding-left: var(--space-2);
     padding-right: var(--space-2);
   }
 
-  .sidebar .footer,
-  .sidebar .menuButton {
+  .sidebar[data-auto-responsive='true'] .footer,
+  .sidebar[data-auto-responsive='true'] .menuButton {
     justify-content: center;
   }
 
-  .sidebar .brandDivider,
-  .sidebar .brandSuffix,
-  .sidebar .roleLabel,
-  .sidebar .userText,
-  .sidebar .logoutButton,
-  .sidebar .logo {
+  .sidebar[data-auto-responsive='true'] .brandDivider,
+  .sidebar[data-auto-responsive='true'] .brandSuffix,
+  .sidebar[data-auto-responsive='true'] .roleLabel,
+  .sidebar[data-auto-responsive='true'] .userText,
+  .sidebar[data-auto-responsive='true'] .logoutButton,
+  .sidebar[data-auto-responsive='true'] .logo {
     display: none;
   }
 
-  .sidebar .logoIcon {
+  .sidebar[data-auto-responsive='true'] .logoIcon {
     display: block;
   }
 }

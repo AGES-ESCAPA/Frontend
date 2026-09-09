@@ -18,6 +18,7 @@
 ## Infraestrutura
 
 A aplicação é **containerizada** e será publicada em um cluster **k3s** gerenciado por **Terraform**:
+
 - Build: `Dockerfile` multi-stage (Node 20 Alpine → nginx Alpine)
 - Orquestração local: `docker-compose.yml`
 - CI/CD: **GitHub Actions** (`.github/workflows/ci.yml`) e GitLab CI (`.gitlab-ci.yml`)
@@ -43,6 +44,7 @@ src/
 ```
 
 ### 📌 Diretrizes de Arquitetura:
+
 1. **Páginas (`src/pages/`)**: Cuidam do estado da tela, formulários e renderização de componentes. **Nunca fazem `fetch` direto**.
 2. **Serviços (`src/services/`)**: Centralizam todas as chamadas HTTP para o backend. As páginas e hooks chamam os serviços.
 3. **Hooks (`src/hooks/`)**: Centralizam lógicas de negócio e estados assíncronos compartilhados entre múltiplas telas.
@@ -109,6 +111,7 @@ Esta regra é validada automaticamente pelo **Stylelint** (`npm run stylelint`).
 ```
 
 #### 🎨 1. Tokens de Cores do Style Guide Oficial:
+
 - **Primária**: `--color-primary-100` até `--color-primary-900` (`500: #2b6fe7` é a base de ação)
 - **Secundária**: `--color-secondary-100` até `--color-secondary-900` (`500: #8d63cc` é a base secundária)
 - **Neutros**: `--color-neutral-100` até `--color-neutral-900`
@@ -121,6 +124,7 @@ Esta regra é validada automaticamente pelo **Stylelint** (`npm run stylelint`).
 - **Bordas**: `--color-border` (`#2e3338`), `--color-border-subtle`, `--color-border-focus` (`#2b6fe7`)
 
 #### 🔤 2. Tokens de Tipografia Oficial (Fonte: Inter):
+
 - **Família de Fonte**: `var(--font-family-base)` ou `var(--font-sans)`
 - **Pesos de Fonte**:
   - Regular: `var(--font-weight-regular)` (400)
@@ -142,10 +146,12 @@ Esta regra é validada automaticamente pelo **Stylelint** (`npm run stylelint`).
   - `--text-body-5`: 10px (`0.625rem` - XSmall)
 
 #### 📏 3. Espaçamentos e Bordas:
+
 - **Espaçamentos**: `--space-1` (4px), `--space-2` (8px), `--space-3` (12px), `--space-4` (16px), `--space-5` (20px), `--space-6` (24px), `--space-8` (32px), `--space-10` (40px), `--space-12` (48px), `--space-16` (64px), `--space-20` (80px)
 - **Border Radius**: `--radius-sm` (4px), `--radius-md` (6px), `--radius-lg` (8px), `--radius-xl` (12px), `--radius-2xl` (16px), `--radius-full` (9999px)
 
 #### 🎨 4. Ícones Oficiais (Lucide Icons):
+
 - Use **exclusivamente** o pacote `lucide-react` para ícones (`import { Play, Check, BookOpen } from 'lucide-react'`).
 - Padrão Figma: grid `24x24px`, stroke `2px`, cantos arredondados `2px`.
 - **Radix UI vs Lucide**: Radix UI gerencia a acessibilidade e estado (Dialog, DropdownMenu), e Lucide React fornece os ícones visuais dentro deles.
@@ -155,6 +161,7 @@ Esta regra é validada automaticamente pelo **Stylelint** (`npm run stylelint`).
 ### 📱 Regra Obrigatória de Responsividade (Mobile, Tablet, Desktop e Web)
 
 **Todo componente, página ou layout gerado DEVE ser 100% responsivo**, cobrindo perfeitamente:
+
 - **Mobile (Celulares)**: `< 640px` (`--breakpoint-mobile`)
   - Layout em coluna única, botões e toques acessíveis (`min-height: 44px`), sidebars colapsadas em drawers, **nunca permitir scroll horizontal**.
 - **Tablet**: `640px` a `1023px` (`--breakpoint-tablet`)
@@ -218,7 +225,14 @@ import { CourseCard } from './CourseCard';
 
 describe('CourseCard', () => {
   it('should render the course title', () => {
-    render(<CourseCard title="Hospitalidade de Luxo" thumbnailUrl="" duration={3600} onSelect={vi.fn()} />);
+    render(
+      <CourseCard
+        title="Hospitalidade de Luxo"
+        thumbnailUrl=""
+        duration={3600}
+        onSelect={vi.fn()}
+      />,
+    );
     expect(screen.getByText('Hospitalidade de Luxo')).toBeInTheDocument();
   });
 
@@ -241,4 +255,4 @@ describe('CourseCard', () => {
 
 ---
 
-*Última atualização: Agosto/2026*
+_Última atualização: Agosto/2026_
