@@ -158,23 +158,118 @@ describe('Sidebar', () => {
   });
 
   // ── Estado collapsed ─────────────────────────────────────────────
-  it('should not be collapsed by default', () => {
+  it('should be collapsed by default while the pointer is away', () => {
     renderStudent();
 
     const sidebar = screen.getByRole('complementary');
-    expect(sidebar).toHaveAttribute('data-collapsed', 'false');
-    expect(sidebar.className).not.toMatch(/collapsed/);
+    expect(sidebar).toHaveAttribute('data-collapsed', 'true');
+    expect(sidebar.className).toMatch(/collapsed/);
   });
 
-  it('should apply the collapsed state while keeping the avatar and accessible names', async () => {
+  it('should expand while hovered and collapse again when the pointer leaves', async () => {
+    renderStudent();
+    const sidebar = screen.getByRole('complementary');
+
+    await userEvent.hover(sidebar);
+    expect(sidebar).toHaveAttribute('data-collapsed', 'false');
+
+    await userEvent.unhover(sidebar);
+    expect(sidebar).toHaveAttribute('data-collapsed', 'true');
+  });
+
+  it('should expand while a menu item has focus', async () => {
+    renderStudent();
+    const sidebar = screen.getByRole('complementary');
+
+    await userEvent.tab();
+    expect(within(sidebar).getByRole('link', { name: 'Cursos' })).toHaveFocus();
+    expect(sidebar).toHaveAttribute('data-collapsed', 'false');
+  });
+
+  it('should pin the sidebar open on double click outside the action buttons', async () => {
+    renderStudent();
+    const sidebar = screen.getByRole('complementary');
+
+    await userEvent.dblClick(sidebar.querySelector('header') as HTMLElement);
+    expect(sidebar).toHaveAttribute('data-pinned', 'true');
+
+    await userEvent.unhover(sidebar);
+    expect(sidebar).toHaveAttribute('data-collapsed', 'false');
+  });
+
+  it('should restore the hover behavior on a second double click', async () => {
+    renderStudent();
+    const sidebar = screen.getByRole('complementary');
+    const header = sidebar.querySelector('header') as HTMLElement;
+
+    await userEvent.dblClick(header);
+    await userEvent.dblClick(header);
+    expect(sidebar).toHaveAttribute('data-pinned', 'false');
+
+    await userEvent.unhover(sidebar);
+    expect(sidebar).toHaveAttribute('data-collapsed', 'true');
+  });
+
+  it('should not pin the sidebar when double clicking an action button', async () => {
+    renderStudent({ onLogout: vi.fn() });
+    const sidebar = screen.getByRole('complementary');
+
+    await userEvent.dblClick(screen.getByRole('button', { name: /sair da conta/i }));
+    expect(sidebar).toHaveAttribute('data-pinned', 'false');
+
+    await userEvent.dblClick(within(sidebar).getByRole('link', { name: 'Meus Cursos' }));
+    expect(sidebar).toHaveAttribute('data-pinned', 'false');
+  });
+
+  it('should hint the double click only while the pointer is over the sidebar', async () => {
+    renderStudent();
+    const sidebar = screen.getByRole('complementary');
+
+    expect(screen.queryByText(/clique duas vezes/i)).not.toBeInTheDocument();
+
+    await userEvent.hover(sidebar);
+    expect(screen.getByText(/clique duas vezes para travar a barra aberta/i)).toBeInTheDocument();
+
+    await userEvent.unhover(sidebar);
+    expect(screen.queryByText(/clique duas vezes/i)).not.toBeInTheDocument();
+  });
+
+  it('should keep the hint hidden while pinned and the pointer is away', async () => {
+    renderStudent();
+    const sidebar = screen.getByRole('complementary');
+
+    await userEvent.hover(sidebar);
+    await userEvent.dblClick(sidebar.querySelector('header') as HTMLElement);
+    expect(screen.getByText(/clique duas vezes para soltar a barra/i)).toBeInTheDocument();
+
+    await userEvent.unhover(sidebar);
+    expect(screen.queryByText(/clique duas vezes/i)).not.toBeInTheDocument();
+  });
+
+  it('should not render the hint when the collapsed state is controlled', async () => {
+    renderStudent({ collapsed: false });
+
+    await userEvent.hover(screen.getByRole('complementary'));
+    expect(screen.queryByText(/clique duas vezes/i)).not.toBeInTheDocument();
+  });
+
+  it('should ignore the double click when the collapsed state is controlled', async () => {
+    renderStudent({ collapsed: true });
+    const sidebar = screen.getByRole('complementary');
+
+    await userEvent.dblClick(sidebar.querySelector('header') as HTMLElement);
+    expect(sidebar).toHaveAttribute('data-collapsed', 'true');
+    expect(sidebar).toHaveAttribute('data-pinned', 'false');
+  });
+
+  it('should apply the collapsed state while keeping the accessible names', () => {
     renderStudent({ collapsed: true });
 
     const sidebar = screen.getByRole('complementary');
     expect(sidebar).toHaveAttribute('data-collapsed', 'true');
     expect(sidebar.className).toMatch(/collapsed/);
 
-    // Avatar permanece; os labels seguem acessíveis via aria-label do Button.
-    expect(await screen.findByText('JA')).toBeInTheDocument();
+    // Os labels seguem acessíveis via aria-label do Button.
     expect(screen.getByRole('link', { name: 'Meus Cursos' })).toBeInTheDocument();
   });
 

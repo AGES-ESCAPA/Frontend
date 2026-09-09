@@ -14,10 +14,11 @@
   left: 0;
   z-index: 40;
   flex-shrink: 0;
-  background-color: var(--color-neutral-900);
+  background-color: var(--color-surface);
   border-right: 1px solid var(--color-info-300);
   font-family: var(--font-family-base);
   overflow: hidden;
+  user-select: none;
   transition: width var(--transition-base);
 }
 
@@ -120,6 +121,17 @@
   border-radius: var(--radius-lg);
 }
 
+/* ── Dica de fixação ───────────────────────────────────────────────── */
+.pinHint {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+  text-align: center;
+  text-wrap: balance;
+}
+
 /* ── Rodapé: identificação do usuário ──────────────────────────────── */
 .footer {
   display: flex;
@@ -189,7 +201,7 @@
   outline: none;
 }
 
-/* ── Estado recolhido: só ícones e Avatar ──────────────────────────── */
+/* ── Estado recolhido: só os ícones do menu e o de sair ────────────── */
 .collapsed {
   width: var(--sidebar-collapsed-width);
 }
@@ -201,7 +213,14 @@
   padding-right: var(--space-2);
 }
 
-.collapsed .footer,
+.collapsed .header {
+  justify-content: center;
+}
+
+.collapsed .footer {
+  justify-content: center;
+}
+
 .collapsed .menuButton {
   justify-content: center;
 }
@@ -209,8 +228,7 @@
 .collapsed .brandDivider,
 .collapsed .brandSuffix,
 .collapsed .roleLabel,
-.collapsed .userText,
-.collapsed .logoutButton,
+.collapsed .userInfo,
 .collapsed .logo {
   display: none;
 }
@@ -219,38 +237,12 @@
   display: block;
 }
 
-/* ── Responsividade ────────────────────────────────────────────────
-   Quando `collapsed` não é informado, tablets e celulares (< 1024px)
-   recolhem automaticamente. Um valor explícito da prop sempre prevalece.
-   A largura reduzida dispara a container query do Button.
-   ─────────────────────────────────────────────────────────────────── */
-@media (width < 64rem) {
-  .sidebar[data-auto-responsive='true'] {
-    width: var(--sidebar-collapsed-width);
-  }
+.sidebar[data-auto-responsive='true'][data-pinned='false']:not(.collapsed) {
+  box-shadow: var(--shadow-md);
+}
 
-  .sidebar[data-auto-responsive='true'] .header,
-  .sidebar[data-auto-responsive='true'] .nav,
-  .sidebar[data-auto-responsive='true'] .footer {
-    padding-left: var(--space-2);
-    padding-right: var(--space-2);
-  }
-
-  .sidebar[data-auto-responsive='true'] .footer,
-  .sidebar[data-auto-responsive='true'] .menuButton {
-    justify-content: center;
-  }
-
-  .sidebar[data-auto-responsive='true'] .brandDivider,
-  .sidebar[data-auto-responsive='true'] .brandSuffix,
-  .sidebar[data-auto-responsive='true'] .roleLabel,
-  .sidebar[data-auto-responsive='true'] .userText,
-  .sidebar[data-auto-responsive='true'] .logoutButton,
-  .sidebar[data-auto-responsive='true'] .logo {
-    display: none;
-  }
-
-  .sidebar[data-auto-responsive='true'] .logoIcon {
-    display: block;
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
   }
 }

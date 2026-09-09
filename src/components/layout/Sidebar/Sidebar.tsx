@@ -1,4 +1,5 @@
-import type { AnchorHTMLAttributes, ReactNode } from 'react';
+import { useState } from 'react';
+import type { AnchorHTMLAttributes, FocusEvent, MouseEvent, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import escapaIcone from '@assets/escapa_icone.png';
@@ -9,6 +10,8 @@ import styles from './Sidebar.module.css';
 
 /** Perfis de usuário que definem o conjunto padrão de itens do menu. */
 export type SidebarRole = 'student' | 'company' | 'admin';
+
+const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, [role="button"]';
 
 /** Props recebidas pelo componente de link dos itens de menu. */
 export type SidebarLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
@@ -70,9 +73,12 @@ export interface SidebarProps {
  * react-router-dom por padrão, substituível via `linkComponent`) renderizado
  * pelo próprio `Button` com `asChild`.
  *
- * O estado `collapsed` é controlado pelo componente pai. A largura reduzida
- * dispara a container query do `Button`, que esconde os labels e mantém só
- * os ícones (o `aria-label` continua descrevendo cada item).
+ * Com a prop `collapsed`, o estado vem do componente pai; sem ela, a Sidebar
+ * fica recolhida em repouso, expande no hover ou no foco e trava aberta com um
+ * duplo clique fora dos botões.
+ *
+ * A largura reduzida dispara a container query do `Button`, que esconde os
+ * labels e mantém só os ícones (o `aria-label` continua descrevendo cada item).
  */
 export const Sidebar = ({
   role,
@@ -83,16 +89,42 @@ export const Sidebar = ({
   linkComponent: LinkComponent = Link,
 }: SidebarProps) => {
   const roleLabel = SIDEBAR_ROLE_LABELS[role];
-  const isCollapsed = collapsed ?? false;
   const isAutoResponsive = collapsed === undefined;
+
+  const [isPinned, setIsPinned] = useState(false);
+  const [isPointerInside, setIsPointerInside] = useState(false);
+  const [hasFocusInside, setHasFocusInside] = useState(false);
+
+  const isOpen = isPinned || isPointerInside || hasFocusInside;
+  const isCollapsed = isAutoResponsive ? !isOpen : collapsed;
+  const isPinnedOpen = isAutoResponsive ? isPinned : !collapsed;
+
+  const handleDoubleClick = (event: MouseEvent<HTMLElement>) => {
+    if (!isAutoResponsive) return;
+    if ((event.target as Element).closest(INTERACTIVE_SELECTOR)) return;
+
+    setIsPinned((pinned) => !pinned);
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+
+    setHasFocusInside(false);
+  };
 
   return (
     <aside
       className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}
       data-role={role}
       data-collapsed={isCollapsed}
+      data-pinned={isPinnedOpen}
       data-auto-responsive={isAutoResponsive}
       aria-label={`Menu lateral — ${roleLabel}`}
+      onDoubleClick={handleDoubleClick}
+      onMouseEnter={() => setIsPointerInside(true)}
+      onMouseLeave={() => setIsPointerInside(false)}
+      onFocus={() => setHasFocusInside(true)}
+      onBlur={handleBlur}
     >
       <header className={styles.header}>
         <div className={styles.headerContent}>
@@ -125,6 +157,14 @@ export const Sidebar = ({
           ))}
         </ul>
       </nav>
+
+      {isAutoResponsive && isPointerInside ? (
+        <p className={styles.pinHint}>
+          {isPinned
+            ? 'Clique duas vezes para soltar a barra'
+            : 'Clique duas vezes para travar a barra aberta'}
+        </p>
+      ) : null}
 
       <footer className={styles.footer}>
         <div className={styles.userInfo}>

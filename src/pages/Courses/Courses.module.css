@@ -6,12 +6,17 @@
 }
 
 .contentShell {
-  width: calc(100% - var(--sidebar-width));
+  width: calc(100% - var(--sidebar-collapsed-width));
   min-height: 100dvh;
-  margin-left: var(--sidebar-width);
+  margin-left: var(--sidebar-collapsed-width);
   transition:
     width var(--transition-base),
     margin-left var(--transition-base);
+}
+
+.page:has([data-pinned='true']) .contentShell {
+  width: calc(100% - var(--sidebar-width));
+  margin-left: var(--sidebar-width);
 }
 
 .main {
@@ -177,11 +182,6 @@
 }
 
 @media (width < 64rem) {
-  .contentShell {
-    width: calc(100% - var(--sidebar-collapsed-width));
-    margin-left: var(--sidebar-collapsed-width);
-  }
-
   .courseGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
