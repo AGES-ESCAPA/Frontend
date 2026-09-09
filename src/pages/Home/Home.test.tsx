@@ -2,14 +2,15 @@ import { render, screen } from '@testing-library/react';
 import { Home } from './Home';
 
 describe('Home', () => {
-  it('should render the catalog title', () => {
+  it('should render the escapa! logo image', () => {
     render(<Home />);
-    expect(screen.getByRole('heading', { name: /cursos em destaque/i })).toBeInTheDocument();
+    const logo = screen.getByRole('img', { name: /escapa! - plataforma de cursos/i });
+    expect(logo).toBeInTheDocument();
   });
 
-  it('should render the catalog subtitle', () => {
+  it('should render the subtitle', () => {
     render(<Home />);
-    expect(screen.getByText(/todos os cursos/i)).toBeInTheDocument();
+    expect(screen.getByText(/plataforma de cursos/i)).toBeInTheDocument();
   });
 
   it('should render the login CTA link', () => {
