@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode, useEffect, useState } from 'react';
 import { vi } from 'vitest';
-import { SearchBar } from './SearchBar.tsx';
+import { SearchBar } from './SearchBar';
 
 const ControlledSearchBar = ({
   onSearch,
