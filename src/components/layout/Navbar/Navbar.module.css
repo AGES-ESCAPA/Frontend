@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  min-height: var(--space-16);
+  min-height: var(--header-height);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   padding: 0 var(--space-6);
@@ -14,11 +14,14 @@
 }
 
 .leftGroup,
-.actions,
-.profileActions {
+.actions {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+.actions {
+  position: relative;
 }
 
 .brand {
@@ -29,15 +32,8 @@
 }
 
 .brand img {
-  width: var(--container-md);
-  max-width: 5.5rem;
-  height: auto;
-}
-
-.leftGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  width: auto;
+  height: var(--space-8);
 }
 
 .context {
@@ -45,6 +41,26 @@
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-medium);
   letter-spacing: var(--tracking-wide);
+}
+
+.primaryEntry {
+  flex: 0 0 auto;
+}
+
+/* Compacta o <Button> do design system para o contexto da navbar
+   (padrão do style guide: --text-body-3, radius-md, borda 1px). */
+.actions .navButton {
+  min-height: var(--space-10);
+  padding: var(--space-3) var(--space-6);
+  border-width: 1px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-3);
+}
+
+.cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .notificationButton,
@@ -67,6 +83,7 @@
 
 .notificationButton {
   position: relative;
+  gap: var(--space-2);
 }
 
 .notificationButton:hover,
@@ -76,6 +93,13 @@
   background-color: var(--color-border-subtle);
   border-color: var(--color-border-subtle);
   outline: none;
+}
+
+.notificationText {
+  display: none;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
 }
 
 .profileText {
@@ -111,12 +135,89 @@
   text-align: center;
 }
 
+.menuToggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-10);
+  min-height: var(--space-10);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.menuToggle:hover,
+.menuToggle:focus-visible {
+  background-color: var(--color-border-subtle);
+  border-color: var(--color-border-subtle);
+  outline: none;
+}
+
+/* Tablet e mobile: colapsa as ações secundárias num menu suspenso */
+@media (width <= 768px) {
+  .cluster {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 20;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 12rem;
+    padding: var(--space-3);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  .cluster[data-open='false'] {
+    display: none;
+  }
+
+  .cluster .notificationButton {
+    width: 100%;
+    justify-content: flex-start;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .cluster .badge {
+    position: static;
+    margin-left: auto;
+  }
+
+  .notificationText {
+    display: inline;
+  }
+
+  .menuToggle {
+    display: inline-flex;
+  }
+
+  .profileText {
+    display: none;
+  }
+}
+
 @media (width <= 640px) {
   .navbar {
     padding: 0 var(--space-3);
   }
 
-  .profileText {
-    display: none;
+  /* alvo de toque acessível no mobile */
+  .actions .navButton {
+    min-height: var(--space-12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notificationButton,
+  .profileButton,
+  .menuToggle {
+    transition: none;
   }
 }
