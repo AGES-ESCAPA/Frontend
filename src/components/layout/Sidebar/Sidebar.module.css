@@ -113,7 +113,7 @@
 .menuButton {
   justify-content: flex-start;
   gap: var(--space-3);
-  min-height: 40px;
+  min-height: var(--space-10);
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-body-4);
   line-height: var(--text-body-4--line-height);
