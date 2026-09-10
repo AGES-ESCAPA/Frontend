@@ -13,10 +13,20 @@ describe('Home', () => {
     expect(screen.getByText(/plataforma de cursos/i)).toBeInTheDocument();
   });
 
-  it('should render the login CTA link', () => {
+  it('should render one courses link for each role', () => {
     render(<Home />);
-    const link = screen.getByRole('link', { name: /acessar a plataforma/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/login');
+
+    expect(screen.getByRole('link', { name: 'Aluno' })).toHaveAttribute(
+      'href',
+      '/courses?role=student',
+    );
+    expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute(
+      'href',
+      '/courses?role=admin',
+    );
+    expect(screen.getByRole('link', { name: 'Empresa' })).toHaveAttribute(
+      'href',
+      '/courses?role=company',
+    );
   });
 });

@@ -13,19 +13,20 @@
 
 ## 📝 O que foi feito?
 
-*Descreva de forma objetiva o que foi implementado ou corrigido nesta branch*
+_Descreva de forma objetiva o que foi implementado ou corrigido nesta branch_
 
 ---
 
 ## 📸 Evidências / Screenshots (Se aplicável)
 
-*Adicione prints ou gravações da tela testando a funcionalidade*
+_Adicione prints ou gravações da tela testando a funcionalidade_
 
 ---
 
 ## ✅ Checklist do Desenvolvedor (Antes de solicitar revisão)
 
 Marque com `[x]` os itens validados:
+
 - [ ] O código segue os padrões de código e aliases do projeto (`@components/`, etc.).
 - [ ] Não há cores, tamanhos ou espaçamentos hardcoded no CSS (apenas variáveis de `index.css`).
 - [ ] Foi executado `npm run lint` e não há erros de ESLint.
@@ -33,4 +34,3 @@ Marque com `[x]` os itens validados:
 - [ ] Foi executado `npm run test` e todos os testes passaram.
 - [ ] Foi executado `npm run build` e a build compila sem erros.
 - [ ] O Merge Request está apontando para a branch **`develop`**.
-

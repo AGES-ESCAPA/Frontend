@@ -78,10 +78,10 @@
   color: var(--color-text-secondary);
 }
 
-/* 5. active — subtle primary overlay bg, bright blue text */
+/* 5. active — navy highlight with cyan text */
 .variant-active {
-  background-color: var(--color-surface-overlay);
-  color: var(--color-primary-400);
+  background-color: var(--color-primary-700);
+  color: var(--color-info-300);
   border-color: transparent;
 }
 

@@ -8,9 +8,17 @@ export const Home = () => {
       <main className={styles.container}>
         <img src={escapaLogo} alt="escapa! - Plataforma de Cursos" className={styles.logo} />
         <p className={styles.subtitle}>Plataforma de cursos</p>
-        <a href="/login" className={styles.cta} aria-label="Acessar a plataforma">
-          Acessar plataforma
-        </a>
+        <div className={styles.ctaGroup} aria-label="Escolha seu perfil">
+          <a href="/courses?role=admin" className={styles.cta}>
+            Admin
+          </a>
+          <a href="/courses?role=company" className={styles.cta}>
+            Empresa
+          </a>
+          <a href="/courses?role=student" className={styles.cta}>
+            Aluno
+          </a>
+        </div>
       </main>
       <Footer variant="full" />
     </>

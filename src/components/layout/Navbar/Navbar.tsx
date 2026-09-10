@@ -61,12 +61,14 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
 
   return (
     <nav ref={navRef} className={styles.navbar} aria-label="Navegação principal" data-state={state}>
-      <div className={styles.leftGroup}>
-        <a href="/" className={styles.brand} aria-label="Página inicial">
-          <img src={logo} alt="escapa!" />
-        </a>
-        {!isProfile && <span className={styles.context}>cursos</span>}
-      </div>
+      {!isProfile && (
+        <div className={styles.leftGroup}>
+          <a href="/" className={styles.brand} aria-label="Página inicial">
+            <img src={logo} alt="escapa!" />
+          </a>
+          <span className={styles.context}>cursos</span>
+        </div>
+      )}
 
       {hasMenu && (
         <div className={styles.actions}>

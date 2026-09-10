@@ -268,7 +268,7 @@
   --transition-slow: 400ms var(--ease-in-out);
 
   /* ── Layout Estrutural ──────────────────────────────────────────*/
-  --sidebar-width: 260px;
+  --sidebar-width: 228px;
   --sidebar-collapsed-width: 64px;
   --header-height: 64px;
   --content-max-width: var(--container-7xl);

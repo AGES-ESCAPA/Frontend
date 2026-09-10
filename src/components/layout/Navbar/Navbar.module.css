@@ -13,6 +13,11 @@
   box-sizing: border-box;
 }
 
+.navbar[data-state='user'],
+.navbar[data-state='company'] {
+  justify-content: flex-end;
+}
+
 .leftGroup,
 .actions {
   display: flex;
@@ -68,6 +73,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--space-3);
   min-width: var(--space-10);
   min-height: var(--space-10);
   border-radius: var(--radius-md);
@@ -81,13 +87,23 @@
     border-color var(--transition-fast);
 }
 
+.profileButton {
+  padding: 0 var(--space-2);
+}
+
 .notificationButton {
   position: relative;
   gap: var(--space-2);
 }
 
 .notificationButton:hover,
-.notificationButton:focus-visible,
+.notificationButton:focus-visible {
+  background-color: var(--color-primary-700);
+  border-color: transparent;
+  color: var(--color-info-300);
+  outline: none;
+}
+
 .profileButton:hover,
 .profileButton:focus-visible {
   background-color: var(--color-border-subtle);
@@ -105,19 +121,23 @@
 .profileText {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: flex-start;
-  gap: var(--space-1);
+  gap: 0;
+  line-height: var(--leading-tight);
 }
 
 .profileText strong {
   color: var(--color-text-primary);
   font-size: var(--text-body-4);
   font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
 }
 
 .profileText small {
   color: var(--color-neutral-400);
   font-size: var(--text-body-5);
+  line-height: var(--leading-tight);
 }
 
 .badge {
