@@ -1,6 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { CourseDetailModal } from '@components/course/CourseDetailModal/CourseDetailModal';
 import { CourseHeader } from '@components/course/CourseHeader/CourseHeader';
+import { CurriculumAccordion } from '@components/course/CurriculumAccordion/CurriculumAccordion';
+import { TeaserPlayer } from '@components/course/TeaserPlayer/TeaserPlayer';
 import { getCourseById } from '@/data/courses';
 import { Home } from '@pages/Home/Home';
 
@@ -16,7 +18,18 @@ export const CourseDetails = () => {
         title={course?.title ?? 'Curso não encontrado'}
         onClose={() => navigate('/')}
       >
-        {course ? <CourseHeader course={course} /> : <p>Curso não encontrado.</p>}
+        {course ? (
+          <>
+            <CourseHeader course={course} />
+            <TeaserPlayer src={course.teaserUrl} title={course.title} />
+            <section aria-labelledby="curriculum-title">
+              <h2 id="curriculum-title">Currículo do Curso</h2>
+              <CurriculumAccordion modules={course.modules} />
+            </section>
+          </>
+        ) : (
+          <p>Curso não encontrado.</p>
+        )}
       </CourseDetailModal>
     </>
   );
