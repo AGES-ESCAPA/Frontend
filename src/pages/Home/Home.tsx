@@ -11,6 +11,9 @@ export const Home = () => {
         <a href="/login" className={styles.cta} aria-label="Acessar a plataforma">
           Acessar plataforma
         </a>
+        <a href="/cursos/ia-aplicada-ao-turismo" className={styles.courseLink}>
+          Ver detalhes do curso
+        </a>
       </main>
       <Footer variant="full" />
     </>

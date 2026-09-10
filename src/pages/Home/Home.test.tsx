@@ -19,4 +19,12 @@ describe('Home', () => {
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/login');
   });
+
+  it('should render the course details link', () => {
+    render(<Home />);
+    expect(screen.getByRole('link', { name: /ver detalhes do curso/i })).toHaveAttribute(
+      'href',
+      '/cursos/ia-aplicada-ao-turismo',
+    );
+  });
 });
