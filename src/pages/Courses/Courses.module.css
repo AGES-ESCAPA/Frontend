@@ -93,17 +93,32 @@
   aspect-ratio: 16 / 8;
   padding: var(--space-4);
   background:
-    linear-gradient(135deg, rgba(26, 219, 255, 0.18), transparent 55%), var(--color-primary-700);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-info-300) 18%, transparent),
+      transparent 55%
+    ),
+    var(--color-primary-700);
 }
 
 .courseCover[data-cover='2'] {
   background:
-    linear-gradient(135deg, rgba(138, 180, 255, 0.2), transparent 55%), var(--color-secondary-800);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary-300) 20%, transparent),
+      transparent 55%
+    ),
+    var(--color-secondary-800);
 }
 
 .courseCover[data-cover='3'] {
   background:
-    linear-gradient(135deg, rgba(159, 125, 212, 0.22), transparent 55%), var(--color-primary-800);
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-secondary-400) 22%, transparent),
+      transparent 55%
+    ),
+    var(--color-primary-800);
 }
 
 .courseCover span {
