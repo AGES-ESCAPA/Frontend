@@ -10,6 +10,7 @@ const Home = lazy(() => import('@pages/Home/Home').then((m) => ({ default: m.Hom
 const CourseDetails = lazy(() =>
   import('@pages/CourseDetails/CourseDetails').then((m) => ({ default: m.CourseDetails })),
 );
+const Login = lazy(() => import('@pages/Login/Login').then((m) => ({ default: m.Login })));
 
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
@@ -49,6 +50,7 @@ export const AppRouter = () => {
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
+          <Route path="/login" element={<Login />} />
 
           {/* TODO: Adicionar as demais páginas conforme o desenvolvimento avança:
             <Route path="/login" element={<Login />} />
