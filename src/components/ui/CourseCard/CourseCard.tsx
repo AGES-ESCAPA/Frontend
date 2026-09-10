@@ -38,6 +38,7 @@ export const CourseCard = ({
   onClick,
 }: CourseCardProps) => {
   const [imageError, setImageError] = useState(false);
+  const showPlaceholder = imageError || !imageUrl;
 
   const handleClick = () => onClick(id);
 
@@ -58,7 +59,7 @@ export const CourseCard = ({
       aria-label={`Ver detalhes do curso ${title}`}
     >
       <div className={styles.imageWrapper}>
-        {imageError ? (
+        {showPlaceholder ? (
           <div className={styles.imagePlaceholder} aria-hidden="true" />
         ) : (
           <img
