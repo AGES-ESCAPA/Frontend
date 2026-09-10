@@ -26,4 +26,9 @@ describe('Badge', () => {
     render(<Badge label="Inteligência Artificial" category="ia" />);
     expect(screen.getByText('Inteligência Artificial').className).toMatch(/badge/);
   });
+
+  it('should use the primary variant for Inteligência Artificial', () => {
+    render(<Badge category="ai" />);
+    expect(screen.getByText('Inteligência Artificial').className).toMatch(/variant-primary/);
+  });
 });

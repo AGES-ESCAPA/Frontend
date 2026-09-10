@@ -200,6 +200,22 @@
   --color-error: var(--color-error-300);
   --color-info: var(--color-info-300);
 
+  --color-badge-level-surface: rgba(8, 8, 14, 0.8);
+  --color-badge-level-text: #fbedd0;
+
+  --text-badge: 13.5px;
+  --text-badge--line-height: 16px;
+  --tracking-badge: 0.544px;
+
+  --badge-category-height: 35px;
+  --badge-level-height: 29px;
+  --badge-level-padding-y: 3px;
+  --badge-level-padding-x: 10px;
+  --badge-offset-category-top: 11px;
+  --badge-offset-category-left: 13px;
+  --badge-offset-level-top: 12px;
+  --badge-offset-level-right: 13px;
+
   /* ── Espaçamento ────────────────────────────────────────────────
      Unidade base: --spacing = 0.25rem (4px).
   ─────────────────────────────────────────────────────────────── */
