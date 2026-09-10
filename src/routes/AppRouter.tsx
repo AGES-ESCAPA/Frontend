@@ -8,6 +8,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 const Home = lazy(() => import('@pages/Home/Home').then((m) => ({ default: m.Home })));
 const Courses = lazy(() => import('@pages/Courses/Courses').then((m) => ({ default: m.Courses })));
+const AdminCourseModules = lazy(() =>
+  import('@pages/AdminCourseModules/AdminCourseModules').then((m) => ({
+    default: m.AdminCourseModules,
+  })),
+);
 
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
@@ -47,6 +52,7 @@ export const AppRouter = () => {
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/admin/cursos/:courseId/modulos" element={<AdminCourseModules />} />
 
           {/* TODO: Adicionar as demais páginas conforme o desenvolvimento avança:
             <Route path="/login" element={<Login />} />
