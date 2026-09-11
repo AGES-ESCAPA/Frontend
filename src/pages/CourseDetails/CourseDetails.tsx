@@ -22,7 +22,7 @@ export const CourseDetails = () => {
           <>
             <CourseHeader course={course} />
             <TeaserPlayer src={course.teaserUrl} title={course.title} />
-            <section aria-labelledby="curriculum-title">
+            <section aria-labelledby="curriculum-title" style={{ marginTop: 'var(--space-6)' }}>
               <h2 id="curriculum-title">Currículo do Curso</h2>
               <CurriculumAccordion modules={course.modules} />
             </section>
