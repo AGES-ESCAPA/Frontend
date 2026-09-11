@@ -1,0 +1,154 @@
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  transition: color var(--transition-fast);
+}
+
+.backLink:hover,
+.backLink:focus-visible {
+  color: var(--color-info-300);
+  outline: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
+  color: var(--color-text-primary);
+}
+
+/* Seletores aninhados de propósito: precisam vencer a especificidade de
+   Badge.module.css e Button.module.css para acompanhar a referência visual. */
+.titleGroup .statusBadge {
+  min-height: var(--space-6);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.actions .actionButton {
+  padding-inline: var(--space-5);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.tabList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-top: var(--space-5);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.tab[data-state='active'] {
+  color: var(--color-info-300);
+  border-bottom-color: var(--color-info-300);
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.tab:focus-visible {
+  color: var(--color-text-secondary);
+  outline: none;
+}
+
+.tab:hover:not(:disabled, [data-state='active']) {
+  color: var(--color-text-secondary);
+}
+
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.loading {
+  margin-top: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+/* Os cards entram direto no grid, sem wrapper de coluna: assim cada linha
+   (Informações Básicas + Classificação, depois Descrição + Métricas) compartilha
+   a mesma altura e os dois cards da linha começam e terminam juntos. */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+}
+
+@media (width < 64rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (width <= 40rem) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .title {
+    font-size: var(--text-h4);
+    line-height: var(--text-h4--line-height);
+  }
+
+  .actions .actionButton {
+    flex: 1 1 auto;
+  }
+
+  .tabList {
+    gap: var(--space-4);
+  }
+}
