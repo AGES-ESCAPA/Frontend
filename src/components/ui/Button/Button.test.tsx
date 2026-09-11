@@ -112,7 +112,14 @@ describe('Button component', () => {
   });
 
   // ── Variants ─────────────────────────────────────────────────────
-  const variants: ButtonVariant[] = ['primary', 'secondary', 'outlined', 'ghost', 'active'];
+  const variants: ButtonVariant[] = [
+    'primary',
+    'secondary',
+    'outlined',
+    'ghost',
+    'ghost-dark',
+    'active',
+  ];
 
   variants.forEach((variant) => {
     it(`should apply the correct CSS class for variant "${variant}"`, () => {
