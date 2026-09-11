@@ -31,14 +31,24 @@
   gap: var(--space-3);
 }
 
-.cta {
+.ctaGroup {
   margin-top: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.cta {
+  min-width: 9rem;
   padding: var(--space-3) var(--space-8);
   background-color: var(--color-primary-500);
   color: var(--color-white);
   border-radius: var(--radius-full);
   font-weight: var(--font-weight-semibold);
   font-size: var(--text-sm);
+  text-align: center;
+  text-decoration: none;
   transition:
     background-color var(--transition-fast),
     transform var(--transition-fast),
@@ -62,4 +72,9 @@
   color: var(--color-info-200);
   text-decoration: underline;
   outline: none;
+@media (width <= 40rem) {
+  .ctaGroup,
+  .cta {
+    width: 100%;
+  }
 }
