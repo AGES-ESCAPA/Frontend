@@ -1,6 +1,7 @@
-import { Navbar, Sidebar, SIDEBAR_MENU_PRESETS } from '@components/layout';
+import { Link } from 'react-router-dom';
+import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
-import { CourseCard } from '@components/ui';
+import { Button, CourseCard } from '@components/ui';
 import styles from './Courses.module.css';
 
 const usersByRole: Record<SidebarRole, SidebarUser> = {
@@ -40,38 +41,40 @@ export const Courses = () => {
   };
 
   return (
-    <div className={styles.page}>
-      <Sidebar role={role} items={courseItems} user={currentUser} onLogout={handleLogout} />
+    <AuthenticatedLayout
+      role={role}
+      items={courseItems}
+      user={currentUser}
+      notificationsCount={2}
+      onLogout={handleLogout}
+    >
+      {role === 'admin' ? (
+        <div className={styles.adminActions}>
+          <Button asChild variant="secondary" label="Novo Curso">
+            <Link to="/admin/cursos/novo" />
+          </Button>
+        </div>
+      ) : null}
 
-      <div className={styles.contentShell}>
-        <Navbar
-          state={role === 'company' ? 'company' : 'user'}
-          user={{ name: currentUser.name, role: currentUser.role }}
-          notificationsCount={2}
-        />
-
-        <main className={styles.main}>
-          <section className={styles.courseSection}>
-            <div className={styles.courseGrid}>
-              <CourseCard
-                id="curso-ia-101"
-                imageUrl=""
-                category="ai"
-                level="basic"
-                title="Introdução ao turismo com IA"
-                description="Aprenda como reter clientes no setor de turismo com a ajuda da inteligência artificial."
-                rating={4.9}
-                reviewsCount={247}
-                duration="12h"
-                lessonsCount={32}
-                instructor="Dra. Mariana"
-                price="R$ 249,90"
-                onClick={() => {}}
-              />
-            </div>
-          </section>
-        </main>
-      </div>
-    </div>
+      <section className={styles.courseSection}>
+        <div className={styles.courseGrid}>
+          <CourseCard
+            id="curso-ia-101"
+            imageUrl=""
+            category="ai"
+            level="basic"
+            title="Introdução ao turismo com IA"
+            description="Aprenda como reter clientes no setor de turismo com a ajuda da inteligência artificial."
+            rating={4.9}
+            reviewsCount={247}
+            duration="12h"
+            lessonsCount={32}
+            instructor="Dra. Mariana"
+            price="R$ 249,90"
+            onClick={() => {}}
+          />
+        </div>
+      </section>
+    </AuthenticatedLayout>
   );
 };

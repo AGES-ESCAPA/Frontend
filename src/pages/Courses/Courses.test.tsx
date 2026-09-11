@@ -32,6 +32,19 @@ describe('Courses', () => {
     expect(coursesLink).toHaveAttribute('aria-current', 'page');
   });
 
+  it('should offer the Course Builder only to the admin profile', () => {
+    renderCourses();
+    expect(screen.queryByRole('link', { name: 'Novo Curso' })).not.toBeInTheDocument();
+
+    window.history.replaceState({}, '', '/courses?role=admin');
+    renderCourses();
+
+    expect(screen.getByRole('link', { name: 'Novo Curso' })).toHaveAttribute(
+      'href',
+      '/admin/cursos/novo',
+    );
+  });
+
   it.each([
     ['admin', 'Admin', 'Admin'],
     ['company', 'Empresa', 'Escapa!'],
