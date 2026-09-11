@@ -14,18 +14,28 @@ const adminUser = {
 
 const sampleModules: CourseModule[] = [
   {
-    id: 1,
+    id: '11111111-1111-4111-8111-111111111111',
     title: 'Fundamentos da Web',
     order: 1,
     totalContents: 2,
     totalDurationMinutes: 150,
     contents: [
-      { id: 101, title: '1.1 Introdução ao HTML5 e Semântica', type: 'VIDEO', order: 1 },
-      { id: 102, title: '1.2 Estrutura básica de um documento', type: 'TEXT', order: 2 },
+      {
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+        title: '1.1 Introdução ao HTML5 e Semântica',
+        type: 'VIDEO',
+        order: 1,
+      },
+      {
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
+        title: '1.2 Estrutura básica de um documento',
+        type: 'TEXT',
+        order: 2,
+      },
     ],
   },
   {
-    id: 2,
+    id: '22222222-2222-4222-8222-222222222222',
     title: 'Estilização com CSS',
     order: 2,
     totalContents: 0,

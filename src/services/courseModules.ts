@@ -1,9 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export type CourseContentType = 'VIDEO' | 'TEXT' | 'FILE' | 'DOCUMENT' | 'QUIZ';
+export type CourseContentType = 'VIDEO' | 'TEXT' | 'FILE';
 
 export interface CourseContent {
-  id: number;
+  id: string;
   title: string;
   type: CourseContentType;
   order: number;
@@ -11,7 +11,7 @@ export interface CourseContent {
 }
 
 export interface CourseModule {
-  id: number;
+  id: string;
   title: string;
   order: number;
   totalContents: number;
@@ -19,13 +19,22 @@ export interface CourseModule {
   contents: CourseContent[];
 }
 
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
 export interface CourseModuleClient {
   listModules(courseId: string): Promise<CourseModule[]>;
   createModule(courseId: string, title: string): Promise<CourseModule>;
-  updateModuleTitle(moduleId: number, title: string): Promise<CourseModule>;
-  reorderModules(courseId: string, moduleIds: number[]): Promise<void>;
-  deleteModule(moduleId: number): Promise<void>;
+  updateModuleTitle(moduleId: string, title: string): Promise<CourseModule>;
+  reorderModules(courseId: string, moduleIds: string[]): Promise<void>;
+  deleteModule(moduleId: string): Promise<void>;
 }
+
+const isApiResponse = <T>(value: T | ApiResponse<T>): value is ApiResponse<T> =>
+  typeof value === 'object' && value !== null && 'data' in value && 'success' in value;
 
 const requestJson = async <T>(url: string, options?: RequestInit): Promise<T> => {
   const response = await fetch(url, options);
@@ -44,7 +53,9 @@ const requestJson = async <T>(url: string, options?: RequestInit): Promise<T> =>
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  const json = (await response.json()) as T | ApiResponse<T>;
+
+  return isApiResponse(json) ? json.data : json;
 };
 
 export const courseModulesApi: CourseModuleClient = {
