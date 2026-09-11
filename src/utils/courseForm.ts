@@ -24,7 +24,7 @@ export const COURSE_FORM_INITIAL_VALUES: CourseFormValues = {
 const REQUIRED_MESSAGE = 'Preenchimento obrigatório.';
 
 const TEASER_URL_PATTERN =
-  /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)[\w-]{11}|youtu\.be\/[\w-]{11}|(?:player\.)?vimeo\.com\/\d+)(?:[?&#/].*)?$/i;
+  /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)[\w-]{11}|youtu\.be\/[\w-]{11}|(?:player\.)?vimeo\.com\/(?:video\/)?\d+)(?:[?&#/].*)?$/i;
 
 const toNumber = (raw: string): number | null => {
   const normalized = raw.trim().replace(',', '.');
