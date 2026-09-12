@@ -17,6 +17,9 @@ const AdminCourseModules = lazy(() =>
     default: m.AdminCourseModules,
   })),
 );
+const CourseBuilder = lazy(() =>
+  import('@pages/CourseBuilder/CourseBuilder').then((m) => ({ default: m.CourseBuilder })),
+);
 
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
@@ -59,6 +62,10 @@ export const AppRouter = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/admin/cursos/:courseId/modulos" element={<AdminCourseModules />} />
+
+          {/* Painel Administrativo */}
+          <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
+          <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
 
           {/* TODO: Adicionar as demais páginas conforme o desenvolvimento avança:
             <Route path="/login" element={<Login />} />
