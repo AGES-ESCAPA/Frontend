@@ -175,7 +175,7 @@
   --color-surface-raised: var(--color-primary-800);
   --color-surface-overlay: rgba(43, 111, 231, 0.08);
   --color-backdrop: rgba(12, 12, 26, 0.84);
-  --color-surface-search-dark: rgba(23, 25, 28, 0.86);
+  --color-surface-search-dark: var(--color-primary-800);
   /* Opaco de proposito: com transparencia o fundo do campo claro se mistura
      com a pagina atras e o contraste do placeholder deixa de ser previsivel
      (3.91:1 sobre fundo escuro). Opaco, Neutros-600 garante 4.63:1 (AA). */

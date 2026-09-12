@@ -13,3 +13,6 @@ export { CourseCard } from './CourseCard';
 export type { CourseCardProps } from './CourseCard';
 export { SearchBar } from './SearchBar';
 export type { SearchBarProps, SearchBarTheme } from './SearchBar';
+export { FilterTabs } from './FilterTabs';
+export type { FilterTabsProps, FilterTabsVariant } from './FilterTabs';
+export { CourseCardSkeleton } from './CourseCard/CourseCardSkeleton';
