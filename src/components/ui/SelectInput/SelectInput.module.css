@@ -1,0 +1,62 @@
+.wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--space-12);
+  background-color: var(--color-primary-700);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.wrapper:focus-within {
+  border-color: var(--color-info-300);
+  box-shadow: 0 0 0 1px var(--color-focus-ring-info);
+}
+
+.wrapper[data-invalid='true'] {
+  border-color: var(--color-error-300);
+}
+
+.select {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
+  appearance: none;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 0;
+  border-radius: inherit;
+  outline: none;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+}
+
+.select:disabled {
+  cursor: not-allowed;
+  color: var(--color-text-muted);
+}
+
+/* Os menus nativos herdam o fundo da página, não do wrapper: sem isto as
+   opções abrem claras no Windows e perdem o contraste do tema escuro. */
+.option {
+  color: var(--color-text-primary);
+  background-color: var(--color-primary-700);
+}
+
+.chevron {
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  pointer-events: none;
+  color: var(--color-text-muted);
+}
+
+.wrapper:focus-within .chevron {
+  color: var(--color-info-300);
+}
