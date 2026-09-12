@@ -1,9 +1,37 @@
 import type { ApiResponse } from '@services/api';
-import type { CourseDetail, CoursePayload } from '@/types/course';
+import { toApiLevel } from '@utils/mapPublicCourse';
+import type {
+  CourseDetail,
+  CoursePayload,
+  PublicCoursesPage,
+  PublicCoursesQuery,
+} from '@/types/course';
 
-const ADMIN_COURSES_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/courses`;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
+export const PUBLIC_COURSES_PATH = '/public/courses';
+
+const ADMIN_COURSES_URL = `${API_BASE}/admin/courses`;
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
+const buildPublicCoursesUrl = (query: PublicCoursesQuery = {}): string => {
+  const params = new URLSearchParams();
+
+  if (query.title) params.set('title', query.title);
+  if (query.category) params.set('category', query.category);
+  if (query.level) params.set('level', toApiLevel(query.level));
+  if (query.page !== undefined) params.set('page', String(query.page));
+  if (query.size !== undefined) params.set('size', String(query.size));
+
+  const search = params.toString();
+  return `${API_BASE}${PUBLIC_COURSES_PATH}${search ? `?${search}` : ''}`;
+};
+
+const isJsonResponse = (response: Response): boolean => {
+  const contentType = response.headers.get('content-type') ?? '';
+  return contentType.includes('application/json');
+};
 
 const extractErrorMessage = async (response: Response, fallback: string): Promise<string> => {
   const body: unknown = await response.json().catch(() => null);
@@ -16,6 +44,19 @@ const extractErrorMessage = async (response: Response, fallback: string): Promis
   }
 
   return fallback;
+};
+
+const getCourses = async (
+  query: PublicCoursesQuery = {},
+  signal?: AbortSignal,
+): Promise<PublicCoursesPage> => {
+  const response = await fetch(buildPublicCoursesUrl(query), { signal });
+
+  if (!response.ok || !isJsonResponse(response)) {
+    throw new Error('Falha ao buscar os cursos publicados');
+  }
+
+  return (await response.json()) as PublicCoursesPage;
 };
 
 const readCourse = async (response: Response, fallback: string): Promise<CourseDetail> => {
@@ -50,4 +91,11 @@ export const updateCourse = async (id: string, payload: CoursePayload): Promise<
   });
 
   return readCourse(response, 'Não foi possível salvar as alterações do curso.');
+};
+
+export const courseService = {
+  getCourses,
+  getCourseById,
+  createCourse,
+  updateCourse,
 };

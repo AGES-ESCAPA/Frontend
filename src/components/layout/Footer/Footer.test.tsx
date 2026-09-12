@@ -38,7 +38,10 @@ describe('Footer', () => {
       'href',
       '/termos-de-uso',
     );
-    expect(screen.getByRole('link', { name: /suporte/i })).toHaveAttribute('href', '/suporte');
+    expect(screen.getByRole('link', { name: /suporte/i })).toHaveAttribute(
+      'href',
+      'https://wa.me/555181046948',
+    );
   });
 
   it('should use the current year when year is not provided', () => {
