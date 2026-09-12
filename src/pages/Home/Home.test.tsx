@@ -29,4 +29,12 @@ describe('Home', () => {
       '/courses?role=company',
     );
   });
+
+  it('should render the course details link', () => {
+    render(<Home />);
+    expect(screen.getByRole('link', { name: /ver detalhes do curso/i })).toHaveAttribute(
+      'href',
+      '/cursos/ia-aplicada-ao-turismo',
+    );
+  });
 });

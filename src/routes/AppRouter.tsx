@@ -7,6 +7,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 // usamos named exports (não default exports).
 
 const Home = lazy(() => import('@pages/Home/Home').then((m) => ({ default: m.Home })));
+const CourseDetails = lazy(() =>
+  import('@pages/CourseDetails/CourseDetails').then((m) => ({ default: m.CourseDetails })),
+);
+const Login = lazy(() => import('@pages/Login/Login').then((m) => ({ default: m.Login })));
 const Courses = lazy(() => import('@pages/Courses/Courses').then((m) => ({ default: m.Courses })));
 const AdminCourseModules = lazy(() =>
   import('@pages/AdminCourseModules/AdminCourseModules').then((m) => ({
@@ -51,6 +55,8 @@ export const AppRouter = () => {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
+          <Route path="/cursos/:courseId" element={<CourseDetails />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/admin/cursos/:courseId/modulos" element={<AdminCourseModules />} />
 
