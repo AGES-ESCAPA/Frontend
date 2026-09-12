@@ -85,6 +85,7 @@ export const validateCourseForm = (
   mode: CourseValidationMode,
 ): CourseFormErrors => {
   const errors: CourseFormErrors = {};
+  const isPublish = mode === 'publish';
 
   if (values.title.trim() === '') {
     errors.title = REQUIRED_MESSAGE;
@@ -102,7 +103,29 @@ export const validateCourseForm = (
     errors.deadline = deadlineError;
   }
 
-  if (mode === 'draft') {
+  // Carga horária e preço não são obrigatórios no rascunho, mas se o usuário
+  // já preencheu algo, o formato/faixa é validado nos dois modos — senão um
+  // valor negativo, zero ou não numérico passa direto pro payload no rascunho,
+  // driblando a mesma regra que é exigida ao publicar.
+  const durationError = validatePositiveInteger(values.durationTime, isPublish);
+  if (durationError) {
+    errors.durationTime = durationError;
+  }
+
+  if (values.price.trim() === '') {
+    if (isPublish) {
+      errors.price = REQUIRED_MESSAGE;
+    }
+  } else {
+    const price = toNumber(values.price);
+    if (price === null) {
+      errors.price = 'Informe um valor válido.';
+    } else if (price <= 0) {
+      errors.price = 'Informe um preço maior que zero.';
+    }
+  }
+
+  if (!isPublish) {
     return errors;
   }
 
@@ -120,22 +143,6 @@ export const validateCourseForm = (
 
   if (values.description.trim() === '') {
     errors.description = REQUIRED_MESSAGE;
-  }
-
-  const durationError = validatePositiveInteger(values.durationTime, true);
-  if (durationError) {
-    errors.durationTime = durationError;
-  }
-
-  if (values.price.trim() === '') {
-    errors.price = REQUIRED_MESSAGE;
-  } else {
-    const price = toNumber(values.price);
-    if (price === null) {
-      errors.price = 'Informe um valor válido.';
-    } else if (price <= 0) {
-      errors.price = 'Informe um preço maior que zero.';
-    }
   }
 
   return errors;

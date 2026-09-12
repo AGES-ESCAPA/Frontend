@@ -90,6 +90,19 @@ describe('CourseBuilder', () => {
     expect(createCourse).not.toHaveBeenCalled();
   });
 
+  it('should reject zeroed or negative values on price and duration even when saving as a draft', async () => {
+    renderBuilder();
+
+    await userEvent.type(screen.getByRole('textbox', { name: /título/i }), 'Curso de Recepção');
+    await userEvent.type(screen.getByRole('textbox', { name: /carga horária/i }), '-8');
+    await userEvent.type(screen.getByRole('textbox', { name: /preço base/i }), '0');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    expect(await screen.findByText('Informe um valor maior que zero.')).toBeInTheDocument();
+    expect(screen.getByText('Informe um preço maior que zero.')).toBeInTheDocument();
+    expect(createCourse).not.toHaveBeenCalled();
+  });
+
   it('should reject a teaser link that is not a YouTube or Vimeo video', async () => {
     renderBuilder();
 
