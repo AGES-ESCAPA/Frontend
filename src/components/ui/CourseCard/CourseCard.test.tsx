@@ -33,7 +33,7 @@ describe('CourseCard', () => {
     render(<CourseCard {...defaultProps} />);
 
     expect(screen.getByText('Marketing')).toBeInTheDocument();
-    expect(screen.getByText('Básico')).toBeInTheDocument();
+    expect(screen.getByText('Iniciante')).toBeInTheDocument();
   });
 
   it('renderiza o rating e a contagem de reviews quando fornecidos', () => {
