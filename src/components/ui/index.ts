@@ -7,6 +7,8 @@ export { Badge } from './Badge';
 export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant } from './Button';
+export { Checkbox } from './Checkbox';
+export type { CheckboxProps } from './Checkbox';
 export { CourseCard } from './CourseCard';
 export type { CourseCardProps } from './CourseCard';
 export { FormField } from './FormField';

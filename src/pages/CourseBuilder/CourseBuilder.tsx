@@ -11,7 +11,12 @@ import { useToast } from '@hooks/useToast';
 import { createCourse, getCourseById, updateCourse } from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
 import type { CourseModule } from '@services/courseModules';
-import type { CourseStatus } from '@/types/course';
+import type {
+  CoursePrerequisiteOption,
+  CourseProgressRules,
+  CourseStatus,
+  CourseVersionLogEntry,
+} from '@/types/course';
 import {
   buildCoursePayload,
   courseDetailToFormValues,
@@ -22,6 +27,9 @@ import { BasicInfoCard } from './components/BasicInfoCard/BasicInfoCard';
 import { ClassificationCard } from './components/ClassificationCard/ClassificationCard';
 import { DescriptionCard } from './components/DescriptionCard/DescriptionCard';
 import { MetricsCard } from './components/MetricsCard/MetricsCard';
+import { PrerequisiteCoursesCard } from './components/PrerequisiteCoursesCard/PrerequisiteCoursesCard';
+import { ProgressRulesCard } from './components/ProgressRulesCard/ProgressRulesCard';
+import { VersionControlCard } from './components/VersionControlCard/VersionControlCard';
 import styles from './CourseBuilder.module.css';
 
 const COURSES_ROUTE = '/admin/cursos';
@@ -78,6 +86,52 @@ const MOCK_MODULES: CourseModule[] = [
   },
 ];
 
+/**
+ * A aba "Regras & Pré Requisitos" também não tem endpoint ainda (nem de
+ * regras de progresso, nem de pré-requisitos ou histórico de versão — ver
+ * TSK-05-BACK). Os dados abaixo só existem pra dar vida à interface; nada
+ * aqui é persistido de verdade até o contrato com o backend ser definido.
+ */
+const MOCK_PROGRESS_RULES: CourseProgressRules = {
+  requireSequentialProgress: true,
+  blockAccessAfterDeadline: false,
+};
+
+const MOCK_PREREQUISITE_CATALOG: CoursePrerequisiteOption[] = [
+  { id: 'integracao-corporativa-n1', title: 'Integração Corporativa N1' },
+  { id: 'seguranca-informacao-basica', title: 'Segurança da Informação Básica' },
+  { id: 'atendimento-hospitalidade-premium', title: 'Atendimento em Hospitalidade Premium' },
+  { id: 'gestao-de-crises-turismo', title: 'Gestão de Crises no Turismo' },
+];
+
+const MOCK_SELECTED_PREREQUISITES: CoursePrerequisiteOption[] = [
+  MOCK_PREREQUISITE_CATALOG[0],
+  MOCK_PREREQUISITE_CATALOG[1],
+];
+
+const MOCK_VERSION_LABEL = 'V 1.4';
+
+const MOCK_VERSION_LOG: CourseVersionLogEntry[] = [
+  {
+    id: '1',
+    timestampLabel: 'Hoje, 14:30',
+    description: 'Alteração nas regras de progressão (Módulo 2).',
+    author: 'Admin Gestor',
+  },
+  {
+    id: '2',
+    timestampLabel: '12 Out 2023, 09:15',
+    description: 'Adicionado curso "Segurança da Informação" como pré-requisito.',
+    author: 'Admin Gestor',
+  },
+  {
+    id: '3',
+    timestampLabel: '05 Out 2023, 16:40',
+    description: 'Versão 1.0 publicada.',
+    author: 'Sistema',
+  },
+];
+
 export const CourseBuilder = () => {
   const { id: courseId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -92,6 +146,12 @@ export const CourseBuilder = () => {
 
   const [modules, setModules] = useState<CourseModule[]>(MOCK_MODULES);
   const [isModulesLoading, setIsModulesLoading] = useState(false);
+
+  const [progressRules, setProgressRules] = useState<CourseProgressRules>(MOCK_PROGRESS_RULES);
+  const [selectedPrerequisites, setSelectedPrerequisites] = useState<CoursePrerequisiteOption[]>(
+    MOCK_SELECTED_PREREQUISITES,
+  );
+  const [notifyStudentsOnPublish, setNotifyStudentsOnPublish] = useState(false);
 
   const isSaving = savingStatus !== null;
   const isFormDisabled = isLoading || isSaving || loadError;
@@ -127,7 +187,7 @@ export const CourseBuilder = () => {
         value: 'rules',
         label: 'Regras & Pré Requisitos',
         icon: <GitBranch size={TAB_ICON_SIZE} />,
-        available: false,
+        available: true,
       },
     ],
     [],
@@ -200,6 +260,23 @@ export const CourseBuilder = () => {
       isCurrent = false;
     };
   }, [courseId]);
+
+  const handleProgressRuleChange = useCallback(
+    (field: keyof CourseProgressRules, value: boolean) => {
+      setProgressRules((current) => ({ ...current, [field]: value }));
+    },
+    [],
+  );
+
+  const handleAddPrerequisite = useCallback((course: CoursePrerequisiteOption) => {
+    setSelectedPrerequisites((current) =>
+      current.some((item) => item.id === course.id) ? current : [...current, course],
+    );
+  }, []);
+
+  const handleRemovePrerequisite = useCallback((prerequisiteId: string) => {
+    setSelectedPrerequisites((current) => current.filter((item) => item.id !== prerequisiteId));
+  }, []);
 
   const handleSave = useCallback(
     async (nextStatus: CourseStatus) => {
@@ -383,6 +460,34 @@ export const CourseBuilder = () => {
             ) : (
               <CourseModulesBuilder courseId={courseId ?? 'novo'} initialModules={modules} />
             )}
+          </Tabs.Content>
+
+          <Tabs.Content value="rules">
+            <div className={styles.grid}>
+              <ProgressRulesCard
+                rules={progressRules}
+                disabled={isFormDisabled}
+                onChange={handleProgressRuleChange}
+              />
+
+              <div className={styles.versionColumn}>
+                <VersionControlCard
+                  versionLabel={MOCK_VERSION_LABEL}
+                  entries={MOCK_VERSION_LOG}
+                  notifyStudentsOnPublish={notifyStudentsOnPublish}
+                  disabled={isFormDisabled}
+                  onNotifyStudentsOnPublishChange={setNotifyStudentsOnPublish}
+                />
+              </div>
+
+              <PrerequisiteCoursesCard
+                selected={selectedPrerequisites}
+                options={MOCK_PREREQUISITE_CATALOG}
+                disabled={isFormDisabled}
+                onAdd={handleAddPrerequisite}
+                onRemove={handleRemovePrerequisite}
+              />
+            </div>
           </Tabs.Content>
         </Tabs.Root>
       </AuthenticatedLayout>

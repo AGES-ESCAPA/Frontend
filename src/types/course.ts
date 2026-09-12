@@ -94,6 +94,30 @@ export interface CourseModule {
   lessons: CourseLesson[];
 }
 
+/**
+ * Regras de progresso do curso, exibidas na aba "Regras & Pré Requisitos".
+ * O backend ainda não tem um endpoint para persistir isso (ver TSK-05-BACK);
+ * por enquanto o Construtor de Curso mantém esse estado só localmente.
+ */
+export interface CourseProgressRules {
+  requireSequentialProgress: boolean;
+  blockAccessAfterDeadline: boolean;
+}
+
+/** Curso já concluído que passa a ser exigido como pré-requisito. */
+export interface CoursePrerequisiteOption {
+  id: string;
+  title: string;
+}
+
+/** Entrada do histórico de versões do curso. */
+export interface CourseVersionLogEntry {
+  id: string;
+  timestampLabel: string;
+  description: string;
+  author: string;
+}
+
 export interface CourseSummary {
   id: string;
   title: string;
