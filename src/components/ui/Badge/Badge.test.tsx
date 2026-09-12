@@ -22,6 +22,11 @@ describe('Badge', () => {
     expect(screen.getByText('Avançado').className).toMatch(/variant-info/);
   });
 
+  it('should use the level variant for the course details modal', () => {
+    render(<Badge label="Iniciante" variant="level" />);
+    expect(screen.getByText('Iniciante').className).toMatch(/variant-level/);
+  });
+
   it('should not wrap text (white-space nowrap applied via module class)', () => {
     render(<Badge label="Inteligência Artificial" category="ia" />);
     expect(screen.getByText('Inteligência Artificial').className).toMatch(/badge/);

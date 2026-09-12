@@ -3,6 +3,7 @@ import { toApiLevel } from '@utils/mapPublicCourse';
 import type {
   CourseDetail,
   CoursePayload,
+  PublicCourseDetails,
   PublicCoursesPage,
   PublicCoursesQuery,
 } from '@/types/course';
@@ -44,6 +45,31 @@ const extractErrorMessage = async (response: Response, fallback: string): Promis
   }
 
   return fallback;
+};
+
+const getPublicCourseById = async (
+  id: string,
+  signal?: AbortSignal,
+): Promise<PublicCourseDetails> => {
+  const response = await fetch(`${API_BASE}${PUBLIC_COURSES_PATH}/${id}`, { signal });
+
+  if (!isJsonResponse(response)) {
+    throw new Error('Não foi possível carregar os dados do curso.');
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      await extractErrorMessage(response, 'Não foi possível carregar os dados do curso.'),
+    );
+  }
+
+  const json: ApiResponse<PublicCourseDetails> = await response.json();
+
+  if (!json.data) {
+    throw new Error(json.message || 'Não foi possível carregar os dados do curso.');
+  }
+
+  return json.data;
 };
 
 const getCourses = async (
@@ -95,6 +121,7 @@ export const updateCourse = async (id: string, payload: CoursePayload): Promise<
 
 export const courseService = {
   getCourses,
+  getPublicCourseById,
   getCourseById,
   createCourse,
   updateCourse,

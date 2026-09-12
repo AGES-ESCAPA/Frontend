@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { PublicCourseCard } from '@/types/course';
+import type { PublicCourseCard, PublicCourseDetails } from '@/types/course';
 import {
   mapCourseCategory,
   mapCourseLevel,
+  mapPublicCourseDetailsToSummary,
   mapPublicCourseToCardProps,
   toApiLevel,
+  toDisplayLevel,
 } from './mapPublicCourse';
 
 const course: PublicCourseCard = {
@@ -54,5 +56,69 @@ describe('mapPublicCourse', () => {
     expect(props.price).toMatch(/R\$\s*249/);
     props.onClick(course.id);
     expect(onClick).toHaveBeenCalledWith(course.id);
+  });
+
+  it('should map public course details to the CourseDetails summary', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: course.shortDescription,
+      description: 'Descrição completa do curso.',
+      category: 'Hospitalidade',
+      level: 'INICIANTE',
+      durationTime: 480,
+      price: 249.9,
+      deadline: null,
+      thumbnailUrl: course.thumbnailUrl,
+      rating: 4.5,
+      reviewsCount: 2,
+      studentsCount: 80,
+      instructor: {
+        id: 'inst-1',
+        name: 'Beatriz Nunes',
+        headline: 'Especialista em hospedagem',
+        bio: null,
+      },
+      learningObjectives: ['Atender com excelência'],
+      materials: [
+        {
+          title: 'Guia de Prompts',
+          format: 'PDF',
+          fileUrl: 'https://cdn.escapa.com/guia.pdf',
+        },
+      ],
+      modules: [
+        {
+          id: 'mod-1',
+          title: 'Recepção',
+          order: 1,
+          totalContents: 1,
+          durationMinutes: 20,
+          contents: [
+            {
+              id: 'lesson-1',
+              title: 'Check-in',
+              type: 'VIDEO',
+              order: 1,
+              durationMinutes: 20,
+              isFree: true,
+              url: 'https://cdn.escapa.com/teaser.mp4',
+            },
+          ],
+        },
+      ],
+    };
+
+    const summary = mapPublicCourseDetailsToSummary(details);
+
+    expect(toDisplayLevel('INICIANTE')).toBe('Iniciante');
+    expect(summary.level).toBe('Iniciante');
+    expect(summary.category).toBe('Hospitalidade');
+    expect(summary.durationHours).toBe(8);
+    expect(summary.instructor.name).toBe('Beatriz Nunes');
+    expect(summary.thumbnailUrl).toBe(course.thumbnailUrl);
+    expect(summary.materials).toEqual(details.materials);
+    expect(summary.teaserUrl).toBe('https://cdn.escapa.com/teaser.mp4');
+    expect(summary.modules[0].lessons[0].type).toBe('video');
   });
 });

@@ -86,6 +86,12 @@ export interface CourseLesson {
   isFree?: boolean;
 }
 
+export interface CourseMaterial {
+  title: string;
+  format: string;
+  fileUrl: string;
+}
+
 export interface CourseModule {
   id: string;
   title: string;
@@ -153,9 +159,57 @@ export interface PublicCoursesQuery {
   size?: number;
 }
 
+export interface PublicCourseInstructor {
+  id: string;
+  name: string;
+  headline: string | null;
+  bio: string | null;
+}
+
+export interface PublicCourseContent {
+  id: string;
+  title: string;
+  type: string;
+  order: number;
+  durationMinutes: number | null;
+  isFree: boolean | null;
+  url: string | null;
+}
+
+export interface PublicCourseModuleDetails {
+  id: string;
+  title: string;
+  order: number;
+  totalContents: number;
+  durationMinutes: number | null;
+  contents: PublicCourseContent[];
+}
+
+/** Curso retornado por GET /api/v1/public/courses/:id. */
+export interface PublicCourseDetails {
+  id: string;
+  title: string;
+  shortDescription: string | null;
+  description: string | null;
+  category: string | null;
+  level: string | null;
+  durationTime: number | null;
+  price: number | null;
+  deadline: number | null;
+  thumbnailUrl: string | null;
+  rating: number | null;
+  reviewsCount: number | null;
+  studentsCount: number | null;
+  instructor: PublicCourseInstructor | null;
+  learningObjectives: string[] | null;
+  materials: CourseMaterial[] | null;
+  modules: PublicCourseModuleDetails[] | null;
+}
+
 export interface CourseSummary {
   id: string;
   title: string;
+  thumbnailUrl: string | null;
   category: string;
   level: string;
   description: string;
@@ -171,5 +225,6 @@ export interface CourseSummary {
   };
   benefits: string[];
   teaserUrl: string;
+  materials: CourseMaterial[];
   modules: CourseModule[];
 }

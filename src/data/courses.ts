@@ -3,6 +3,7 @@ import type { CourseSummary } from '@/types/course';
 export const featuredCourse: CourseSummary = {
   id: 'ia-aplicada-ao-turismo',
   title: 'IA Aplicada ao Turismo',
+  thumbnailUrl: null,
   category: 'Inteligência Artificial',
   level: 'Iniciante',
   description:
@@ -23,6 +24,23 @@ export const featuredCourse: CourseSummary = {
     'Acesso vitalício ao conteúdo',
   ],
   teaserUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+  materials: [
+    {
+      title: 'Guia de Prompts para Turismo',
+      format: 'PDF',
+      fileUrl: 'https://cdn.escapa.com/materials/guia-prompts.pdf',
+    },
+    {
+      title: 'Planilha de Automação de Processos',
+      format: 'Excel',
+      fileUrl: 'https://cdn.escapa.com/materials/planilha-automacao.xlsx',
+    },
+    {
+      title: 'Mapa de Ferramentas de IA 2025',
+      format: 'PDF',
+      fileUrl: 'https://cdn.escapa.com/materials/mapa-ferramentas.pdf',
+    },
+  ],
   modules: [
     {
       id: 'fundamentos-ia',

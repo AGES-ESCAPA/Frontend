@@ -10,7 +10,7 @@ export interface CurriculumAccordionProps {
 
 export const CurriculumAccordion: FC<CurriculumAccordionProps> = ({ modules }) => {
   const [openModules, setOpenModules] = useState<Set<string>>(
-    new Set(modules.length > 0 ? [modules[0].id] : []),
+    () => new Set(modules.map((courseModule) => courseModule.id)),
   );
 
   const toggleModule = (moduleId: string) => {
