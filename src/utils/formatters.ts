@@ -17,6 +17,17 @@ export const formatDuration = (totalSeconds: number): string => {
   return `${hours}h ${String(minutes).padStart(2, '0')}min`;
 };
 
+export const formatWorkload = (durationTime: number | null): string => {
+  if (durationTime === null || durationTime <= 0) return '0min';
+
+  const hours = Math.floor(durationTime / 60);
+  const minutes = durationTime % 60;
+
+  if (hours === 0) return `${minutes}min`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}min`;
+};
+
 /**
  * Formata um valor numérico como moeda brasileira (BRL).
  * @example formatCurrency(1500) // → "R$ 1.500,00"

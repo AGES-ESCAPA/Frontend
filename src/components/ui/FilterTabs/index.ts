@@ -1,2 +1,2 @@
-export { default } from './FilterTabs';
-export type { FilterTabsProps } from './FilterTabs';
+export { FilterTabs, default } from './FilterTabs';
+export type { FilterTabsProps, FilterTabsVariant } from './FilterTabs';

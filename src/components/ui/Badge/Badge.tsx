@@ -8,6 +8,7 @@ export type BadgeCategory =
   | 'marketing'
   | 'innovation'
   | 'hospitality'
+  | 'tourism'
   | 'ai'
   | 'basic'
   | 'intermediate'
@@ -27,11 +28,16 @@ export interface BadgeProps {
 }
 
 const CATEGORY_VARIANT_MAP: Record<string, BadgeVariant> = {
-  marketing: 'secondary',
-  innovation: 'info',
-  hospitality: 'warning',
+  marketing: 'success',
+  innovation: 'secondary',
+  inovacao: 'secondary',
+  hospitality: 'info',
+  hospitalidade: 'info',
+  tourism: 'warning',
+  turismo: 'warning',
   ai: 'primary',
   ia: 'primary',
+  'inteligencia-artificial': 'primary',
   basic: 'success',
   intermediate: 'secondary',
   advanced: 'error',
@@ -41,6 +47,8 @@ const CATEGORY_LABEL_MAP: Record<string, string> = {
   marketing: 'Marketing',
   innovation: 'Inovação',
   hospitality: 'Hospitalidade',
+  tourism: 'Turismo',
+  turismo: 'Turismo',
   ai: 'Inteligência Artificial',
   ia: 'Inteligência Artificial',
   basic: 'Iniciante',

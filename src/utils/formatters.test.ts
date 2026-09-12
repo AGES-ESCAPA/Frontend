@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   formatDuration,
   formatCurrency,
+  formatWorkload,
   formatDecimalInput,
   maskCurrencyInput,
   toTitleCase,
@@ -23,6 +24,19 @@ describe('formatDuration', () => {
 
   it('should handle negative values gracefully', () => {
     expect(formatDuration(-10)).toBe('0min');
+  });
+});
+
+describe('formatWorkload', () => {
+  it('should format minute-based workload from the public API', () => {
+    expect(formatWorkload(480)).toBe('8h');
+    expect(formatWorkload(90)).toBe('1h 30min');
+    expect(formatWorkload(12)).toBe('12min');
+  });
+
+  it('should handle empty values', () => {
+    expect(formatWorkload(null)).toBe('0min');
+    expect(formatWorkload(0)).toBe('0min');
   });
 });
 

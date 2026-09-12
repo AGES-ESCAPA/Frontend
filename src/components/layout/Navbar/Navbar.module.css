@@ -41,11 +41,19 @@
   height: var(--space-8);
 }
 
+.divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: var(--space-5);
+  background-color: var(--color-text-muted);
+}
+
 .context {
   color: var(--color-text-muted);
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-medium);
   letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
 }
 
 .primaryEntry {

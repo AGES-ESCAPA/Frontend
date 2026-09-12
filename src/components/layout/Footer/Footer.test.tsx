@@ -15,7 +15,7 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: /minha conta/i })).toHaveAttribute('href', '/login');
     expect(screen.getByRole('link', { name: /sobre a escapa!/i })).toHaveAttribute(
       'href',
-      '/sobre',
+      'https://www.escapa.com.br/#nossa-historia',
     );
     expect(
       screen.getByText('© 2026 Escapa! Cursos. Todos os direitos reservados.'),
@@ -38,7 +38,10 @@ describe('Footer', () => {
       'href',
       '/termos-de-uso',
     );
-    expect(screen.getByRole('link', { name: /suporte/i })).toHaveAttribute('href', '/suporte');
+    expect(screen.getByRole('link', { name: /suporte/i })).toHaveAttribute(
+      'href',
+      'https://wa.me/555181046948',
+    );
   });
 
   it('should use the current year when year is not provided', () => {
