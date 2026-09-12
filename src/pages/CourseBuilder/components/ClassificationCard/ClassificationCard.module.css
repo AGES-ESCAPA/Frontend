@@ -1,0 +1,11 @@
+.levelGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.levelGroup .levelButton {
+  padding-inline: var(--space-4);
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+}
