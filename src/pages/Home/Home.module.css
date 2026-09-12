@@ -72,6 +72,8 @@
   color: var(--color-info-200);
   text-decoration: underline;
   outline: none;
+}
+
 @media (width <= 40rem) {
   .ctaGroup,
   .cta {
