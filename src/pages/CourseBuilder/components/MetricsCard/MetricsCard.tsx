@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { ChartNoAxesCombined } from 'lucide-react';
 import { FormField, Panel, TextInput } from '@components/ui';
+import { maskCurrencyInput } from '@utils/formatters';
 import type { CourseFormField } from '@/types/course';
 import styles from './MetricsCard.module.css';
 
@@ -69,13 +70,13 @@ const MetricsCardBase = ({
       <TextInput
         id={PRICE_ID}
         value={price}
-        inputMode="decimal"
-        placeholder="499.00"
+        inputMode="numeric"
+        placeholder="0,00"
         addon="R$"
         required
         disabled={disabled}
         invalid={priceError !== undefined}
-        onChange={(event) => onFieldChange('price', event.target.value)}
+        onChange={(event) => onFieldChange('price', maskCurrencyInput(event.target.value))}
       />
     </FormField>
   </Panel>

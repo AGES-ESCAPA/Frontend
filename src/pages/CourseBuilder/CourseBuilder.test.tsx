@@ -136,7 +136,7 @@ describe('CourseBuilder', () => {
     );
     expect(screen.getByRole('textbox', { name: /carga horária/i })).toHaveValue('40');
     expect(screen.getByRole('textbox', { name: /prazo/i })).toHaveValue('365');
-    expect(screen.getByRole('textbox', { name: /preço base/i })).toHaveValue('499');
+    expect(screen.getByRole('textbox', { name: /preço base/i })).toHaveValue('499,00');
     expect(screen.getByRole('button', { name: 'Iniciante' })).toHaveAttribute(
       'aria-pressed',
       'true',

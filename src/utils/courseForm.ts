@@ -1,3 +1,4 @@
+import { formatDecimalInput } from '@utils/formatters';
 import { COURSE_DIFFICULTIES } from '@/types/course';
 import type {
   CourseDetail,
@@ -26,9 +27,17 @@ const REQUIRED_MESSAGE = 'Preenchimento obrigatório.';
 const TEASER_URL_PATTERN =
   /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)[\w-]{11}|youtu\.be\/[\w-]{11}|(?:player\.)?vimeo\.com\/(?:video\/)?\d+)(?:[?&#/].*)?$/i;
 
+/**
+ * Carga horária e prazo são inteiros simples, sem separador. Preço vem da
+ * máscara monetária (`maskCurrencyInput`), sempre no formato "1.500,00": a
+ * vírgula é o separador decimal e, quando ela aparece, todo ponto é
+ * separador de milhar e é descartado antes de converter para número.
+ */
 const toNumber = (raw: string): number | null => {
-  const normalized = raw.trim().replace(',', '.');
-  if (normalized === '') return null;
+  const trimmed = raw.trim();
+  if (trimmed === '') return null;
+
+  const normalized = trimmed.includes(',') ? trimmed.replace(/\./g, '').replace(',', '.') : trimmed;
 
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
@@ -160,5 +169,5 @@ export const courseDetailToFormValues = (course: CourseDetail): CourseFormValues
   difficulty: toDifficulty(course.level ?? '') ?? '',
   durationTime: numberToInput(course.durationTime),
   deadline: numberToInput(course.deadline),
-  price: numberToInput(course.price),
+  price: typeof course.price === 'number' ? formatDecimalInput(course.price) : '',
 });
