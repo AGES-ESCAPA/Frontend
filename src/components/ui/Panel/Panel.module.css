@@ -25,8 +25,15 @@
 }
 
 .title {
+  flex: 1;
   font-size: var(--text-h5);
   line-height: var(--text-h5--line-height);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
 }

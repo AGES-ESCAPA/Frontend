@@ -142,9 +142,25 @@
   margin-top: var(--space-6);
 }
 
+/* Faz o card da direita (Controle de Versão) ocupar as duas linhas dos
+   cards empilhados à esquerda, em vez de esticar cada um até a mesma altura. */
+.versionColumn {
+  display: flex;
+  grid-row: span 2;
+}
+
+.versionColumn > * {
+  flex: 1;
+  min-width: 0;
+}
+
 @media (width < 64rem) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .versionColumn {
+    grid-row: auto;
   }
 }
 
