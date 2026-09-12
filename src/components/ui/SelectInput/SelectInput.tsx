@@ -20,7 +20,7 @@ export const SelectInput = forwardRef<HTMLSelectElement, SelectInputProps>(
     <div className={`${styles.wrapper} ${className}`.trim()} data-invalid={invalid}>
       <select ref={ref} className={styles.select} aria-invalid={invalid || undefined} {...props}>
         {placeholder === undefined ? null : (
-          <option value="" className={styles.option}>
+          <option value="" className={styles.option} disabled>
             {placeholder}
           </option>
         )}
