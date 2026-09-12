@@ -61,6 +61,19 @@
   transform: translateY(-2px);
 }
 
+.courseLink {
+  color: var(--color-info-300);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-semibold);
+}
+
+.courseLink:hover,
+.courseLink:focus-visible {
+  color: var(--color-info-200);
+  text-decoration: underline;
+  outline: none;
+}
+
 @media (width <= 40rem) {
   .ctaGroup,
   .cta {
