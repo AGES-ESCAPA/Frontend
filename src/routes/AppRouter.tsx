@@ -12,11 +12,6 @@ const CourseDetails = lazy(() =>
 );
 const Login = lazy(() => import('@pages/Login/Login').then((m) => ({ default: m.Login })));
 const Courses = lazy(() => import('@pages/Courses/Courses').then((m) => ({ default: m.Courses })));
-const AdminCourseModules = lazy(() =>
-  import('@pages/AdminCourseModules/AdminCourseModules').then((m) => ({
-    default: m.AdminCourseModules,
-  })),
-);
 const CourseBuilder = lazy(() =>
   import('@pages/CourseBuilder/CourseBuilder').then((m) => ({ default: m.CourseBuilder })),
 );
@@ -61,7 +56,6 @@ export const AppRouter = () => {
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/courses" element={<Courses />} />
-          <Route path="/admin/cursos/:courseId/modulos" element={<AdminCourseModules />} />
 
           {/* Painel Administrativo */}
           <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
