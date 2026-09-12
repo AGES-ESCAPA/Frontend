@@ -4,10 +4,13 @@ import * as Tabs from '@radix-ui/react-tabs';
 import { ArrowLeft, GitBranch, Info, Layers } from 'lucide-react';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
+import { CourseModulesBuilder } from '@components/course';
 import { Badge, Button, Toast } from '@components/ui';
 import { useCourseForm } from '@hooks/useCourseForm';
 import { useToast } from '@hooks/useToast';
 import { createCourse, getCourseById, updateCourse } from '@services/courseService';
+import { courseModulesApi } from '@services/courseModules';
+import type { CourseModule } from '@services/courseModules';
 import type { CourseStatus } from '@/types/course';
 import {
   buildCoursePayload,
@@ -37,24 +40,41 @@ const STATUS_LABELS: Record<CourseStatus, string> = {
 
 const TAB_ICON_SIZE = 14;
 
-const BUILDER_TABS = [
+/**
+ * O backend ainda não tem os endpoints de módulos implementados (só
+ * curso e conteúdos dentro de um módulo existente). Enquanto isso, a
+ * estrutura de conteúdo usa estes dados mockados como fallback — tanto
+ * para um curso novo (sem id ainda) quanto quando a chamada real falha.
+ */
+const MOCK_MODULES: CourseModule[] = [
   {
-    value: 'basics',
-    label: 'Informações Básicas',
-    icon: <Info size={TAB_ICON_SIZE} />,
-    available: true,
+    id: '11111111-1111-4111-8111-111111111111',
+    title: 'Fundamentos da Web',
+    order: 1,
+    totalContents: 2,
+    totalDurationMinutes: 150,
+    contents: [
+      {
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+        title: '1.1 Introdução ao HTML5 e Semântica',
+        type: 'VIDEO',
+        order: 1,
+      },
+      {
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
+        title: '1.2 Estrutura básica de um documento',
+        type: 'TEXT',
+        order: 2,
+      },
+    ],
   },
   {
-    value: 'content',
-    label: 'Estrutura de Conteúdo',
-    icon: <Layers size={TAB_ICON_SIZE} />,
-    available: false,
-  },
-  {
-    value: 'rules',
-    label: 'Regras & Pré Requisitos',
-    icon: <GitBranch size={TAB_ICON_SIZE} />,
-    available: false,
+    id: '22222222-2222-4222-8222-222222222222',
+    title: 'Estilização com CSS',
+    order: 2,
+    totalContents: 0,
+    totalDurationMinutes: 0,
+    contents: [],
   },
 ];
 
@@ -70,6 +90,9 @@ export const CourseBuilder = () => {
   const [loadError, setLoadError] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
 
+  const [modules, setModules] = useState<CourseModule[]>(MOCK_MODULES);
+  const [isModulesLoading, setIsModulesLoading] = useState(false);
+
   const isSaving = savingStatus !== null;
   const isFormDisabled = isLoading || isSaving || loadError;
 
@@ -83,6 +106,30 @@ export const CourseBuilder = () => {
 
   const menuItems = useMemo(
     () => SIDEBAR_MENU_PRESETS.admin.map((item, index) => ({ ...item, active: index === 0 })),
+    [],
+  );
+
+  const builderTabs = useMemo(
+    () => [
+      {
+        value: 'basics',
+        label: 'Informações Básicas',
+        icon: <Info size={TAB_ICON_SIZE} />,
+        available: true,
+      },
+      {
+        value: 'content',
+        label: 'Estrutura de Conteúdo',
+        icon: <Layers size={TAB_ICON_SIZE} />,
+        available: true,
+      },
+      {
+        value: 'rules',
+        label: 'Regras & Pré Requisitos',
+        icon: <GitBranch size={TAB_ICON_SIZE} />,
+        available: false,
+      },
+    ],
     [],
   );
 
@@ -125,6 +172,34 @@ export const CourseBuilder = () => {
   const handleRetryLoad = useCallback(() => {
     setReloadToken((token) => token + 1);
   }, []);
+
+  useEffect(() => {
+    if (courseId === undefined) {
+      setModules(MOCK_MODULES);
+      return undefined;
+    }
+
+    let isCurrent = true;
+    setIsModulesLoading(true);
+
+    courseModulesApi
+      .listModules(courseId)
+      .then((loadedModules) => {
+        if (isCurrent) setModules(loadedModules);
+      })
+      .catch(() => {
+        // Endpoint de módulos ainda não existe no backend — usa os
+        // dados mockados pra não travar o teste da tab.
+        if (isCurrent) setModules(MOCK_MODULES);
+      })
+      .finally(() => {
+        if (isCurrent) setIsModulesLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [courseId]);
 
   const handleSave = useCallback(
     async (nextStatus: CourseStatus) => {
@@ -214,7 +289,7 @@ export const CourseBuilder = () => {
 
         <Tabs.Root defaultValue="basics">
           <Tabs.List className={styles.tabList} aria-label="Seções do construtor de curso">
-            {BUILDER_TABS.map((tab) => (
+            {builderTabs.map((tab) => (
               <Tabs.Trigger
                 key={tab.value}
                 value={tab.value}
@@ -298,6 +373,16 @@ export const CourseBuilder = () => {
                 onFieldChange={changeField}
               />
             </form>
+          </Tabs.Content>
+
+          <Tabs.Content value="content">
+            {isModulesLoading ? (
+              <p className={styles.loading} role="status">
+                Carregando a estrutura de conteúdo…
+              </p>
+            ) : (
+              <CourseModulesBuilder courseId={courseId ?? 'novo'} initialModules={modules} />
+            )}
           </Tabs.Content>
         </Tabs.Root>
       </AuthenticatedLayout>
