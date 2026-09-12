@@ -7,6 +7,7 @@ describe('useToast', () => {
     const { result } = renderHook(() => useToast());
 
     expect(result.current.toast).toBeNull();
+    expect(result.current.isOpen).toBe(false);
   });
 
   it('should show a toast with the given variant, title and description', () => {
@@ -16,6 +17,7 @@ describe('useToast', () => {
       result.current.showToast('success', 'Rascunho salvo!', 'Os dados foram gravados.');
     });
 
+    expect(result.current.isOpen).toBe(true);
     expect(result.current.toast).toMatchObject({
       variant: 'success',
       title: 'Rascunho salvo!',
@@ -23,18 +25,19 @@ describe('useToast', () => {
     });
   });
 
-  it('should dismiss the toast', () => {
+  it('should dismiss the toast without dropping its content', () => {
     const { result } = renderHook(() => useToast());
 
     act(() => {
       result.current.showToast('error', 'Falha ao salvar');
     });
-    expect(result.current.toast).not.toBeNull();
+    expect(result.current.isOpen).toBe(true);
 
     act(() => {
       result.current.dismissToast();
     });
-    expect(result.current.toast).toBeNull();
+    expect(result.current.isOpen).toBe(false);
+    expect(result.current.toast).toMatchObject({ title: 'Falha ao salvar' });
   });
 
   it('should give every toast a different key, even when triggered back-to-back', () => {

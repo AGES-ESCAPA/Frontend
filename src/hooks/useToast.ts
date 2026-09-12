@@ -10,16 +10,18 @@ export interface ToastMessage {
 
 export const useToast = () => {
   const [toast, setToast] = useState<ToastMessage | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const nextKeyRef = useRef(0);
 
   const showToast = useCallback((variant: ToastVariant, title: string, description?: string) => {
     nextKeyRef.current += 1;
     setToast({ key: nextKeyRef.current, variant, title, description });
+    setIsOpen(true);
   }, []);
 
   const dismissToast = useCallback(() => {
-    setToast(null);
+    setIsOpen(false);
   }, []);
 
-  return { toast, showToast, dismissToast };
+  return { toast, isOpen, showToast, dismissToast };
 };

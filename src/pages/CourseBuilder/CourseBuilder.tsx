@@ -62,7 +62,7 @@ export const CourseBuilder = () => {
   const { id: courseId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { values, errors, changeField, replaceValues, replaceErrors } = useCourseForm();
-  const { toast, showToast, dismissToast } = useToast();
+  const { toast, isOpen: isToastOpen, showToast, dismissToast } = useToast();
 
   const [status, setStatus] = useState<CourseStatus>('DRAFT');
   const [savingStatus, setSavingStatus] = useState<CourseStatus | null>(null);
@@ -305,7 +305,7 @@ export const CourseBuilder = () => {
       {toast === null ? null : (
         <Toast
           key={toast.key}
-          open
+          open={isToastOpen}
           onOpenChange={(open) => {
             if (!open) dismissToast();
           }}
