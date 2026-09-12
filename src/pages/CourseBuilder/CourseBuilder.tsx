@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import * as Tabs from '@radix-ui/react-tabs';
 import { ArrowLeft, GitBranch, Info, Layers } from 'lucide-react';
@@ -73,6 +73,14 @@ export const CourseBuilder = () => {
   const isSaving = savingStatus !== null;
   const isFormDisabled = isLoading || isSaving || loadError;
 
+  /**
+   * Guarda o id que acabamos de criar/salvar, pra o efeito de carregamento
+   * abaixo saber que os dados já estão em mãos (veio na resposta do
+   * createCourse) e não precisa refazer o GET só porque a navegação para a
+   * rota de edição trocou o `courseId` com o componente ainda montado.
+   */
+  const skipNextLoadIdRef = useRef<string | null>(null);
+
   const menuItems = useMemo(
     () => SIDEBAR_MENU_PRESETS.admin.map((item, index) => ({ ...item, active: index === 0 })),
     [],
@@ -80,6 +88,11 @@ export const CourseBuilder = () => {
 
   useEffect(() => {
     if (courseId === undefined) return undefined;
+
+    if (skipNextLoadIdRef.current === courseId) {
+      skipNextLoadIdRef.current = null;
+      return undefined;
+    }
 
     let isCurrent = true;
     setIsLoading(true);
@@ -143,6 +156,7 @@ export const CourseBuilder = () => {
         );
 
         if (courseId === undefined) {
+          skipNextLoadIdRef.current = saved.id;
           navigate(`${COURSES_ROUTE}/${saved.id}/editar`, { replace: true });
         }
       } catch (error: unknown) {
