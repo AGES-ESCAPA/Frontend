@@ -6,7 +6,7 @@ describe('CourseDetailModal', () => {
     const onClose = vi.fn();
 
     render(
-      <CourseDetailModal title="IA Aplicada ao Turismo" onClose={onClose}>
+      <CourseDetailModal onClose={onClose}>
         <p>Conteúdo do curso</p>
       </CourseDetailModal>,
     );
@@ -22,7 +22,7 @@ describe('CourseDetailModal', () => {
     const onClose = vi.fn();
 
     render(
-      <CourseDetailModal title="IA Aplicada ao Turismo" onClose={onClose}>
+      <CourseDetailModal onClose={onClose}>
         <p>Conteúdo do curso</p>
       </CourseDetailModal>,
     );
@@ -30,5 +30,21 @@ describe('CourseDetailModal', () => {
     fireEvent.mouseDown(screen.getByRole('dialog'));
 
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('locks background scroll while open and restores it on close', () => {
+    const { unmount } = render(
+      <CourseDetailModal onClose={vi.fn()}>
+        <p>Conteúdo do curso</p>
+      </CourseDetailModal>,
+    );
+
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    unmount();
+
+    expect(document.body.style.overflow).toBe('');
+    expect(document.documentElement.style.overflow).toBe('');
   });
 });

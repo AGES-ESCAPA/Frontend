@@ -95,4 +95,23 @@ describe('courseService', () => {
       'Falha ao buscar os cursos publicados',
     );
   });
+
+  it('should call GET /api/v1/public/courses/:id and return the payload data', async () => {
+    const details = {
+      id: 'e0000000-0000-4000-e000-000000000001',
+      title: 'Atendimento de Excelência em Hospedagem',
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve({ success: true, data: details }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await courseService.getPublicCourseById(details.id);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain(`${PUBLIC_COURSES_PATH}/${details.id}`);
+    expect(result.title).toBe(details.title);
+  });
 });

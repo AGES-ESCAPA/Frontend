@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import styles from './Badge.module.css';
 
 export type BadgeVariant =
-  'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral';
+  'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' | 'level';
 
 export type BadgeCategory =
   | 'marketing'

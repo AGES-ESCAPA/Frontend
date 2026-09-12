@@ -1,18 +1,26 @@
 import { Badge, Button } from '@components/ui';
-import { Check, Clock3, GraduationCap, Users } from 'lucide-react';
+import { Book, Check, Clock3, GraduationCap, Users } from 'lucide-react';
 import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { CourseSummary } from '@/types/course';
+import type { CourseModule, CourseSummary } from '@/types/course';
+import { mapCourseCategory } from '@utils/mapPublicCourse';
 import styles from './CourseHeader.module.css';
 
 const PURCHASE_REDIRECT_KEY = 'escapa:purchase-redirect';
 
 export interface CourseHeaderProps {
   course: CourseSummary;
+  onViewFreeLessons?: () => void;
 }
 
-export const CourseHeader: FC<CourseHeaderProps> = ({ course }) => {
+const listLessons = (modules: CourseModule[]) =>
+  modules.flatMap((courseModule) => courseModule.lessons);
+
+export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons }) => {
   const navigate = useNavigate();
+  const lessons = listLessons(course.modules);
+  const freeLessonCount = lessons.filter((lesson) => lesson.isFree).length;
+  const isFreeOnly = lessons.length > 0 && freeLessonCount === lessons.length;
 
   const handlePurchase = () => {
     const destination = `/cursos/${course.id}`;
@@ -27,14 +35,26 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course }) => {
     navigate(`/checkout/${course.id}`);
   };
 
+  const handleCta = () => {
+    if (isFreeOnly) {
+      onViewFreeLessons?.();
+      return;
+    }
+
+    handlePurchase();
+  };
+
   return (
     <section className={styles.header} aria-labelledby="course-title">
       <div className={styles.hero}>
         <div className={styles.heroCopy}>
           <div className={styles.tags}>
-            <Badge label={course.category} category="ai" />
-            <Badge label={course.level} variant="neutral" />
-            <Badge label="Certificado" variant="info" />
+            <Badge label={course.category} category={mapCourseCategory(course.category)} />
+            <Badge label={course.level} variant="level" />
+            <span className={styles.certificate}>
+              <span aria-hidden="true">🏅</span>
+              Certificado
+            </span>
           </div>
           <h2 id="course-title">{course.title}</h2>
           <p className={styles.description}>{course.description}</p>
@@ -49,6 +69,11 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course }) => {
             <span>
               <Clock3 size={14} aria-hidden="true" /> {course.durationHours}h
             </span>
+            <span>
+              <Book size={14} aria-hidden="true" />{' '}
+              {course.modules.reduce((acc, module) => acc + module.lessonCount, 0)} aulas ·{' '}
+              {course.modules.length} módulos
+            </span>
           </div>
           <div className={styles.instructor}>
             <span className={styles.instructorAvatar} aria-hidden="true">
@@ -61,21 +86,31 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course }) => {
           </div>
         </div>
 
-        <aside className={styles.purchase} aria-label="Comprar curso">
-          <div className={styles.cover} aria-label="Imagem ilustrativa do curso" role="img">
-            <GraduationCap size={56} aria-hidden="true" />
-            <span>IA aplicada ao turismo</span>
-          </div>
+        <aside
+          className={styles.purchase}
+          aria-label={isFreeOnly ? 'Aulas grátis' : 'Comprar curso'}
+        >
+          {course.thumbnailUrl ? (
+            <div className={styles.cover}>
+              <img className={styles.coverImage} src={course.thumbnailUrl} alt="Capa do curso" />
+            </div>
+          ) : (
+            <div className={styles.cover} aria-label="Imagem ilustrativa do curso" role="img">
+              <GraduationCap size={56} aria-hidden="true" />
+            </div>
+          )}
           <div className={styles.purchaseBody}>
             <div className={styles.priceBlock}>
               <strong>{course.price}</strong>
               <small>{course.accessPeriod} · Certificado incluso</small>
             </div>
             <Button
-              label="Cadastre-se para Comprar"
-              variant="secondary"
+              label={
+                isFreeOnly ? `Ver aulas grátis (${freeLessonCount})` : 'Cadastre-se para Comprar'
+              }
+              variant="primary"
               fullWidth
-              onClick={handlePurchase}
+              onClick={handleCta}
             />
             <ul className={styles.benefits}>
               {course.benefits.map((benefit) => (
