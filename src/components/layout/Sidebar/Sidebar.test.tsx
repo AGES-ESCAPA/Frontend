@@ -116,11 +116,11 @@ describe('Sidebar', () => {
     expect(activeItem).toHaveAttribute('aria-current', 'page');
   });
 
-  it('should use the ghost Button variant for non-active items', () => {
+  it('should use the ghost-dark Button variant for non-active items', () => {
     renderSidebar(<Sidebar role="student" items={customItems} user={student} />);
 
     const inactiveItem = screen.getByRole('link', { name: 'Catálogo' });
-    expect(inactiveItem.className).toMatch(/variant-ghost/);
+    expect(inactiveItem.className).toMatch(/variant-ghost-dark/);
     expect(inactiveItem).not.toHaveAttribute('aria-current');
   });
 

@@ -65,7 +65,7 @@ export interface SidebarProps {
 /**
  * Sidebar — menu lateral fixo das telas internas (pós-login).
  *
- * Compõe `Button` (variantes `ghost` e `active`) para os itens de menu e
+ * Utiliza `Button` (variantes `ghost-dark` e `active`) para os itens de menu e
  * `Avatar` para a identificação do usuário no rodapé — não reimplementa
  * nenhum dos dois, seguindo o mesmo princípio da `Navbar`.
  *
@@ -147,7 +147,7 @@ export const Sidebar = ({
                 fullWidth
                 label={item.label}
                 icon={item.icon}
-                variant={item.active ? 'active' : 'ghost'}
+                variant={item.active ? 'active' : 'ghost-dark'}
                 className={styles.menuButton}
                 aria-current={item.active ? 'page' : undefined}
               >
