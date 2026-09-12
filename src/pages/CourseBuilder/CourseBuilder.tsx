@@ -67,9 +67,11 @@ export const CourseBuilder = () => {
   const [status, setStatus] = useState<CourseStatus>('DRAFT');
   const [savingStatus, setSavingStatus] = useState<CourseStatus | null>(null);
   const [isLoading, setIsLoading] = useState(courseId !== undefined);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const isSaving = savingStatus !== null;
-  const isFormDisabled = isLoading || isSaving;
+  const isFormDisabled = isLoading || isSaving || loadError;
 
   const menuItems = useMemo(
     () => SIDEBAR_MENU_PRESETS.admin.map((item, index) => ({ ...item, active: index === 0 })),
@@ -81,6 +83,7 @@ export const CourseBuilder = () => {
 
     let isCurrent = true;
     setIsLoading(true);
+    setLoadError(false);
 
     getCourseById(courseId)
       .then((course) => {
@@ -90,6 +93,7 @@ export const CourseBuilder = () => {
       })
       .catch((error: unknown) => {
         if (!isCurrent) return;
+        setLoadError(true);
         showToast(
           'error',
           'Não foi possível carregar o curso',
@@ -103,7 +107,11 @@ export const CourseBuilder = () => {
     return () => {
       isCurrent = false;
     };
-  }, [courseId, replaceValues, showToast]);
+  }, [courseId, reloadToken, replaceValues, showToast]);
+
+  const handleRetryLoad = useCallback(() => {
+    setReloadToken((token) => token + 1);
+  }, []);
 
   const handleSave = useCallback(
     async (nextStatus: CourseStatus) => {
@@ -212,6 +220,22 @@ export const CourseBuilder = () => {
               <p className={styles.loading} role="status">
                 Carregando os dados do curso…
               </p>
+            ) : null}
+
+            {loadError ? (
+              <div className={styles.loadError} role="alert">
+                <p>
+                  Não foi possível carregar os dados deste curso. Para evitar sobrescrever o
+                  conteúdo já salvo, o formulário permanece bloqueado até o carregamento ser
+                  concluído com sucesso.
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  label="Tentar novamente"
+                  onClick={handleRetryLoad}
+                />
+              </div>
             ) : null}
 
             <form

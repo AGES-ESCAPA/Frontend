@@ -116,6 +116,21 @@
   line-height: var(--text-body-3--line-height);
 }
 
+.loadError {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding: var(--space-4);
+  border: 1px solid var(--color-error-200);
+  border-radius: var(--radius-md);
+  background: var(--color-error-100);
+  color: var(--color-error-500);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
 /* Os cards entram direto no grid, sem wrapper de coluna: assim cada linha
    (Informações Básicas + Classificação, depois Descrição + Métricas) compartilha
    a mesma altura e os dois cards da linha começam e terminam juntos. */
