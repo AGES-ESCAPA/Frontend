@@ -16,6 +16,41 @@ export interface CourseModule {
   lessons: CourseLesson[];
 }
 
+/** Cartão de curso retornado por GET /api/v1/public/courses. */
+export interface PublicCourseCard {
+  id: string;
+  title: string;
+  shortDescription: string;
+  category: string;
+  level: string;
+  /** Carga horária em minutos. */
+  durationTime: number | null;
+  lessonsCount: number | null;
+  price: number | null;
+  thumbnailUrl: string | null;
+  instructor: string | null;
+  ratingAverage: number | null;
+  reviewsCount: number | null;
+}
+
+/** Envelope paginado da listagem pública de cursos. */
+export interface PublicCoursesPage {
+  content: PublicCourseCard[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+/** Query params aceitos por GET /api/v1/public/courses. */
+export interface PublicCoursesQuery {
+  title?: string;
+  category?: string;
+  level?: string;
+  page?: number;
+  size?: number;
+}
+
 export interface CourseSummary {
   id: string;
   title: string;
