@@ -15,7 +15,7 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: /minha conta/i })).toHaveAttribute('href', '/login');
     expect(screen.getByRole('link', { name: /sobre a escapa!/i })).toHaveAttribute(
       'href',
-      '/sobre',
+      'https://www.escapa.com.br/#nossa-historia',
     );
     expect(
       screen.getByText('© 2026 Escapa! Cursos. Todos os direitos reservados.'),

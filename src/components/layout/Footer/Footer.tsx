@@ -17,18 +17,18 @@ type FooterLink = {
 const platformLinks: FooterLink[] = [
   { label: 'Minha Conta', href: '/login' },
   { label: 'Certificados', href: '/certificados' },
-  { label: 'Suporte', href: '/suporte' },
+  { label: 'Suporte', href: 'https://wa.me/555181046948' },
 ];
 
 const companyLinks: FooterLink[] = [
-  { label: 'Sobre a escapa!', href: '/sobre' },
-  { label: 'Contato', href: '/contato' },
+  { label: 'Sobre a Escapa!', href: 'https://www.escapa.com.br/#nossa-historia' },
+  { label: 'Contato', href: 'https://wa.me/555181046948' },
 ];
 
 const compactLinks: FooterLink[] = [
   { label: 'Política de Privacidade', href: '/politica-de-privacidade' },
   { label: 'Termos de Uso', href: '/termos-de-uso' },
-  { label: 'Suporte', href: '/suporte' },
+  { label: 'Suporte', href: 'https://wa.me/555181046948' },
 ];
 
 const defaultCategories = ['Turismo', 'Hospitalidade', 'Inovação'];
