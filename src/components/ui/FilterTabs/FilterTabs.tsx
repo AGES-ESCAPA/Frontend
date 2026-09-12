@@ -1,17 +1,32 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import styles from './FilterTabs.module.css';
 
+export type FilterTabsVariant = 'outlined' | 'ghost-dark';
+
 export interface FilterTabsProps {
   options: string[];
   selected: string;
   onChange: (value: string) => void;
-
+  variant?: FilterTabsVariant;
   groupLabel?: string;
 }
 
-export default function FilterTabs({ options, selected, onChange, groupLabel }: FilterTabsProps) {
+export function FilterTabs({
+  options,
+  selected,
+  onChange,
+  variant = 'outlined',
+  groupLabel,
+}: FilterTabsProps) {
+  const variantClass = variant === 'ghost-dark' ? styles.ghostDark : styles.outlined;
+
   return (
-    <Tabs.Root value={selected} onValueChange={onChange} className={styles.root}>
+    <Tabs.Root
+      value={selected}
+      onValueChange={onChange}
+      className={`${styles.root} ${variantClass}`}
+      data-variant={variant}
+    >
       <Tabs.List className={styles.list} aria-label={groupLabel}>
         {options.map((option) => (
           <Tabs.Trigger key={option} value={option} className={styles.trigger}>
@@ -22,3 +37,5 @@ export default function FilterTabs({ options, selected, onChange, groupLabel }: 
     </Tabs.Root>
   );
 }
+
+export default FilterTabs;

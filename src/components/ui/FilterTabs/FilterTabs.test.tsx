@@ -16,6 +16,7 @@ function ControlledFilterTabs(props: Partial<FilterTabsProps>) {
         setSelected(value);
         props.onChange?.(value);
       }}
+      variant={props.variant}
       groupLabel={props.groupLabel}
     />
   );
@@ -62,6 +63,20 @@ describe('FilterTabs', () => {
       'data-state',
       'inactive',
     );
+  });
+
+  it('usa outlined por padrão e aceita o modo ghost-dark', () => {
+    const { rerender } = render(<ControlledFilterTabs groupLabel="Categoria" />);
+
+    expect(
+      screen.getByRole('tablist', { name: 'Categoria' }).closest('[data-variant]'),
+    ).toHaveAttribute('data-variant', 'outlined');
+
+    rerender(<ControlledFilterTabs groupLabel="Categoria" variant="ghost-dark" />);
+
+    expect(
+      screen.getByRole('tablist', { name: 'Categoria' }).closest('[data-variant]'),
+    ).toHaveAttribute('data-variant', 'ghost-dark');
   });
 
   it('usa groupLabel como aria-label do grupo, sem exibi-lo visualmente', () => {
