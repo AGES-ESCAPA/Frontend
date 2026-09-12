@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { ToastVariant } from '@components/ui';
 
 export interface ToastMessage {
@@ -10,9 +10,11 @@ export interface ToastMessage {
 
 export const useToast = () => {
   const [toast, setToast] = useState<ToastMessage | null>(null);
+  const nextKeyRef = useRef(0);
 
   const showToast = useCallback((variant: ToastVariant, title: string, description?: string) => {
-    setToast({ key: Date.now(), variant, title, description });
+    nextKeyRef.current += 1;
+    setToast({ key: nextKeyRef.current, variant, title, description });
   }, []);
 
   const dismissToast = useCallback(() => {
