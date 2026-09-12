@@ -23,7 +23,12 @@ type BuilderStatus = 'idle' | 'saving' | 'success' | 'error';
 const sortModulesByOrder = (modules: CourseModule[]) =>
   [...modules].sort((current, next) => current.order - next.order);
 
-const createFallbackModule = (id: number, title: string, order: number): CourseModule => ({
+const createTemporaryId = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `temporary-${Date.now()}`;
+
+const createFallbackModule = (id: string, title: string, order: number): CourseModule => ({
   id,
   title,
   order,
@@ -51,12 +56,12 @@ export const CourseModulesBuilder = ({
   client = courseModulesApi,
 }: CourseModulesBuilderProps) => {
   const [modules, setModules] = useState(() => sortModulesByOrder(initialModules));
-  const [expandedModuleIds, setExpandedModuleIds] = useState<Set<number>>(() => new Set());
-  const [draggingModuleId, setDraggingModuleId] = useState<number | null>(null);
-  const [dragOverModuleId, setDragOverModuleId] = useState<number | null>(null);
+  const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(() => new Set());
+  const [draggingModuleId, setDraggingModuleId] = useState<string | null>(null);
+  const [dragOverModuleId, setDragOverModuleId] = useState<string | null>(null);
   const [status, setStatus] = useState<BuilderStatus>('idle');
   const [statusMessage, setStatusMessage] = useState('');
-  const titleInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+  const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const savedTitlesRef = useRef(
     new Map(initialModules.map((module) => [module.id, module.title] as const)),
   );
@@ -75,7 +80,7 @@ export const CourseModulesBuilder = ({
     setStatusMessage(message);
   };
 
-  const toggleExpanded = (moduleId: number) => {
+  const toggleExpanded = (moduleId: string) => {
     setExpandedModuleIds((currentIds) => {
       const nextIds = new Set(currentIds);
 
@@ -100,7 +105,7 @@ export const CourseModulesBuilder = ({
       setModules((currentModules) =>
         reindexModules([
           ...currentModules,
-          createdModule ?? createFallbackModule(Date.now(), title, 1),
+          createdModule ?? createFallbackModule(createTemporaryId(), title, 1),
         ]),
       );
       if (createdModule) {
@@ -115,13 +120,13 @@ export const CourseModulesBuilder = ({
     }
   };
 
-  const updateModuleTitleLocally = (moduleId: number, title: string) => {
+  const updateModuleTitleLocally = (moduleId: string, title: string) => {
     setModules((currentModules) =>
       currentModules.map((module) => (module.id === moduleId ? { ...module, title } : module)),
     );
   };
 
-  const handleRenameModule = async (moduleId: number, title: string) => {
+  const handleRenameModule = async (moduleId: string, title: string) => {
     const normalizedTitle = title.trim();
 
     if (!normalizedTitle) {
@@ -188,11 +193,11 @@ export const CourseModulesBuilder = ({
     }
   };
 
-  const handleDragStart = (moduleId: number) => {
+  const handleDragStart = (moduleId: string) => {
     setDraggingModuleId(moduleId);
   };
 
-  const handleDrop = async (targetModuleId: number) => {
+  const handleDrop = async (targetModuleId: string) => {
     if (draggingModuleId === null || draggingModuleId === targetModuleId) {
       setDraggingModuleId(null);
       setDragOverModuleId(null);
@@ -218,7 +223,7 @@ export const CourseModulesBuilder = ({
     await persistModuleOrder(nextModules, previousModules);
   };
 
-  const handleDeleteModule = async (moduleId: number) => {
+  const handleDeleteModule = async (moduleId: string) => {
     const moduleToDelete = modules.find((module) => module.id === moduleId);
 
     if (!moduleToDelete) {

@@ -4,43 +4,65 @@ import { describe, expect, it, vi } from 'vitest';
 import { CourseModulesBuilder } from './CourseModulesBuilder';
 import type { CourseModule, CourseModuleClient } from '@services/courseModules';
 
+const COURSE_ID = '00000000-0000-4000-8000-000000000001';
+const FIRST_MODULE_ID = '11111111-1111-4111-8111-111111111111';
+const SECOND_MODULE_ID = '22222222-2222-4222-8222-222222222222';
+const THIRD_MODULE_ID = '33333333-3333-4333-8333-333333333333';
+
 const createModules = (): CourseModule[] => [
   {
-    id: 1,
+    id: FIRST_MODULE_ID,
     title: 'Fundamentos do atendimento turístico',
     order: 1,
     totalContents: 2,
     totalDurationMinutes: 45,
     contents: [
-      { id: 101, title: 'Boas-vindas e objetivos do curso', type: 'VIDEO', order: 1 },
-      { id: 102, title: 'Mapa da jornada do cliente', type: 'TEXT', order: 2 },
+      {
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+        title: 'Boas-vindas e objetivos do curso',
+        type: 'VIDEO',
+        order: 1,
+      },
+      {
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
+        title: 'Mapa da jornada do cliente',
+        type: 'TEXT',
+        order: 2,
+      },
     ],
   },
   {
-    id: 2,
+    id: SECOND_MODULE_ID,
     title: 'Hospitalidade aplicada na prática',
     order: 2,
     totalContents: 1,
     totalDurationMinutes: 30,
-    contents: [{ id: 201, title: 'Protocolos de experiência premium', type: 'FILE', order: 1 }],
+    contents: [
+      {
+        id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1',
+        title: 'Protocolos de experiência premium',
+        type: 'FILE',
+        order: 1,
+      },
+    ],
   },
 ];
 
 const createClient = (): CourseModuleClient => ({
   listModules: vi.fn(),
   createModule: vi.fn().mockResolvedValue({
-    id: 3,
+    id: THIRD_MODULE_ID,
     title: 'Novo módulo 3',
     order: 3,
     totalContents: 0,
     totalDurationMinutes: 0,
     contents: [],
   }),
-  updateModuleTitle: vi.fn().mockImplementation((moduleId: number, title: string) =>
+  updateModuleTitle: vi.fn().mockImplementation((moduleId: string, title: string) =>
     Promise.resolve({
       id: moduleId,
       title,
-      order: moduleId,
+      order: 1,
       totalContents: 0,
       totalDurationMinutes: 0,
       contents: [],
@@ -52,7 +74,7 @@ const createClient = (): CourseModuleClient => ({
 
 const renderBuilder = (client = createClient()) => {
   render(
-    <CourseModulesBuilder courseId="course-1" initialModules={createModules()} client={client} />,
+    <CourseModulesBuilder courseId={COURSE_ID} initialModules={createModules()} client={client} />,
   );
   return client;
 };
@@ -88,7 +110,7 @@ describe('CourseModulesBuilder', () => {
     await user.click(screen.getByRole('button', { name: /\+ adicionar módulo/i }));
 
     await waitFor(() => {
-      expect(client.createModule).toHaveBeenCalledWith('course-1', 'Novo módulo 3');
+      expect(client.createModule).toHaveBeenCalledWith(COURSE_ID, 'Novo módulo 3');
     });
     expect(await screen.findByDisplayValue('Novo módulo 3')).toBeInTheDocument();
   });
@@ -103,7 +125,10 @@ describe('CourseModulesBuilder', () => {
     await user.tab();
 
     await waitFor(() => {
-      expect(client.updateModuleTitle).toHaveBeenCalledWith(1, 'Fundamentos revisados');
+      expect(client.updateModuleTitle).toHaveBeenCalledWith(
+        FIRST_MODULE_ID,
+        'Fundamentos revisados',
+      );
     });
   });
 
@@ -116,7 +141,10 @@ describe('CourseModulesBuilder', () => {
     fireEvent.drop(moduleCards[0]);
 
     await waitFor(() => {
-      expect(client.reorderModules).toHaveBeenCalledWith('course-1', [2, 1]);
+      expect(client.reorderModules).toHaveBeenCalledWith(COURSE_ID, [
+        SECOND_MODULE_ID,
+        FIRST_MODULE_ID,
+      ]);
     });
 
     const reorderedModuleCards = screen.getAllByRole('listitem');
@@ -133,7 +161,7 @@ describe('CourseModulesBuilder', () => {
     await user.click(screen.getByRole('button', { name: /excluir módulo 1/i }));
 
     await waitFor(() => {
-      expect(client.deleteModule).toHaveBeenCalledWith(1);
+      expect(client.deleteModule).toHaveBeenCalledWith(FIRST_MODULE_ID);
     });
     expect(
       screen.queryByDisplayValue('Fundamentos do atendimento turístico'),
