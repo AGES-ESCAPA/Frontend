@@ -4,39 +4,93 @@
  * Comunicação com a API de aulas (TSK-05-BACK). As telas e o modal nunca
  * chamam `fetch` diretamente: elas usam estas funções.
  */
-import type { Lesson, LessonPayload } from '@/types/lesson';
+import type { Lesson, LessonPayload, LessonResource, LessonType } from '@/types/lesson';
 import type { ApiResponse } from './api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-interface LessonRequest {
-  body: BodyInit;
-  headers?: HeadersInit;
+type ApiLessonType = 'VIDEO' | 'TEXT' | 'FILE';
+
+interface CreateContentRequest {
+  title: string;
+  type: ApiLessonType;
+  url: string | null;
+  durationMinutes: number | null;
+  description: string | null;
+  isFree: boolean;
 }
 
-/**
- * Sem arquivos locais o corpo é JSON puro. Com arquivos, vira `multipart`
- * com os campos da aula em `lesson` — o `Content-Type` fica a cargo do
- * navegador, que precisa incluir o boundary.
- */
-const buildRequest = (payload: LessonPayload): LessonRequest => {
-  const { uploads, ...lesson } = payload;
+interface ContentResponse {
+  id: string;
+  moduleId: string;
+  title: string;
+  type: ApiLessonType;
+  url: string | null;
+  durationMinutes: number | null;
+  description: string | null;
+  isFree: boolean;
+  order: number;
+  resources: string | LessonResource[] | null;
+}
 
-  if (uploads.length === 0) {
-    return {
-      body: JSON.stringify(lesson),
-      headers: { 'Content-Type': 'application/json' },
-    };
+const toApiLessonType = (type: LessonType): ApiLessonType => type.toUpperCase() as ApiLessonType;
+
+const toLessonType = (type: ApiLessonType): LessonType => type.toLowerCase() as LessonType;
+
+const secondsToMinutes = (seconds: number | null): number | null => {
+  if (seconds == null || seconds <= 0) return null;
+  return Math.max(1, Math.round(seconds / 60));
+};
+
+const resolveContentUrl = (payload: LessonPayload): string | null => {
+  if (payload.type === 'video') return payload.videoUrl;
+  if (payload.type === 'file') return payload.fileUrl;
+  return null;
+};
+
+const resolveContentDescription = (payload: LessonPayload): string | null => {
+  if (payload.type === 'text') return payload.textContent;
+  return payload.description || null;
+};
+
+const buildCreateContentRequest = (payload: LessonPayload): CreateContentRequest => ({
+  title: payload.title,
+  type: toApiLessonType(payload.type),
+  url: resolveContentUrl(payload),
+  durationMinutes: payload.type === 'video' ? secondsToMinutes(payload.durationInSeconds) : null,
+  description: resolveContentDescription(payload),
+  isFree: payload.isFreeSample,
+});
+
+const parseResources = (resources: ContentResponse['resources']): LessonResource[] => {
+  if (Array.isArray(resources)) return resources;
+  if (!resources) return [];
+
+  try {
+    const parsed: unknown = JSON.parse(resources);
+    return Array.isArray(parsed) ? (parsed as LessonResource[]) : [];
+  } catch {
+    return [];
   }
+};
 
-  const formData = new FormData();
-  formData.append('lesson', JSON.stringify(lesson));
-  uploads.forEach((upload) => {
-    const field = upload.resourceId ? `resources[${upload.resourceId}]` : 'file';
-    formData.append(field, upload.file, upload.file.name);
-  });
+const mapContentToLesson = (content: ContentResponse): Lesson => {
+  const type = toLessonType(content.type);
 
-  return { body: formData };
+  return {
+    id: content.id,
+    moduleId: content.moduleId,
+    title: content.title,
+    description: content.description ?? '',
+    type,
+    videoUrl: type === 'video' ? content.url : null,
+    durationInSeconds: content.durationMinutes != null ? content.durationMinutes * 60 : null,
+    textContent: type === 'text' ? content.description : null,
+    fileUrl: type === 'file' ? content.url : null,
+    isFreeSample: Boolean(content.isFree),
+    resources: parseResources(content.resources),
+    order: content.order,
+  };
 };
 
 const extractErrorMessage = (data: unknown): string | null => {
@@ -52,27 +106,25 @@ const parseLessonResponse = async (response: Response, fallback: string): Promis
     throw new Error(extractErrorMessage(errorData) ?? fallback);
   }
 
-  const json: ApiResponse<Lesson> = await response.json();
-  return json.data;
+  const json: ApiResponse<ContentResponse> = await response.json();
+  return mapContentToLesson(json.data);
 };
 
 export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
-  const { body, headers } = buildRequest(payload);
-  const response = await fetch(`${API_BASE_URL}/modules/${payload.moduleId}/lessons`, {
+  const response = await fetch(`${API_BASE_URL}/admin/modules/${payload.moduleId}/contents`, {
     method: 'POST',
-    headers,
-    body,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(buildCreateContentRequest(payload)),
   });
 
   return parseLessonResponse(response, 'Não foi possível criar a aula.');
 };
 
 export const updateLesson = async (lessonId: string, payload: LessonPayload): Promise<Lesson> => {
-  const { body, headers } = buildRequest(payload);
-  const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}`, {
+  const response = await fetch(`${API_BASE_URL}/admin/contents/${lessonId}`, {
     method: 'PUT',
-    headers,
-    body,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(buildCreateContentRequest(payload)),
   });
 
   return parseLessonResponse(response, 'Não foi possível salvar as alterações da aula.');

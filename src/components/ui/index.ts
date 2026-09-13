@@ -25,6 +25,8 @@ export { FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 export { Panel } from './Panel';
 export type { PanelProps } from './Panel';
+export { ProgressBar } from './ProgressBar';
+export type { ProgressBarProps } from './ProgressBar';
 export { FilterTabs } from './FilterTabs';
 export type { FilterTabsProps, FilterTabsVariant } from './FilterTabs';
 export { CourseCardSkeleton } from './CourseCard/CourseCardSkeleton';

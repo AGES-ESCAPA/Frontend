@@ -161,7 +161,7 @@ export const LessonModal = ({
           <Button
             type="button"
             label="Cancelar"
-            variant="primary"
+            variant="secondary"
             className={styles.footerButton}
             disabled={isSaving}
             onClick={() => onOpenChange(false)}
@@ -169,7 +169,7 @@ export const LessonModal = ({
           <Button
             type="submit"
             label={isEditing ? 'Salvar Alterações' : 'Salvar Aula'}
-            variant="secondary"
+            variant="primary"
             className={`${styles.footerButton} ${styles.saveButton}`}
             isLoading={isSaving}
           />
