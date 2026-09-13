@@ -79,3 +79,19 @@
   color: var(--color-badge-level-text);
   backdrop-filter: none;
 }
+
+.mini {
+  min-height: var(--space-6);
+  height: auto;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+  letter-spacing: var(--tracking-wide);
+}
+
+.mini.variant-neutral,
+.mini.variant-level {
+  height: auto;
+  min-height: var(--space-6);
+  padding: var(--space-1) var(--space-3);
+}

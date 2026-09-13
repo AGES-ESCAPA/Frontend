@@ -1,6 +1,7 @@
 import type { ApiResponse } from '@services/api';
 import { toApiLevel } from '@utils/mapPublicCourse';
 import type {
+  AdminCourseListItem,
   CourseDetail,
   CoursePayload,
   PublicCourseDetails,
@@ -14,7 +15,12 @@ export const PUBLIC_COURSES_PATH = '/public/courses';
 
 const ADMIN_COURSES_URL = `${API_BASE}/admin/courses`;
 
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
+const ADMIN_USER_ID = import.meta.env.VITE_ADMIN_USER_ID ?? 'a0000000-0000-4000-a000-000000000001';
+
+const adminHeaders = (): HeadersInit => ({
+  'Content-Type': 'application/json',
+  'X-User-Id': ADMIN_USER_ID,
+});
 
 const buildPublicCoursesUrl = (query: PublicCoursesQuery = {}): string => {
   const params = new URLSearchParams();
@@ -95,14 +101,14 @@ const readCourse = async (response: Response, fallback: string): Promise<CourseD
 };
 
 export const getCourseById = async (id: string): Promise<CourseDetail> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`);
+  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, { headers: adminHeaders() });
   return readCourse(response, 'Não foi possível carregar os dados do curso.');
 };
 
 export const createCourse = async (payload: CoursePayload): Promise<CourseDetail> => {
   const response = await fetch(ADMIN_COURSES_URL, {
     method: 'POST',
-    headers: JSON_HEADERS,
+    headers: adminHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -112,11 +118,37 @@ export const createCourse = async (payload: CoursePayload): Promise<CourseDetail
 export const updateCourse = async (id: string, payload: CoursePayload): Promise<CourseDetail> => {
   const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, {
     method: 'PUT',
-    headers: JSON_HEADERS,
+    headers: adminHeaders(),
     body: JSON.stringify(payload),
   });
 
   return readCourse(response, 'Não foi possível salvar as alterações do curso.');
+};
+
+const listAdminCourses = async (signal?: AbortSignal): Promise<AdminCourseListItem[]> => {
+  const response = await fetch(ADMIN_COURSES_URL, { headers: adminHeaders(), signal });
+
+  if (!isJsonResponse(response)) {
+    throw new Error('Não foi possível carregar os cursos.');
+  }
+
+  if (!response.ok) {
+    throw new Error(await extractErrorMessage(response, 'Não foi possível carregar os cursos.'));
+  }
+
+  const json: ApiResponse<AdminCourseListItem[]> = await response.json();
+  return json.data ?? [];
+};
+
+const archiveCourse = async (id: string): Promise<void> => {
+  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractErrorMessage(response, 'Não foi possível arquivar o curso.'));
+  }
 };
 
 export const courseService = {
@@ -125,4 +157,6 @@ export const courseService = {
   getCourseById,
   createCourse,
   updateCourse,
+  listAdminCourses,
+  archiveCourse,
 };

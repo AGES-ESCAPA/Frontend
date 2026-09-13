@@ -14,6 +14,8 @@ import {
   maskCurrencyInput,
   toTitleCase,
   truncate,
+  toCourseCode,
+  formatCourseVersion,
 } from './formatters';
 
 describe('formatDuration', () => {
@@ -188,5 +190,24 @@ describe('truncate', () => {
 
   it('should truncate long strings with ellipsis', () => {
     expect(truncate('texto muito longo', 8)).toBe('texto...');
+  });
+});
+
+describe('toCourseCode', () => {
+  it('should use the first letter of the first two significant words', () => {
+    expect(toCourseCode('Atendimento de Excelencia em Hospedagem')).toBe('AE');
+    expect(toCourseCode('Gestao de Reservas e Overbooking')).toBe('GR');
+    expect(toCourseCode('Ingles para Recepcao')).toBe('IR');
+  });
+
+  it('should fall back to the first two letters of a single word', () => {
+    expect(toCourseCode('Hospitalidade')).toBe('HO');
+  });
+});
+
+describe('formatCourseVersion', () => {
+  it('should format major and minor as vX.Y', () => {
+    expect(formatCourseVersion(1, 2)).toBe('v1.2');
+    expect(formatCourseVersion(null, null)).toBe('v0.0');
   });
 });

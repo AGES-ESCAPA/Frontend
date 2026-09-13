@@ -119,6 +119,7 @@ describe('Button component', () => {
     'ghost',
     'ghost-dark',
     'active',
+    'danger',
   ];
 
   variants.forEach((variant) => {

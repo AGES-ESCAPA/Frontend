@@ -15,6 +15,9 @@ const Courses = lazy(() => import('@pages/Courses/Courses').then((m) => ({ defau
 const CourseBuilder = lazy(() =>
   import('@pages/CourseBuilder/CourseBuilder').then((m) => ({ default: m.CourseBuilder })),
 );
+const AdminCourses = lazy(() =>
+  import('@pages/AdminCourses/AdminCourses').then((m) => ({ default: m.AdminCourses })),
+);
 
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
@@ -56,8 +59,11 @@ export const AppRouter = () => {
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/aluno/cursos" element={<Courses />} />
+          <Route path="/empresa/cursos" element={<Courses />} />
 
           {/* Painel Administrativo */}
+          <Route path="/admin/cursos" element={<AdminCourses />} />
           <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
           <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
 

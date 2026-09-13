@@ -9,6 +9,7 @@
 .iconButton,
 .dragHandle,
 .lessonItem,
+.addLessonButton,
 .addModuleCard {
   display: flex;
   align-items: center;
@@ -218,6 +219,29 @@
   font-size: var(--text-body-3);
 }
 
+.addLessonButton {
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  color: var(--color-info-200);
+  background-color: transparent;
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-3--line-height);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.addLessonButton:disabled {
+  color: var(--color-neutral-700);
+  cursor: not-allowed;
+}
+
+.addLessonButton:hover:not(:disabled) {
+  color: var(--color-info-300);
+  background-color: var(--color-surface-overlay);
+}
+
 .addModuleCard {
   flex-direction: column;
   justify-content: center;
@@ -279,7 +303,8 @@
 
   .moduleHeader,
   .lessonItem,
-  .emptyLessons {
+  .emptyLessons,
+  .addLessonButton {
     padding-right: var(--space-4);
     padding-left: var(--space-4);
   }
@@ -289,6 +314,7 @@
   .moduleCard,
   .iconButton,
   .titleField input,
+  .addLessonButton,
   .addModuleCard {
     transition: none;
   }

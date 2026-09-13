@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import styles from './Button.module.css';
 
 export type ButtonVariant =
-  'primary' | 'secondary' | 'outlined' | 'ghost' | 'ghost-dark' | 'active';
+  'primary' | 'secondary' | 'outlined' | 'ghost' | 'ghost-dark' | 'active' | 'danger';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Text displayed on the button (required). */

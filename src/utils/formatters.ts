@@ -193,3 +193,44 @@ export const truncate = (str: string, maxLength: number): string => {
   if (str.length <= maxLength) return str;
   return `${str.slice(0, maxLength - 3)}...`;
 };
+
+const COURSE_CODE_STOP_WORDS = new Set([
+  'de',
+  'da',
+  'do',
+  'das',
+  'dos',
+  'e',
+  'em',
+  'para',
+  'o',
+  'a',
+  'os',
+  'as',
+]);
+
+/**
+ * Gera o código de duas letras exibido na coluna "Curso" da gestão administrativa.
+ * @example toCourseCode("Atendimento de Excelencia em Hospedagem") // → "AE"
+ */
+export const toCourseCode = (title: string): string => {
+  const words = title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/\s+/)
+    .filter((word) => word.length > 0 && !COURSE_CODE_STOP_WORDS.has(word.toLowerCase()));
+
+  if (words.length === 0) return '--';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+
+  return `${words[0].charAt(0)}${words[1].charAt(0)}`.toUpperCase();
+};
+
+/**
+ * Formata a versão major/minor do curso no padrão da tabela administrativa.
+ * @example formatCourseVersion(1, 2) // → "v1.2"
+ */
+export const formatCourseVersion = (
+  majorVersion: number | null,
+  minorVersion: number | null,
+): string => `v${majorVersion ?? 0}.${minorVersion ?? 0}`;

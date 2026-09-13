@@ -114,4 +114,54 @@ describe('courseService', () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain(`${PUBLIC_COURSES_PATH}/${details.id}`);
     expect(result.title).toBe(details.title);
   });
+
+  it('should call GET /api/v1/admin/courses with the admin header', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () =>
+        Promise.resolve({
+          success: true,
+          data: [
+            {
+              id: 'e0000000-0000-4000-e000-000000000001',
+              title: 'Atendimento de Excelencia em Hospedagem',
+              category: 'Hospitalidade',
+              price: 249.9,
+              status: 'PUBLISHED',
+              majorVersion: 1,
+              minorVersion: 2,
+            },
+          ],
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await courseService.listAdminCourses();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses');
+    expect(url).not.toMatch(/\/admin\/courses\/.+/);
+    expect((init.headers as Record<string, string>)['X-User-Id']).toBe(
+      'a0000000-0000-4000-a000-000000000001',
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe('Atendimento de Excelencia em Hospedagem');
+  });
+
+  it('should call DELETE /api/v1/admin/courses/:id to archive a course', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve({ success: true, data: null }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await courseService.archiveCourse('e0000000-0000-4000-e000-000000000003');
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses/e0000000-0000-4000-e000-000000000003');
+    expect(init.method).toBe('DELETE');
+  });
 });

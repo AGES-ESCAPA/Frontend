@@ -1,0 +1,22 @@
+.root {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: var(--space-3);
+  background-color: var(--color-primary-700);
+  border-radius: var(--radius-full);
+}
+
+.indicator {
+  display: block;
+  height: 100%;
+  background-color: var(--color-info-300);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
+}

@@ -6,16 +6,26 @@ import {
   FileText,
   GripVertical,
   Pencil,
+  Plus,
   Trash2,
 } from 'lucide-react';
+import { LessonModal } from '@components/ui';
 import { courseModulesApi } from '@services/courseModules';
-import type { CourseModule, CourseModuleClient } from '@services/courseModules';
+import type {
+  CourseContent,
+  CourseContentType,
+  CourseModule,
+  CourseModuleClient,
+} from '@services/courseModules';
+import { createLesson as persistLessonRequest } from '@services/lessonService';
+import type { Lesson, LessonPayload } from '@/types/lesson';
 import styles from './CourseModulesBuilder.module.css';
 
 export interface CourseModulesBuilderProps {
   courseId: string;
   initialModules: CourseModule[];
   client?: CourseModuleClient;
+  createLesson?: (payload: LessonPayload) => Promise<Lesson>;
 }
 
 type BuilderStatus = 'idle' | 'saving' | 'success' | 'error';
@@ -50,15 +60,42 @@ const formatModuleDuration = (totalMinutes: number) => {
   return `${hours}h ${minutes}m`;
 };
 
+const mapLessonToCourseContent = (lesson: Lesson, fallbackOrder: number): CourseContent => ({
+  id: lesson.id,
+  title: lesson.title,
+  type: lesson.type.toUpperCase() as CourseContentType,
+  order: lesson.order ?? fallbackOrder,
+  durationMinutes:
+    lesson.durationInSeconds != null ? Math.round(lesson.durationInSeconds / 60) : undefined,
+});
+
+const appendLessonToModule = (module: CourseModule, lesson: Lesson): CourseModule => {
+  const content = mapLessonToCourseContent(lesson, module.contents.length + 1);
+  const contents = [...module.contents, content];
+
+  return {
+    ...module,
+    contents,
+    totalContents: contents.length,
+    totalDurationMinutes: module.totalDurationMinutes + (content.durationMinutes ?? 0),
+  };
+};
+
 export const CourseModulesBuilder = ({
   courseId,
   initialModules,
   client = courseModulesApi,
+  createLesson = persistLessonRequest,
 }: CourseModulesBuilderProps) => {
   const [modules, setModules] = useState(() => sortModulesByOrder(initialModules));
   const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(() => new Set());
   const [draggingModuleId, setDraggingModuleId] = useState<string | null>(null);
   const [dragOverModuleId, setDragOverModuleId] = useState<string | null>(null);
+  const [lessonTarget, setLessonTarget] = useState<{
+    moduleId: string;
+    moduleName: string;
+    moduleOrder: number;
+  } | null>(null);
   const [status, setStatus] = useState<BuilderStatus>('idle');
   const [statusMessage, setStatusMessage] = useState('');
   const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -263,6 +300,27 @@ export const CourseModulesBuilder = ({
     }
   };
 
+  const handleCreateLesson = async (payload: LessonPayload) => {
+    setFeedback('saving', 'Criando aula...');
+
+    try {
+      const createdLesson = await createLesson(payload);
+
+      setModules((currentModules) =>
+        currentModules.map((module) =>
+          module.id === payload.moduleId ? appendLessonToModule(module, createdLesson) : module,
+        ),
+      );
+      setFeedback('success', 'Aula adicionada.');
+    } catch (error) {
+      setFeedback(
+        'error',
+        error instanceof Error ? error.message : 'Não foi possível criar a aula.',
+      );
+      throw error;
+    }
+  };
+
   return (
     <section className={styles.builder} aria-label="Estrutura de conteúdo do curso">
       {statusMessage ? (
@@ -398,6 +456,22 @@ export const CourseModulesBuilder = ({
                     ) : (
                       <p className={styles.emptyLessons}>Nenhuma aula vinculada a este módulo.</p>
                     )}
+                    <button
+                      type="button"
+                      className={styles.addLessonButton}
+                      disabled={status === 'saving'}
+                      aria-label={`Adicionar aula ao Módulo ${moduleNumber}`}
+                      onClick={() =>
+                        setLessonTarget({
+                          moduleId: module.id,
+                          moduleName: module.title,
+                          moduleOrder: moduleNumber,
+                        })
+                      }
+                    >
+                      <Plus size={16} strokeWidth={2} aria-hidden="true" />
+                      Adicionar Aula
+                    </button>
                   </div>
                 ) : null}
               </article>
@@ -416,6 +490,19 @@ export const CourseModulesBuilder = ({
         <strong>+ Adicionar Módulo</strong>
         <span>Crie uma nova seção para organizar o conteúdo do curso.</span>
       </button>
+
+      {lessonTarget ? (
+        <LessonModal
+          open
+          onOpenChange={(open) => {
+            if (!open) setLessonTarget(null);
+          }}
+          moduleId={lessonTarget.moduleId}
+          moduleName={lessonTarget.moduleName}
+          moduleOrder={lessonTarget.moduleOrder}
+          onSubmit={handleCreateLesson}
+        />
+      ) : null}
     </section>
   );
 };
