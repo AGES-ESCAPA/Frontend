@@ -5,7 +5,8 @@
  * chamam `fetch` diretamente: elas usam estas funções.
  */
 import type { Lesson, LessonPayload, LessonResource, LessonType } from '@/types/lesson';
-import type { ApiResponse } from './api';
+import { adminHeaders } from '@services/api';
+import type { ApiResponse } from '@services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -113,7 +114,7 @@ const parseLessonResponse = async (response: Response, fallback: string): Promis
 export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
   const response = await fetch(`${API_BASE_URL}/admin/modules/${payload.moduleId}/contents`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminHeaders(),
     body: JSON.stringify(buildCreateContentRequest(payload)),
   });
 
@@ -123,7 +124,7 @@ export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
 export const updateLesson = async (lessonId: string, payload: LessonPayload): Promise<Lesson> => {
   const response = await fetch(`${API_BASE_URL}/admin/contents/${lessonId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminHeaders(),
     body: JSON.stringify(buildCreateContentRequest(payload)),
   });
 

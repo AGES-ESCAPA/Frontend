@@ -53,7 +53,10 @@ describe('lessonService', () => {
     expect(fetchMock.mock.calls[0][1]).toEqual(
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': 'a0000000-0000-4000-a000-000000000001',
+        },
         body: JSON.stringify({
           title: payload.title,
           type: 'VIDEO',

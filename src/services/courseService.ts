@@ -1,3 +1,4 @@
+import { adminHeaders } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { toApiLevel } from '@utils/mapPublicCourse';
 import type {
@@ -14,13 +15,6 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const PUBLIC_COURSES_PATH = '/public/courses';
 
 const ADMIN_COURSES_URL = `${API_BASE}/admin/courses`;
-
-const ADMIN_USER_ID = import.meta.env.VITE_ADMIN_USER_ID ?? 'a0000000-0000-4000-a000-000000000001';
-
-const adminHeaders = (): HeadersInit => ({
-  'Content-Type': 'application/json',
-  'X-User-Id': ADMIN_USER_ID,
-});
 
 const buildPublicCoursesUrl = (query: PublicCoursesQuery = {}): string => {
   const params = new URLSearchParams();
