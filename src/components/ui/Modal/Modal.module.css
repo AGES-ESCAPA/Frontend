@@ -1,0 +1,196 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Modal — CSS Module
+   Component: src/components/ui/Modal/Modal.tsx
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Backdrop ──────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: var(--color-overlay-backdrop);
+  backdrop-filter: blur(var(--blur-sm));
+  animation: modal-fade-in var(--transition-fast);
+}
+
+/* ── Caixa do diálogo ──────────────────────────────────────────────── */
+.content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - var(--space-8));
+  max-height: calc(100vh - var(--space-16));
+  overflow: hidden;
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+  transform: translate(-50%, -50%);
+  animation: modal-zoom-in var(--transition-base);
+}
+
+.content:focus-visible {
+  outline: none;
+}
+
+.size-sm {
+  max-width: var(--container-lg);
+}
+
+.size-md {
+  max-width: var(--container-2xl);
+}
+
+.size-lg {
+  max-width: var(--container-4xl);
+}
+
+/* ── Cabeçalho ─────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  color: var(--color-primary-300);
+  background-color: var(--color-primary-600);
+  border-radius: var(--radius-xl);
+}
+
+.headings {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-h5);
+  line-height: var(--text-h5--line-height);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.subtitle {
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-text-muted);
+}
+
+.close {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  color: var(--color-text-secondary);
+  background-color: var(--color-overlay-hover-on-dark);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.close:hover {
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-overlay);
+}
+
+.close:focus-visible {
+  border-color: var(--color-info-300);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--color-focus-ring-info);
+}
+
+/* ── Corpo e rodapé ────────────────────────────────────────────────── */
+.shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-700) var(--color-primary-900);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+/* ── Animações ─────────────────────────────────────────────────────── */
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-zoom-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ── Responsividade ────────────────────────────────────────────────── */
+@media (width <= 640px) {
+  .content {
+    width: calc(100% - var(--space-4));
+    max-height: calc(100vh - var(--space-8));
+  }
+
+  .header {
+    padding: var(--space-4);
+  }
+
+  .body {
+    padding: var(--space-4);
+  }
+
+  .footer {
+    padding: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .content {
+    animation: none;
+  }
+}
