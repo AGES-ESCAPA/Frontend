@@ -185,6 +185,7 @@ export interface PublicCourseInstructor {
   name: string;
   headline: string | null;
   bio: string | null;
+  avatarUrl: string | null;
 }
 
 export interface PublicCourseContent {
@@ -218,6 +219,7 @@ export interface PublicCourseDetails {
   price: number | null;
   deadline: number | null;
   thumbnailUrl: string | null;
+  teaserVideoUrl: string | null;
   rating: number | null;
   reviewsCount: number | null;
   studentsCount: number | null;
@@ -243,6 +245,8 @@ export interface CourseSummary {
   instructor: {
     name: string;
     role: string;
+    bio?: string;
+    avatarUrl?: string | null;
   };
   benefits: string[];
   teaserUrl: string;

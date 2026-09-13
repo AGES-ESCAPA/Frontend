@@ -111,9 +111,11 @@ export const mapPublicCourseDetailsToSummary = (course: PublicCourseDetails): Co
   instructor: {
     name: course.instructor?.name ?? 'ESCAPA',
     role: course.instructor?.headline ?? '',
+    bio: course.instructor?.bio ?? '',
+    avatarUrl: course.instructor?.avatarUrl ?? null,
   },
   benefits: course.learningObjectives ?? [],
-  teaserUrl: firstTeaserUrl(course),
+  teaserUrl: course.teaserVideoUrl || firstTeaserUrl(course),
   materials: course.materials ?? [],
   modules: (course.modules ?? []).map(mapPublicModule),
 });

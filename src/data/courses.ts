@@ -17,6 +17,7 @@ export const featuredCourse: CourseSummary = {
   instructor: {
     name: 'Dra. Mariana Fonseca',
     role: 'Pesquisadora em Turismo e IA — ESCAPA',
+    bio: 'Formada em Gestão de Turismo, com MBA em Marketing Estratégico, Mestrado e Doutorado em Administração e Marketing pela PUC/RS.',
   },
   benefits: [
     'Acesso em qualquer dispositivo',

@@ -23,4 +23,25 @@ describe('TeaserPlayer', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Vídeo não disponível para esse curso');
   });
+
+  it('embeds a Vimeo player when the teaser is a Vimeo URL', () => {
+    render(
+      <TeaserPlayer
+        src="https://vimeo.com/1226382615?share=copy&fl=sv&fe=ci"
+        title="IA Aplicada ao Turismo"
+      />,
+    );
+
+    const iframe = screen.getByTitle('Teaser do curso IA Aplicada ao Turismo');
+
+    expect(iframe).toHaveAttribute(
+      'src',
+      'https://player.vimeo.com/video/1226382615?badge=0&autopause=0&player_id=0&app_id=58479&title=0&byline=0&portrait=0',
+    );
+    expect(iframe).toHaveAttribute(
+      'allow',
+      'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share',
+    );
+    expect(iframe).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+  });
 });
