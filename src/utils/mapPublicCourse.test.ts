@@ -70,6 +70,7 @@ describe('mapPublicCourse', () => {
       price: 249.9,
       deadline: null,
       thumbnailUrl: course.thumbnailUrl,
+      teaserVideoUrl: null,
       rating: 4.5,
       reviewsCount: 2,
       studentsCount: 80,
@@ -78,6 +79,7 @@ describe('mapPublicCourse', () => {
         name: 'Beatriz Nunes',
         headline: 'Especialista em hospedagem',
         bio: null,
+        avatarUrl: null,
       },
       learningObjectives: ['Atender com excelência'],
       materials: [
@@ -116,9 +118,43 @@ describe('mapPublicCourse', () => {
     expect(summary.category).toBe('Hospitalidade');
     expect(summary.durationHours).toBe(8);
     expect(summary.instructor.name).toBe('Beatriz Nunes');
+    expect(summary.instructor.bio).toBe('');
     expect(summary.thumbnailUrl).toBe(course.thumbnailUrl);
     expect(summary.materials).toEqual(details.materials);
     expect(summary.teaserUrl).toBe('https://cdn.escapa.com/teaser.mp4');
     expect(summary.modules[0].lessons[0].type).toBe('video');
+  });
+
+  it('should prefer the course teaser URL over a free lesson video', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: course.shortDescription,
+      description: 'Descrição completa do curso.',
+      category: 'Hospitalidade',
+      level: 'INICIANTE',
+      durationTime: 480,
+      price: 249.9,
+      deadline: null,
+      thumbnailUrl: course.thumbnailUrl,
+      teaserVideoUrl: 'https://vimeo.com/1226382615?share=copy&fl=sv&fe=ci',
+      rating: 4.5,
+      reviewsCount: 2,
+      studentsCount: 80,
+      instructor: {
+        id: 'inst-1',
+        name: 'Beatriz Nunes',
+        headline: 'Especialista em hospedagem',
+        bio: null,
+        avatarUrl: null,
+      },
+      learningObjectives: [],
+      materials: [],
+      modules: [],
+    };
+
+    expect(mapPublicCourseDetailsToSummary(details).teaserUrl).toBe(
+      'https://vimeo.com/1226382615?share=copy&fl=sv&fe=ci',
+    );
   });
 });

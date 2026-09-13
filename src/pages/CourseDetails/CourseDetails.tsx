@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import { CourseDetailModal } from '@components/course/CourseDetailModal/CourseDetailModal';
 import { CourseHeader } from '@components/course/CourseHeader/CourseHeader';
+import { CourseInstructor } from '@components/course/CourseInstructor/CourseInstructor';
 import { CourseMaterials } from '@components/course/CourseMaterials/CourseMaterials';
 import { CurriculumAccordion } from '@components/course/CurriculumAccordion/CurriculumAccordion';
 import { TeaserPlayer } from '@components/course/TeaserPlayer/TeaserPlayer';
@@ -66,6 +67,7 @@ export const CourseDetails = () => {
                 <CurriculumAccordion modules={course.modules} />
               </section>
             ) : null}
+            {course.instructor.name ? <CourseInstructor instructor={course.instructor} /> : null}
             {course.materials.length > 0 ? <CourseMaterials materials={course.materials} /> : null}
           </>
         )}

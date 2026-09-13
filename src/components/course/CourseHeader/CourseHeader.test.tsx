@@ -30,6 +30,21 @@ describe('CourseHeader', () => {
     expect(screen.getByRole('img', { name: 'Imagem ilustrativa do curso' })).toBeInTheDocument();
   });
 
+  it('shows the instructor avatar with the first letter of the name', () => {
+    render(
+      <MemoryRouter>
+        <CourseHeader
+          course={{
+            ...featuredCourse,
+            instructor: { name: 'Barbara Diogo', role: featuredCourse.instructor.role },
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('B')).toBeInTheDocument();
+  });
+
   it('renders the cover image when thumbnailUrl is present', () => {
     render(
       <MemoryRouter>

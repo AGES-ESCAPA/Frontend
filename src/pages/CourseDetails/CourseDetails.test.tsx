@@ -35,6 +35,7 @@ const details: PublicCourseDetails = {
   price: 249.9,
   deadline: null,
   thumbnailUrl: null,
+  teaserVideoUrl: null,
   rating: 4.5,
   reviewsCount: 2,
   studentsCount: 80,
@@ -42,7 +43,8 @@ const details: PublicCourseDetails = {
     id: 'inst-1',
     name: 'Beatriz Nunes',
     headline: 'Especialista em hospedagem',
-    bio: null,
+    bio: 'Doze anos coordenando recepção e governança em hotéis de praia.',
+    avatarUrl: null,
   },
   learningObjectives: ['Atender com excelência'],
   materials: [
@@ -81,6 +83,10 @@ describe('CourseDetails', () => {
     ).toBeInTheDocument();
     expect(within(dialog).getByText('Hospitalidade')).toBeInTheDocument();
     expect(within(dialog).getByText('Iniciante')).toBeInTheDocument();
+    expect(within(dialog).getByRole('heading', { name: 'Sobre o Instrutor' })).toBeInTheDocument();
+    expect(
+      within(dialog).getByText('Doze anos coordenando recepção e governança em hotéis de praia.'),
+    ).toBeInTheDocument();
     expect(within(dialog).getByRole('heading', { name: 'Materiais Inclusos' })).toBeInTheDocument();
     expect(within(dialog).getByText('Guia de Prompts para Turismo (PDF)')).toBeInTheDocument();
     expect(within(dialog).getByText('Vídeo não disponível para esse curso')).toBeInTheDocument();

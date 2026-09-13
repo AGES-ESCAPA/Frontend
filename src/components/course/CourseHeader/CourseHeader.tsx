@@ -49,8 +49,12 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
       <div className={styles.hero}>
         <div className={styles.heroCopy}>
           <div className={styles.tags}>
-            <Badge label={course.category} category={mapCourseCategory(course.category)} />
-            <Badge label={course.level} variant="level" />
+            <Badge
+              className={styles.headerBadge}
+              label={course.category}
+              category={mapCourseCategory(course.category)}
+            />
+            <Badge className={styles.headerBadge} label={course.level} variant="level" />
             <span className={styles.certificate}>
               <span aria-hidden="true">🏅</span>
               Certificado
@@ -59,25 +63,33 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
           <h2 id="course-title">{course.title}</h2>
           <p className={styles.description}>{course.description}</p>
           <div className={styles.stats} aria-label="Informações do curso">
-            <span>
+            <div className={styles.statsMeta}>
+              <span>
+                <Users size={14} aria-hidden="true" />{' '}
+                {course.studentsCount.toLocaleString('pt-BR')} alunos
+              </span>
+              <span>
+                <Clock3 size={14} aria-hidden="true" /> {course.durationHours}h
+              </span>
+              <span>
+                <Book size={14} aria-hidden="true" />{' '}
+                {course.modules.reduce((acc, module) => acc + module.lessonCount, 0)} aulas ·{' '}
+                {course.modules.length} módulos
+              </span>
+            </div>
+            <span className={styles.rating}>
               ★ {course.rating} ({course.reviewsCount} avaliações)
-            </span>
-            <span>
-              <Users size={14} aria-hidden="true" /> {course.studentsCount.toLocaleString('pt-BR')}{' '}
-              alunos
-            </span>
-            <span>
-              <Clock3 size={14} aria-hidden="true" /> {course.durationHours}h
-            </span>
-            <span>
-              <Book size={14} aria-hidden="true" />{' '}
-              {course.modules.reduce((acc, module) => acc + module.lessonCount, 0)} aulas ·{' '}
-              {course.modules.length} módulos
             </span>
           </div>
           <div className={styles.instructor}>
-            <span className={styles.instructorAvatar} aria-hidden="true">
-              M
+            <span className={styles.instructorAvatar}>
+              {course.instructor.avatarUrl ? (
+                <img src={course.instructor.avatarUrl} alt={`Foto de ${course.instructor.name}`} />
+              ) : (
+                <span aria-hidden="true">
+                  {course.instructor.name.trim().charAt(0).toLocaleUpperCase('pt-BR')}
+                </span>
+              )}
             </span>
             <span>
               <strong>{course.instructor.name}</strong>
