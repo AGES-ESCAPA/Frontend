@@ -4,7 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { createCourse, getCourseById, updateCourse } from '@services/courseService';
+import { courseModulesApi } from '@services/courseModules';
 import type { CourseDetail } from '@/types/course';
+import type { AdminCourseModule } from '@/types/module';
 import { CourseBuilder } from './CourseBuilder';
 
 vi.mock('@services/courseService', () => ({
@@ -12,6 +14,27 @@ vi.mock('@services/courseService', () => ({
   getCourseById: vi.fn(),
   updateCourse: vi.fn(),
 }));
+
+vi.mock('@services/courseModules', () => ({
+  courseModulesApi: {
+    listModules: vi.fn(),
+    createModule: vi.fn(),
+    updateModuleTitle: vi.fn(),
+    reorderModules: vi.fn(),
+    deleteModule: vi.fn(),
+  },
+}));
+
+const SAVED_MODULES: AdminCourseModule[] = [
+  {
+    id: '01000000-0000-4000-9000-000000000001',
+    title: 'Fundamentos do Atendimento',
+    order: 1,
+    totalContents: 0,
+    totalDurationMinutes: 0,
+    contents: [],
+  },
+];
 
 const SAVED_COURSE: CourseDetail = {
   id: 'c2f1b3a4-0000-4000-8000-000000000001',
@@ -42,6 +65,7 @@ describe('CourseBuilder', () => {
     vi.mocked(createCourse).mockReset().mockResolvedValue(SAVED_COURSE);
     vi.mocked(updateCourse).mockReset().mockResolvedValue(SAVED_COURSE);
     vi.mocked(getCourseById).mockReset().mockResolvedValue(SAVED_COURSE);
+    vi.mocked(courseModulesApi.listModules).mockReset().mockResolvedValue(SAVED_MODULES);
   });
 
   it('should render every field of the course registration form', () => {
@@ -165,5 +189,45 @@ describe('CourseBuilder', () => {
     await waitFor(() => {
       expect(screen.getByRole('textbox', { name: /título/i })).toBeEnabled();
     });
+  });
+  it('should ask to save the draft before organizing modules on a new course', async () => {
+    renderBuilder();
+
+    await userEvent.click(screen.getByRole('tab', { name: /estrutura de conteúdo/i }));
+
+    expect(
+      await screen.findByText(/salve o rascunho do curso para começar a organizar os módulos/i),
+    ).toBeInTheDocument();
+    expect(courseModulesApi.listModules).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /adicionar módulo/i })).not.toBeInTheDocument();
+  });
+
+  it('should load the stored modules on the edit route', async () => {
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+
+    await waitFor(() => {
+      expect(courseModulesApi.listModules).toHaveBeenCalledWith(SAVED_COURSE.id);
+    });
+
+    await userEvent.click(screen.getByRole('tab', { name: /estrutura de conteúdo/i }));
+
+    expect(await screen.findByDisplayValue('Fundamentos do Atendimento')).toBeInTheDocument();
+  });
+
+  it('should show the API error and retry loading the modules', async () => {
+    vi.mocked(courseModulesApi.listModules)
+      .mockRejectedValueOnce(new Error('Access denied: user is not ADMIN'))
+      .mockResolvedValueOnce(SAVED_MODULES);
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await userEvent.click(screen.getByRole('tab', { name: /estrutura de conteúdo/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Access denied: user is not ADMIN');
+    expect(screen.queryByDisplayValue('Fundamentos do Atendimento')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /tentar novamente/i }));
+
+    expect(await screen.findByDisplayValue('Fundamentos do Atendimento')).toBeInTheDocument();
+    expect(courseModulesApi.listModules).toHaveBeenCalledTimes(2);
   });
 });

@@ -9,45 +9,36 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { LessonModal } from '@components/ui';
+import { ConfirmDialog, LessonModal } from '@components/ui';
 import { courseModulesApi } from '@services/courseModules';
-import type {
-  CourseContent,
-  CourseContentType,
-  CourseModule,
-  CourseModuleClient,
-} from '@services/courseModules';
 import { createLesson as persistLessonRequest } from '@services/lessonService';
 import type { Lesson, LessonPayload } from '@/types/lesson';
+import type {
+  AdminCourseModule,
+  AdminModuleContent,
+  AdminModuleContentType,
+  CourseModuleClient,
+} from '@/types/module';
 import styles from './CourseModulesBuilder.module.css';
 
 export interface CourseModulesBuilderProps {
   courseId: string;
-  initialModules: CourseModule[];
+  initialModules: AdminCourseModule[];
   client?: CourseModuleClient;
   createLesson?: (payload: LessonPayload) => Promise<Lesson>;
 }
 
 type BuilderStatus = 'idle' | 'saving' | 'success' | 'error';
 
-const sortModulesByOrder = (modules: CourseModule[]) =>
+const sortModulesByOrder = (modules: AdminCourseModule[]) =>
   [...modules].sort((current, next) => current.order - next.order);
 
-const createTemporaryId = () =>
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `temporary-${Date.now()}`;
-
-const createFallbackModule = (id: string, title: string, order: number): CourseModule => ({
-  id,
-  title,
-  order,
-  totalContents: 0,
-  totalDurationMinutes: 0,
-  contents: [],
-});
-
-const reindexModules = (modules: CourseModule[]) =>
+/**
+ * O `order` do servidor pode ter lacunas após remoções. A numeração exibida
+ * ("Módulo 1", "Módulo 2"…) usa sempre o índice do array, e aqui só ajustamos
+ * o `order` local para manter a ordenação estável enquanto a API não responde.
+ */
+const reindexModules = (modules: AdminCourseModule[]) =>
   modules.map((module, index) => ({
     ...module,
     order: index + 1,
@@ -60,17 +51,19 @@ const formatModuleDuration = (totalMinutes: number) => {
   return `${hours}h ${minutes}m`;
 };
 
-const mapLessonToCourseContent = (lesson: Lesson, fallbackOrder: number): CourseContent => ({
+const formatContentsCount = (total: number) => (total === 1 ? '1 aula' : `${total} aulas`);
+
+const mapLessonToModuleContent = (lesson: Lesson, fallbackOrder: number): AdminModuleContent => ({
   id: lesson.id,
   title: lesson.title,
-  type: lesson.type.toUpperCase() as CourseContentType,
+  type: lesson.type.toUpperCase() as AdminModuleContentType,
   order: lesson.order ?? fallbackOrder,
   durationMinutes:
     lesson.durationInSeconds != null ? Math.round(lesson.durationInSeconds / 60) : undefined,
 });
 
-const appendLessonToModule = (module: CourseModule, lesson: Lesson): CourseModule => {
-  const content = mapLessonToCourseContent(lesson, module.contents.length + 1);
+const appendLessonToModule = (module: AdminCourseModule, lesson: Lesson): AdminCourseModule => {
+  const content = mapLessonToModuleContent(lesson, module.contents.length + 1);
   const contents = [...module.contents, content];
 
   return {
@@ -96,6 +89,8 @@ export const CourseModulesBuilder = ({
     moduleName: string;
     moduleOrder: number;
   } | null>(null);
+  const [moduleToDelete, setModuleToDelete] = useState<AdminCourseModule | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [status, setStatus] = useState<BuilderStatus>('idle');
   const [statusMessage, setStatusMessage] = useState('');
   const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -137,17 +132,11 @@ export const CourseModulesBuilder = ({
     setFeedback('saving', 'Criando módulo...');
 
     try {
+      // O servidor calcula a posição: o módulo novo entra sempre no fim.
       const createdModule = await client.createModule(courseId, title);
 
-      setModules((currentModules) =>
-        reindexModules([
-          ...currentModules,
-          createdModule ?? createFallbackModule(createTemporaryId(), title, 1),
-        ]),
-      );
-      if (createdModule) {
-        savedTitlesRef.current.set(createdModule.id, createdModule.title);
-      }
+      setModules((currentModules) => [...currentModules, createdModule]);
+      savedTitlesRef.current.set(createdModule.id, createdModule.title);
       setFeedback('success', 'Módulo adicionado.');
     } catch (error) {
       setFeedback(
@@ -209,19 +198,23 @@ export const CourseModulesBuilder = ({
   };
 
   const persistModuleOrder = async (
-    nextModules: CourseModule[],
-    previousModules: CourseModule[],
+    nextModules: AdminCourseModule[],
+    previousModules: AdminCourseModule[],
   ) => {
-    const reindexedModules = reindexModules(nextModules);
-    const moduleIds = reindexedModules.map((module) => module.id);
+    // O reorder é tudo ou nada: enviamos a lista completa de IDs na ordem exibida.
+    const moduleIds = nextModules.map((module) => module.id);
 
-    setModules(reindexedModules);
+    setModules(reindexModules(nextModules));
     setFeedback('saving', 'Salvando nova ordem dos módulos...');
 
     try {
-      await client.reorderModules(courseId, moduleIds);
+      // O servidor devolve a lista já com `order` reatribuído de 1 a n.
+      const reorderedModules = await client.reorderModules(courseId, moduleIds);
+
+      setModules(sortModulesByOrder(reorderedModules));
       setFeedback('success', 'Ordem dos módulos salva.');
     } catch (error) {
+      // Em 400 nada foi alterado no servidor: voltamos à ordem anterior.
       setModules(previousModules);
       setFeedback(
         'error',
@@ -260,43 +253,53 @@ export const CourseModulesBuilder = ({
     await persistModuleOrder(nextModules, previousModules);
   };
 
-  const handleDeleteModule = async (moduleId: string) => {
-    const moduleToDelete = modules.find((module) => module.id === moduleId);
+  const requestDeleteModule = (moduleId: string) => {
+    const module = modules.find((current) => current.id === moduleId);
 
+    if (module) {
+      setModuleToDelete(module);
+    }
+  };
+
+  const handleDeleteDialogChange = (open: boolean) => {
+    if (!open && !isDeleting) {
+      setModuleToDelete(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
     if (!moduleToDelete) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Tem certeza que deseja excluir "${moduleToDelete.title}"? As aulas vinculadas a este módulo também serão removidas.`,
-    );
+    const moduleId = moduleToDelete.id;
 
-    if (!confirmed) {
-      return;
-    }
-
-    const previousModules = orderedModules;
-
-    setModules((currentModules) =>
-      reindexModules(currentModules.filter((module) => module.id !== moduleId)),
-    );
-    setExpandedModuleIds((currentIds) => {
-      const nextIds = new Set(currentIds);
-      nextIds.delete(moduleId);
-      return nextIds;
-    });
+    setIsDeleting(true);
     setFeedback('saving', 'Excluindo módulo...');
 
     try {
+      // A remoção cascateia para todos os conteúdos e é irreversível;
+      // por isso só atualizamos a lista depois do 204.
       await client.deleteModule(moduleId);
+
+      setModules((currentModules) => currentModules.filter((module) => module.id !== moduleId));
+      setExpandedModuleIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(moduleId);
+        return nextIds;
+      });
       savedTitlesRef.current.delete(moduleId);
+      setModuleToDelete(null);
       setFeedback('success', 'Módulo excluído.');
     } catch (error) {
-      setModules(previousModules);
+      // Fecha o diálogo para a mensagem de erro ficar visível na tela.
+      setModuleToDelete(null);
       setFeedback(
         'error',
         error instanceof Error ? error.message : 'Não foi possível excluir o módulo.',
       );
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -321,11 +324,23 @@ export const CourseModulesBuilder = ({
     }
   };
 
+  const deleteDescription = moduleToDelete
+    ? `Esta ação excluirá o módulo “${moduleToDelete.title}” e ${formatContentsCount(
+        moduleToDelete.totalContents,
+      )} vinculada${moduleToDelete.totalContents === 1 ? '' : 's'} a ele. Não é possível desfazer.`
+    : '';
+
   return (
     <section className={styles.builder} aria-label="Estrutura de conteúdo do curso">
       {statusMessage ? (
         <p className={styles.statusMessage} data-status={status} role="status">
           {statusMessage}
+        </p>
+      ) : null}
+
+      {orderedModules.length === 0 ? (
+        <p className={styles.emptyLessons}>
+          Este curso ainda não tem módulos. Adicione o primeiro para começar a organizar o conteúdo.
         </p>
       ) : null}
 
@@ -391,7 +406,7 @@ export const CourseModulesBuilder = ({
                           }}
                         />
                       </label>
-                      <p>{`${module.totalContents} aulas · ${formatModuleDuration(
+                      <p>{`${formatContentsCount(module.totalContents)} · ${formatModuleDuration(
                         module.totalDurationMinutes,
                       )}`}</p>
                     </div>
@@ -410,7 +425,7 @@ export const CourseModulesBuilder = ({
                     <button
                       type="button"
                       className={`${styles.iconButton} ${styles.deleteButton}`}
-                      onClick={() => handleDeleteModule(module.id)}
+                      onClick={() => requestDeleteModule(module.id)}
                       disabled={status === 'saving'}
                       aria-label={`Excluir Módulo ${moduleNumber}`}
                     >
@@ -490,6 +505,18 @@ export const CourseModulesBuilder = ({
         <strong>+ Adicionar Módulo</strong>
         <span>Crie uma nova seção para organizar o conteúdo do curso.</span>
       </button>
+
+      <ConfirmDialog
+        open={moduleToDelete !== null}
+        title="Excluir módulo?"
+        description={deleteDescription}
+        confirmLabel="Excluir módulo"
+        isConfirming={isDeleting}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
+        onOpenChange={handleDeleteDialogChange}
+      />
 
       {lessonTarget ? (
         <LessonModal

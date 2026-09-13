@@ -10,7 +10,7 @@ import { useCourseForm } from '@hooks/useCourseForm';
 import { useToast } from '@hooks/useToast';
 import { createCourse, getCourseById, updateCourse } from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
-import type { CourseModule } from '@services/courseModules';
+import type { AdminCourseModule } from '@/types/module';
 import type {
   CoursePrerequisiteOption,
   CourseProgressRules,
@@ -47,44 +47,6 @@ const STATUS_LABELS: Record<CourseStatus, string> = {
 };
 
 const TAB_ICON_SIZE = 14;
-
-/**
- * O backend ainda não tem os endpoints de módulos implementados (só
- * curso e conteúdos dentro de um módulo existente). Enquanto isso, a
- * estrutura de conteúdo usa estes dados mockados como fallback — tanto
- * para um curso novo (sem id ainda) quanto quando a chamada real falha.
- */
-const MOCK_MODULES: CourseModule[] = [
-  {
-    id: '11111111-1111-4111-8111-111111111111',
-    title: 'Fundamentos da Web',
-    order: 1,
-    totalContents: 2,
-    totalDurationMinutes: 150,
-    contents: [
-      {
-        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
-        title: '1.1 Introdução ao HTML5 e Semântica',
-        type: 'VIDEO',
-        order: 1,
-      },
-      {
-        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
-        title: '1.2 Estrutura básica de um documento',
-        type: 'TEXT',
-        order: 2,
-      },
-    ],
-  },
-  {
-    id: '22222222-2222-4222-8222-222222222222',
-    title: 'Estilização com CSS',
-    order: 2,
-    totalContents: 0,
-    totalDurationMinutes: 0,
-    contents: [],
-  },
-];
 
 /**
  * A aba "Regras & Pré Requisitos" também não tem endpoint ainda (nem de
@@ -144,8 +106,10 @@ export const CourseBuilder = () => {
   const [loadError, setLoadError] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
 
-  const [modules, setModules] = useState<CourseModule[]>(MOCK_MODULES);
+  const [modules, setModules] = useState<AdminCourseModule[]>([]);
   const [isModulesLoading, setIsModulesLoading] = useState(false);
+  const [modulesError, setModulesError] = useState<string | null>(null);
+  const [modulesReloadToken, setModulesReloadToken] = useState(0);
 
   const [progressRules, setProgressRules] = useState<CourseProgressRules>(MOCK_PROGRESS_RULES);
   const [selectedPrerequisites, setSelectedPrerequisites] = useState<CoursePrerequisiteOption[]>(
@@ -233,24 +197,33 @@ export const CourseBuilder = () => {
     setReloadToken((token) => token + 1);
   }, []);
 
+  /**
+   * A estrutura de conteúdo só existe para um curso já salvo: sem `courseId`
+   * não há para onde criar módulos. Nesse caso a aba mostra um aviso e não
+   * consulta a API.
+   */
   useEffect(() => {
     if (courseId === undefined) {
-      setModules(MOCK_MODULES);
+      setModules([]);
+      setModulesError(null);
       return undefined;
     }
 
     let isCurrent = true;
     setIsModulesLoading(true);
+    setModulesError(null);
 
     courseModulesApi
       .listModules(courseId)
       .then((loadedModules) => {
         if (isCurrent) setModules(loadedModules);
       })
-      .catch(() => {
-        // Endpoint de módulos ainda não existe no backend — usa os
-        // dados mockados pra não travar o teste da tab.
-        if (isCurrent) setModules(MOCK_MODULES);
+      .catch((error: unknown) => {
+        if (!isCurrent) return;
+        setModules([]);
+        setModulesError(
+          error instanceof Error ? error.message : 'Não foi possível carregar os módulos do curso.',
+        );
       })
       .finally(() => {
         if (isCurrent) setIsModulesLoading(false);
@@ -259,7 +232,11 @@ export const CourseBuilder = () => {
     return () => {
       isCurrent = false;
     };
-  }, [courseId]);
+  }, [courseId, modulesReloadToken]);
+
+  const handleRetryModulesLoad = useCallback(() => {
+    setModulesReloadToken((token) => token + 1);
+  }, []);
 
   const handleProgressRuleChange = useCallback(
     (field: keyof CourseProgressRules, value: boolean) => {
@@ -453,13 +430,33 @@ export const CourseBuilder = () => {
           </Tabs.Content>
 
           <Tabs.Content value="content">
-            {isModulesLoading ? (
+            {courseId === undefined ? (
+              <p className={styles.contentNotice} role="status">
+                Salve o rascunho do curso para começar a organizar os módulos.
+              </p>
+            ) : null}
+
+            {courseId !== undefined && isModulesLoading ? (
               <p className={styles.loading} role="status">
                 Carregando a estrutura de conteúdo…
               </p>
-            ) : (
-              <CourseModulesBuilder courseId={courseId ?? 'novo'} initialModules={modules} />
-            )}
+            ) : null}
+
+            {courseId !== undefined && !isModulesLoading && modulesError !== null ? (
+              <div className={styles.loadError} role="alert">
+                <p>{modulesError}</p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  label="Tentar novamente"
+                  onClick={handleRetryModulesLoad}
+                />
+              </div>
+            ) : null}
+
+            {courseId !== undefined && !isModulesLoading && modulesError === null ? (
+              <CourseModulesBuilder courseId={courseId} initialModules={modules} />
+            ) : null}
           </Tabs.Content>
 
           <Tabs.Content value="rules">
