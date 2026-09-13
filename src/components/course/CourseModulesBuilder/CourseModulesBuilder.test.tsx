@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CourseModulesBuilder } from './CourseModulesBuilder';
-import type { CourseModule, CourseModuleClient } from '@services/courseModules';
+import type { AdminCourseModule, CourseModuleClient } from '@/types/module';
 import type { Lesson, LessonPayload } from '@/types/lesson';
 
 const COURSE_ID = '00000000-0000-4000-8000-000000000001';
@@ -10,7 +10,7 @@ const FIRST_MODULE_ID = '11111111-1111-4111-8111-111111111111';
 const SECOND_MODULE_ID = '22222222-2222-4222-8222-222222222222';
 const THIRD_MODULE_ID = '33333333-3333-4333-8333-333333333333';
 
-const createModules = (): CourseModule[] => [
+const createModules = (): AdminCourseModule[] => [
   {
     id: FIRST_MODULE_ID,
     title: 'Fundamentos do atendimento turístico',
@@ -71,7 +71,12 @@ const createClient = (): CourseModuleClient => ({
       contents: [],
     }),
   ),
-  reorderModules: vi.fn().mockResolvedValue(undefined),
+  reorderModules: vi.fn().mockImplementation((_courseId: string, moduleIds: string[]) => {
+    const byId = new Map(createModules().map((module) => [module.id, module]));
+    return Promise.resolve(
+      moduleIds.map((id, index) => ({ ...(byId.get(id) as AdminCourseModule), order: index + 1 })),
+    );
+  }),
   deleteModule: vi.fn().mockResolvedValue(undefined),
 });
 
@@ -175,14 +180,42 @@ describe('CourseModulesBuilder', () => {
     expect(
       within(reorderedModuleCards[0]).getByDisplayValue('Hospitalidade aplicada na prática'),
     ).toBeInTheDocument();
+    expect(within(reorderedModuleCards[0]).getByText('Módulo 1:')).toBeInTheDocument();
   });
 
-  it('should delete a module after confirmation', async () => {
+  it('should restore the previous order when the API rejects the reorder', async () => {
+    const client = createClient();
+    vi.mocked(client.reorderModules).mockRejectedValue(
+      new Error('moduleIds must contain every module of the course exactly once'),
+    );
+    renderBuilder(client);
+    const moduleCards = screen.getAllByRole('listitem');
+
+    fireEvent.dragStart(moduleCards[1]);
+    fireEvent.dragOver(moduleCards[0]);
+    fireEvent.drop(moduleCards[0]);
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'moduleIds must contain every module of the course exactly once',
+    );
+    const restoredCards = screen.getAllByRole('listitem');
+    expect(
+      within(restoredCards[0]).getByDisplayValue('Fundamentos do atendimento turístico'),
+    ).toBeInTheDocument();
+  });
+
+  it('should ask for confirmation showing the content count before deleting', async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const { client } = renderBuilder();
 
     await user.click(screen.getByRole('button', { name: /excluir módulo 1/i }));
+
+    const dialog = screen.getByRole('dialog', { name: /excluir módulo\?/i });
+    expect(dialog).toHaveTextContent('Fundamentos do atendimento turístico');
+    expect(dialog).toHaveTextContent('2 aulas');
+    expect(client.deleteModule).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole('button', { name: /^excluir módulo$/i }));
 
     await waitFor(() => {
       expect(client.deleteModule).toHaveBeenCalledWith(FIRST_MODULE_ID);
@@ -190,8 +223,31 @@ describe('CourseModulesBuilder', () => {
     expect(
       screen.queryByDisplayValue('Fundamentos do atendimento turístico'),
     ).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 
-    confirmSpy.mockRestore();
+  it('should keep the module when the deletion is cancelled', async () => {
+    const user = userEvent.setup();
+    const { client } = renderBuilder();
+
+    await user.click(screen.getByRole('button', { name: /excluir módulo 2/i }));
+    await user.click(screen.getByRole('button', { name: /cancelar/i }));
+
+    expect(client.deleteModule).not.toHaveBeenCalled();
+    expect(screen.getByDisplayValue('Hospitalidade aplicada na prática')).toBeInTheDocument();
+  });
+
+  it('should keep the module listed when the API refuses the deletion', async () => {
+    const user = userEvent.setup();
+    const client = createClient();
+    vi.mocked(client.deleteModule).mockRejectedValue(new Error('Access denied: user is not ADMIN'));
+    renderBuilder(client);
+
+    await user.click(screen.getByRole('button', { name: /excluir módulo 1/i }));
+    await user.click(screen.getByRole('button', { name: /^excluir módulo$/i }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Access denied: user is not ADMIN');
+    expect(screen.getByDisplayValue('Fundamentos do atendimento turístico')).toBeInTheDocument();
   });
 
   it('should show the add lesson button only when a module is expanded', async () => {
