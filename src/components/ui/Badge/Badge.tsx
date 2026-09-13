@@ -22,6 +22,8 @@ export interface BadgeProps {
 
   variant?: BadgeVariant;
 
+  mini?: boolean;
+
   className?: string;
 
   style?: CSSProperties;
@@ -81,15 +83,28 @@ const resolveLabel = (category?: string, label?: string): string => {
   return CATEGORY_LABEL_MAP[key] ?? category ?? '';
 };
 
-export const Badge = ({ label, category, variant, className = '', style }: BadgeProps) => {
+export const Badge = ({
+  label,
+  category,
+  variant,
+  mini = false,
+  className = '',
+  style,
+}: BadgeProps) => {
   const resolvedVariant = resolveVariant(category, variant);
   const resolvedLabel = resolveLabel(category, label);
 
+  const classNames = [
+    styles.badge,
+    styles[`variant-${resolvedVariant}`],
+    mini && styles.mini,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <span
-      className={`${styles.badge} ${styles[`variant-${resolvedVariant}`]} ${className}`.trim()}
-      style={style}
-    >
+    <span className={classNames} style={style}>
       {resolvedLabel}
     </span>
   );

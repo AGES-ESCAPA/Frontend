@@ -76,6 +76,27 @@ export interface CourseDetail {
   status: CourseStatus;
 }
 
+/** Item da listagem administrativa GET /api/v1/admin/courses. */
+export interface AdminCourseListItem {
+  id: string;
+  title: string;
+  category: string | null;
+  price: number | null;
+  status: CourseStatus;
+  majorVersion: number;
+  minorVersion: number;
+}
+
+/** Linha pronta para a tabela da Gestão de Cursos. */
+export interface AdminCourseRow {
+  id: string;
+  code: string;
+  title: string;
+  price: number;
+  status: CourseStatus;
+  version: string;
+}
+
 export type LessonType = 'video' | 'text' | 'quiz';
 
 export interface CourseLesson {

@@ -35,6 +35,12 @@ describe('Badge', () => {
   it('should use the primary variant for Inteligência Artificial', () => {
     render(<Badge category="ai" />);
     expect(screen.getByText('Inteligência Artificial').className).toMatch(/variant-primary/);
+    expect(screen.getByText('Inteligência Artificial').className).not.toMatch(/mini/);
+  });
+
+  it('should apply the mini class when mini is true', () => {
+    render(<Badge label="Publicado" variant="success" mini />);
+    expect(screen.getByText('Publicado').className).toMatch(/mini/);
   });
 
   it('should use Figma variants for Hospitalidade and Inovação', () => {

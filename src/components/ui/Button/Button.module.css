@@ -98,6 +98,17 @@
   opacity: 0.85;
 }
 
+/* 7. danger — destructive action, red surface */
+.variant-danger {
+  background-color: var(--color-error-300);
+  color: var(--color-white);
+  border-color: transparent;
+}
+
+.variant-danger:hover:not(.disabled, .loading) {
+  background-color: var(--color-error-400);
+}
+
 /* ── Disabled State ────────────────────────────────────────────────── */
 .disabled {
   opacity: 0.5;
