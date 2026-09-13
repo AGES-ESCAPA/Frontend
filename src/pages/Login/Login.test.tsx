@@ -20,17 +20,11 @@ describe('Login', () => {
   it('should render one courses link for each role', () => {
     renderLogin();
 
-    expect(screen.getByRole('link', { name: 'Estudante' })).toHaveAttribute(
-      'href',
-      '/courses?role=student',
-    );
-    expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute(
-      'href',
-      '/courses?role=admin',
-    );
+    expect(screen.getByRole('link', { name: 'Aluno' })).toHaveAttribute('href', '/aluno/cursos');
+    expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin/cursos');
     expect(screen.getByRole('link', { name: 'Empresa' })).toHaveAttribute(
       'href',
-      '/courses?role=company',
+      '/empresa/cursos',
     );
   });
 });

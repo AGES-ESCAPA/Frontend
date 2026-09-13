@@ -4,9 +4,9 @@ import escapaLogo from '@assets/escapa_logo.png';
 import styles from './Login.module.css';
 
 const profiles = [
-  { label: 'Estudante', to: '/courses?role=student' },
-  { label: 'Admin', to: '/courses?role=admin' },
-  { label: 'Empresa', to: '/courses?role=company' },
+  { label: 'Aluno', to: '/aluno/cursos' },
+  { label: 'Admin', to: '/admin/cursos' },
+  { label: 'Empresa', to: '/empresa/cursos' },
 ] as const;
 
 export const Login = () => {

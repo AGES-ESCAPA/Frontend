@@ -20,7 +20,7 @@ export const SIDEBAR_MENU_PRESETS: Record<SidebarRole, SidebarMenuItem[]> = {
     {
       icon: <LayoutDashboard size={SIDEBAR_ICON_SIZE} />,
       label: 'Cursos',
-      route: '/courses',
+      route: '/aluno/cursos',
     },
     {
       icon: <Play size={SIDEBAR_ICON_SIZE} />,

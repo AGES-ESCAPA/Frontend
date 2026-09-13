@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
 import { Button, CourseCard } from '@components/ui';
@@ -22,17 +22,18 @@ const usersByRole: Record<SidebarRole, SidebarUser> = {
   },
 };
 
-const getRole = (): SidebarRole => {
-  const role = new URLSearchParams(window.location.search).get('role');
-  return role === 'admin' || role === 'company' || role === 'student' ? role : 'student';
+const getRoleFromPathname = (pathname: string): SidebarRole => {
+  if (pathname.startsWith('/admin')) return 'admin';
+  if (pathname.startsWith('/empresa')) return 'company';
+  return 'student';
 };
 
 export const Courses = () => {
-  const role = getRole();
+  const { pathname } = useLocation();
+  const role = getRoleFromPathname(pathname);
   const currentUser = usersByRole[role];
   const courseItems = SIDEBAR_MENU_PRESETS[role].map((item, index) => ({
     ...item,
-    route: index === 0 ? `/courses?role=${role}` : item.route,
     active: index === 0,
   }));
 

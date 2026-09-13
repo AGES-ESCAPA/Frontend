@@ -1,17 +1,16 @@
 import { render, screen, within } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
-import { beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { Courses } from './Courses';
 
-// A Sidebar navega via Link do react-router — a página precisa de um Router.
-const renderCourses = (): RenderResult => render(<Courses />, { wrapper: MemoryRouter });
+const renderCourses = (path = '/aluno/cursos'): RenderResult =>
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <Courses />
+    </MemoryRouter>,
+  );
 
 describe('Courses', () => {
-  beforeEach(() => {
-    window.history.replaceState({}, '', '/courses?role=student');
-  });
-
   it('should integrate the student Sidebar and authenticated Navbar', () => {
     renderCourses();
 
@@ -28,16 +27,15 @@ describe('Courses', () => {
     const sidebar = screen.getByRole('complementary');
     const coursesLink = within(sidebar).getByRole('link', { name: 'Cursos' });
 
-    expect(coursesLink).toHaveAttribute('href', '/courses?role=student');
+    expect(coursesLink).toHaveAttribute('href', '/aluno/cursos');
     expect(coursesLink).toHaveAttribute('aria-current', 'page');
   });
 
   it('should offer the Course Builder only to the admin profile', () => {
-    renderCourses();
+    renderCourses('/aluno/cursos');
     expect(screen.queryByRole('link', { name: 'Novo Curso' })).not.toBeInTheDocument();
 
-    window.history.replaceState({}, '', '/courses?role=admin');
-    renderCourses();
+    renderCourses('/admin/cursos');
 
     expect(screen.getByRole('link', { name: 'Novo Curso' })).toHaveAttribute(
       'href',
@@ -46,11 +44,10 @@ describe('Courses', () => {
   });
 
   it.each([
-    ['admin', 'Admin', 'Admin'],
-    ['company', 'Empresa', 'Escapa!'],
-  ])('should render the %s variant', (role, roleLabel, userName) => {
-    window.history.replaceState({}, '', `/courses?role=${role}`);
-    renderCourses();
+    ['/admin/cursos', 'Admin', 'Admin'],
+    ['/empresa/cursos', 'Empresa', 'Escapa!'],
+  ])('should render the variant for %s', (path, roleLabel, userName) => {
+    renderCourses(path);
 
     expect(
       screen.getByRole('complementary', {
