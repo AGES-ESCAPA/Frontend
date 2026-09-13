@@ -1,0 +1,460 @@
+/* ═══════════════════════════════════════════════════════════════════
+   LessonModal — CSS Module
+   Component: src/components/ui/LessonModal/LessonModal.tsx
+   Compartilhado com FormField, FileInputButton, LessonTypeSelector e
+   LessonResources, que compõem o mesmo formulário.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Utilitário de acessibilidade ──────────────────────────────────── */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Campo (rótulo + controle + mensagem) ──────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.required {
+  color: var(--color-info-300);
+}
+
+.optional {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+}
+
+.hint {
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  color: var(--color-text-muted);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  color: var(--color-error-200);
+}
+
+/* ── Controles de texto ────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  outline: none;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.input::placeholder {
+  color: var(--color-neutral-500);
+}
+
+.inputInvalid {
+  border-color: var(--color-error-300);
+}
+
+.input:hover {
+  border-color: var(--color-neutral-700);
+}
+
+.input:focus {
+  border-color: var(--color-info-300);
+  box-shadow: 0 0 0 1px var(--color-focus-ring-info);
+}
+
+.textarea {
+  min-height: calc(var(--space-16) + var(--space-12));
+  resize: vertical;
+}
+
+.textareaLarge {
+  min-height: calc(var(--space-20) + var(--space-16));
+  resize: vertical;
+}
+
+/* ── Linha com dois campos (URL do vídeo + duração) ────────────────── */
+.row {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* ── Seletor de tipo de aula ───────────────────────────────────────── */
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.typeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-3);
+  cursor: pointer;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.typeOptionSelected {
+  background-color: var(--color-surface-overlay);
+  border-color: var(--color-info-300);
+  box-shadow:
+    0 0 0 1px var(--color-info-300),
+    0 0 var(--space-4) var(--color-focus-ring-info);
+}
+
+.typeOption:has(input:focus-visible) {
+  border-color: var(--color-info-300);
+  box-shadow: 0 0 0 2px var(--color-focus-ring-info);
+}
+
+.typeOption:hover:not(.typeOptionSelected) {
+  background-color: var(--color-overlay-hover-on-dark);
+  border-color: var(--color-neutral-700);
+}
+
+.typeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  color: var(--color-neutral-400);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+}
+
+.typeLabel {
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.typeOptionSelected .typeIcon {
+  color: var(--color-info-300);
+  border-color: var(--color-info-400);
+}
+
+.typeOptionSelected .typeLabel {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info-300);
+}
+
+/* ── Upload de arquivo ─────────────────────────────────────────────── */
+.fileRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.filePicker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.filePickerButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.filePickerButton:hover {
+  color: var(--color-info-300);
+  border-color: var(--color-info-300);
+}
+
+.filePickerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  color: var(--color-neutral-500);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.iconButton:hover {
+  color: var(--color-error-200);
+  background-color: var(--color-overlay-hover-on-dark);
+}
+
+.iconButton:focus-visible {
+  border-color: var(--color-info-300);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--color-focus-ring-info);
+}
+
+/* ── Gerenciador de anexos e links ─────────────────────────────────── */
+.resources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.resourcesHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.resourcesHeadings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.resourcesTitle {
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.resourcesHint {
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-text-muted);
+}
+
+.resourcesActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.resourcesEmpty {
+  padding: var(--space-4);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-text-muted);
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.resourceList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.resourceItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.resourceKind {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-10);
+  height: var(--space-10);
+  color: var(--color-neutral-400);
+}
+
+.resourceFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--space-3);
+}
+
+.resourceField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* ── Aula de amostra gratuita ──────────────────────────────────────── */
+.toggleCard {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.toggleTexts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.toggleTitle {
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.toggleHint {
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-text-muted);
+}
+
+/* ── Erro de persistência ──────────────────────────────────────────── */
+.submitError {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-error-200);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-error-300);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Botões ────────────────────────────────────────────────────────
+   Classe duplicada de propósito: o Button define as cores e o tamanho na
+   própria folha e, entre CSS Modules diferentes, a ordem de carregamento não
+   é garantida. Dobrar a classe eleva a especificidade e torna o override
+   estável.
+   ──────────────────────────────────────────────────────────────────── */
+.footerButton.footerButton {
+  min-width: var(--space-20);
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+}
+
+.saveButton.saveButton {
+  color: var(--color-primary-900);
+  background-color: var(--color-info-200);
+}
+
+.saveButton.saveButton:hover:not(:disabled) {
+  background-color: var(--color-info-300);
+  box-shadow: none;
+}
+
+.smallButton.smallButton {
+  min-height: var(--space-10);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Responsividade ────────────────────────────────────────────────── */
+@media (width <= 640px) {
+  .row,
+  .fileRow,
+  .resourceFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .typeOption {
+    padding: var(--space-4) var(--space-2);
+  }
+
+  .resourceItem {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .resourceKind {
+    display: none;
+  }
+
+  .toggleCard {
+    align-items: flex-start;
+  }
+
+  .smallButton.smallButton {
+    flex: 1;
+    min-height: var(--space-12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input,
+  .typeOption,
+  .filePickerButton,
+  .iconButton {
+    transition: none;
+  }
+}
