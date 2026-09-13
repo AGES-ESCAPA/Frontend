@@ -9,7 +9,7 @@ describe('Badge', () => {
 
   it('should resolve the correct variant class from category', () => {
     render(<Badge label="Marketing" category="marketing" />);
-    expect(screen.getByText('Marketing').className).toMatch(/variant-secondary/);
+    expect(screen.getByText('Marketing').className).toMatch(/variant-success/);
   });
 
   it('should fall back to neutral when category is unknown', () => {
@@ -22,6 +22,11 @@ describe('Badge', () => {
     expect(screen.getByText('Avançado').className).toMatch(/variant-info/);
   });
 
+  it('should use the level variant for the course details modal', () => {
+    render(<Badge label="Iniciante" variant="level" />);
+    expect(screen.getByText('Iniciante').className).toMatch(/variant-level/);
+  });
+
   it('should not wrap text (white-space nowrap applied via module class)', () => {
     render(<Badge label="Inteligência Artificial" category="ia" />);
     expect(screen.getByText('Inteligência Artificial').className).toMatch(/badge/);
@@ -30,5 +35,16 @@ describe('Badge', () => {
   it('should use the primary variant for Inteligência Artificial', () => {
     render(<Badge category="ai" />);
     expect(screen.getByText('Inteligência Artificial').className).toMatch(/variant-primary/);
+  });
+
+  it('should use Figma variants for Hospitalidade and Inovação', () => {
+    const { rerender } = render(<Badge category="hospitality" />);
+    expect(screen.getByText('Hospitalidade').className).toMatch(/variant-info/);
+
+    rerender(<Badge category="innovation" />);
+    expect(screen.getByText('Inovação').className).toMatch(/variant-secondary/);
+
+    rerender(<Badge category="Turismo" />);
+    expect(screen.getByText('Turismo').className).toMatch(/variant-warning/);
   });
 });

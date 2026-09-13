@@ -123,6 +123,17 @@ export const formatSecondsToTimecode = (totalSeconds: number): string => {
   return `${hours}:${String(minutes).padStart(2, '0')}:${paddedSeconds}`;
 };
 
+export const formatWorkload = (durationTime: number | null): string => {
+  if (durationTime === null || durationTime <= 0) return '0min';
+
+  const hours = Math.floor(durationTime / 60);
+  const minutes = durationTime % 60;
+
+  if (hours === 0) return `${minutes}min`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}min`;
+};
+
 /**
  * Formata um valor numérico como moeda brasileira (BRL).
  * @example formatCurrency(1500) // → "R$ 1.500,00"
@@ -132,6 +143,34 @@ export const formatCurrency = (value: number): string => {
     style: 'currency',
     currency: 'BRL',
   }).format(value);
+};
+
+/**
+ * Formata um valor em reais (não em centavos) no mesmo padrão numérico usado
+ * por `maskCurrencyInput` — sem o símbolo "R$", pra preencher um campo de
+ * formulário que já tem esse prefixo como addon visual.
+ * @example formatDecimalInput(499) // → "499,00"
+ */
+export const formatDecimalInput = (value: number): string =>
+  value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/**
+ * Máscara de valor monetário no padrão de mercado: o usuário só digita
+ * números, e eles entram da direita pra esquerda como centavos — digitar "1"
+ * mostra "0,01", mais um "0" mostra "0,10", mais um "0" mostra "1,00", e assim
+ * por diante. Qualquer caractere que não seja dígito (inclusive o que a
+ * própria máscara insere, como o separador de milhar e a vírgula) é
+ * descartado antes de recalcular o valor — então funciona tanto ao digitar
+ * quanto ao apagar (backspace) o último dígito exibido.
+ * @example maskCurrencyInput("100") // → "1,00"
+ * @example maskCurrencyInput("150000") // → "1.500,00"
+ */
+export const maskCurrencyInput = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+  if (digits === '') return '';
+
+  const cents = Number(digits);
+  return formatDecimalInput(cents / 100);
 };
 
 /**

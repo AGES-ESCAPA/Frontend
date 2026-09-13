@@ -1,0 +1,31 @@
+/* O acento à esquerda destaca este card como a regra "principal" da aba —
+   o overflow: hidden recorta a barra para acompanhar o raio do Panel. */
+.panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 3px;
+  background-color: var(--color-info-300);
+}
+
+.rule {
+  padding-block: var(--space-4);
+}
+
+.rule:first-child {
+  padding-top: 0;
+}
+
+.rule:last-child {
+  padding-bottom: 0;
+}
+
+.rule + .rule {
+  border-top: 1px solid var(--color-border-subtle);
+}

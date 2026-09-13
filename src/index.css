@@ -174,7 +174,8 @@
   --color-surface: var(--color-primary-900);
   --color-surface-raised: var(--color-primary-800);
   --color-surface-overlay: rgba(43, 111, 231, 0.08);
-  --color-surface-search-dark: rgba(23, 25, 28, 0.86);
+  --color-backdrop: rgba(12, 12, 26, 0.84);
+  --color-surface-search-dark: var(--color-primary-800);
   /* Opaco de proposito: com transparencia o fundo do campo claro se mistura
      com a pagina atras e o contraste do placeholder deixa de ser previsivel
      (3.91:1 sobre fundo escuro). Opaco, Neutros-600 garante 4.63:1 (AA). */
@@ -204,6 +205,12 @@
 
   --color-badge-level-surface: rgba(8, 8, 14, 0.8);
   --color-badge-level-text: #fbedd0;
+  --color-badge-level-surface-soft: color-mix(
+    in srgb,
+    var(--color-badge-level-text) 10%,
+    transparent
+  );
+  --color-badge-level-border: color-mix(in srgb, var(--color-badge-level-text) 15%, transparent);
 
   --text-badge: 13.5px;
   --text-badge--line-height: 16px;
@@ -316,6 +323,25 @@ body {
   background-color: var(--color-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-300) var(--color-primary-900);
+}
+
+*::-webkit-scrollbar {
+  width: var(--space-2);
+  height: var(--space-2);
+}
+
+*::-webkit-scrollbar-track {
+  background-color: var(--color-primary-900);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary-300);
+  border-radius: var(--radius-full);
 }
 
 /* ── Elementos Semânticos de Título com Tipografia Padrão ─────────── */

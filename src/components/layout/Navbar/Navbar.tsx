@@ -66,6 +66,7 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
           <a href="/" className={styles.brand} aria-label="Página inicial">
             <img src={logo} alt="escapa!" />
           </a>
+          <span className={styles.divider} aria-hidden="true" />
           <span className={styles.context}>cursos</span>
         </div>
       )}
@@ -76,7 +77,7 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
           {state === 'noAuth' && (
             <Button
               asChild
-              variant="ghost"
+              variant="ghost-dark"
               label="Entrar"
               className={`${styles.primaryEntry} ${styles.navButton}`}
             >
@@ -121,7 +122,7 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
               onClick={() => setMenuOpen(false)}
             >
               <Button
-                variant="secondary"
+                variant="primary"
                 type="button"
                 label="Começar Agora"
                 className={styles.navButton}
