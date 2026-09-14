@@ -183,9 +183,9 @@ describe('courseService', () => {
       }),
     );
 
-    await expect(courseService.publishCourse('e0000000-0000-4000-e000-000000000001')).rejects.toThrow(
-      'Cannot publish course due to missing requirements: instructorId',
-    );
+    await expect(
+      courseService.publishCourse('e0000000-0000-4000-e000-000000000001'),
+    ).rejects.toThrow('Cannot publish course due to missing requirements: instructorId');
   });
 
   it('should call DELETE /api/v1/admin/courses/:id to archive a course', async () => {

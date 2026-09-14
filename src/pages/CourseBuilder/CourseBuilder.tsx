@@ -285,8 +285,7 @@ export const CourseBuilder = () => {
         // Publicar é uma ação separada do salvamento: o PUT só grava os campos
         // do formulário, quem muda o status pra PUBLISHED é o endpoint de
         // publish (que também valida os obrigatórios pra publicação).
-        const finalCourse =
-          nextStatus === 'PUBLISHED' ? await publishCourse(saved.id) : saved;
+        const finalCourse = nextStatus === 'PUBLISHED' ? await publishCourse(saved.id) : saved;
 
         setStatus(finalCourse.status);
         showToast(
@@ -297,7 +296,9 @@ export const CourseBuilder = () => {
       } catch (error: unknown) {
         showToast(
           'error',
-          nextStatus === 'PUBLISHED' ? 'Não foi possível publicar o curso' : 'Não foi possível salvar o curso',
+          nextStatus === 'PUBLISHED'
+            ? 'Não foi possível publicar o curso'
+            : 'Não foi possível salvar o curso',
           error instanceof Error ? error.message : undefined,
         );
       } finally {

@@ -65,14 +65,19 @@ describe('CourseBuilder', () => {
   beforeEach(() => {
     vi.mocked(createCourse).mockReset().mockResolvedValue(SAVED_COURSE);
     vi.mocked(updateCourse).mockReset().mockResolvedValue(SAVED_COURSE);
-    vi.mocked(publishCourse).mockReset().mockResolvedValue({ ...SAVED_COURSE, status: 'PUBLISHED' });
+    vi.mocked(publishCourse)
+      .mockReset()
+      .mockResolvedValue({ ...SAVED_COURSE, status: 'PUBLISHED' });
     vi.mocked(getCourseById).mockReset().mockResolvedValue(SAVED_COURSE);
     vi.mocked(courseModulesApi.listModules).mockReset().mockResolvedValue(SAVED_MODULES);
   });
 
   const fillRequiredFieldsForPublish = async () => {
     await userEvent.type(screen.getByRole('textbox', { name: /título/i }), 'Curso de Recepção');
-    await userEvent.type(screen.getByRole('textbox', { name: /resumo curto/i }), 'Ementa resumida.');
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /resumo curto/i }),
+      'Ementa resumida.',
+    );
     await userEvent.type(
       screen.getByRole('textbox', { name: /descrição completa/i }),
       'Descrição completa do curso.',
