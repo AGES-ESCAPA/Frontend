@@ -3,7 +3,7 @@ import type { RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { createCourse, getCourseById, updateCourse } from '@services/courseService';
+import { createCourse, getCourseById, publishCourse, updateCourse } from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
 import type { CourseDetail } from '@/types/course';
 import type { AdminCourseModule } from '@/types/module';
@@ -13,6 +13,7 @@ vi.mock('@services/courseService', () => ({
   createCourse: vi.fn(),
   getCourseById: vi.fn(),
   updateCourse: vi.fn(),
+  publishCourse: vi.fn(),
 }));
 
 vi.mock('@services/courseModules', () => ({
@@ -64,9 +65,31 @@ describe('CourseBuilder', () => {
   beforeEach(() => {
     vi.mocked(createCourse).mockReset().mockResolvedValue(SAVED_COURSE);
     vi.mocked(updateCourse).mockReset().mockResolvedValue(SAVED_COURSE);
+    vi.mocked(publishCourse)
+      .mockReset()
+      .mockResolvedValue({ ...SAVED_COURSE, status: 'PUBLISHED' });
     vi.mocked(getCourseById).mockReset().mockResolvedValue(SAVED_COURSE);
     vi.mocked(courseModulesApi.listModules).mockReset().mockResolvedValue(SAVED_MODULES);
   });
+
+  const fillRequiredFieldsForPublish = async () => {
+    await userEvent.type(screen.getByRole('textbox', { name: /título/i }), 'Curso de Recepção');
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /resumo curto/i }),
+      'Ementa resumida.',
+    );
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /descrição completa/i }),
+      'Descrição completa do curso.',
+    );
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: /categoria principal/i }),
+      'Hospitalidade',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciante' }));
+    await userEvent.type(screen.getByRole('textbox', { name: /carga horária/i }), '40');
+    await userEvent.type(screen.getByRole('textbox', { name: /preço base/i }), '199');
+  };
 
   it('should render every field of the course registration form', () => {
     renderBuilder();
@@ -152,6 +175,34 @@ describe('CourseBuilder', () => {
     });
 
     expect(await screen.findByText('Rascunho salvo!')).toBeInTheDocument();
+  });
+
+  it('should save the course and then call the publish endpoint as a separate step', async () => {
+    renderBuilder();
+
+    await fillRequiredFieldsForPublish();
+    await userEvent.click(screen.getByRole('button', { name: 'Publicar Curso' }));
+
+    await waitFor(() => {
+      expect(createCourse).toHaveBeenCalled();
+    });
+    expect(publishCourse).toHaveBeenCalledWith(SAVED_COURSE.id);
+    expect(await screen.findByText('Curso publicado com sucesso!')).toBeInTheDocument();
+  });
+
+  it('should show the API validation error and keep the course as a draft when publish is rejected', async () => {
+    vi.mocked(publishCourse).mockRejectedValueOnce(
+      new Error('Cannot publish course due to missing requirements: instructorId'),
+    );
+    renderBuilder();
+
+    await fillRequiredFieldsForPublish();
+    await userEvent.click(screen.getByRole('button', { name: 'Publicar Curso' }));
+
+    expect(
+      await screen.findByText('Cannot publish course due to missing requirements: instructorId'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Rascunho')).toBeInTheDocument();
   });
 
   it('should prefill the form with the stored course on the edit route', async () => {

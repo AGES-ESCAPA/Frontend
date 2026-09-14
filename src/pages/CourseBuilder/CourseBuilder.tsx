@@ -8,7 +8,7 @@ import { CourseModulesBuilder } from '@components/course';
 import { Badge, Button, Toast } from '@components/ui';
 import { useCourseForm } from '@hooks/useCourseForm';
 import { useToast } from '@hooks/useToast';
-import { createCourse, getCourseById, updateCourse } from '@services/courseService';
+import { createCourse, getCourseById, publishCourse, updateCourse } from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
 import type { AdminCourseModule } from '@/types/module';
 import type {
@@ -277,21 +277,28 @@ export const CourseBuilder = () => {
             ? await createCourse(payload)
             : await updateCourse(courseId, payload);
 
-        setStatus(saved.status);
+        if (courseId === undefined) {
+          skipNextLoadIdRef.current = saved.id;
+          navigate(`${COURSES_ROUTE}/${saved.id}/editar`, { replace: true });
+        }
+
+        // Publicar é uma ação separada do salvamento: o PUT só grava os campos
+        // do formulário, quem muda o status pra PUBLISHED é o endpoint de
+        // publish (que também valida os obrigatórios pra publicação).
+        const finalCourse = nextStatus === 'PUBLISHED' ? await publishCourse(saved.id) : saved;
+
+        setStatus(finalCourse.status);
         showToast(
           'success',
           nextStatus === 'PUBLISHED' ? 'Curso publicado com sucesso!' : 'Rascunho salvo!',
           'Os dados do curso foram gravados.',
         );
-
-        if (courseId === undefined) {
-          skipNextLoadIdRef.current = saved.id;
-          navigate(`${COURSES_ROUTE}/${saved.id}/editar`, { replace: true });
-        }
       } catch (error: unknown) {
         showToast(
           'error',
-          'Não foi possível salvar o curso',
+          nextStatus === 'PUBLISHED'
+            ? 'Não foi possível publicar o curso'
+            : 'Não foi possível salvar o curso',
           error instanceof Error ? error.message : undefined,
         );
       } finally {
