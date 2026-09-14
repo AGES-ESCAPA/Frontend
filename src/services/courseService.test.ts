@@ -150,6 +150,44 @@ describe('courseService', () => {
     expect(result[0].title).toBe('Atendimento de Excelencia em Hospedagem');
   });
 
+  it('should call POST /api/v1/admin/courses/:id/publish to publish a course', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () =>
+        Promise.resolve({
+          success: true,
+          data: { id: 'e0000000-0000-4000-e000-000000000001', status: 'PUBLISHED' },
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await courseService.publishCourse('e0000000-0000-4000-e000-000000000001');
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses/e0000000-0000-4000-e000-000000000001/publish');
+    expect(init.method).toBe('POST');
+    expect(result.status).toBe('PUBLISHED');
+  });
+
+  it('should surface the API validation message when publish is rejected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () =>
+          Promise.resolve({
+            message: 'Cannot publish course due to missing requirements: instructorId',
+          }),
+      }),
+    );
+
+    await expect(courseService.publishCourse('e0000000-0000-4000-e000-000000000001')).rejects.toThrow(
+      'Cannot publish course due to missing requirements: instructorId',
+    );
+  });
+
   it('should call DELETE /api/v1/admin/courses/:id to archive a course', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

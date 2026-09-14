@@ -119,6 +119,15 @@ export const updateCourse = async (id: string, payload: CoursePayload): Promise<
   return readCourse(response, 'Não foi possível salvar as alterações do curso.');
 };
 
+export const publishCourse = async (id: string): Promise<CourseDetail> => {
+  const response = await fetch(`${ADMIN_COURSES_URL}/${id}/publish`, {
+    method: 'POST',
+    headers: adminHeaders(),
+  });
+
+  return readCourse(response, 'Não foi possível publicar o curso.');
+};
+
 const listAdminCourses = async (signal?: AbortSignal): Promise<AdminCourseListItem[]> => {
   const response = await fetch(ADMIN_COURSES_URL, { headers: adminHeaders(), signal });
 
@@ -151,6 +160,7 @@ export const courseService = {
   getCourseById,
   createCourse,
   updateCourse,
+  publishCourse,
   listAdminCourses,
   archiveCourse,
 };
