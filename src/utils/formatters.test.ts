@@ -6,6 +6,7 @@ import {
   formatDurationMaskFromDigits,
   formatSecondsToDurationMask,
   formatSecondsToTimecode,
+  formatTime,
   parseDurationDigitBuffer,
   parseDurationMask,
   parseTimecodeToSeconds,
@@ -209,5 +210,36 @@ describe('formatCourseVersion', () => {
   it('should format major and minor as vX.Y', () => {
     expect(formatCourseVersion(1, 2)).toBe('v1.2');
     expect(formatCourseVersion(null, null)).toBe('v0.0');
+  });
+});
+
+describe('formatTime', () => {
+  it('should format seconds only with two-digit minutes', () => {
+    expect(formatTime(0)).toBe('00:00');
+    expect(formatTime(5)).toBe('00:05');
+    expect(formatTime(59)).toBe('00:59');
+  });
+
+  it('should format minutes and seconds as "mm:ss"', () => {
+    expect(formatTime(60)).toBe('01:00');
+    expect(formatTime(551)).toBe('09:11');
+    expect(formatTime(1450)).toBe('24:10');
+    expect(formatTime(3599)).toBe('59:59');
+  });
+
+  it('should switch to "h:mm:ss" from one hour on', () => {
+    expect(formatTime(3600)).toBe('1:00:00');
+    expect(formatTime(3725)).toBe('1:02:05');
+    expect(formatTime(36000)).toBe('10:00:00');
+  });
+
+  it('should drop fractions of a second', () => {
+    expect(formatTime(551.9)).toBe('09:11');
+  });
+
+  it('should return "00:00" for negative or invalid values', () => {
+    expect(formatTime(-10)).toBe('00:00');
+    expect(formatTime(Number.NaN)).toBe('00:00');
+    expect(formatTime(Number.POSITIVE_INFINITY)).toBe('00:00');
   });
 });

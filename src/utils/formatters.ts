@@ -123,6 +123,22 @@ export const formatSecondsToTimecode = (totalSeconds: number): string => {
   return `${hours}:${String(minutes).padStart(2, '0')}:${paddedSeconds}`;
 };
 
+/**
+ * Formata segundos como tempo do player: "mm:ss" (minutos sempre com dois dígitos)
+ * e "h:mm:ss" a partir de uma hora. Valores negativos ou inválidos viram "00:00".
+ * @example formatTime(551) // → "09:11"
+ * @example formatTime(3725) // → "1:02:05"
+ */
+export const formatTime = (totalSeconds: number): string => {
+  const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, '0');
+  const seconds = String(safeSeconds % 60).padStart(2, '0');
+
+  if (hours === 0) return `${minutes}:${seconds}`;
+  return `${hours}:${minutes}:${seconds}`;
+};
+
 export const formatWorkload = (durationTime: number | null): string => {
   if (durationTime === null || durationTime <= 0) return '0min';
 
