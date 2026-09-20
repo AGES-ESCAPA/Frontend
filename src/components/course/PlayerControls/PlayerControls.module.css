@@ -1,0 +1,131 @@
+.controls {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-primary-700);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.playButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-primary-900);
+  background-color: var(--color-info-400);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.playButton:hover {
+  background-color: var(--color-info-300);
+}
+
+.playButton:focus-visible {
+  outline: 2px solid var(--color-info-200);
+  outline-offset: 2px;
+}
+
+.icon {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.time {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Linha do tempo: input nativo (acessível por teclado), estilizado como a barra do Figma. */
+.timeline {
+  width: 100%;
+  height: var(--space-4);
+
+  /* Área de clique de 16px, mas ocupando só a altura da linha (4px) no layout. */
+  margin: calc((var(--space-1) - var(--space-4)) / 2) 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+
+.timeline:focus-visible {
+  outline: 2px solid var(--color-info-200);
+  outline-offset: 2px;
+}
+
+.timeline::-webkit-slider-runnable-track {
+  height: var(--space-1);
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    to right,
+    var(--color-info-400) var(--progress, 0%),
+    var(--color-neutral-800) var(--progress, 0%)
+  );
+}
+
+.timeline::-moz-range-track {
+  height: var(--space-1);
+  border-radius: var(--radius-full);
+  background-color: var(--color-neutral-800);
+}
+
+.timeline::-moz-range-progress {
+  height: var(--space-1);
+  border-radius: var(--radius-full);
+  background-color: var(--color-info-400);
+}
+
+/* O marcador só aparece ao passar o mouse ou focar, como no protótipo (barra lisa). */
+.timeline::-webkit-slider-thumb {
+  width: var(--space-3);
+  height: var(--space-3);
+  margin-top: calc((var(--space-1) - var(--space-3)) / 2);
+  border: 0;
+  border-radius: var(--radius-full);
+  background-color: var(--color-info-300);
+  opacity: 0;
+  appearance: none;
+  transition: opacity var(--transition-fast);
+}
+
+.timeline::-moz-range-thumb {
+  width: var(--space-3);
+  height: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-full);
+  background-color: var(--color-info-300);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.timeline:hover::-webkit-slider-thumb,
+.timeline:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+.timeline:hover::-moz-range-thumb,
+.timeline:focus-visible::-moz-range-thumb {
+  opacity: 1;
+}
+
+@media (width <= 640px) {
+  .playButton {
+    width: calc(var(--space-10) + var(--space-1));
+    height: calc(var(--space-10) + var(--space-1));
+  }
+}
