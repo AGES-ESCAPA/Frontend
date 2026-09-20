@@ -1,0 +1,179 @@
+export interface Course {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  instructor: string;
+  progressPercentage: number;
+  durationHours: number;
+  lessonsCount: number;
+  status: 'IN_PROGRESS' | 'PENDING' | 'COMPLETED';
+  thumbnailUrl: string;
+}
+
+export const mockCourses: Course[] = [
+  {
+    id: '1',
+    category: 'INTELIGÊNCIA ARTIFICIAL',
+    title: 'IA Aplicada ao Turismo',
+    description:
+      'Domine as ferramentas de inteligência artificial para transformar sua operação turística',
+    instructor: 'Dra. Mariana',
+    progressPercentage: 72,
+    durationHours: 12,
+    lessonsCount: 32,
+    status: 'IN_PROGRESS',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '2',
+    category: 'MARKETING',
+    title: 'Marketing Digital para Hospitalidade',
+    description: 'Estratégias de marketing digital para hotéis, pousadas e operadoras de turismo',
+    instructor: 'Paulo Henrique',
+    progressPercentage: 45,
+    durationHours: 16,
+    lessonsCount: 44,
+    status: 'IN_PROGRESS',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '5',
+    category: 'GESTÃO',
+    title: 'Gestão Financeira para Pousadas',
+    description:
+      'Aprenda a controlar o fluxo de caixa, precificar diárias e aumentar a margem de lucro.',
+    instructor: 'Roberto Alves',
+    progressPercentage: 15,
+    durationHours: 8,
+    lessonsCount: 20,
+    status: 'IN_PROGRESS',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '3',
+    category: 'HOSPITALIDADE',
+    title: 'Revenue Management para Hotelaria',
+    description:
+      'Estratégias avançadas de precificação e gestão de receitas para meios de hospedagem',
+    instructor: 'Camila Torres',
+    progressPercentage: 0,
+    durationHours: 20,
+    lessonsCount: 52,
+    status: 'PENDING',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '6',
+    category: 'INOVAÇÃO',
+    title: 'Inovação em Destinos Turísticos',
+    description:
+      'Como criar e gerir destinos turísticos competitivos e inovadores no mercado global',
+    instructor: 'Thamires Magalhães',
+    progressPercentage: 0,
+    durationHours: 14,
+    lessonsCount: 32,
+    status: 'PENDING',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '4',
+    category: 'HOSPITALIDADE',
+    title: 'Liderança em Hospitalidade de Luxo',
+    description:
+      'Desenvolva competências de liderança para o mercado premium de hospedagem e turismo',
+    instructor: 'André Monteiro',
+    progressPercentage: 100,
+    durationHours: 18,
+    lessonsCount: 46,
+    status: 'COMPLETED',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1542314831-c6a4d14d8c53?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '7',
+    category: 'ATENDIMENTO',
+    title: 'Experiência Premium do Hóspede',
+    description: 'Técnicas e metodologias para criar experiências memoráveis em hospitalidade',
+    instructor: 'Letícia Amaral',
+    progressPercentage: 100,
+    durationHours: 10,
+    lessonsCount: 28,
+    status: 'COMPLETED',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '8',
+    category: 'VENDAS',
+    title: 'Vendas B2B no Turismo',
+    description: 'Técnicas avançadas de negociação com agências e operadoras corporativas',
+    instructor: 'Carlos Silva',
+    progressPercentage: 100,
+    durationHours: 24,
+    lessonsCount: 60,
+    status: 'COMPLETED',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1556761175-5973dc0f32b7?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '9',
+    category: 'INTELIGÊNCIA ARTIFICIAL',
+    title: 'IA Aplicada ao Turismo',
+    description:
+      'Domine as ferramentas de inteligência artificial para transformar sua operação turística',
+    instructor: 'Dra. Mariana',
+    progressPercentage: 72,
+    durationHours: 12,
+    lessonsCount: 32,
+    status: 'IN_PROGRESS',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '10',
+    category: 'MARKETING',
+    title: 'Marketing Digital para Hospitalidade',
+    description: 'Estratégias de marketing digital para hotéis, pousadas e operadoras de turismo',
+    instructor: 'Paulo Henrique',
+    progressPercentage: 45,
+    durationHours: 16,
+    lessonsCount: 44,
+    status: 'IN_PROGRESS',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '11',
+    category: 'HOSPITALIDADE',
+    title: 'Revenue Management para Hotelaria',
+    description:
+      'Estratégias avançadas de precificação e gestão de receitas para meios de hospedagem',
+    instructor: 'Camila Torres',
+    progressPercentage: 0,
+    durationHours: 20,
+    lessonsCount: 52,
+    status: 'PENDING',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=600',
+  },
+  {
+    id: '12',
+    category: 'HOSPITALIDADE',
+    title: 'Liderança em Hospitalidade de Luxo',
+    description:
+      'Desenvolva competências de liderança para o mercado premium de hospedagem e turismo',
+    instructor: 'André Monteiro',
+    progressPercentage: 100,
+    durationHours: 18,
+    lessonsCount: 46,
+    status: 'COMPLETED',
+    thumbnailUrl:
+      'https://images.unsplash.com/photo-1542314831-c6a4d14d8c53?auto=format&fit=crop&q=80&w=600',
+  },
+];
