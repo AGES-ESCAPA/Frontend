@@ -117,5 +117,35 @@ describe('PlayerControls', () => {
 
       expect(screen.getByRole('slider').style.getPropertyValue('--progress')).toBe('100%');
     });
+
+    it('caps the elapsed time at the duration when currentTime goes past it', () => {
+      renderControls({ currentTime: 2000, duration: 1450 });
+
+      const timeline = screen.getByRole('slider');
+
+      expect(screen.getByText('24:10 / 24:10')).toBeInTheDocument();
+      expect(timeline).toHaveValue('1450');
+      expect(timeline).toHaveAttribute('aria-valuetext', '24:10 de 24:10');
+    });
+
+    it('never shows a negative elapsed time', () => {
+      renderControls({ currentTime: -30, duration: 1450 });
+
+      expect(screen.getByText('00:00 / 24:10')).toBeInTheDocument();
+      expect(screen.getByRole('slider')).toHaveValue('0');
+    });
+
+    it('treats a non-numeric currentTime as zero', () => {
+      renderControls({ currentTime: Number.NaN, duration: 1450 });
+
+      expect(screen.getByText('00:00 / 24:10')).toBeInTheDocument();
+      expect(screen.getByRole('slider').style.getPropertyValue('--progress')).toBe('0%');
+    });
+
+    it('keeps the elapsed time at zero while the duration is unknown', () => {
+      renderControls({ currentTime: 500, duration: 0 });
+
+      expect(screen.getByText('00:00 / 00:00')).toBeInTheDocument();
+    });
   });
 });

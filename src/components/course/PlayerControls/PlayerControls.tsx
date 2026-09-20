@@ -17,12 +17,12 @@ export interface PlayerControlsProps {
 const toSafeDuration = (duration: number): number =>
   Number.isFinite(duration) && duration > 0 ? duration : 0;
 
-const toProgressPercent = (currentTime: number, duration: number): number => {
-  if (duration <= 0) return 0;
+/** Mantém o tempo entre 0 e a duração. Valores inválidos (NaN, Infinity) viram 0. */
+const clampTime = (time: number, duration: number): number =>
+  Number.isFinite(time) ? Math.min(Math.max(time, 0), duration) : 0;
 
-  const clamped = Math.min(Math.max(currentTime, 0), duration);
-  return Number(((clamped / duration) * 100).toFixed(2));
-};
+const toProgressPercent = (time: number, duration: number): number =>
+  duration > 0 ? Number(((time / duration) * 100).toFixed(2)) : 0;
 
 /**
  * Barra de controles do player: botão de tocar/pausar, tempo decorrido e linha do tempo.
@@ -36,8 +36,9 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   onSeek,
 }) => {
   const safeDuration = toSafeDuration(duration);
-  const percent = toProgressPercent(currentTime, safeDuration);
-  const elapsed = formatTime(currentTime);
+  const safeCurrentTime = clampTime(currentTime, safeDuration);
+  const percent = toProgressPercent(safeCurrentTime, safeDuration);
+  const elapsed = formatTime(safeCurrentTime);
   const total = formatTime(safeDuration);
   const Icon = isPlaying ? Pause : Play;
 
@@ -53,7 +54,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
         min={0}
         max={safeDuration}
         step={1}
-        value={Math.min(Math.max(currentTime, 0), safeDuration)}
+        value={safeCurrentTime}
         style={{ '--progress': `${percent}%` } as CSSProperties}
         aria-label="Linha do tempo do vídeo"
         aria-valuetext={`${elapsed} de ${total}`}
