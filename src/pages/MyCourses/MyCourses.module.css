@@ -40,3 +40,31 @@
 .pageContent p {
   color: var(--color-text-muted);
 }
+
+.headerArea {
+  margin-bottom: 2rem;
+}
+
+.courseSection {
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--color-text-primary);
+}
+
+.courseGrid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.emptyState {
+  margin-top: 4rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 1.125rem;
+}

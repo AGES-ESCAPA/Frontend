@@ -93,7 +93,7 @@ export const mockCourses: Course[] = [
     lessonsCount: 46,
     status: 'COMPLETED',
     thumbnailUrl:
-      'https://images.unsplash.com/photo-1542314831-c6a4d14d8c53?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=600',
   },
   {
     id: '7',
@@ -106,7 +106,7 @@ export const mockCourses: Course[] = [
     lessonsCount: 28,
     status: 'COMPLETED',
     thumbnailUrl:
-      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=600',
   },
   {
     id: '8',
@@ -119,7 +119,7 @@ export const mockCourses: Course[] = [
     lessonsCount: 60,
     status: 'COMPLETED',
     thumbnailUrl:
-      'https://images.unsplash.com/photo-1556761175-5973dc0f32b7?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=600',
   },
   {
     id: '9',
@@ -174,6 +174,6 @@ export const mockCourses: Course[] = [
     lessonsCount: 46,
     status: 'COMPLETED',
     thumbnailUrl:
-      'https://images.unsplash.com/photo-1542314831-c6a4d14d8c53?auto=format&fit=crop&q=80&w=600',
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=600',
   },
 ];
