@@ -34,6 +34,7 @@
     "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-toast": "^1.2.1",
     "@radix-ui/react-tooltip": "^1.1.2",
+    "lucide-react": "^1.33.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.1"
@@ -67,8 +68,11 @@
     "vitest": "^2.0.5"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": [
+    "src/**/!(*.d).{ts,tsx}": [
       "eslint --max-warnings 0",
+      "prettier --check"
+    ],
+    "src/**/*.d.ts": [
       "prettier --check"
     ],
     "src/**/*.css": [

@@ -27,6 +27,10 @@ RUN npm ci --frozen-lockfile
 # Copia o restante do código-fonte
 COPY . .
 
+# Argumentos de ambiente para o build do Vite
+ARG VITE_API_BASE_URL=http://localhost:8080/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Compila a aplicação React (output em /app/dist)
 RUN npm run build
 

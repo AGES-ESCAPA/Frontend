@@ -17,12 +17,7 @@
       "version": "detect"
     }
   },
-  "plugins": [
-    "@typescript-eslint",
-    "react",
-    "react-hooks",
-    "react-refresh"
-  ],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "react-refresh"],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
