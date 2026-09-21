@@ -1,5 +1,44 @@
 // Barrel export para primitivas de UI (wrappers sobre Radix UI).
 // Adicione novos componentes conforme forem criados:
-// export { Button } from './Button/Button';
-// export { Dialog, DialogContent, DialogTitle } from './Dialog/Dialog';
-// export { Toast, ToastProvider } from './Toast/Toast';
+
+export { Avatar } from './Avatar/Avatar';
+export type { AvatarProps, AvatarTheme } from './Avatar/Avatar';
+export { Badge } from './Badge';
+export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
+export { Button } from './Button';
+export type { ButtonProps, ButtonVariant } from './Button';
+export { Checkbox } from './Checkbox';
+export type { CheckboxProps } from './Checkbox';
+export { ConfirmDialog } from './ConfirmDialog';
+export type { ConfirmDialogProps } from './ConfirmDialog';
+export { CourseCard } from './CourseCard';
+export type { CourseCardProps } from './CourseCard';
+export { LessonModal } from './LessonModal';
+export type { LessonModalProps } from './LessonModal';
+export { Modal } from './Modal';
+export type { ModalProps, ModalSize } from './Modal';
+export { SearchBar } from './SearchBar';
+export type { SearchBarProps, SearchBarTheme } from './SearchBar';
+export { Switch } from './Switch';
+export type { SwitchProps } from './Switch';
+export { FormField } from './FormField';
+export type { FormFieldProps } from './FormField';
+export { Panel } from './Panel';
+export type { PanelProps } from './Panel';
+export { ProgressBar } from './ProgressBar';
+export type { ProgressBarProps } from './ProgressBar';
+export { FilterTabs } from './FilterTabs';
+export type { FilterTabsProps, FilterTabsVariant } from './FilterTabs';
+export { CourseCardSkeleton } from './CourseCard/CourseCardSkeleton';
+export { SelectInput } from './SelectInput';
+export type { SelectInputOption, SelectInputProps } from './SelectInput';
+export { SumCard } from './SumCard';
+export type { SumCardProps } from './SumCard';
+export { Table } from './Table';
+export type { TableAlign, TableColumn, TableProps } from './Table';
+export { TextArea } from './TextArea';
+export type { TextAreaProps } from './TextArea';
+export { TextInput } from './TextInput';
+export type { TextInputProps } from './TextInput';
+export { Toast } from './Toast';
+export type { ToastProps, ToastVariant } from './Toast';

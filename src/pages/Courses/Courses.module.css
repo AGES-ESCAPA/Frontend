@@ -1,0 +1,202 @@
+.pageHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-10);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--color-info-300);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.pageHeader h1 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-4xl);
+  line-height: var(--leading-tight);
+}
+
+.pageHeader p {
+  max-width: var(--container-lg);
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-2);
+}
+
+.adminActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-6);
+}
+
+.courseSection h2 {
+  margin-bottom: var(--space-5);
+  color: var(--color-text-primary);
+  font-size: var(--text-xl);
+}
+
+.courseGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.courseCard {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-primary-800);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.courseCard:hover {
+  border-color: var(--color-info-500);
+  transform: translateY(-2px);
+}
+
+.courseCover {
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 16 / 8;
+  padding: var(--space-4);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-info-300) 18%, transparent),
+      transparent 55%
+    ),
+    var(--color-primary-700);
+}
+
+.courseCover[data-cover='2'] {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary-300) 20%, transparent),
+      transparent 55%
+    ),
+    var(--color-secondary-800);
+}
+
+.courseCover[data-cover='3'] {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-secondary-400) 22%, transparent),
+      transparent 55%
+    ),
+    var(--color-primary-800);
+}
+
+.courseCover span {
+  color: var(--color-info-200);
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.courseContent {
+  padding: var(--space-5);
+}
+
+.courseContent h3 {
+  color: var(--color-text-primary);
+  font-size: var(--text-lg);
+}
+
+.courseContent > p {
+  min-height: 3em;
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--leading-normal);
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-5);
+  color: var(--color-neutral-400);
+  font-size: var(--text-body-4);
+}
+
+.progressHeader strong {
+  color: var(--color-info-300);
+}
+
+.progressTrack {
+  height: var(--space-2);
+  margin-top: var(--space-2);
+  overflow: hidden;
+  background: var(--color-neutral-800);
+  border-radius: var(--radius-full);
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  background: var(--color-info-300);
+  border-radius: inherit;
+}
+
+.courseLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--space-10);
+  margin-top: var(--space-5);
+  color: var(--color-info-200);
+  border: 1px solid var(--color-info-500);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.courseLink:hover,
+.courseLink:focus-visible {
+  color: var(--color-neutral-900);
+  background: var(--color-info-300);
+  outline: none;
+}
+
+@media (width < 64rem) {
+  .courseGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width <= 40rem) {
+  .pageHeader {
+    margin-bottom: var(--space-8);
+  }
+
+  .pageHeader h1 {
+    font-size: var(--text-3xl);
+  }
+
+  .courseGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .courseCard,
+  .courseLink {
+    transition: none;
+  }
+}

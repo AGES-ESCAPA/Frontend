@@ -1,0 +1,95 @@
+.root {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow: auto hidden;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.trigger {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.outlined .trigger {
+  border-radius: var(--radius-full);
+  border-color: var(--color-neutral-700);
+  background-color: transparent;
+  color: var(--color-neutral-400);
+}
+
+.ghostDark .trigger {
+  border-radius: var(--radius-lg);
+  padding-inline: var(--space-2);
+  background-color: var(--color-primary-900);
+  color: var(--color-white);
+  border-color: transparent;
+}
+
+.outlined .trigger:hover {
+  border-color: var(--color-neutral-600);
+  color: var(--color-neutral-300);
+}
+
+.ghostDark .trigger:hover {
+  background-color: var(--color-primary-700);
+}
+
+.outlined .trigger[data-state='active'] {
+  background-color: color-mix(in srgb, var(--color-info-500) 12%, transparent);
+  border-color: var(--color-info-300);
+  color: var(--color-info-300);
+}
+
+.ghostDark .trigger[data-state='active'] {
+  background-color: color-mix(in srgb, var(--color-info-500) 12%, transparent);
+  border-color: var(--color-info-300);
+  color: var(--color-info-300);
+}
+
+.outlined .trigger[data-state='active']:hover {
+  border-color: var(--color-info-300);
+  color: var(--color-info-300);
+}
+
+.ghostDark .trigger[data-state='active']:hover {
+  border-color: var(--color-info-300);
+  color: var(--color-info-300);
+}
+
+@media (width <= 639px) {
+  .trigger {
+    min-height: 44px;
+  }
+}

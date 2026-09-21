@@ -1,0 +1,26 @@
+.status {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-2);
+}
+
+.background {
+  pointer-events: none;
+  user-select: none;
+}
+
+.curriculum {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-10);
+}
+
+.curriculum h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
