@@ -1,17 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { MyCourses } from './MyCourses';
 
 describe('MyCourses', () => {
   it('renders student cards from the page mocks', () => {
-    render(<MyCourses />);
+    render(
+      <MemoryRouter>
+        <MyCourses />
+      </MemoryRouter>,
+    );
 
     expect(screen.getAllByRole('progressbar').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Aguardando' })).toHaveLength(3);
   });
 
   it('filters the cards by enrollment status', async () => {
-    render(<MyCourses />);
+    render(
+      <MemoryRouter>
+        <MyCourses />
+      </MemoryRouter>,
+    );
 
     await userEvent.click(screen.getByRole('tab', { name: 'Aguardando' }));
 
@@ -23,10 +32,14 @@ describe('MyCourses', () => {
   });
 
   it('shows the empty state when the search has no matches', async () => {
-    render(<MyCourses />);
+    render(
+      <MemoryRouter>
+        <MyCourses />
+      </MemoryRouter>,
+    );
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Buscar meus cursos' }), 'xyzxyz');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Buscar em meus cursos' }), 'xyzxyz');
 
-    expect(screen.getByText('Nenhum curso encontrado com estes filtros.')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum curso encontrado')).toBeInTheDocument();
   });
 });

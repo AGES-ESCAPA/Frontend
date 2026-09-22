@@ -82,7 +82,7 @@ export const MyCourses = () => {
           <EmptyState
             title="Nenhum curso encontrado"
             description="Não encontramos nenhum curso com os filtros atuais. Que tal explorar o catálogo?"
-            action={<Button onClick={() => {}}>Explorar Catálogo</Button>}
+            action={<Button label="Explorar Catálogo" variant="outlined" onClick={() => {}} />}
           />
         ) : (
           <div className={styles.coursesContainer}>
