@@ -1,19 +1,25 @@
 import { useState, useMemo } from 'react';
+import { FilterTabs, SearchBar, StudentCourseCard } from '@components/ui';
 import styles from './MyCourses.module.css';
 import { mockCourses } from './mockCourses';
-import { MyCourseCard } from '../../components/ui/MyCourseCard/MyCourseCard';
 
-export type TabType = 'Todos' | 'IN_PROGRESS' | 'PENDING' | 'COMPLETED';
+export type TabType = 'Todos' | 'Em andamento' | 'Aguardando' | 'Concluídos';
+
+const tabOptions: TabType[] = ['Todos', 'Em andamento', 'Aguardando', 'Concluídos'];
+const statusByTab = {
+  'Em andamento': 'IN_PROGRESS',
+  Aguardando: 'PENDING',
+  Concluídos: 'COMPLETED',
+} as const;
 
 export const MyCourses = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchTerm, setSearchTerm] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTab, setActiveTab] = useState<TabType>('Todos');
 
   const filteredCourses = useMemo(() => {
     return mockCourses.filter((course) => {
-      const matchesTab = activeTab === 'Todos' || course.status === activeTab;
+      const matchesTab =
+        activeTab === 'Todos' || course.enrollmentStatus === statusByTab[activeTab];
       const matchesSearch =
         course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -21,14 +27,14 @@ export const MyCourses = () => {
     });
   }, [activeTab, searchTerm]);
 
-  const inProgressCourses = filteredCourses.filter((c) => c.status === 'IN_PROGRESS');
-  const pendingCourses = filteredCourses.filter((c) => c.status === 'PENDING');
-  const completedCourses = filteredCourses.filter((c) => c.status === 'COMPLETED');
+  const inProgressCourses = filteredCourses.filter((c) => c.enrollmentStatus === 'IN_PROGRESS');
+  const pendingCourses = filteredCourses.filter((c) => c.enrollmentStatus === 'PENDING');
+  const completedCourses = filteredCourses.filter((c) => c.enrollmentStatus === 'COMPLETED');
 
   const renderCourseGrid = (courses: typeof mockCourses) => (
     <div className={styles.courseGrid}>
       {courses.map((course) => (
-        <MyCourseCard key={course.id} course={course} />
+        <StudentCourseCard key={course.courseId} {...course} />
       ))}
     </div>
   );
@@ -48,6 +54,22 @@ export const MyCourses = () => {
           <div className={styles.headerArea}>
             <h1>Meus Cursos</h1>
             <p>Continue de onde você parou</p>
+          </div>
+
+          <div className={styles.controls}>
+            <div className={styles.tabScroller}>
+              <FilterTabs
+                options={tabOptions}
+                selected={activeTab}
+                onChange={(value) => setActiveTab(value as TabType)}
+                groupLabel="Filtrar cursos por status"
+              />
+            </div>
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              aria-label="Buscar meus cursos"
+            />
           </div>
 
           {filteredCourses.length === 0 ? (

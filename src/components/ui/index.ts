@@ -13,6 +13,8 @@ export { ConfirmDialog } from './ConfirmDialog';
 export type { ConfirmDialogProps } from './ConfirmDialog';
 export { CourseCard } from './CourseCard';
 export type { CourseCardProps } from './CourseCard';
+export { StudentCourseCard } from './StudentCourseCard';
+export type { EnrollmentStatus, StudentCourseCardProps } from './StudentCourseCard';
 export { LessonModal } from './LessonModal';
 export type { LessonModalProps } from './LessonModal';
 export { Modal } from './Modal';

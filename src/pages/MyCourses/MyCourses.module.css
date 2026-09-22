@@ -14,6 +14,7 @@
 
 .mainContent {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -45,6 +46,20 @@
   margin-bottom: 2rem;
 }
 
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.tabScroller {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .courseSection {
   margin-bottom: 3rem;
 }
@@ -59,7 +74,7 @@
 .courseGrid {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--container-xs)), 1fr));
 }
 
 .emptyState {
@@ -67,4 +82,14 @@
   text-align: center;
   color: var(--color-text-muted);
   font-size: 1.125rem;
+}
+
+@media (width <= 640px) {
+  .mockSidebar {
+    display: none;
+  }
+
+  .pageContent {
+    padding: var(--space-4);
+  }
 }
