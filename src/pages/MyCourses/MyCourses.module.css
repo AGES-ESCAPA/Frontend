@@ -33,26 +33,52 @@
   flex: 1;
 }
 
-.pageContent h1 {
-  font-size: 2rem;
+.topHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.titleSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.breadcrumb {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-info-300);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
 }
 
-.pageContent p {
+.titleSection h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.25rem;
+  margin-top: 0;
+}
+
+.titleSection p {
   color: var(--color-text-muted);
+  margin-bottom: 0;
+  font-size: 1rem;
 }
 
-.headerArea {
-  margin-bottom: 2rem;
-}
-
-.controls {
+.controlsSection {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.searchContainer {
+  width: 320px;
 }
 
 .tabScroller {
@@ -102,4 +128,17 @@
   .courseGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-surface-raised);
+  color: var(--color-info-300);
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.1rem 0.6rem;
+  border-radius: var(--radius-full, 9999px);
+  margin-left: 0.5rem;
 }

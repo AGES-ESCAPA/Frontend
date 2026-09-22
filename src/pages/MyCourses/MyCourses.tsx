@@ -52,22 +52,31 @@ export const MyCourses = () => {
       notificationsCount={3}
     >
       <section className={styles.pageContent}>
-        <div className={styles.headerArea}>
-          <h1>Meus Cursos</h1>
-          <p>Continue de onde você parou</p>
-        </div>
-
-        <div className={styles.controls}>
-          <div className={styles.tabScroller}>
-            <FilterTabs
-              options={tabOptions}
-              selected={activeTab}
-              onChange={(value) => setActiveTab(value as TabType)}
-              groupLabel="Filtrar cursos por status"
-            />
+        <header className={styles.topHeader}>
+          <div className={styles.titleSection}>
+            <span className={styles.breadcrumb}>ÁREA DO ALUNO • Meus Cursos</span>
+            <h1>Meus Cursos</h1>
+            <p>Continue de onde você parou</p>
           </div>
-          <SearchBar value={searchTerm} onChange={setSearchTerm} aria-label="Buscar meus cursos" />
-        </div>
+
+          <div className={styles.controlsSection}>
+            <div className={styles.searchContainer}>
+              <SearchBar
+                value={searchTerm}
+                onChange={setSearchTerm}
+                aria-label="Buscar em meus cursos"
+              />
+            </div>
+            <div className={styles.tabContainer}>
+              <FilterTabs
+                options={tabOptions}
+                selected={activeTab}
+                onChange={(value) => setActiveTab(value as TabType)}
+                groupLabel="Filtrar cursos por status"
+              />
+            </div>
+          </div>
+        </header>
 
         {filteredCourses.length === 0 ? (
           <EmptyState
