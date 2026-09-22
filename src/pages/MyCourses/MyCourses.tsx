@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
-import { FilterTabs, SearchBar, StudentCourseCard } from '@components/ui';
+import { FilterTabs, SearchBar, StudentCourseCard, EmptyState, Button } from '@components/ui';
+import { AuthenticatedLayout } from '../../components/layout/AuthenticatedLayout/AuthenticatedLayout';
+import { SIDEBAR_MENU_PRESETS } from '../../components/layout/Sidebar/sidebarMenuPresets';
 import styles from './MyCourses.module.css';
-import { mockCourses } from './mockCourses';
+import { mockCourses, mockUser } from './mockCourses';
 
 export type TabType = 'Todos' | 'Em andamento' | 'Aguardando' | 'Concluídos';
 
@@ -40,74 +42,80 @@ export const MyCourses = () => {
   );
 
   return (
-    <div className={styles.container}>
-      <aside className={styles.mockSidebar}>
-        <p>Sidebar Placeholder</p>
-      </aside>
+    <AuthenticatedLayout
+      role="student"
+      user={mockUser}
+      items={SIDEBAR_MENU_PRESETS.student.map((item) => ({
+        ...item,
+        active: item.label === 'Meus Cursos',
+      }))}
+      notificationsCount={3}
+    >
+      <section className={styles.pageContent}>
+        <div className={styles.headerArea}>
+          <h1>Meus Cursos</h1>
+          <p>Continue de onde você parou</p>
+        </div>
 
-      <main className={styles.mainContent}>
-        <header className={styles.mockNavbar}>
-          <p>Navbar Placeholder</p>
-        </header>
-
-        <section className={styles.pageContent}>
-          <div className={styles.headerArea}>
-            <h1>Meus Cursos</h1>
-            <p>Continue de onde você parou</p>
-          </div>
-
-          <div className={styles.controls}>
-            <div className={styles.tabScroller}>
-              <FilterTabs
-                options={tabOptions}
-                selected={activeTab}
-                onChange={(value) => setActiveTab(value as TabType)}
-                groupLabel="Filtrar cursos por status"
-              />
-            </div>
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              aria-label="Buscar meus cursos"
+        <div className={styles.controls}>
+          <div className={styles.tabScroller}>
+            <FilterTabs
+              options={tabOptions}
+              selected={activeTab}
+              onChange={(value) => setActiveTab(value as TabType)}
+              groupLabel="Filtrar cursos por status"
             />
           </div>
+          <SearchBar value={searchTerm} onChange={setSearchTerm} aria-label="Buscar meus cursos" />
+        </div>
 
-          {filteredCourses.length === 0 ? (
-            <div className={styles.emptyState}>Nenhum curso encontrado com estes filtros.</div>
-          ) : (
-            <div className={styles.coursesContainer}>
-              {activeTab === 'Todos' ? (
-                <>
-                  {inProgressCourses.length > 0 && (
-                    <section className={styles.courseSection}>
-                      <h2 className={styles.sectionTitle}>Em Andamento 🔄</h2>
-                      {renderCourseGrid(inProgressCourses)}
-                    </section>
-                  )}
+        {filteredCourses.length === 0 ? (
+          <EmptyState
+            title="Nenhum curso encontrado"
+            description="Não encontramos nenhum curso com os filtros atuais. Que tal explorar o catálogo?"
+            action={<Button onClick={() => {}}>Explorar Catálogo</Button>}
+          />
+        ) : (
+          <div className={styles.coursesContainer}>
+            {activeTab === 'Todos' ? (
+              <>
+                {inProgressCourses.length > 0 && (
+                  <section className={styles.courseSection}>
+                    <h2 className={styles.sectionTitle}>
+                      ▶ Em Andamento{' '}
+                      <span className={styles.badge}>{inProgressCourses.length}</span>
+                    </h2>
+                    {renderCourseGrid(inProgressCourses)}
+                  </section>
+                )}
 
-                  {pendingCourses.length > 0 && (
-                    <section className={styles.courseSection}>
-                      <h2 className={styles.sectionTitle}>Aguardando Liberação ⏳</h2>
-                      {renderCourseGrid(pendingCourses)}
-                    </section>
-                  )}
+                {pendingCourses.length > 0 && (
+                  <section className={styles.courseSection}>
+                    <h2 className={styles.sectionTitle}>
+                      ⏳ Aguardando Liberação{' '}
+                      <span className={styles.badge}>{pendingCourses.length}</span>
+                    </h2>
+                    {renderCourseGrid(pendingCourses)}
+                  </section>
+                )}
 
-                  {completedCourses.length > 0 && (
-                    <section className={styles.courseSection}>
-                      <h2 className={styles.sectionTitle}>Concluídos ✅</h2>
-                      {renderCourseGrid(completedCourses)}
-                    </section>
-                  )}
-                </>
-              ) : (
-                <section className={styles.courseSection}>
-                  {renderCourseGrid(filteredCourses)}
-                </section>
-              )}
-            </div>
-          )}
-        </section>
-      </main>
-    </div>
+                {completedCourses.length > 0 && (
+                  <section className={styles.courseSection}>
+                    <h2 className={styles.sectionTitle}>
+                      ✅ Concluídos <span className={styles.badge}>{completedCourses.length}</span>
+                    </h2>
+                    {renderCourseGrid(completedCourses)}
+                  </section>
+                )}
+              </>
+            ) : (
+              <section className={styles.courseSection}>
+                {renderCourseGrid(filteredCourses)}
+              </section>
+            )}
+          </div>
+        )}
+      </section>
+    </AuthenticatedLayout>
   );
 };

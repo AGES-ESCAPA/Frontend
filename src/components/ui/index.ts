@@ -44,3 +44,6 @@ export { TextInput } from './TextInput';
 export type { TextInputProps } from './TextInput';
 export { Toast } from './Toast';
 export type { ToastProps, ToastVariant } from './Toast';
+
+export { EmptyState } from './EmptyState';
+export type { EmptyStateProps } from './EmptyState';

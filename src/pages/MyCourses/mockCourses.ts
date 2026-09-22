@@ -1,3 +1,10 @@
+import type { SidebarUser } from '../../components/layout/Sidebar';
+export const mockUser: SidebarUser = {
+  name: 'Jorge Amado',
+  role: 'student',
+  avatarUrl: 'https://i.pravatar.cc/150?img=11',
+};
+
 export interface Course {
   courseId: string;
   category: string;
