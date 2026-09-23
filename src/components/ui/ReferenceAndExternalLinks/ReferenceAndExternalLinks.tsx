@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { ExternalLink, Globe } from 'lucide-react';
 
-import styles from './ReferencesandExternalLinks.module.css';
+import styles from './ReferenceAndExternalLinks.module.css';
 
 export interface LessonReference {
   title: string;

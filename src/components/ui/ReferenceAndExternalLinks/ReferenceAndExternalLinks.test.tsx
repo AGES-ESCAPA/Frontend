@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { LessonReferences, type LessonReference } from './ReferencesandExternalLinks';
+import { LessonReferences, type LessonReference } from './ReferenceAndExternalLinks';
 
 const references: LessonReference[] = [
   {
