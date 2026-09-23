@@ -59,7 +59,7 @@ export const AppRouter = () => {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
-          <Route path="/my-courses" element={<MyCourses />} />
+          <Route path="/meus-cursos" element={<MyCourses />} />
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/courses" element={<Courses />} />

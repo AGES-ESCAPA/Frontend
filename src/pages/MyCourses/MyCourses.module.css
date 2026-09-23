@@ -142,3 +142,28 @@
   border-radius: var(--radius-full, 9999px);
   margin-left: 0.5rem;
 }
+
+.loadingContainer {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-muted);
+}
+
+.loadMoreContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--color-surface-raised);
+  border-radius: var(--radius-md);
+  margin-bottom: 2rem;
+}
+
+.errorMessage {
+  color: var(--color-error-300);
+  margin-bottom: 1rem;
+}

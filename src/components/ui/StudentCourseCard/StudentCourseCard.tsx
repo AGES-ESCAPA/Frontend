@@ -4,7 +4,7 @@ import { Button } from '@components/ui/Button';
 import { ProgressBar } from '@components/ui/ProgressBar';
 import styles from './StudentCourseCard.module.css';
 
-export type EnrollmentStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+export type EnrollmentStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'EXPIRED';
 
 export interface StudentCourseCardProps {
   courseId: string;
@@ -17,13 +17,14 @@ export interface StudentCourseCardProps {
   enrollmentStatus: EnrollmentStatus;
   category?: string;
   description?: string;
-  onAction?: (courseId: string, status: Exclude<EnrollmentStatus, 'PENDING'>) => void;
+  onAction?: (courseId: string, status: Exclude<EnrollmentStatus, 'PENDING' | 'EXPIRED'>) => void;
 }
 
 const statusDetails = {
   PENDING: { label: 'Pendente', variant: 'neutral' },
   IN_PROGRESS: { label: 'Em andamento', variant: 'info' },
   COMPLETED: { label: 'Concluído', variant: 'success' },
+  EXPIRED: { label: 'Expirado', variant: 'error' },
 } as const;
 
 export const StudentCourseCard = ({
@@ -41,17 +42,19 @@ export const StudentCourseCard = ({
 }: StudentCourseCardProps) => {
   const isPending = enrollmentStatus === 'PENDING';
   const isCompleted = enrollmentStatus === 'COMPLETED';
+  const isExpired = enrollmentStatus === 'EXPIRED';
   const progress = Number.isFinite(progressPercentage)
     ? Math.min(100, Math.max(0, progressPercentage))
     : 0;
   const status = statusDetails[enrollmentStatus];
 
   const handleAction = () => {
-    if (!isPending) onAction?.(courseId, enrollmentStatus);
+    if (!isPending && !isExpired)
+      onAction?.(courseId, enrollmentStatus as Exclude<EnrollmentStatus, 'PENDING' | 'EXPIRED'>);
   };
 
   return (
-    <article className={`${styles.card} ${isPending ? styles.pending : ''}`}>
+    <article className={`${styles.card} ${isPending || isExpired ? styles.pending : ''}`}>
       <div className={styles.imageWrapper}>
         <img src={thumbnailUrl} alt={`Capa do curso ${title}`} className={styles.thumbnail} />
         <div className={styles.badges}>
@@ -86,12 +89,22 @@ export const StudentCourseCard = ({
           <Button
             type="button"
             label={
-              isPending ? 'Aguardando' : isCompleted ? 'Visualizar Certificado' : 'Continuar Aula'
+              isExpired
+                ? 'Expirado'
+                : isPending
+                  ? 'Aguardando'
+                  : isCompleted
+                    ? 'Visualizar Certificado'
+                    : 'Continuar Aula'
             }
-            icon={!isPending && !isCompleted ? <ArrowRight aria-hidden="true" /> : undefined}
-            variant={isPending || isCompleted ? 'outlined' : 'primary'}
+            icon={
+              !isPending && !isCompleted && !isExpired ? (
+                <ArrowRight aria-hidden="true" />
+              ) : undefined
+            }
+            variant={isPending || isCompleted || isExpired ? 'outlined' : 'primary'}
             className={isCompleted ? styles.completedButton : styles.actionButton}
-            disabled={isPending}
+            disabled={isPending || isExpired}
             onClick={handleAction}
           />
         </footer>

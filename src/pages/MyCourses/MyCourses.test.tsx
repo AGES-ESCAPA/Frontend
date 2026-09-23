@@ -1,45 +1,91 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { MyCourses } from './MyCourses';
+import { vi } from 'vitest';
+import * as enrollmentService from '../../services/enrollmentService';
+
+vi.mock('../../services/enrollmentService', () => ({
+  getStudentEnrollments: vi.fn(),
+}));
 
 describe('MyCourses', () => {
-  it('renders student cards from the page mocks', () => {
-    render(
-      <MemoryRouter>
-        <MyCourses />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getAllByRole('progressbar').length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('button', { name: 'Aguardando' })).toHaveLength(3);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(enrollmentService.getStudentEnrollments).mockResolvedValue({
+      content: [
+        {
+          courseId: '1',
+          title: 'Curso Pendente',
+          enrollmentStatus: 'PENDING',
+          lessonsCount: 10,
+        },
+        {
+          courseId: '2',
+          title: 'Curso em Andamento',
+          enrollmentStatus: 'IN_PROGRESS',
+          lessonsCount: 10,
+          progressPercentage: 50,
+        },
+      ],
+      pageNumber: 0,
+      pageSize: 10,
+      totalPages: 1,
+      totalElements: 2,
+    });
   });
 
-  it('filters the cards by enrollment status', async () => {
+  it('renders student cards from the api', async () => {
     render(
       <MemoryRouter>
         <MyCourses />
       </MemoryRouter>,
     );
+
+    await waitFor(() => {
+      expect(screen.getByText('Curso Pendente')).toBeInTheDocument();
+    });
+
+    expect(screen.getAllByRole('button', { name: 'Aguardando' })).toHaveLength(1);
+  });
+
+  it('filters the cards by enrollment status via tab click', async () => {
+    render(
+      <MemoryRouter>
+        <MyCourses />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Curso Pendente')).toBeInTheDocument();
+    });
 
     await userEvent.click(screen.getByRole('tab', { name: 'Aguardando' }));
 
-    expect(screen.getAllByRole('button', { name: 'Aguardando' })).toHaveLength(3);
-    expect(screen.queryByRole('button', { name: 'Continuar Aula' })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Visualizar Certificado' }),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(enrollmentService.getStudentEnrollments).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'PENDING' }),
+      );
+    });
   });
 
-  it('shows the empty state when the search has no matches', async () => {
+  it('shows the empty state when the api returns empty', async () => {
+    vi.mocked(enrollmentService.getStudentEnrollments).mockResolvedValue({
+      content: [],
+      pageNumber: 0,
+      pageSize: 10,
+      totalPages: 0,
+      totalElements: 0,
+    });
+
     render(
       <MemoryRouter>
         <MyCourses />
       </MemoryRouter>,
     );
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Buscar em meus cursos' }), 'xyzxyz');
-
-    expect(screen.getByText('Nenhum curso encontrado')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Nenhum curso encontrado')).toBeInTheDocument();
+    });
   });
 });
