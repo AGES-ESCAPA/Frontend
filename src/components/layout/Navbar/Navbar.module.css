@@ -1,0 +1,251 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--header-height);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--space-6);
+  box-sizing: border-box;
+}
+
+.navbar[data-state='user'],
+.navbar[data-state='company'] {
+  justify-content: flex-end;
+}
+
+.leftGroup,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.actions {
+  position: relative;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.brand img {
+  width: auto;
+  height: var(--space-8);
+}
+
+.divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: var(--space-5);
+  background-color: var(--color-text-muted);
+}
+
+.context {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.primaryEntry {
+  flex: 0 0 auto;
+}
+
+/* Compacta o <Button> do design system para o contexto da navbar
+   (padrão do style guide: --text-body-3, radius-md, borda 1px). */
+.actions .navButton {
+  min-height: var(--space-10);
+  padding: var(--space-3) var(--space-6);
+  border-width: 1px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-3);
+}
+
+.cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.notificationButton,
+.profileButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-width: var(--space-10);
+  min-height: var(--space-10);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-info-300);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.profileButton {
+  padding: 0 var(--space-2);
+}
+
+.notificationButton {
+  position: relative;
+  gap: var(--space-2);
+}
+
+.notificationButton:hover,
+.notificationButton:focus-visible {
+  background-color: var(--color-primary-700);
+  border-color: transparent;
+  color: var(--color-info-300);
+  outline: none;
+}
+
+.profileButton:hover,
+.profileButton:focus-visible {
+  background-color: var(--color-border-subtle);
+  border-color: var(--color-border-subtle);
+  outline: none;
+}
+
+.notificationText {
+  display: none;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+}
+
+.profileText {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0;
+  line-height: var(--leading-tight);
+}
+
+.profileText strong {
+  color: var(--color-text-primary);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.profileText small {
+  color: var(--color-neutral-400);
+  font-size: var(--text-body-5);
+  line-height: var(--leading-tight);
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: var(--space-3);
+  min-height: var(--space-3);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-full);
+  color: var(--color-white);
+  background-color: var(--color-error-300);
+  font-size: var(--text-body-5);
+  line-height: var(--space-3);
+  text-align: center;
+}
+
+.menuToggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-10);
+  min-height: var(--space-10);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.menuToggle:hover,
+.menuToggle:focus-visible {
+  background-color: var(--color-border-subtle);
+  border-color: var(--color-border-subtle);
+  outline: none;
+}
+
+/* Tablet e mobile: colapsa as ações secundárias num menu suspenso */
+@media (width <= 768px) {
+  .cluster {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 20;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 12rem;
+    padding: var(--space-3);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  .cluster[data-open='false'] {
+    display: none;
+  }
+
+  .cluster .notificationButton {
+    width: 100%;
+    justify-content: flex-start;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .cluster .badge {
+    position: static;
+    margin-left: auto;
+  }
+
+  .notificationText {
+    display: inline;
+  }
+
+  .menuToggle {
+    display: inline-flex;
+  }
+
+  .profileText {
+    display: none;
+  }
+}
+
+@media (width <= 640px) {
+  .navbar {
+    padding: 0 var(--space-3);
+  }
+
+  /* alvo de toque acessível no mobile */
+  .actions .navButton {
+    min-height: var(--space-12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notificationButton,
+  .profileButton,
+  .menuToggle {
+    transition: none;
+  }
+}

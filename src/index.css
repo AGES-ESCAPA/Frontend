@@ -174,10 +174,25 @@
   --color-surface: var(--color-primary-900);
   --color-surface-raised: var(--color-primary-800);
   --color-surface-overlay: rgba(43, 111, 231, 0.08);
+  --color-backdrop: rgba(12, 12, 26, 0.84);
+  --color-surface-search-dark: var(--color-primary-800);
+  /* Opaco de proposito: com transparencia o fundo do campo claro se mistura
+     com a pagina atras e o contraste do placeholder deixa de ser previsivel
+     (3.91:1 sobre fundo escuro). Opaco, Neutros-600 garante 4.63:1 (AA). */
+  --color-surface-search-light: var(--color-neutral-100);
 
   --color-border: var(--color-neutral-800);
   --color-border-subtle: rgba(255, 255, 255, 0.08);
   --color-border-focus: var(--color-primary-500);
+
+  /* Halo do campo em foco: Info-300 a 24%. */
+  --color-focus-ring-info: rgba(26, 219, 255, 0.24);
+  /* Realce de hover sobre superficie escura: branco a 6%. */
+  --color-overlay-hover-on-dark: rgba(255, 255, 255, 0.06);
+  /* Fundo escurecido atras de dialogos e drawers: Primaria-900 a 72%. */
+  --color-overlay-backdrop: rgba(12, 12, 26, 0.72);
+  /* Realce de hover sobre superficie clara: Neutros-900 a 6%. */
+  --color-overlay-hover-on-light: rgba(23, 25, 28, 0.06);
 
   --color-text-primary: var(--color-neutral-100);
   --color-text-secondary: var(--color-neutral-300);
@@ -187,6 +202,28 @@
   --color-warning: var(--color-warning-300);
   --color-error: var(--color-error-300);
   --color-info: var(--color-info-300);
+
+  --color-badge-level-surface: rgba(8, 8, 14, 0.8);
+  --color-badge-level-text: #fbedd0;
+  --color-badge-level-surface-soft: color-mix(
+    in srgb,
+    var(--color-badge-level-text) 10%,
+    transparent
+  );
+  --color-badge-level-border: color-mix(in srgb, var(--color-badge-level-text) 15%, transparent);
+
+  --text-badge: 13.5px;
+  --text-badge--line-height: 16px;
+  --tracking-badge: 0.544px;
+
+  --badge-category-height: 35px;
+  --badge-level-height: 29px;
+  --badge-level-padding-y: 3px;
+  --badge-level-padding-x: 10px;
+  --badge-offset-category-top: 11px;
+  --badge-offset-category-left: 13px;
+  --badge-offset-level-top: 12px;
+  --badge-offset-level-right: 13px;
 
   /* ── Espaçamento ────────────────────────────────────────────────
      Unidade base: --spacing = 0.25rem (4px).
@@ -256,7 +293,7 @@
   --transition-slow: 400ms var(--ease-in-out);
 
   /* ── Layout Estrutural ──────────────────────────────────────────*/
-  --sidebar-width: 260px;
+  --sidebar-width: 228px;
   --sidebar-collapsed-width: 64px;
   --header-height: 64px;
   --content-max-width: var(--container-7xl);
@@ -286,6 +323,25 @@ body {
   background-color: var(--color-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-300) var(--color-primary-900);
+}
+
+*::-webkit-scrollbar {
+  width: var(--space-2);
+  height: var(--space-2);
+}
+
+*::-webkit-scrollbar-track {
+  background-color: var(--color-primary-900);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary-300);
+  border-radius: var(--radius-full);
 }
 
 /* ── Elementos Semânticos de Título com Tipografia Padrão ─────────── */
