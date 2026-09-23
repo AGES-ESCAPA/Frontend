@@ -18,7 +18,6 @@ const CourseBuilder = lazy(() =>
 const AdminCourses = lazy(() =>
   import('@pages/AdminCourses/AdminCourses').then((m) => ({ default: m.AdminCourses })),
 );
-
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
