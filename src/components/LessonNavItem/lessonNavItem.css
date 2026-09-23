@@ -1,0 +1,65 @@
+.lesson-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-left: var(--space-1) solid transparent;
+}
+
+.lesson-nav-item.current {
+  border-left-color: var(--color-primary-500);
+  background-color: var(--color-primary-100);
+}
+
+.lesson-nav-item.available:hover,
+.lesson-nav-item.completed:hover {
+  background-color: var(--color-neutral-100);
+}
+
+.icon {
+  width: var(--space-5);
+  height: var(--space-5);
+}
+
+.icon.current,
+.title.current {
+  color: var(--color-primary-500);
+}
+
+.icon.completed {
+  color: var(--color-success-400);
+}
+
+.icon.locked {
+  color: var(--color-neutral-300);
+}
+
+.icon.available {
+  color: var(--color-neutral-600);
+}
+
+.title {
+  flex-grow: 1;
+  font-size: var(--text-body-3);
+}
+
+.title.current {
+  font-weight: var(--font-weight-semibold);
+}
+
+.title.completed {
+  color: var(--color-text-primary);
+}
+
+.title.locked {
+  color: var(--color-text-muted);
+}
+
+.title.available,
+.duration {
+  color: var(--color-neutral-600);
+}
+
+.duration {
+  font-size: var(--text-body-4);
+}
