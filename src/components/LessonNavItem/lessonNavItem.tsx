@@ -17,9 +17,11 @@ export function LessonNavItem({
   isCurrent = false,
   href,
 }: LessonNavItemProps) {
+  // Um item bloqueado só deve ser considerado bloqueado quando não é o atual.
   const isLocked = !isCurrent && status === 'LOCKED';
   const isCompleted = status === 'COMPLETED';
 
+  // O estado disponível é o padrão; os próximos blocos substituem ícone e classe quando necessário.
   let stateClass = 'available';
   let Icon = Circle;
 
@@ -34,6 +36,7 @@ export function LessonNavItem({
     Icon = Lock;
   }
 
+  // O conteúdo é compartilhado entre o link acessível e a versão não interativa bloqueada.
   const content = (
     <>
       <Icon className={`icon ${stateClass}`} />
@@ -44,6 +47,7 @@ export function LessonNavItem({
     </>
   );
 
+  // Aulas bloqueadas não recebem link para impedir navegação acidental.
   if (isLocked) {
     return (
       <div className={`lesson-nav-item ${stateClass}`} aria-disabled="true">
