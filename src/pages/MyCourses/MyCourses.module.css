@@ -9,7 +9,7 @@
   width: 260px;
   background-color: var(--color-surface-raised);
   border-right: 1px solid var(--color-border);
-  padding: 2rem;
+  padding: var(--space-8);
 }
 
 .mainContent {
@@ -24,12 +24,12 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 0 2rem;
+  padding: 0 var(--space-8);
   border-bottom: 1px solid var(--color-border);
 }
 
 .pageContent {
-  padding: 2.5rem;
+  padding: var(--space-10);
   flex: 1;
 }
 
@@ -37,8 +37,8 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 3rem;
-  gap: 2rem;
+  margin-bottom: var(--space-12);
+  gap: var(--space-8);
   flex-wrap: wrap;
 }
 
@@ -48,32 +48,32 @@
 }
 
 .breadcrumb {
-  font-size: 0.75rem;
+  font-size: var(--text-body-4);
   font-weight: 700;
   color: var(--color-info-300);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 .titleSection h1 {
-  font-size: 2.5rem;
+  font-size: var(--text-h2);
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-1);
   margin-top: 0;
 }
 
 .titleSection p {
   color: var(--color-text-muted);
   margin-bottom: 0;
-  font-size: 1rem;
+  font-size: var(--text-body-2);
 }
 
 .controlsSection {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: var(--space-6);
   flex-wrap: wrap;
 }
 
@@ -87,27 +87,27 @@
 }
 
 .courseSection {
-  margin-bottom: 3rem;
+  margin-bottom: var(--space-12);
 }
 
 .sectionTitle {
-  font-size: 1.25rem;
+  font-size: var(--text-h5);
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
   color: var(--color-text-primary);
 }
 
 .courseGrid {
   display: grid;
-  gap: 1.5rem;
+  gap: var(--space-6);
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .emptyState {
-  margin-top: 4rem;
+  margin-top: var(--space-16);
   text-align: center;
   color: var(--color-text-muted);
-  font-size: 1.125rem;
+  font-size: var(--text-body-1);
 }
 
 @media (width <= 640px) {
@@ -136,34 +136,39 @@
   justify-content: center;
   background-color: var(--color-surface-raised);
   color: var(--color-info-300);
-  font-size: 0.875rem;
+  font-size: var(--text-body-3);
   font-weight: 700;
-  padding: 0.1rem 0.6rem;
+  padding: 2px 10px;
   border-radius: var(--radius-full, 9999px);
-  margin-left: 0.5rem;
+  margin-left: var(--space-2);
 }
 
 .loadingContainer {
   text-align: center;
-  padding: 2rem;
+  padding: var(--space-8);
   color: var(--color-text-muted);
 }
 
 .loadMoreContainer {
   display: flex;
   justify-content: center;
-  margin-top: 2rem;
+  margin-top: var(--space-8);
 }
 
 .errorContainer {
   text-align: center;
-  padding: 2rem;
+  padding: var(--space-8);
   background-color: var(--color-surface-raised);
   border-radius: var(--radius-md);
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
 }
 
 .errorMessage {
   color: var(--color-error-300);
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
+}
+
+.icon {
+  margin-right: var(--space-2);
+  vertical-align: text-bottom;
 }

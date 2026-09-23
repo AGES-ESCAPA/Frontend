@@ -59,7 +59,9 @@ export const StudentCourseCard = ({
         <img src={thumbnailUrl} alt={`Capa do curso ${title}`} className={styles.thumbnail} />
         <div className={styles.badges}>
           {category && <Badge category={category} />}
-          <Badge label={status.label} variant={status.variant} />
+          {enrollmentStatus !== 'IN_PROGRESS' && (
+            <Badge label={status.label} variant={status.variant} />
+          )}
         </div>
       </div>
 

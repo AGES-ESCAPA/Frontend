@@ -24,7 +24,6 @@ describe('StudentCourseCard', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Paulo Henrique/)).toBeInTheDocument();
     expect(screen.getByText('16h · 44 aulas')).toBeInTheDocument();
-    expect(screen.getByText('Em andamento')).toBeInTheDocument();
   });
 
   it('shows exact progress and forwards the continue action', async () => {

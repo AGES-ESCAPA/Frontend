@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PlayCircle, Clock, CheckCircle, Ban } from 'lucide-react';
 import { FilterTabs, SearchBar, StudentCourseCard, EmptyState, Button } from '@components/ui';
 import { AuthenticatedLayout } from '../../components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '../../components/layout/Sidebar/sidebarMenuPresets';
@@ -125,6 +126,7 @@ export const MyCourses = () => {
               <SearchBar
                 value={searchTerm}
                 onChange={setSearchTerm}
+                placeholder="Buscar em meus cursos"
                 aria-label="Buscar em meus cursos"
               />
             </div>
@@ -159,7 +161,7 @@ export const MyCourses = () => {
                 {inProgressCourses.length > 0 && (
                   <section className={styles.courseSection}>
                     <h2 className={styles.sectionTitle}>
-                      ▶ Em Andamento{' '}
+                      <PlayCircle size={20} className={styles.icon} /> Em Andamento{' '}
                       <span className={styles.badge}>{inProgressCourses.length}</span>
                     </h2>
                     {renderCourseGrid(inProgressCourses)}
@@ -169,7 +171,7 @@ export const MyCourses = () => {
                 {pendingCourses.length > 0 && (
                   <section className={styles.courseSection}>
                     <h2 className={styles.sectionTitle}>
-                      ⏳ Aguardando Liberação{' '}
+                      <Clock size={20} className={styles.icon} /> Aguardando Liberação{' '}
                       <span className={styles.badge}>{pendingCourses.length}</span>
                     </h2>
                     {renderCourseGrid(pendingCourses)}
@@ -179,7 +181,8 @@ export const MyCourses = () => {
                 {completedCourses.length > 0 && (
                   <section className={styles.courseSection}>
                     <h2 className={styles.sectionTitle}>
-                      ✅ Concluídos <span className={styles.badge}>{completedCourses.length}</span>
+                      <CheckCircle size={20} className={styles.icon} /> Concluídos{' '}
+                      <span className={styles.badge}>{completedCourses.length}</span>
                     </h2>
                     {renderCourseGrid(completedCourses)}
                   </section>
@@ -188,7 +191,8 @@ export const MyCourses = () => {
                 {expiredCourses.length > 0 && (
                   <section className={styles.courseSection}>
                     <h2 className={styles.sectionTitle}>
-                      ❌ Expirados <span className={styles.badge}>{expiredCourses.length}</span>
+                      <Ban size={20} className={styles.icon} /> Expirados{' '}
+                      <span className={styles.badge}>{expiredCourses.length}</span>
                     </h2>
                     {renderCourseGrid(expiredCourses)}
                   </section>
