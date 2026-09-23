@@ -4,25 +4,43 @@ import { MemoryRouter } from 'react-router-dom';
 import { MyCourses } from './MyCourses';
 import { vi } from 'vitest';
 import * as enrollmentService from '../../services/enrollmentService';
+import { useAuth } from '../../hooks/useAuth';
 
 vi.mock('../../services/enrollmentService', () => ({
   getStudentEnrollments: vi.fn(),
 }));
 
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: vi.fn(),
+}));
+
 describe('MyCourses', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useAuth).mockReturnValue({
+      user: { id: '1', name: 'Test User', email: 'test@escapa.com', role: 'STUDENT' },
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
     vi.mocked(enrollmentService.getStudentEnrollments).mockResolvedValue({
       content: [
         {
           courseId: '1',
           title: 'Curso Pendente',
+          instructor: null,
+          thumbnailUrl: null,
+          durationTime: null,
           enrollmentStatus: 'PENDING',
           lessonsCount: 10,
+          progressPercentage: null,
         },
         {
           courseId: '2',
           title: 'Curso em Andamento',
+          instructor: null,
+          thumbnailUrl: null,
+          durationTime: null,
           enrollmentStatus: 'IN_PROGRESS',
           lessonsCount: 10,
           progressPercentage: 50,

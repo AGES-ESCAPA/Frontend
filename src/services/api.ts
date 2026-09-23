@@ -11,26 +11,26 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  * Quando o JWT entrar, basta trocar este helper por `Authorization: Bearer` —
  * nenhum serviço monta o header por conta própria.
  */
-const DEFAULT_ADMIN_USER_ID = 'a0000000-0000-4000-a000-000000000001';
-const DEFAULT_STUDENT_USER_ID = '123e4567-e89b-12d3-a456-426614174000';
-
-export const ADMIN_USER_ID: string = import.meta.env.VITE_ADMIN_USER_ID || DEFAULT_ADMIN_USER_ID;
-export const STUDENT_USER_ID: string =
-  import.meta.env.VITE_STUDENT_USER_ID || DEFAULT_STUDENT_USER_ID;
-
-export const getLoggedUserId = (): string | null => {
-  return localStorage.getItem('escapa_mock_user_id');
+export const getAuthToken = (): string | null => {
+  return localStorage.getItem('escapa_access_token');
 };
 
-export const adminHeaders = (): Record<string, string> => ({
-  'Content-Type': 'application/json',
-  'X-User-Id': getLoggedUserId() || ADMIN_USER_ID,
-});
+export const getAuthHeaders = (): Record<string, string> => {
+  const token = getAuthToken();
+  if (token) {
+    return {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  return {
+    'Content-Type': 'application/json',
+  };
+};
 
-export const studentHeaders = (): Record<string, string> => ({
-  'Content-Type': 'application/json',
-  'X-User-Id': getLoggedUserId() || STUDENT_USER_ID,
-});
+// Aliases mantidos para retrocompatibilidade
+export const adminHeaders = getAuthHeaders;
+export const studentHeaders = getAuthHeaders;
 
 /** Envelope de sucesso devolvido pela API (`{ success, data, message }`). */
 export interface ApiResponse<T> {

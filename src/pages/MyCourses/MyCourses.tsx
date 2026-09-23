@@ -3,10 +3,10 @@ import { FilterTabs, SearchBar, StudentCourseCard, EmptyState, Button } from '@c
 import { AuthenticatedLayout } from '../../components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '../../components/layout/Sidebar/sidebarMenuPresets';
 import styles from './MyCourses.module.css';
-import { mockUser } from './mockCourses';
 import { getStudentEnrollments } from '../../services/enrollmentService';
 import type { StudentCourseCardResponse } from '../../services/enrollmentService';
 import type { EnrollmentStatus } from '../../components/ui/StudentCourseCard';
+import { useAuth } from '../../hooks/useAuth';
 
 export type TabType = 'Todos' | 'Em andamento' | 'Aguardando' | 'Concluídos' | 'Expirados';
 
@@ -19,6 +19,14 @@ const statusByTab: Record<Exclude<TabType, 'Todos'>, EnrollmentStatus> = {
 };
 
 export const MyCourses = () => {
+  const { user } = useAuth();
+
+  const sidebarUser = {
+    name: user?.name || 'Carregando...',
+    role: (user?.role?.toLowerCase() || 'student') as 'student' | 'admin' | 'company',
+    avatarUrl: 'https://i.pravatar.cc/150?img=11',
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('Todos');
@@ -105,7 +113,7 @@ export const MyCourses = () => {
   return (
     <AuthenticatedLayout
       role="student"
-      user={mockUser}
+      user={sidebarUser}
       items={SIDEBAR_MENU_PRESETS.student.map((item) => ({
         ...item,
         active: item.label === 'Meus Cursos',

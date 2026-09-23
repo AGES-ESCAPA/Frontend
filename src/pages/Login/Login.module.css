@@ -45,3 +45,52 @@
     width: 100%;
   }
 }
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 300px;
+  margin-top: var(--space-6);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-bottom: var(--space-4);
+}
+
+.label {
+  font-size: var(--text-body-3);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.input {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  font-size: var(--text-body-2);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+.errorText {
+  color: var(--color-error-300);
+  font-size: var(--text-body-3);
+  margin-bottom: var(--space-3);
+}
+
+.divider {
+  margin: var(--space-6) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
