@@ -2,15 +2,21 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { LessonVideoPlayer } from './LessonVideoPlayer';
 
 const MP4_URL = 'https://example.com/video.mp4';
+const SECOND_MP4_URL = 'https://example.com/video-2.mp4';
 const VIMEO_URL = 'https://vimeo.com/123456789';
 const TITLE = 'Experiências Imersivas na Prática';
 
 const renderPlayer = (props: Partial<React.ComponentProps<typeof LessonVideoPlayer>> = {}) => {
   const onEnded = vi.fn();
 
-  render(<LessonVideoPlayer src={MP4_URL} title={TITLE} onEnded={onEnded} {...props} />);
+  const result = render(
+    <LessonVideoPlayer src={MP4_URL} title={TITLE} onEnded={onEnded} {...props} />,
+  );
 
-  return { onEnded };
+  return {
+    ...result,
+    onEnded,
+  };
 };
 
 const loadMetadata = (video: HTMLVideoElement, duration = 1450) => {
@@ -20,18 +26,6 @@ const loadMetadata = (video: HTMLVideoElement, duration = 1450) => {
   });
 
   fireEvent.loadedMetadata(video);
-};
-
-const makeVimeoReady = () => {
-  fireEvent(
-    window,
-    new MessageEvent('message', {
-      origin: 'https://player.vimeo.com',
-      data: {
-        event: 'ready',
-      },
-    }),
-  );
 };
 
 describe('LessonVideoPlayer', () => {
@@ -58,7 +52,11 @@ describe('LessonVideoPlayer', () => {
 
       loadMetadata(video);
 
-      expect(screen.getByRole('button', { name: 'Reproduzir vídeo' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', {
+          name: 'Reproduzir vídeo',
+        }),
+      ).toBeInTheDocument();
 
       expect(screen.getByText(TITLE)).toBeInTheDocument();
     });
@@ -71,7 +69,11 @@ describe('LessonVideoPlayer', () => {
       loadMetadata(video);
       fireEvent.play(video);
 
-      expect(screen.queryByRole('button', { name: 'Reproduzir vídeo' })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', {
+          name: 'Reproduzir vídeo',
+        }),
+      ).not.toBeInTheDocument();
     });
 
     it('shows the overlay again when the video is paused', () => {
@@ -83,7 +85,11 @@ describe('LessonVideoPlayer', () => {
       fireEvent.play(video);
       fireEvent.pause(video);
 
-      expect(screen.getByRole('button', { name: 'Reproduzir vídeo' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', {
+          name: 'Reproduzir vídeo',
+        }),
+      ).toBeInTheDocument();
     });
 
     it('updates the elapsed time when timeupdate is fired', () => {
@@ -129,103 +135,39 @@ describe('LessonVideoPlayer', () => {
       );
     });
 
-    it('shows loading while Vimeo is not ready', () => {
+    it('does not add the legacy api parameter to the Vimeo URL', () => {
       renderPlayer({ src: VIMEO_URL });
 
-      expect(screen.getByText('Carregando...')).toBeInTheDocument();
+      const iframe = screen.getByTitle(TITLE);
+
+      expect(iframe.getAttribute('src')).not.toContain('api=1');
+    });
+
+    it('does not render custom PlayerControls for Vimeo', () => {
+      renderPlayer({ src: VIMEO_URL });
 
       expect(
         screen.queryByRole('slider', {
           name: 'Linha do tempo do vídeo',
         }),
       ).not.toBeInTheDocument();
-    });
-
-    it('shows PlayerControls when Vimeo is ready', () => {
-      renderPlayer({ src: VIMEO_URL });
-
-      makeVimeoReady();
 
       expect(
-        screen.getByRole('slider', {
-          name: 'Linha do tempo do vídeo',
-        }),
-      ).toBeInTheDocument();
-
-      expect(
-        screen.getByRole('button', {
+        screen.queryByRole('button', {
           name: 'Reproduzir',
         }),
-      ).toBeInTheDocument();
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not show the native video loading state over Vimeo', () => {
+      renderPlayer({ src: VIMEO_URL });
 
       expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
-    });
-
-    it('updates the elapsed time from Vimeo timeupdate events', () => {
-      renderPlayer({ src: VIMEO_URL });
-
-      makeVimeoReady();
-
-      fireEvent(
-        window,
-        new MessageEvent('message', {
-          origin: 'https://player.vimeo.com',
-          data: {
-            event: 'timeupdate',
-            data: {
-              seconds: 551,
-              duration: 1450,
-            },
-          },
-        }),
-      );
-
-      expect(screen.getByText('09:11 / 24:10')).toBeInTheDocument();
-    });
-
-    it('changes PlayerControls to pause when Vimeo starts playing', () => {
-      renderPlayer({ src: VIMEO_URL });
-
-      makeVimeoReady();
-
-      fireEvent(
-        window,
-        new MessageEvent('message', {
-          origin: 'https://player.vimeo.com',
-          data: {
-            event: 'play',
-          },
-        }),
-      );
-
-      expect(
-        screen.getByRole('button', {
-          name: 'Pausar',
-        }),
-      ).toBeInTheDocument();
-    });
-
-    it('calls onEnded when Vimeo finishes', () => {
-      const { onEnded } = renderPlayer({ src: VIMEO_URL });
-
-      makeVimeoReady();
-
-      fireEvent(
-        window,
-        new MessageEvent('message', {
-          origin: 'https://player.vimeo.com',
-          data: {
-            event: 'ended',
-          },
-        }),
-      );
-
-      expect(onEnded).toHaveBeenCalledOnce();
     });
   });
 
   describe('error', () => {
-    it('shows "Vídeo indisponível" when the video fails to load', () => {
+    it('shows "Vídeo indisponível" when the native video fails to load', () => {
       renderPlayer();
 
       const video = screen.getByLabelText(TITLE);
@@ -234,10 +176,30 @@ describe('LessonVideoPlayer', () => {
 
       expect(screen.getByText('Vídeo indisponível')).toBeInTheDocument();
     });
+
+    it('resets the error state when src changes', () => {
+      const { rerender } = renderPlayer();
+
+      const firstVideo = screen.getByLabelText(TITLE);
+
+      fireEvent.error(firstVideo);
+
+      expect(screen.getByText('Vídeo indisponível')).toBeInTheDocument();
+
+      rerender(<LessonVideoPlayer src={SECOND_MP4_URL} title={TITLE} />);
+
+      expect(screen.queryByText('Vídeo indisponível')).not.toBeInTheDocument();
+
+      const secondVideo = screen.getByLabelText(TITLE);
+
+      expect(secondVideo).toHaveAttribute('src', SECOND_MP4_URL);
+
+      expect(screen.getByText('Carregando...')).toBeInTheDocument();
+    });
   });
 
   describe('keyboard', () => {
-    it('plays the video when Space is pressed while the player is focused', () => {
+    it('plays the native video when Space is pressed while the player is focused', () => {
       renderPlayer();
 
       const player = screen.getByLabelText(`Player da aula ${TITLE}`);
@@ -261,6 +223,21 @@ describe('LessonVideoPlayer', () => {
       expect(playMock).toHaveBeenCalledOnce();
 
       playMock.mockRestore();
+    });
+
+    it('does not try to control Vimeo when Space is pressed', () => {
+      renderPlayer({ src: VIMEO_URL });
+
+      const player = screen.getByLabelText(`Player da aula ${TITLE}`);
+
+      player.focus();
+
+      fireEvent.keyDown(player, {
+        code: 'Space',
+        key: ' ',
+      });
+
+      expect(screen.getByTitle(TITLE)).toBeInTheDocument();
     });
   });
 });
