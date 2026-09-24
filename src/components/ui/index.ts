@@ -13,6 +13,8 @@ export { ConfirmDialog } from './ConfirmDialog';
 export type { ConfirmDialogProps } from './ConfirmDialog';
 export { CourseCard } from './CourseCard';
 export type { CourseCardProps } from './CourseCard';
+export { StudentCourseCard } from './StudentCourseCard';
+export type { EnrollmentStatus, StudentCourseCardProps } from './StudentCourseCard';
 export { LessonModal } from './LessonModal';
 export type { LessonModalProps } from './LessonModal';
 export { Modal } from './Modal';
@@ -42,3 +44,6 @@ export { TextInput } from './TextInput';
 export type { TextInputProps } from './TextInput';
 export { Toast } from './Toast';
 export type { ToastProps, ToastVariant } from './Toast';
+
+export { EmptyState } from './EmptyState';
+export type { EmptyStateProps } from './EmptyState';

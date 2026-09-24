@@ -27,4 +27,13 @@ describe('ProgressBar', () => {
 
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
   });
+
+  it('supports a success appearance without changing its value', () => {
+    render(<ProgressBar value={100} variant="success" aria-label="Curso concluído" />);
+
+    expect(screen.getByRole('progressbar', { name: 'Curso concluído' })).toHaveAttribute(
+      'aria-valuenow',
+      '100',
+    );
+  });
 });
