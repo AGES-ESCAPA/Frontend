@@ -1,0 +1,112 @@
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--color-neutral-400);
+}
+
+.iconBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  color: var(--color-white);
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+}
+
+.duration {
+  flex-shrink: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-4);
+  color: var(--color-text-muted);
+}
+
+/* Completed */
+.completed .iconBadge {
+  background-color: var(--color-success-400);
+}
+
+.completed .title {
+  color: var(--color-text-secondary);
+}
+
+/* Available */
+.available .icon {
+  color: var(--color-neutral-400);
+}
+
+.available .title {
+  color: var(--color-text-secondary);
+}
+
+/* Current — assume ter reprodução; sobrepõe o estado de `status`. */
+.current::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 24px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-500);
+}
+
+.current .iconBadge {
+  background-color: var(--color-primary-500);
+}
+
+.current .title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* Locked */
+.locked {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.locked .icon {
+  color: var(--color-neutral-500);
+}
+
+.locked .title,
+.locked .duration {
+  color: var(--color-text-muted);
+}
+
+.item:not(.locked):hover {
+  background-color: var(--color-surface-raised);
+}
+
+.item:not(.locked):focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
