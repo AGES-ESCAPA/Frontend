@@ -65,7 +65,6 @@
   color: var(--color-text-secondary);
 }
 
-/* Current — assume ter reprodução; sobrepõe o estado de `status`. */
 .current::before {
   content: '';
   position: absolute;
