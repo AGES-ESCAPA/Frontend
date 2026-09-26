@@ -1,0 +1,149 @@
+.page {
+  width: 100%;
+  min-height: 100%;
+  padding: 2rem;
+}
+
+.lesson {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.breadcrumb {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.header h1 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-3xl);
+  line-height: 1.2;
+}
+
+.header p {
+  max-width: 48rem;
+  margin: 0.75rem 0 0;
+  line-height: 1.6;
+}
+
+.playerContainer {
+  width: 100%;
+}
+
+.stateContainer {
+  display: flex;
+  min-height: 24rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.stateContainer h1 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-3xl);
+}
+
+.stateContainer p {
+  max-width: 36rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.courseLink {
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+.nonVideoContent {
+  display: flex;
+  min-height: 20rem;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border: 1px dashed currentcolor;
+  border-radius: 0.75rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: rgb(0 0 0 / 8%);
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 45%), transparent);
+  content: '';
+  transform: translateX(-100%);
+  animation: skeleton-loading 1.4s infinite;
+}
+
+.skeletonBreadcrumb {
+  width: 10rem;
+  height: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.skeletonTitle {
+  width: min(28rem, 75%);
+  height: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.skeletonDescription {
+  width: min(40rem, 90%);
+  height: 1.25rem;
+}
+
+.playerSkeleton {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+@keyframes skeleton-loading {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+@media (width <= 768px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+  }
+
+  .stateContainer {
+    min-height: 18rem;
+    padding: 1rem;
+  }
+}
