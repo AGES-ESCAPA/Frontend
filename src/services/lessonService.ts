@@ -5,7 +5,7 @@
  * chamam `fetch` diretamente: elas usam estas funções.
  */
 import type { Lesson, LessonPayload, LessonResource, LessonType } from '@/types/lesson';
-import { adminHeaders } from '@services/api';
+import { adminHeaders, studentHeaders } from '@services/api';
 import type { ApiResponse } from '@services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -34,23 +34,54 @@ interface ContentResponse {
   resources: string | LessonResource[] | null;
 }
 
+interface StudentLessonResponse {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string | null;
+  type: ApiLessonType;
+  url: string | null;
+  durationMinutes: number | null;
+  isFree: boolean;
+  order: number;
+  resources: string | null;
+  module: {
+    id: string;
+    title: string;
+    order: number;
+  };
+}
+
+export class StudentLessonError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'StudentLessonError';
+    this.status = status;
+  }
+}
+
 const toApiLessonType = (type: LessonType): ApiLessonType => type.toUpperCase() as ApiLessonType;
 
 const toLessonType = (type: ApiLessonType): LessonType => type.toLowerCase() as LessonType;
 
 const secondsToMinutes = (seconds: number | null): number | null => {
   if (seconds == null || seconds <= 0) return null;
+
   return Math.max(1, Math.round(seconds / 60));
 };
 
 const resolveContentUrl = (payload: LessonPayload): string | null => {
   if (payload.type === 'video') return payload.videoUrl;
   if (payload.type === 'file') return payload.fileUrl;
+
   return null;
 };
 
 const resolveContentDescription = (payload: LessonPayload): string | null => {
   if (payload.type === 'text') return payload.textContent;
+
   return payload.description || null;
 };
 
@@ -69,6 +100,7 @@ const parseResources = (resources: ContentResponse['resources']): LessonResource
 
   try {
     const parsed: unknown = JSON.parse(resources);
+
     return Array.isArray(parsed) ? (parsed as LessonResource[]) : [];
   } catch {
     return [];
@@ -94,21 +126,72 @@ const mapContentToLesson = (content: ContentResponse): Lesson => {
   };
 };
 
-const extractErrorMessage = (data: unknown): string | null => {
-  if (typeof data !== 'object' || data === null || !('message' in data)) return null;
+const mapStudentLessonToLesson = (content: StudentLessonResponse): Lesson => {
+  const type = toLessonType(content.type);
 
-  const { message } = data as { message?: unknown };
+  return {
+    id: content.id,
+    moduleId: content.module.id,
+    title: content.title,
+    description: content.description ?? '',
+    type,
+    videoUrl: type === 'video' ? content.url : null,
+    durationInSeconds: content.durationMinutes != null ? content.durationMinutes * 60 : null,
+    textContent: type === 'text' ? content.description : null,
+    fileUrl: type === 'file' ? content.url : null,
+    isFreeSample: Boolean(content.isFree),
+    resources: parseResources(content.resources),
+    order: content.order,
+  };
+};
+
+const extractErrorMessage = (data: unknown): string | null => {
+  if (typeof data !== 'object' || data === null || !('message' in data)) {
+    return null;
+  }
+
+  const { message } = data as {
+    message?: unknown;
+  };
+
   return typeof message === 'string' ? message : null;
 };
 
 const parseLessonResponse = async (response: Response, fallback: string): Promise<Lesson> => {
   if (!response.ok) {
     const errorData: unknown = await response.json().catch(() => null);
+
     throw new Error(extractErrorMessage(errorData) ?? fallback);
   }
 
   const json: ApiResponse<ContentResponse> = await response.json();
+
   return mapContentToLesson(json.data);
+};
+
+export const getStudentLesson = async (
+  courseId: string,
+  lessonId: string,
+  signal?: AbortSignal,
+): Promise<Lesson> => {
+  const response = await fetch(`${API_BASE_URL}/student/courses/${courseId}/lessons/${lessonId}`, {
+    method: 'GET',
+    headers: studentHeaders(),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorData: unknown = await response.json().catch(() => null);
+
+    throw new StudentLessonError(
+      response.status,
+      extractErrorMessage(errorData) ?? 'Não foi possível carregar a aula.',
+    );
+  }
+
+  const json: ApiResponse<StudentLessonResponse> = await response.json();
+
+  return mapStudentLessonToLesson(json.data);
 };
 
 export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
