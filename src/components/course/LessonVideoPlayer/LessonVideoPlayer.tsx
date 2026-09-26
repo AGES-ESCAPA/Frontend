@@ -2,16 +2,31 @@ import { Play } from 'lucide-react';
 import { useEffect, useRef, useState, type FC, type KeyboardEvent } from 'react';
 
 import { toVimeoEmbedUrl } from '@utils/vimeo';
+import { CourseCompletionMessage } from '../CourseCompletionMessage/CourseCompletionMessage';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
 import styles from './LessonVideoPlayer.module.css';
 
 export interface LessonVideoPlayerProps {
   src: string;
   title: string;
+  /** Nome do curso, exibido na mensagem de parabenização (US-17). */
+  courseTitle?: string;
+  /** Se a aula atual é a última do curso: controla se o término do vídeo mostra a mensagem de parabenização. */
+  isLastLesson?: boolean;
   onEnded?: () => void;
+  onViewOtherCourses?: () => void;
+  onViewCertificate?: () => void;
 }
 
-export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({ src, title, onEnded }) => {
+export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
+  src,
+  title,
+  courseTitle = '',
+  isLastLesson = false,
+  onEnded,
+  onViewOtherCourses,
+  onViewCertificate,
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -19,6 +34,7 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({ src, title, onEn
   const [hasError, setHasError] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [hasCompletedCourse, setHasCompletedCourse] = useState(false);
 
   const vimeoEmbedUrl = toVimeoEmbedUrl(src);
   const isVimeo = Boolean(vimeoEmbedUrl);
@@ -29,6 +45,9 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({ src, title, onEn
     setHasError(false);
     setCurrentTime(0);
     setDuration(0);
+    // Trocar de aula (voltar ou avançar) descarta a mensagem de parabenização
+    // de uma conclusão anterior; ela só volta se essa nova aula também terminar.
+    setHasCompletedCourse(false);
   }, [src]);
 
   const handleTogglePlay = async () => {
@@ -83,6 +102,9 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({ src, title, onEn
 
   const handleEnded = () => {
     setIsPlaying(false);
+    if (isLastLesson) {
+      setHasCompletedCourse(true);
+    }
     onEnded?.();
   };
 
@@ -138,16 +160,26 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({ src, title, onEn
 
           {!isPlaying && !isLoading && !isVimeo && (
             <div className={styles.overlay}>
-              <button
-                type="button"
-                className={styles.playButton}
-                aria-label="Reproduzir vídeo"
-                onClick={handleTogglePlay}
-              >
-                <Play className={styles.playIcon} fill="currentColor" aria-hidden="true" />
-              </button>
+              {hasCompletedCourse ? (
+                <CourseCompletionMessage
+                  courseTitle={courseTitle}
+                  onViewOtherCourses={onViewOtherCourses ?? (() => {})}
+                  onViewCertificate={onViewCertificate ?? (() => {})}
+                />
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className={styles.playButton}
+                    aria-label="Reproduzir vídeo"
+                    onClick={handleTogglePlay}
+                  >
+                    <Play className={styles.playIcon} fill="currentColor" aria-hidden="true" />
+                  </button>
 
-              <p className={styles.title}>{title}</p>
+                  <p className={styles.title}>{title}</p>
+                </>
+              )}
             </div>
           )}
 
