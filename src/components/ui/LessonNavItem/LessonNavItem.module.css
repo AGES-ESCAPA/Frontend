@@ -22,8 +22,8 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: var(--space-5);
+  height: var(--space-5);
   border-radius: var(--radius-full);
   color: var(--color-white);
 }
