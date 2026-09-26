@@ -1,0 +1,58 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background-color: var(--color-neutral-800);
+  color: var(--color-secondary-100);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.button:hover {
+  background-color: var(--color-neutral-700);
+}
+
+.button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* Só existe para detectar falha de carregamento (onError); nunca é exibido,
+   ver skill de decisão do time: sem preview visível nesta US. */
+.previewProbe {
+  position: absolute;
+  inset: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Igual ao role="status" do TeaserPlayer, mas sem ocupar espaço visual —
+   decisão do time para esta US: o botão não muda de aparência no erro. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
