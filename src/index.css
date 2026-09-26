@@ -225,6 +225,10 @@
   --badge-offset-level-top: 12px;
   --badge-offset-level-right: 13px;
 
+  --course-card-image-ratio: 16 / 9;
+  --opacity-card-pending: 0.6;
+  --border-width-thin: 1px;
+
   /* ── Espaçamento ────────────────────────────────────────────────
      Unidade base: --spacing = 0.25rem (4px).
   ─────────────────────────────────────────────────────────────── */
