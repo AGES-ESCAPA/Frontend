@@ -1,0 +1,34 @@
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  min-width: 0;
+  max-width: 480px;
+  padding: 0 var(--space-4);
+  pointer-events: auto;
+}
+
+.text {
+  width: 100%;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+  line-height: 1.6;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.courseTitle {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
