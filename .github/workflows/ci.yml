@@ -145,6 +145,8 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          build-args: |
+            VITE_API_BASE_URL=https://api.escapaages.online/api/v1
           tags: |
             ${{ env.IMAGE_NAME }}:stable
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
