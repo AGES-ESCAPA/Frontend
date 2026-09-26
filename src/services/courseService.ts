@@ -1,5 +1,6 @@
 import { adminHeaders } from '@services/api';
 import type { ApiResponse } from '@services/api';
+import { getApiBaseUrl } from '@services/runtimeEnv';
 import { toApiLevel } from '@utils/mapPublicCourse';
 import type {
   AdminCourseListItem,
@@ -10,7 +11,7 @@ import type {
   PublicCoursesQuery,
 } from '@/types/course';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE = getApiBaseUrl() || '/api/v1';
 
 export const PUBLIC_COURSES_PATH = '/public/courses';
 

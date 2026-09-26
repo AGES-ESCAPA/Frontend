@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { getApiBaseUrl } from '@services/runtimeEnv';
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Identificação do administrador nas rotas `/admin/**`.
