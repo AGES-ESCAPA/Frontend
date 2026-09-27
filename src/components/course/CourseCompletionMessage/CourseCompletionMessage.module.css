@@ -15,8 +15,8 @@
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--text-body-3);
-  line-height: 1.6;
-  letter-spacing: 0.5px;
+  line-height: var(--text-body-3--line-height);
+  letter-spacing: var(--tracking-badge);
   text-align: center;
 }
 
@@ -31,4 +31,18 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
+}
+
+@media (width <= 480px) {
+  .message {
+    gap: var(--space-3);
+  }
+
+  .text {
+    font-size: var(--text-body-4);
+  }
+
+  .actions {
+    gap: var(--space-3);
+  }
 }

@@ -68,6 +68,9 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
 
   const handlePlay = () => {
     setIsPlaying(true);
+    // Rever a aula depois de concluída não deve manter a mensagem de
+    // parabenização: ela só volta se o vídeo terminar de novo.
+    setHasCompletedCourse(false);
   };
 
   const handlePause = () => {
@@ -114,7 +117,10 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.code !== 'Space' || isVimeo) return;
+    // event.target !== event.currentTarget: o Espaço só reproduz/pausa quando
+    // o foco está no próprio player, não quando vem de um elemento focável lá
+    // dentro (ex.: os botões da mensagem de parabenização).
+    if (event.code !== 'Space' || isVimeo || event.target !== event.currentTarget) return;
 
     event.preventDefault();
     void handleTogglePlay();
@@ -158,6 +164,10 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
             />
           )}
 
+          {/* !isVimeo (pré-existente): o iframe do Vimeo não dispara onEnded nem os
+              demais eventos daqui, então uma última aula em Vimeo nunca mostra a
+              mensagem de parabenização (US-17). Precisaria da API do player do
+              Vimeo via postMessage; fora do escopo desta task. */}
           {!isPlaying && !isLoading && !isVimeo && (
             <div className={styles.overlay}>
               {hasCompletedCourse ? (

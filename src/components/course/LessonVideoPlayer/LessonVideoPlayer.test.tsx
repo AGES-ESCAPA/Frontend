@@ -267,6 +267,49 @@ describe('LessonVideoPlayer', () => {
       expect(onViewOtherCourses).toHaveBeenCalledOnce();
     });
 
+    it('does not toggle the video when Space is pressed on a button inside the message', () => {
+      renderPlayer({ isLastLesson: true, courseTitle: COURSE_TITLE });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.ended(video);
+
+      const playSpy = vi.spyOn(video, 'play').mockResolvedValue(undefined);
+      Object.defineProperty(video, 'paused', { configurable: true, value: true });
+
+      const certificateButton = screen.getByRole('button', { name: 'Ver Certificado' });
+      certificateButton.focus();
+      fireEvent.keyDown(certificateButton, { code: 'Space', key: ' ' });
+
+      // O Espaço com foco no botão deve ativar só o botão (comportamento nativo do
+      // <button>), sem o player interpretar como "tocar/pausar o vídeo".
+      expect(playSpy).not.toHaveBeenCalled();
+
+      playSpy.mockRestore();
+    });
+
+    it('clears the congrats message when playing the video again after it ended', () => {
+      renderPlayer({ isLastLesson: true, courseTitle: COURSE_TITLE });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.ended(video);
+      expect(screen.getByText(/parabéns/i)).toBeInTheDocument();
+
+      // Reassistir a aula (ex.: pausar no meio pra rever um trecho) não pode
+      // trazer de volta a mensagem de conclusão de antes.
+      fireEvent.play(video);
+      fireEvent.pause(video);
+
+      expect(screen.getByRole('button', { name: 'Reproduzir vídeo' })).toBeInTheDocument();
+      expect(screen.getByText(TITLE)).toBeInTheDocument();
+      expect(screen.queryByText(/parabéns/i)).not.toBeInTheDocument();
+    });
+
     it('clears the congrats message when moving to another lesson', () => {
       const { rerender } = renderPlayer({ isLastLesson: true, courseTitle: COURSE_TITLE });
 
