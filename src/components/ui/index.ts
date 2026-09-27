@@ -21,6 +21,8 @@ export { LessonNavItem } from './LessonNavItem';
 export type { LessonNavItemProps, LessonStatus } from './LessonNavItem';
 export { Modal } from './Modal';
 export type { ModalProps, ModalSize } from './Modal';
+export { ModuleNavSection } from './ModuleNavSection';
+export type { ModuleNavLesson, ModuleNavSectionProps } from './ModuleNavSection';
 export { SearchBar } from './SearchBar';
 export type { SearchBarProps, SearchBarTheme } from './SearchBar';
 export { Switch } from './Switch';
