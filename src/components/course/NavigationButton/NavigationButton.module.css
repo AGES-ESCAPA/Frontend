@@ -7,8 +7,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: var(--space-12);
+  height: var(--space-12);
   padding: 0;
   border: 0;
   border-radius: var(--radius-full);
@@ -28,8 +28,8 @@
 }
 
 .icon {
-  width: 24px;
-  height: 24px;
+  width: var(--space-6);
+  height: var(--space-6);
 }
 
 /* Só existe para detectar falha de carregamento (onError); nunca é exibido,
