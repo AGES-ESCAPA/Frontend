@@ -17,6 +17,8 @@ export { StudentCourseCard } from './StudentCourseCard';
 export type { EnrollmentStatus, StudentCourseCardProps } from './StudentCourseCard';
 export { LessonModal } from './LessonModal';
 export type { LessonModalProps } from './LessonModal';
+export { LessonNavItem } from './LessonNavItem';
+export type { LessonNavItemProps, LessonStatus } from './LessonNavItem';
 export { Modal } from './Modal';
 export type { ModalProps, ModalSize } from './Modal';
 export { SearchBar } from './SearchBar';
