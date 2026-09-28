@@ -107,6 +107,16 @@ export interface CourseLesson {
   isFree?: boolean;
 }
 
+/**
+ * Referência leve a uma aula, usada pela navegação do player (US-14): só o
+ * necessário para identificar a aula e exibir seu nome, sem o restante do
+ * conteúdo de `CourseLesson`.
+ */
+export interface LessonRef {
+  id: string;
+  title: string;
+}
+
 export interface CourseMaterial {
   title: string;
   format: string;
