@@ -33,7 +33,7 @@ export const AboutUser: FC<AboutUserProps> = ({
       <div className={styles.identity}>
         <Avatar name={name} imageUrl={avatarUrl} />
         <p id="about-user-title" className={styles.headline}>
-          Concluído por <strong>{name}</strong>
+          Concluído por <span>{name}</span>
           <br />
           em {conclusionDate}
         </p>

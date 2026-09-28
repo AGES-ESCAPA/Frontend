@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCertificateByCode } from '@services/certificateService';
@@ -61,6 +61,22 @@ describe('DigitalCertificate', () => {
     expect(screen.queryByRole('link', { name: /meus cursos/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^baixar$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^compartilhar$/i })).not.toBeInTheDocument();
+  });
+
+  it('copies the public verification link when sharing, even from the logged-in route', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    getCertificateByCodeMock.mockResolvedValue(certificate);
+    renderPage(true);
+
+    fireEvent.click(await screen.findByRole('button', { name: /^compartilhar$/i }));
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        `${window.location.origin}/certificados/${certificate.verificationCode}`,
+      );
+    });
+    expect(await screen.findByText(/link copiado/i)).toBeInTheDocument();
   });
 
   it('shows a friendly error message when the certificate fails to load', async () => {
