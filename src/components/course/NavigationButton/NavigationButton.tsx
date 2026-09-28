@@ -1,4 +1,4 @@
-import { SkipBack, SkipForward } from 'lucide-react';
+import { StepBack, StepForward } from 'lucide-react';
 import { useEffect, useState, type FC } from 'react';
 import type { LessonRef } from '@/types/course';
 import styles from './NavigationButton.module.css';
@@ -48,7 +48,7 @@ export const NavigationButton: FC<NavigationButtonProps> = ({
   }
 
   const isPrevious = direction === 'previous';
-  const Icon = isPrevious ? SkipBack : SkipForward;
+  const Icon = isPrevious ? StepBack : StepForward;
   const label = LABELS[direction];
 
   return (

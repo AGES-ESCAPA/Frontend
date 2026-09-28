@@ -41,6 +41,15 @@ describe('NavigationButton', () => {
       ).toBeInTheDocument();
     });
 
+    it.each([
+      ['previous', 'lucide-step-back'],
+      ['next', 'lucide-step-forward'],
+    ] as const)('uses the prototype icon for the %s direction', (direction, iconClass) => {
+      renderButton({ direction });
+
+      expect(screen.getByRole('button').querySelector('svg')).toHaveClass(iconClass);
+    });
+
     it('does not render when there is no lesson in that direction', () => {
       const { container } = renderButton({ targetLesson: null });
 
