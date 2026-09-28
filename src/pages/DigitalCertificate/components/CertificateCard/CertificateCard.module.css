@@ -1,222 +1,322 @@
+/*
+ * Certificado reproduzindo a imagem do protótipo (Figma, 939 × 725).
+ *
+ * As medidas são proporcionais à largura do certificado (unidades `cqi` do
+ * container), tiradas da imagem de referência, para o desenho manter as mesmas
+ * proporções em qualquer tamanho. Cada tamanho de texto fica limitado entre dois
+ * tokens do design system com clamp(), para não ficar ilegível nem gigante.
+ */
 .card {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-8);
-  border: 1px solid var(--color-info);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-surface-raised);
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-surface-raised) 0%, var(--color-surface) 100%);
   box-shadow: var(--shadow-md);
+  container: certificate / inline-size;
 }
 
+/* Borda fina recuada para dentro, como a moldura da imagem. */
+.card::before {
+  position: absolute;
+  inset: 1.4cqi;
+  z-index: 0;
+  border: 1px solid color-mix(in srgb, var(--color-info) 45%, transparent);
+  border-radius: var(--radius-md);
+  content: '';
+  pointer-events: none;
+}
+
+/* ── Fita e selo (lado direito) ─────────────────────────────────────── */
 .ribbon {
   position: absolute;
-  top: calc(var(--space-20) + var(--space-6));
-  right: var(--space-10);
+  top: 1.4cqi;
+  left: 71.5cqi;
   z-index: 0;
-  width: var(--space-4);
-  height: calc(var(--space-20) + var(--space-8));
-  background: linear-gradient(180deg, var(--color-info-400) 0%, transparent 100%);
-  opacity: 0.35;
-  clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+  width: 23.1cqi;
+  pointer-events: none;
 }
 
-.badge {
+.ribbonBand {
+  fill: color-mix(in srgb, var(--color-primary-700) 75%, transparent);
+  stroke: color-mix(in srgb, var(--color-info) 45%, transparent);
+  stroke-width: 1.5;
+}
+
+.ribbonTails rect {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-info) 22%, transparent);
+  stroke-width: 1.5;
+}
+
+.seal {
   position: absolute;
-  top: var(--space-4);
-  right: var(--space-6);
+  top: 14.2cqi;
+  left: 78.3cqi;
+  z-index: 1;
+  width: 15.1cqi;
+  pointer-events: none;
+}
+
+.sealOuter {
+  fill: var(--color-surface);
+  stroke: var(--color-info);
+  stroke-width: 6;
+}
+
+.sealInner {
+  fill: none;
+  stroke: var(--color-info);
+  stroke-width: 3.5;
+}
+
+.sealDot {
+  fill: var(--color-info);
+}
+
+.sealText {
+  fill: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: 19px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 4px;
+}
+
+.sealCheck {
+  fill: none;
+  stroke: var(--color-info);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Conteúdo ────────────────────────────────────────────────────────── */
+.content {
+  position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--space-20) + var(--space-4));
-  height: calc(var(--space-20) + var(--space-4));
-}
-
-.badgeRing {
-  width: 100%;
-  height: 100%;
-}
-
-.badgeRingCircle {
-  fill: var(--color-surface-raised);
-  stroke: var(--color-info);
-  stroke-width: 1.5px;
-}
-
-.badgeText {
-  fill: var(--color-info);
-  font-size: 8.5px;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.06em;
-}
-
-.badgeIcon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--color-info);
+  flex-direction: column;
+  padding: 7cqi 7.7cqi;
 }
 
 .header {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 2cqi;
 }
 
 .logo {
-  height: var(--space-6);
+  height: clamp(var(--space-6), 4.06cqi, var(--space-10));
 }
 
 .divider {
   width: 1px;
-  height: var(--space-5);
+  height: 2.8cqi;
   background-color: var(--color-text-muted);
 }
 
 .context {
-  color: var(--color-text-muted);
-  font-size: var(--text-body-3);
+  color: var(--color-neutral-400);
+  font-size: clamp(var(--text-body-5), 1.68cqi, var(--text-body-2));
   font-weight: var(--font-weight-medium);
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: calc(var(--tracking-wide) * 9);
   text-transform: uppercase;
 }
 
 .eyebrow {
-  position: relative;
-  z-index: 1;
+  max-width: 62cqi;
+  margin: 6.8cqi 0 0;
   color: var(--color-info);
-  font-size: var(--text-body-4);
-  line-height: var(--text-body-4--line-height);
-  letter-spacing: var(--tracking-wide);
+  font-size: clamp(var(--text-body-5), 1.19cqi, var(--text-body-4));
+  font-weight: var(--font-weight-bold);
+  letter-spacing: calc(var(--tracking-wide) * 5);
   text-transform: uppercase;
 }
 
 .intro {
-  position: relative;
-  z-index: 1;
   display: flex;
+  max-width: 62cqi;
   flex-direction: column;
-  gap: var(--space-1);
-  max-width: 85%;
+  margin-top: 2.4cqi;
 }
 
 .introLine {
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
+  color: var(--color-neutral-400);
+  font-size: clamp(var(--text-body-4), 1.54cqi, var(--text-body-2));
+  line-height: var(--leading-normal);
 }
 
 .studentName {
-  margin: var(--space-1) 0;
+  margin: 1.2cqi 0 2.3cqi;
   color: var(--color-text-primary);
-  font-size: var(--text-h4);
-  line-height: var(--text-h4--line-height);
+  font-size: clamp(var(--text-h5), 4.27cqi, var(--text-h2));
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
 }
 
 .courseName {
-  margin: 0;
+  margin: 1.6cqi 0 0;
   color: var(--color-info);
-  font-size: var(--text-h6);
-  line-height: var(--text-h6--line-height);
+  font-size: clamp(var(--text-h6), 2.9cqi, var(--text-h3));
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
 }
 
 .offeredBy {
-  margin: var(--space-1) 0 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-4);
-  line-height: var(--text-body-4--line-height);
+  margin: 2cqi 0 0;
+  color: var(--color-neutral-300);
+  font-size: clamp(var(--text-body-4), 1.4cqi, var(--text-body-3));
+  line-height: var(--leading-normal);
 }
 
+/* ── Data, carga horária e código ───────────────────────────────────── */
 .details {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  margin: 0;
+  gap: 2.4cqi;
+  margin: 5cqi 0 0;
 }
 
 .detailItem {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 2.3cqi;
+}
+
+.detailIcon {
+  flex-shrink: 0;
+  width: clamp(var(--space-5), 2.9cqi, var(--space-10));
+  height: clamp(var(--space-5), 2.9cqi, var(--space-10));
   color: var(--color-info);
 }
 
 .detailItem dt {
-  color: var(--color-text-muted);
-  font-size: var(--text-body-5);
-  line-height: var(--text-body-5--line-height);
+  color: var(--color-neutral-400);
+  font-size: clamp(var(--text-body-5), 1.26cqi, var(--text-body-3));
+  line-height: var(--leading-normal);
 }
 
 .detailItem dd {
   margin: 0;
   color: var(--color-text-primary);
-  font-size: var(--text-body-4);
-  line-height: var(--text-body-4--line-height);
-  font-weight: var(--font-weight-medium);
+  font-size: clamp(var(--text-body-4), 1.37cqi, var(--text-body-3));
+  line-height: var(--leading-normal);
+}
+
+/* ── Verificação e assinatura ───────────────────────────────────────── */
+/* Na imagem, a assinatura sobe ao lado do código de verificação, alinhada pela
+   base com o link: ela fica posicionada no canto e não empurra o texto. */
+.footer {
+  margin-top: 2.8cqi;
+  padding-right: 32cqi;
 }
 
 .verify {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 0.8cqi;
 }
 
 .verify p {
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-5);
-  line-height: var(--text-body-5--line-height);
+  color: var(--color-neutral-300);
+  font-size: clamp(var(--text-body-5), 1.3cqi, var(--text-body-3));
+  line-height: var(--leading-normal);
 }
 
 .verifyLink {
   color: var(--color-info);
-  font-size: var(--text-body-4);
-  line-height: var(--text-body-4--line-height);
+  font-size: clamp(var(--text-body-4), 1.37cqi, var(--text-body-3));
+  line-height: var(--leading-normal);
+  overflow-wrap: anywhere;
 }
 
 .signature {
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  right: 9.7cqi;
+  bottom: 7cqi;
   display: flex;
+  width: 27.3cqi;
   flex-direction: column;
-  align-items: flex-end;
-  align-self: flex-end;
-  gap: var(--space-1);
-  text-align: right;
+  align-items: center;
+  text-align: center;
 }
 
-.signatureScript {
-  color: var(--color-info);
-  font-size: var(--text-h6);
-  font-style: italic;
-  font-weight: var(--font-weight-semibold);
+.signatureStroke {
+  width: 16.5cqi;
+  margin-bottom: -1.2cqi;
+  fill: none;
+  stroke: var(--color-text-primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .signatureLine {
-  width: calc(var(--space-20) + var(--space-6));
+  width: 100%;
   height: 1px;
-  background-color: var(--color-border-subtle);
+  background-color: var(--color-neutral-500);
 }
 
 .signatureName {
+  margin-top: 1.4cqi;
   color: var(--color-info);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
-  font-weight: var(--font-weight-semibold);
+  font-size: clamp(var(--text-body-4), 1.4cqi, var(--text-body-3));
+  line-height: var(--leading-normal);
 }
 
 .signatureCaption {
-  color: var(--color-text-muted);
-  font-size: var(--text-body-5);
-  line-height: var(--text-body-5--line-height);
+  color: var(--color-neutral-400);
+  font-size: clamp(var(--text-body-5), 1.33cqi, var(--text-body-3));
+  line-height: var(--leading-normal);
+}
+
+/* ── Certificado estreito (celular) ─────────────────────────────────── */
+@container certificate (width < 36rem) {
+  /* A fita não cabe ao lado do texto: fica só o selo, menor, no canto. */
+  .ribbon {
+    display: none;
+  }
+
+  .seal {
+    top: 5cqi;
+    right: 5cqi;
+    left: auto;
+    width: 20cqi;
+  }
+
+  .header,
+  .eyebrow {
+    max-width: 60cqi;
+  }
+
+  .intro {
+    max-width: none;
+  }
+
+  .details {
+    gap: var(--space-3);
+  }
+
+  .detailItem {
+    gap: var(--space-3);
+  }
+
+  /* No celular não há espaço ao lado: a assinatura desce para baixo do link. */
+  .footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding-right: 0;
+  }
+
+  .signature {
+    position: static;
+    align-self: center;
+    width: 70cqi;
+  }
+
+  .signatureStroke {
+    width: 45cqi;
+  }
 }
