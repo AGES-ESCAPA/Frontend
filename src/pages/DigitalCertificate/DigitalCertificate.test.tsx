@@ -12,22 +12,39 @@ vi.mock('@services/certificateService', () => ({
 
 const getCertificateByCodeMock = vi.mocked(getCertificateByCode);
 
-const certificate: CertificateData = {
-  course: 'Marketing Digital para Hospitalidade',
-  student: 'Jorge Amado',
-  workload: '16 horas',
-  conclusionDate: '21 de agosto de 2026',
-  verificationCode: 'ESC-21AGO25-7X9L2M3N',
-};
+const buildCertificate = (isOwner: boolean): CertificateData => ({
+  certificate: {
+    conclusionDate: '2026-08-21',
+    workload: 960,
+    verificationCode: 'ESC-21AGO25-7X9L2M3N',
+  },
+  student: {
+    name: 'Jorge Amado',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  course: {
+    id: 'e0000000-0000-4000-e000-000000000002',
+    title: 'Marketing Digital para Hospitalidade',
+    description: 'Estratégias de marketing digital para hotéis, pousadas e operadoras de turismo',
+    category: 'Marketing',
+    level: 'INTERMEDIARIO',
+    thumbnailUrl: null,
+    durationTime: 960,
+    lessonsCount: 44,
+    rating: 4.7,
+    reviewsCount: 98,
+    instructor: 'Paulo Henrique',
+    price: 249.9,
+  },
+  isOwner,
+});
 
-const renderPage = (isAuthenticated: boolean, verificationCode = certificate.verificationCode) =>
+const renderPage = (verificationCode = 'ESC-21AGO25-7X9L2M3N') =>
   render(
     <MemoryRouter initialEntries={[`/certificados/${verificationCode}`]}>
       <Routes>
-        <Route
-          path="/certificados/:verificationCode"
-          element={<DigitalCertificate isAuthenticated={isAuthenticated} />}
-        />
+        <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -37,39 +54,54 @@ describe('DigitalCertificate', () => {
     getCertificateByCodeMock.mockReset();
   });
 
-  it('renders the certificate with the sidebar and action buttons when authenticated', async () => {
-    getCertificateByCodeMock.mockResolvedValue(certificate);
-    renderPage(true);
+  it('loads and renders the real certificate data from the API on success', async () => {
+    getCertificateByCodeMock.mockResolvedValue(buildCertificate(false));
+    renderPage();
 
     expect(
-      await screen.findByRole('heading', { name: certificate.student, level: 1 }),
+      await screen.findByRole('heading', { name: 'Jorge Amado', level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: certificate.course, level: 2 })).toBeInTheDocument();
-    expect(screen.getByText(/concluído por/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /meus cursos/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^baixar$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^compartilhar$/i })).toBeInTheDocument();
-  });
-
-  it('renders the certificate publicly without the sidebar or action buttons', async () => {
-    getCertificateByCodeMock.mockResolvedValue(certificate);
-    renderPage(false);
-
     expect(
-      await screen.findByRole('heading', { name: certificate.student, level: 1 }),
+      screen.getByRole('heading', { name: 'Marketing Digital para Hospitalidade', level: 2 }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /meus cursos/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^baixar$/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^compartilhar$/i })).not.toBeInTheDocument();
+    expect(screen.getAllByText(/21 de agosto de 2026/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/16h/).length).toBeGreaterThan(0);
+    expect(screen.getByText('ESC-21AGO25-7X9L2M3N')).toBeInTheDocument();
+    expect(getCertificateByCodeMock).toHaveBeenCalledWith(
+      'ESC-21AGO25-7X9L2M3N',
+      expect.any(AbortSignal),
+    );
   });
 
   it('shows a friendly error message when the certificate fails to load', async () => {
     getCertificateByCodeMock.mockRejectedValue(new Error('Certificado não encontrado.'));
-    renderPage(false, 'CODIGO-INEXISTENTE');
+    renderPage('CODIGO-INEXISTENTE');
 
     await waitFor(() => {
       expect(screen.getByText(/não foi possível carregar o certificado/i)).toBeInTheDocument();
     });
     expect(screen.getByText('Certificado não encontrado.')).toBeInTheDocument();
+  });
+
+  it('shows the sidebar, the authenticated navbar and the action buttons when isOwner is true', async () => {
+    getCertificateByCodeMock.mockResolvedValue(buildCertificate(true));
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Jorge Amado', level: 1 });
+
+    expect(screen.getByRole('link', { name: /meus cursos/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^baixar$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^compartilhar$/i })).toBeInTheDocument();
+  });
+
+  it('hides the sidebar and the action buttons when isOwner is false (public view)', async () => {
+    getCertificateByCodeMock.mockResolvedValue(buildCertificate(false));
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Jorge Amado', level: 1 });
+
+    expect(screen.queryByRole('link', { name: /meus cursos/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^baixar$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^compartilhar$/i })).not.toBeInTheDocument();
   });
 });

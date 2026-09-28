@@ -69,16 +69,9 @@ export const AppRouter = () => {
           <Route path="/courses" element={<Courses />} />
           <Route path="/aluno/cursos" element={<Courses />} />
           <Route path="/empresa/cursos" element={<Courses />} />
-          <Route
-            path="/certificados/:verificationCode"
-            element={<DigitalCertificate isAuthenticated={false} />}
-          />
-
-          {/* Área do Aluno */}
-          <Route
-            path="/aluno/certificado/:verificationCode"
-            element={<DigitalCertificate isAuthenticated />}
-          />
+          {/* Sidebar/Navbar autenticadas e os botões de Baixar/Compartilhar são
+              decididos pelo isOwner da API, não pela rota (ver DigitalCertificate). */}
+          <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
 
           {/* Painel Administrativo */}
           <Route path="/admin/cursos" element={<AdminCourses />} />
