@@ -90,7 +90,7 @@ export const DigitalCertificate = ({ isAuthenticated = false }: DigitalCertifica
 
             {courseSummary && (
               <div className={styles.courseSummary}>
-                <h2 className={styles.courseSummaryTitle}>Sobre o curso</h2>
+                <h2 className={styles.courseSummaryTitle}>Sobre o curso:</h2>
                 <CourseCard {...courseSummary} onClick={(id) => navigate(`/cursos/${id}`)} />
               </div>
             )}

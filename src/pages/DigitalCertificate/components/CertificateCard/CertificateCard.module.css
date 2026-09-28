@@ -5,7 +5,7 @@
   gap: var(--space-5);
   padding: var(--space-8);
   border: 1px solid var(--color-info);
-  border-radius: var(--radius-2xl);
+  border-radius: var(--radius-lg);
   background-color: var(--color-surface-raised);
   box-shadow: var(--shadow-md);
 }
@@ -136,16 +136,16 @@
 .details {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   margin: 0;
 }
 
 .detailItem {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-3);
   color: var(--color-info);
 }
 
