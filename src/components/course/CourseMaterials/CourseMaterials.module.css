@@ -46,3 +46,35 @@
   flex: 1;
   min-width: 0;
 }
+
+.downloadButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--space-8);
+  height: var(--space-8);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.downloadButton:hover {
+  background-color: var(--color-surface-raised);
+  color: var(--color-primary);
+}
+
+.downloadButton:disabled {
+  color: var(--color-text-muted);
+  cursor: progress;
+}
+
+.hiddenAnchor {
+  display: none;
+}
