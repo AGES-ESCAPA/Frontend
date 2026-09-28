@@ -21,13 +21,16 @@ export const CoursePlayer = () => {
     if (status === 'loading') {
       return (
         <section className={styles.lesson} aria-busy="true" aria-label="Carregando aula">
-          <header className={styles.header}>
-            <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
-            <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
-            <div className={`${styles.skeleton} ${styles.skeletonDescription}`} />
-          </header>
+          <div className={styles.layout}>
+            <main className={styles.mainColumn}>
+              <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
 
-          <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
+              <header className={styles.header}>
+                <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
+                <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
+              </header>
+            </main>
+          </div>
         </section>
       );
     }
@@ -51,7 +54,7 @@ export const CoursePlayer = () => {
         <section className={styles.stateContainer}>
           <h1>Aula não encontrada</h1>
 
-          <p>{errorMessage ?? 'Não foi possível encontrar a aula solicitada.'}</p>
+          <p>Não foi possível encontrar a aula solicitada.</p>
 
           <Link className={styles.courseLink} to={courseDetailsPath}>
             Voltar para o curso
@@ -76,31 +79,70 @@ export const CoursePlayer = () => {
       return null;
     }
 
+    const moduleNumber = lesson.module?.order;
+    const lessonNumber = lesson.order;
+    const durationMinutes =
+      lesson.durationInSeconds != null ? Math.round(lesson.durationInSeconds / 60) : null;
+
+    const lessonMetadata = [
+      moduleNumber != null ? `MÓDULO ${moduleNumber}` : null,
+      lessonNumber != null ? `AULA ${lessonNumber}` : null,
+      durationMinutes != null ? `${durationMinutes} min` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
     return (
       <section className={styles.lesson}>
-        <header className={styles.header}>
-          <span className={styles.breadcrumb}>ÁREA DO ALUNO • AULA</span>
+        <div className={styles.layout}>
+          <main className={styles.mainColumn}>
+            {lesson.type === 'video' ? (
+              lesson.videoUrl ? (
+                <div className={styles.playerContainer}>
+                  <LessonVideoPlayer src={lesson.videoUrl} title={lesson.title} />
+                </div>
+              ) : (
+                <div className={styles.nonVideoContent}>
+                  <p>Vídeo indisponível para esta aula.</p>
+                </div>
+              )
+            ) : (
+              <div className={styles.nonVideoContent} data-testid="non-video-lesson">
+                <p>O conteúdo desta aula será exibido aqui.</p>
+              </div>
+            )}
 
-          <h1>{lesson.title}</h1>
+            <header className={styles.header}>
+              {lessonMetadata && <span className={styles.breadcrumb}>{lessonMetadata}</span>}
 
-          {lesson.description && <p>{lesson.description}</p>}
-        </header>
+              <h1>{lesson.title}</h1>
+            </header>
 
-        {lesson.type === 'video' ? (
-          lesson.videoUrl ? (
-            <div className={styles.playerContainer}>
-              <LessonVideoPlayer src={lesson.videoUrl} title={lesson.title} />
-            </div>
-          ) : (
-            <div className={styles.stateContainer}>
-              <p>Vídeo indisponível para esta aula.</p>
-            </div>
-          )
-        ) : (
-          <div className={styles.nonVideoContent} data-testid="non-video-lesson">
-            <p>O conteúdo desta aula será exibido aqui.</p>
-          </div>
-        )}
+            {/* US-12: conteúdo textual da aula */}
+            <section
+              className={styles.reservedArea}
+              data-area="Texto da aula"
+              aria-label="Texto da aula"
+            />
+
+            {/* US-16: materiais complementares */}
+            <section className={styles.reservedArea} data-area="Materiais" aria-label="Materiais" />
+          </main>
+
+          {/* US-13: menu lateral da aula */}
+          <aside
+            className={styles.sidebarColumn}
+            data-area="Menu lateral"
+            aria-label="Menu lateral"
+          />
+
+          {/* US-14/US-15: navegação entre aulas */}
+          <nav
+            className={styles.bottomNavigation}
+            data-area="Navegação inferior"
+            aria-label="Navegação inferior"
+          />
+        </div>
       </section>
     );
   };

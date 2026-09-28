@@ -48,7 +48,7 @@ export const useStudentLesson = (courseId: string, lessonId: string): UseStudent
         if (error instanceof StudentLessonError) {
           if (error.status === 403) {
             setErrorStatus(403);
-          } else if (error.status === 404) {
+          } else if (error.status === 400 || error.status === 404) {
             setErrorStatus(404);
           }
 

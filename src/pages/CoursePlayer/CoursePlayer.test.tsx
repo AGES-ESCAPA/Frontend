@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -24,9 +24,16 @@ const COURSE_ID = 'e0000000-0000-4000-e000-000000000005';
 
 const LESSON_ID = '02000000-0000-4000-9000-000000000182';
 
+const MODULE_ID = '01000000-0000-4000-9000-000000000018';
+
 const lesson: Lesson = {
   id: LESSON_ID,
-  moduleId: '01000000-0000-4000-9000-000000000018',
+  moduleId: MODULE_ID,
+  module: {
+    id: MODULE_ID,
+    title: 'Módulo 1',
+    order: 1,
+  },
   title: 'Introdução ao curso',
   description: 'Descrição da aula.',
   type: 'video',
@@ -51,6 +58,16 @@ const renderCoursePlayer = () =>
     </MemoryRouter>,
   );
 
+const mockSuccessfulLesson = (currentLesson: Lesson = lesson) => {
+  useStudentLessonMock.mockReturnValue({
+    lesson: currentLesson,
+    status: 'success',
+    errorStatus: null,
+    errorMessage: null,
+    retry: retryMock,
+  });
+};
+
 describe('CoursePlayer', () => {
   beforeEach(() => {
     useStudentLessonMock.mockReset();
@@ -74,13 +91,7 @@ describe('CoursePlayer', () => {
   });
 
   it('should render the lesson video from the API data', () => {
-    useStudentLessonMock.mockReturnValue({
-      lesson,
-      status: 'success',
-      errorStatus: null,
-      errorMessage: null,
-      retry: retryMock,
-    });
+    mockSuccessfulLesson();
 
     renderCoursePlayer();
 
@@ -91,11 +102,71 @@ describe('CoursePlayer', () => {
       }),
     ).toBeInTheDocument();
 
-    expect(screen.getByText(lesson.description)).toBeInTheDocument();
-
     expect(screen.getByTestId('lesson-video-player')).toHaveTextContent(lesson.title);
 
     expect(screen.getByTestId('lesson-video-player')).toHaveTextContent(lesson.videoUrl ?? '');
+  });
+
+  it('should render the dynamic lesson metadata below the player', () => {
+    mockSuccessfulLesson();
+
+    renderCoursePlayer();
+
+    const player = screen.getByTestId('lesson-video-player');
+
+    const heading = screen.getByRole('heading', {
+      name: lesson.title,
+      level: 1,
+    });
+
+    const metadata = screen.getByText('MÓDULO 1 · AULA 2 · 10 min');
+
+    const header = heading.closest('header');
+
+    expect(header).not.toBeNull();
+
+    expect(within(header!).getByText('MÓDULO 1 · AULA 2 · 10 min')).toBeInTheDocument();
+
+    expect(metadata).toBeInTheDocument();
+
+    expect(player.compareDocumentPosition(header!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('should not render the lesson description in the header', () => {
+    mockSuccessfulLesson();
+
+    renderCoursePlayer();
+
+    const heading = screen.getByRole('heading', {
+      name: lesson.title,
+      level: 1,
+    });
+
+    const header = heading.closest('header');
+
+    expect(header).not.toBeNull();
+
+    expect(within(header!).queryByText(lesson.description)).not.toBeInTheDocument();
+
+    expect(screen.queryByText(lesson.description)).not.toBeInTheDocument();
+  });
+
+  it('should reserve the four areas for the other user stories', () => {
+    mockSuccessfulLesson();
+
+    renderCoursePlayer();
+
+    const areaNames = ['Texto da aula', 'Materiais', 'Menu lateral', 'Navegação inferior'];
+
+    for (const areaName of areaNames) {
+      const area = document.querySelector(`[data-area="${areaName}"]`);
+
+      expect(area).not.toBeNull();
+
+      expect(area).toHaveAttribute('aria-label', areaName);
+
+      expect(area).toBeEmptyDOMElement();
+    }
   });
 
   it('should render the access denied state and link to the course details', async () => {
@@ -188,13 +259,7 @@ describe('CoursePlayer', () => {
       textContent: 'Conteúdo textual da aula.',
     };
 
-    useStudentLessonMock.mockReturnValue({
-      lesson: textLesson,
-      status: 'success',
-      errorStatus: null,
-      errorMessage: null,
-      retry: retryMock,
-    });
+    mockSuccessfulLesson(textLesson);
 
     renderCoursePlayer();
 

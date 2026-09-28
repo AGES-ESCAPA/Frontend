@@ -139,6 +139,11 @@ describe('lessonService', () => {
       expect(lesson).toEqual({
         id: LESSON_ID,
         moduleId: MODULE_ID,
+        module: {
+          id: MODULE_ID,
+          title: 'Módulo 1',
+          order: 1,
+        },
         title: 'Introdução ao curso',
         description: 'Descrição da aula.',
         type: 'video',

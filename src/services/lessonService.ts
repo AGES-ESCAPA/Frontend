@@ -132,16 +132,21 @@ const mapStudentLessonToLesson = (content: StudentLessonResponse): Lesson => {
   return {
     id: content.id,
     moduleId: content.module.id,
+    module: {
+      id: content.module.id,
+      title: content.module.title,
+      order: content.module.order,
+    },
+    order: content.order,
     title: content.title,
     description: content.description ?? '',
     type,
     videoUrl: type === 'video' ? content.url : null,
     durationInSeconds: content.durationMinutes != null ? content.durationMinutes * 60 : null,
-    textContent: type === 'text' ? content.description : null,
+    textContent: null,
     fileUrl: type === 'file' ? content.url : null,
     isFreeSample: Boolean(content.isFree),
     resources: parseResources(content.resources),
-    order: content.order,
   };
 };
 

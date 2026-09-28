@@ -47,6 +47,11 @@ export interface Lesson extends LessonContent {
   id: string;
   moduleId: string;
   order?: number;
+  module?: {
+    id: string;
+    title: string;
+    order: number;
+  };
 }
 
 /** Conjunto de dados enviado à API ao criar ou editar uma aula. */

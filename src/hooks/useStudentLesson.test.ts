@@ -89,6 +89,17 @@ describe('useStudentLesson', () => {
     expect(result.current.errorMessage).toBe('Aula não encontrada.');
   });
 
+  it('should treat HTTP 400 as a lesson not found error', async () => {
+    getStudentLessonMock.mockRejectedValue(new StudentLessonError(400, 'Invalid UUID string: abc'));
+
+    const { result } = renderHook(() => useStudentLesson('abc', 'xyz'));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+
+    expect(result.current.lesson).toBeNull();
+    expect(result.current.errorStatus).toBe(404);
+  });
+
   it('should expose a generic error and allow retry after a network failure', async () => {
     getStudentLessonMock
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
