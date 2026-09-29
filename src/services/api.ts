@@ -12,7 +12,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  * nenhum serviço monta o header por conta própria.
  */
 const DEFAULT_ADMIN_USER_ID = 'a0000000-0000-4000-a000-000000000001';
-const DEFAULT_STUDENT_USER_ID = '123e4567-e89b-12d3-a456-426614174000';
+const DEFAULT_STUDENT_USER_ID = 'b0000000-0000-4000-b000-000000000001';
 
 export const ADMIN_USER_ID: string = import.meta.env.VITE_ADMIN_USER_ID || DEFAULT_ADMIN_USER_ID;
 export const STUDENT_USER_ID: string =
