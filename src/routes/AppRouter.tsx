@@ -98,7 +98,7 @@ export const AppRouter = () => {
           <Route path="/" element={<Home />} />
           <Route path="/meus-cursos" element={<MyCourses />} />
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
-          <Route path="/courses/:courseId/lessons/:lessonId" element={<CoursePlayer />} />
+          <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
           <Route path="/login" element={<Login />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/aluno/cursos" element={<Courses />} />
