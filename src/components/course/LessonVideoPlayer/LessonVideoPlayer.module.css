@@ -1,11 +1,30 @@
 .player {
+  /* Altura da barra do PlayerControls (padding + linha do tempo + gap + botão),
+     para o overlay central não cobrir os controles. */
+  --player-controls-height: calc(
+    var(--space-3) * 2 + var(--space-1) + var(--space-2) + var(--space-8)
+  );
+
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
+
+  /* Deixa o conteúdo do overlay (ex.: CourseCompletionMessage) se adaptar à
+     largura do player, e não à da tela. */
+  container: lesson-player / inline-size;
   overflow: hidden;
   border-radius: 8px;
   background: #10161d;
   outline: none;
+}
+
+/* Mesmo breakpoint do PlayerControls, onde o botão de play cresce para a área de toque. */
+@media (width <= 640px) {
+  .player {
+    --player-controls-height: calc(
+      var(--space-3) * 2 + var(--space-1) + var(--space-2) + var(--space-10) + var(--space-1)
+    );
+  }
 }
 
 .player:focus-visible {
@@ -25,7 +44,8 @@
 
 .overlay {
   position: absolute;
-  inset: 0;
+  inset: 0 0 var(--player-controls-height);
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -53,7 +53,11 @@ const AdminCourses = lazy(() =>
     default: m.AdminCourses,
   })),
 );
-
+const DigitalCertificate = lazy(() =>
+  import('@pages/DigitalCertificate/DigitalCertificate').then((m) => ({
+    default: m.DigitalCertificate,
+  })),
+);
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -99,6 +103,16 @@ export const AppRouter = () => {
           <Route path="/courses" element={<Courses />} />
           <Route path="/aluno/cursos" element={<Courses />} />
           <Route path="/empresa/cursos" element={<Courses />} />
+          <Route
+            path="/certificados/:verificationCode"
+            element={<DigitalCertificate isAuthenticated={false} />}
+          />
+
+          {/* Área do Aluno */}
+          <Route
+            path="/aluno/certificado/:verificationCode"
+            element={<DigitalCertificate isAuthenticated />}
+          />
 
           {/* Painel Administrativo */}
           <Route path="/admin/cursos" element={<AdminCourses />} />

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { LessonVideoPlayer } from './LessonVideoPlayer';
 
 const MP4_URL = 'https://example.com/video.mp4';
@@ -195,6 +196,141 @@ describe('LessonVideoPlayer', () => {
       expect(secondVideo).toHaveAttribute('src', SECOND_MP4_URL);
 
       expect(screen.getByText('Carregando...')).toBeInTheDocument();
+    });
+  });
+
+  describe('course completion (US-17)', () => {
+    const COURSE_TITLE = 'Experiências Imersivas na Prática';
+
+    it('shows the standard overlay when a lesson that is not the last one ends', () => {
+      renderPlayer({ isLastLesson: false, courseTitle: COURSE_TITLE });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.ended(video);
+
+      expect(screen.getByRole('button', { name: 'Reproduzir vídeo' })).toBeInTheDocument();
+      expect(screen.getByText(TITLE)).toBeInTheDocument();
+      expect(screen.queryByText(/parabéns/i)).not.toBeInTheDocument();
+    });
+
+    it('shows the congrats message with the course name when the last lesson ends', () => {
+      renderPlayer({ isLastLesson: true, courseTitle: COURSE_TITLE });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.ended(video);
+
+      expect(screen.getByText(/parabéns/i)).toBeInTheDocument();
+      expect(screen.getByText(COURSE_TITLE)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Reproduzir vídeo' })).not.toBeInTheDocument();
+    });
+
+    it('does not show the congrats message before the video ends, even on the last lesson', () => {
+      renderPlayer({ isLastLesson: true, courseTitle: COURSE_TITLE });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.pause(video);
+
+      expect(screen.getByRole('button', { name: 'Reproduzir vídeo' })).toBeInTheDocument();
+      expect(screen.queryByText(/parabéns/i)).not.toBeInTheDocument();
+    });
+
+    it('offers actions to proceed once the congrats message is shown', async () => {
+      const onViewOtherCourses = vi.fn();
+      const onViewCertificate = vi.fn();
+
+      renderPlayer({
+        isLastLesson: true,
+        courseTitle: COURSE_TITLE,
+        onViewOtherCourses,
+        onViewCertificate,
+      });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.ended(video);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Ver Certificado' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Ver Outros Cursos' }));
+
+      expect(onViewCertificate).toHaveBeenCalledOnce();
+      expect(onViewOtherCourses).toHaveBeenCalledOnce();
+    });
+
+    it('does not toggle the video when Space is pressed on a button inside the message', () => {
+      renderPlayer({ isLastLesson: true, courseTitle: COURSE_TITLE });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.ended(video);
+
+      const playSpy = vi.spyOn(video, 'play').mockResolvedValue(undefined);
+      Object.defineProperty(video, 'paused', { configurable: true, value: true });
+
+      const certificateButton = screen.getByRole('button', { name: 'Ver Certificado' });
+      certificateButton.focus();
+      fireEvent.keyDown(certificateButton, { code: 'Space', key: ' ' });
+
+      // O Espaço com foco no botão deve ativar só o botão (comportamento nativo do
+      // <button>), sem o player interpretar como "tocar/pausar o vídeo".
+      expect(playSpy).not.toHaveBeenCalled();
+
+      playSpy.mockRestore();
+    });
+
+    it('clears the congrats message when playing the video again after it ended', () => {
+      renderPlayer({ isLastLesson: true, courseTitle: COURSE_TITLE });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.ended(video);
+      expect(screen.getByText(/parabéns/i)).toBeInTheDocument();
+
+      // Reassistir a aula (ex.: pausar no meio pra rever um trecho) não pode
+      // trazer de volta a mensagem de conclusão de antes.
+      fireEvent.play(video);
+      fireEvent.pause(video);
+
+      expect(screen.getByRole('button', { name: 'Reproduzir vídeo' })).toBeInTheDocument();
+      expect(screen.getByText(TITLE)).toBeInTheDocument();
+      expect(screen.queryByText(/parabéns/i)).not.toBeInTheDocument();
+    });
+
+    it('clears the congrats message when moving to another lesson', () => {
+      const { rerender } = renderPlayer({ isLastLesson: true, courseTitle: COURSE_TITLE });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      fireEvent.play(video);
+      fireEvent.ended(video);
+
+      expect(screen.getByText(/parabéns/i)).toBeInTheDocument();
+
+      rerender(
+        <LessonVideoPlayer
+          src={SECOND_MP4_URL}
+          title={TITLE}
+          courseTitle={COURSE_TITLE}
+          isLastLesson={false}
+        />,
+      );
+
+      expect(screen.queryByText(/parabéns/i)).not.toBeInTheDocument();
     });
   });
 

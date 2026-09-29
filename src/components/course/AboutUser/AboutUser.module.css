@@ -1,0 +1,26 @@
+/* No protótipo, o painel "Concluído por" é um card com borda, e todo o texto
+   tem o mesmo tamanho e a mesma cor clara. */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-surface-raised);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.headline,
+.summary {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-2);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--text-body-2--line-height);
+}
