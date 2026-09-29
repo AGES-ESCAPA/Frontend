@@ -35,8 +35,14 @@ export const DigitalCertificate = () => {
   };
 
   const handleShare = async () => {
+    if (!certificate) return;
+
+    // Sempre o link público de verificação: a URL atual pode ser a rota logada
+    // (/aluno/certificado/...), que mostra sidebar e botões para quem recebe.
+    const publicUrl = `${window.location.origin}/certificados/${certificate.certificate.verificationCode}`;
+
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(publicUrl);
       showToast(
         'success',
         'Link copiado',
@@ -99,7 +105,7 @@ export const DigitalCertificate = () => {
             />
 
             <div className={styles.courseSummary}>
-              <h2 className={styles.courseSummaryTitle}>Sobre o curso</h2>
+              <h2 className={styles.courseSummaryTitle}>Sobre o curso:</h2>
               <CourseCard
                 id={certificate.course.id}
                 imageUrl={certificate.course.thumbnailUrl ?? ''}
