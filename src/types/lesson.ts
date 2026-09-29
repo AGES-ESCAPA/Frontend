@@ -63,3 +63,23 @@ export interface LessonPayload extends LessonContent {
    */
   uploads: LessonAttachmentUpload[];
 }
+
+/** Referência externa citada no conteúdo da aula (US-12). */
+export interface LessonReference {
+  title: string;
+  url: string;
+  favicon?: string;
+}
+
+export interface Lesson extends LessonContent {
+  id: string;
+  moduleId: string;
+  order?: number;
+  module?: {
+    id: string;
+    title: string;
+    order: number;
+  };
+  concepts?: string[];
+  references?: LessonReference[];
+}

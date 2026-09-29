@@ -4,9 +4,15 @@
  * Comunicação com a API de aulas (TSK-05-BACK). As telas e o modal nunca
  * chamam `fetch` diretamente: elas usam estas funções.
  */
-import type { Lesson, LessonPayload, LessonResource, LessonType } from '@/types/lesson';
 import { adminHeaders, studentHeaders } from '@services/api';
 import type { ApiResponse } from '@services/api';
+import type {
+  Lesson,
+  LessonPayload,
+  LessonReference,
+  LessonResource,
+  LessonType,
+} from '@/types/lesson';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -45,6 +51,8 @@ interface StudentLessonResponse {
   isFree: boolean;
   order: number;
   resources: string | null;
+  concepts: string[];
+  references: LessonReference[];
   module: {
     id: string;
     title: string;
@@ -147,6 +155,8 @@ const mapStudentLessonToLesson = (content: StudentLessonResponse): Lesson => {
     fileUrl: type === 'file' ? content.url : null,
     isFreeSample: Boolean(content.isFree),
     resources: parseResources(content.resources),
+    concepts: content.concepts,
+    references: content.references,
   };
 };
 

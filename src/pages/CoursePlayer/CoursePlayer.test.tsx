@@ -148,15 +148,16 @@ describe('CoursePlayer', () => {
 
     expect(within(header!).queryByText(lesson.description)).not.toBeInTheDocument();
 
-    expect(screen.queryByText(lesson.description)).not.toBeInTheDocument();
+    expect(screen.getByText('Sobre esta aula')).toBeInTheDocument();
+    expect(screen.getByText(lesson.description)).toBeInTheDocument();
   });
 
-  it('should reserve the four areas for the other user stories', () => {
+  it('should reserve the three remaining areas for the other user stories', () => {
     mockSuccessfulLesson();
 
     renderCoursePlayer();
 
-    const areaNames = ['Texto da aula', 'Materiais', 'Menu lateral', 'Navegação inferior'];
+    const areaNames = ['Materiais', 'Menu lateral', 'Navegação inferior'];
 
     for (const areaName of areaNames) {
       const area = document.querySelector(`[data-area="${areaName}"]`);
@@ -167,6 +168,54 @@ describe('CoursePlayer', () => {
 
       expect(area).toBeEmptyDOMElement();
     }
+  });
+
+  it('should render the lesson concepts and references when provided by the API', () => {
+    const lessonWithSupplements: Lesson = {
+      ...lesson,
+      concepts: ['React', 'Hooks'],
+      references: [{ title: 'MDN Web Docs', url: 'https://developer.mozilla.org' }],
+    };
+
+    mockSuccessfulLesson(lessonWithSupplements);
+
+    renderCoursePlayer();
+
+    expect(screen.getByText('Sobre esta aula')).toBeInTheDocument();
+    expect(screen.getByText('React')).toBeInTheDocument();
+    expect(screen.getByText('Referências e links externos')).toBeInTheDocument();
+    expect(screen.getByText('MDN Web Docs')).toBeInTheDocument();
+  });
+
+  it('should not render the content or references sections when the lesson has none', () => {
+    const emptyLesson: Lesson = {
+      ...lesson,
+      description: '',
+      concepts: [],
+      references: [],
+    };
+
+    mockSuccessfulLesson(emptyLesson);
+
+    renderCoursePlayer();
+
+    expect(screen.queryByText('Sobre esta aula')).not.toBeInTheDocument();
+    expect(screen.queryByText('Referências e links externos')).not.toBeInTheDocument();
+  });
+
+  it('should render the content and references skeletons while loading', () => {
+    useStudentLessonMock.mockReturnValue({
+      lesson: null,
+      status: 'loading',
+      errorStatus: null,
+      errorMessage: null,
+      retry: retryMock,
+    });
+
+    renderCoursePlayer();
+
+    expect(screen.getByTestId('lesson-content-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('lesson-references-skeleton')).toBeInTheDocument();
   });
 
   it('should render the access denied state and link to the course details', async () => {
