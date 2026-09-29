@@ -22,14 +22,14 @@ export const CoursePlayer = () => {
       return (
         <section className={styles.lesson} aria-busy="true" aria-label="Carregando aula">
           <div className={styles.layout}>
-            <main className={styles.mainColumn}>
+            <div className={styles.mainColumn}>
               <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
 
               <header className={styles.header}>
                 <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
                 <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
               </header>
-            </main>
+            </div>
           </div>
         </section>
       );
@@ -95,7 +95,7 @@ export const CoursePlayer = () => {
     return (
       <section className={styles.lesson}>
         <div className={styles.layout}>
-          <main className={styles.mainColumn}>
+          <div className={styles.mainColumn}>
             {lesson.type === 'video' ? (
               lesson.videoUrl ? (
                 <div className={styles.playerContainer}>
@@ -127,7 +127,7 @@ export const CoursePlayer = () => {
 
             {/* US-16: materiais complementares */}
             <section className={styles.reservedArea} data-area="Materiais" aria-label="Materiais" />
-          </main>
+          </div>
 
           {/* US-13: menu lateral da aula */}
           <aside
