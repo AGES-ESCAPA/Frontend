@@ -1,0 +1,6 @@
+// Gerado em runtime pelo nginx (ver nginx/50-inject-runtime-env.sh) a partir
+// de variaveis de ambiente do container. Nao editar o arquivo publicado
+// (env-config.js) diretamente - ele e sobrescrito a cada start do container.
+window.__ENV__ = {
+  VITE_API_BASE_URL: "${VITE_API_BASE_URL}",
+};

@@ -7,8 +7,9 @@
 import type { Lesson, LessonPayload, LessonResource, LessonType } from '@/types/lesson';
 import { adminHeaders, studentHeaders } from '@services/api';
 import type { ApiResponse } from '@services/api';
+import { getApiBaseUrl } from '@services/runtimeEnv';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 type ApiLessonType = 'VIDEO' | 'TEXT' | 'FILE';
 
