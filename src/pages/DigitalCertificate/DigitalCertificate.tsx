@@ -1,26 +1,29 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { Download, Share2 } from 'lucide-react';
 import { Button, CourseCard, EmptyState, Toast } from '@components/ui';
-import { AuthenticatedLayout, Navbar, SIDEBAR_MENU_PRESETS } from '@components/layout';
+import {
+  AuthenticatedLayout,
+  Navbar,
+  SIDEBAR_MENU_PRESETS,
+  SIDEBAR_ROLE_LABELS,
+} from '@components/layout';
 import { AboutUser } from '@components/course/AboutUser/AboutUser';
 import { useCertificate } from '@hooks/useCertificate';
 import { useToast } from '@hooks/useToast';
 import { getCertificateDownloadUrl } from '@services/certificateService';
+import { formatCurrency, formatLongDate, formatWorkload } from '@utils/formatters';
+import { mapCourseCategory, mapCourseLevel } from '@utils/mapPublicCourse';
 import { CertificateCard } from './components/CertificateCard/CertificateCard';
-import { MOCK_COURSE_SUMMARIES } from './mockCourseSummary';
-import { mockCertificateUser } from './mockCertificateUser';
 import styles from './DigitalCertificate.module.css';
 
-export interface DigitalCertificateProps {
-  /**
-   * Sem sistema de login integrado ainda, quem acessa a tela decide isso
-   * (US-18 pede a mesma tela nas duas variantes: logada e pública).
-   */
-  isAuthenticated?: boolean;
-}
-
-/** Tela de visualização do certificado digital do aluno (US-18). */
-export const DigitalCertificate = ({ isAuthenticated = false }: DigitalCertificateProps) => {
+/**
+ * Tela de visualização do certificado digital do aluno (US-18 + integração
+ * #100). Quem vê Sidebar/Navbar autenticada e os botões de Baixar/Compartilhar
+ * é decidido pelo `isOwner` devolvido pela API, não por uma prop externa: sem
+ * autenticação real ainda, o backend fixa `isOwner: false`, então em produção
+ * a tela sempre renderiza a versão pública até o login ser implementado.
+ */
+export const DigitalCertificate = () => {
   const { verificationCode } = useParams();
   const navigate = useNavigate();
   const { certificate, status, errorMessage } = useCertificate(verificationCode);
@@ -28,7 +31,7 @@ export const DigitalCertificate = ({ isAuthenticated = false }: DigitalCertifica
 
   const handleDownload = () => {
     if (!certificate) return;
-    window.open(getCertificateDownloadUrl(certificate.verificationCode), '_blank');
+    window.open(getCertificateDownloadUrl(certificate.certificate.verificationCode), '_blank');
   };
 
   const handleShare = async () => {
@@ -36,7 +39,7 @@ export const DigitalCertificate = ({ isAuthenticated = false }: DigitalCertifica
 
     // Sempre o link público de verificação: a URL atual pode ser a rota logada
     // (/aluno/certificado/...), que mostra sidebar e botões para quem recebe.
-    const publicUrl = `${window.location.origin}/certificados/${certificate.verificationCode}`;
+    const publicUrl = `${window.location.origin}/certificados/${certificate.certificate.verificationCode}`;
 
     try {
       await navigator.clipboard.writeText(publicUrl);
@@ -53,8 +56,6 @@ export const DigitalCertificate = ({ isAuthenticated = false }: DigitalCertifica
       );
     }
   };
-
-  const courseSummary = certificate ? MOCK_COURSE_SUMMARIES[certificate.course] : undefined;
 
   const content = (
     <div className={styles.page}>
@@ -76,32 +77,53 @@ export const DigitalCertificate = ({ isAuthenticated = false }: DigitalCertifica
       {status === 'success' && certificate && (
         <div className={styles.layout}>
           <div className={styles.mainColumn}>
-            <CertificateCard certificate={certificate} />
+            <CertificateCard
+              studentName={certificate.student.name}
+              courseTitle={certificate.course.title}
+              workload={formatWorkload(certificate.certificate.workload)}
+              conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
+              verificationCode={certificate.certificate.verificationCode}
+            />
 
             <p className={styles.disclaimer}>
-              O certificado acima atesta que {certificate.student} concluiu com êxito o curso{' '}
-              {certificate.course} em {certificate.conclusionDate}. O certificado indica que todo o
-              curso foi concluído pelo aluno. A duração do curso representa a duração total dos
-              vídeos e aulas em texto no curso no momento da conclusão.
+              O certificado acima atesta que {certificate.student.name} concluiu com êxito o curso{' '}
+              {certificate.course.title} em {formatLongDate(certificate.certificate.conclusionDate)}
+              . O certificado indica que todo o curso foi concluído pelo aluno. A duração do curso
+              representa a duração total dos vídeos e aulas em texto no curso no momento da
+              conclusão.
             </p>
           </div>
 
           <aside className={styles.sidebar}>
             <AboutUser
-              name={certificate.student}
-              conclusionDate={certificate.conclusionDate}
-              workload={certificate.workload}
-              course={certificate.course}
+              name={certificate.student.name}
+              avatarUrl={certificate.student.avatarUrl ?? undefined}
+              conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
+              workload={formatWorkload(certificate.certificate.workload)}
+              course={certificate.course.title}
+              isVerified={certificate.student.isVerified}
             />
 
-            {courseSummary && (
-              <div className={styles.courseSummary}>
-                <h2 className={styles.courseSummaryTitle}>Sobre o curso:</h2>
-                <CourseCard {...courseSummary} onClick={(id) => navigate(`/cursos/${id}`)} />
-              </div>
-            )}
+            <div className={styles.courseSummary}>
+              <h2 className={styles.courseSummaryTitle}>Sobre o curso:</h2>
+              <CourseCard
+                id={certificate.course.id}
+                imageUrl={certificate.course.thumbnailUrl ?? ''}
+                category={mapCourseCategory(certificate.course.category)}
+                level={mapCourseLevel(certificate.course.level)}
+                title={certificate.course.title}
+                description={certificate.course.description}
+                rating={certificate.course.rating ?? undefined}
+                reviewsCount={certificate.course.reviewsCount}
+                duration={formatWorkload(certificate.course.durationTime)}
+                lessonsCount={certificate.course.lessonsCount}
+                instructor={certificate.course.instructor}
+                price={formatCurrency(certificate.course.price)}
+                onClick={(id) => navigate(`/cursos/${id}`)}
+              />
+            </div>
 
-            {isAuthenticated && (
+            {certificate.isOwner && (
               <div className={styles.actions}>
                 <Button
                   label="Baixar"
@@ -123,11 +145,15 @@ export const DigitalCertificate = ({ isAuthenticated = false }: DigitalCertifica
     </div>
   );
 
-  if (isAuthenticated) {
+  if (certificate && certificate.isOwner) {
     return (
       <AuthenticatedLayout
         role="student"
-        user={mockCertificateUser}
+        user={{
+          name: certificate.student.name,
+          role: SIDEBAR_ROLE_LABELS.student,
+          avatarUrl: certificate.student.avatarUrl ?? undefined,
+        }}
         items={SIDEBAR_MENU_PRESETS.student.map((item) => ({ ...item, active: false }))}
         notificationsCount={0}
       >

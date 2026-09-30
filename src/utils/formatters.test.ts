@@ -11,6 +11,7 @@ import {
   parseDurationMask,
   parseTimecodeToSeconds,
   formatWorkload,
+  formatLongDate,
   formatDecimalInput,
   maskCurrencyInput,
   toTitleCase,
@@ -127,6 +128,13 @@ describe('formatWorkload', () => {
   it('should handle empty values', () => {
     expect(formatWorkload(null)).toBe('0min');
     expect(formatWorkload(0)).toBe('0min');
+  });
+});
+
+describe('formatLongDate', () => {
+  it('should format an ISO date in full Portuguese, without shifting the day', () => {
+    expect(formatLongDate('2026-08-21')).toBe('21 de agosto de 2026');
+    expect(formatLongDate('2026-01-01')).toBe('1 de janeiro de 2026');
   });
 });
 
