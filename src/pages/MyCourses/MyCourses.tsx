@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PlayCircle, Clock, CheckCircle, Ban } from 'lucide-react';
 import { FilterTabs, SearchBar, StudentCourseCard, EmptyState, Button } from '@components/ui';
 import { AuthenticatedLayout } from '../../components/layout/AuthenticatedLayout/AuthenticatedLayout';
@@ -8,6 +9,7 @@ import { mockUser } from './mockCourses';
 import { getStudentEnrollments } from '../../services/enrollmentService';
 import type { StudentCourseCardResponse } from '../../services/enrollmentService';
 import type { EnrollmentStatus } from '../../components/ui/StudentCourseCard';
+import { getStudentCurriculum } from '../../services/curriculumService';
 
 export type TabType = 'Todos' | 'Em andamento' | 'Aguardando' | 'Concluídos' | 'Expirados';
 
@@ -20,6 +22,7 @@ const statusByTab: Record<Exclude<TabType, 'Todos'>, EnrollmentStatus> = {
 };
 
 export const MyCourses = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('Todos');
@@ -85,6 +88,23 @@ export const MyCourses = () => {
   const completedCourses = courses.filter((c) => c.enrollmentStatus === 'COMPLETED');
   const expiredCourses = courses.filter((c) => c.enrollmentStatus === 'EXPIRED');
 
+  const handleCourseAction = async (courseId: string, status: EnrollmentStatus) => {
+    if (status === 'COMPLETED') {
+      const code = courses.find((c) => c.courseId === courseId)?.certificateCode;
+      if (code) navigate(`/certificados/${code}`);
+      return;
+    }
+
+    try {
+      const curriculum = await getStudentCurriculum(courseId);
+      const lessons = curriculum.modules.flatMap((module) => module.lessons);
+      const next = lessons.find((lesson) => lesson.status === 'AVAILABLE') ?? lessons[0];
+      if (next) navigate(`/aluno/cursos/${courseId}/aulas/${next.id}`);
+    } catch {
+      navigate(`/cursos/${courseId}`);
+    }
+  };
+
   const renderCourseGrid = (courseList: StudentCourseCardResponse[]) => (
     <div className={styles.courseGrid}>
       {courseList.map((course) => (
@@ -98,6 +118,7 @@ export const MyCourses = () => {
           lessonsCount={course.lessonsCount}
           progressPercentage={course.progressPercentage ?? 0}
           enrollmentStatus={course.enrollmentStatus}
+          onAction={handleCourseAction}
         />
       ))}
     </div>
