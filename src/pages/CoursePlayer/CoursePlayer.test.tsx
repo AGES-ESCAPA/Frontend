@@ -1,13 +1,20 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { StudentCurriculum } from '@/types/curriculum';
 import type { Lesson } from '@/types/lesson';
 import { useStudentLesson } from '@/hooks/useStudentLesson';
+import { getStudentCurriculum, StudentCurriculumError } from '@services/curriculumService';
 import { CoursePlayer } from './CoursePlayer';
 
 vi.mock('@/hooks/useStudentLesson', () => ({
   useStudentLesson: vi.fn(),
+}));
+
+vi.mock('@services/curriculumService', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  getStudentCurriculum: vi.fn(),
 }));
 
 vi.mock('@components/course/LessonVideoPlayer/LessonVideoPlayer', () => ({
@@ -20,11 +27,54 @@ vi.mock('@components/course/LessonVideoPlayer/LessonVideoPlayer', () => ({
 
 const useStudentLessonMock = vi.mocked(useStudentLesson);
 
+const getStudentCurriculumMock = vi.mocked(getStudentCurriculum);
+
 const COURSE_ID = 'e0000000-0000-4000-e000-000000000005';
 
 const LESSON_ID = '02000000-0000-4000-9000-000000000182';
 
+const NEXT_LESSON_ID = '02000000-0000-4000-9000-000000000183';
+
 const MODULE_ID = '01000000-0000-4000-9000-000000000018';
+
+const curriculum: StudentCurriculum = {
+  courseId: COURSE_ID,
+  completedLessons: 1,
+  totalLessons: 3,
+  modules: [
+    {
+      id: MODULE_ID,
+      title: 'Módulo 1',
+      locked: false,
+      completedLessons: 1,
+      totalLessons: 2,
+      lessons: [
+        { id: LESSON_ID, title: 'Introdução ao curso', durationMinutes: 10, status: 'COMPLETED' },
+        {
+          id: NEXT_LESSON_ID,
+          title: 'Mapeando a jornada do hóspede',
+          durationMinutes: 12,
+          status: 'AVAILABLE',
+        },
+      ],
+    },
+    {
+      id: '01000000-0000-4000-9000-000000000019',
+      title: 'Módulo 2',
+      locked: true,
+      completedLessons: 0,
+      totalLessons: 1,
+      lessons: [
+        {
+          id: '02000000-0000-4000-9000-000000000184',
+          title: 'Parcerias locais',
+          durationMinutes: 8,
+          status: 'LOCKED',
+        },
+      ],
+    },
+  ],
+};
 
 const lesson: Lesson = {
   id: LESSON_ID,
@@ -50,9 +100,9 @@ const retryMock = vi.fn();
 
 const renderCoursePlayer = () =>
   render(
-    <MemoryRouter initialEntries={[`/courses/${COURSE_ID}/lessons/${LESSON_ID}`]}>
+    <MemoryRouter initialEntries={[`/aluno/cursos/${COURSE_ID}/aulas/${LESSON_ID}`]}>
       <Routes>
-        <Route path="/courses/:courseId/lessons/:lessonId" element={<CoursePlayer />} />
+        <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
         <Route path="/cursos/:courseId" element={<p>Detalhes do curso</p>} />
       </Routes>
     </MemoryRouter>,
@@ -72,6 +122,9 @@ describe('CoursePlayer', () => {
   beforeEach(() => {
     useStudentLessonMock.mockReset();
     retryMock.mockReset();
+    getStudentCurriculumMock.mockReset();
+    // Por padrão o menu fica carregando; os testes do menu definem a resposta.
+    getStudentCurriculumMock.mockReturnValue(new Promise<StudentCurriculum>(() => {}));
   });
 
   it('should render the loading skeleton', () => {
@@ -151,12 +204,12 @@ describe('CoursePlayer', () => {
     expect(screen.queryByText(lesson.description)).not.toBeInTheDocument();
   });
 
-  it('should reserve the four areas for the other user stories', () => {
+  it('should reserve the areas for the other user stories', () => {
     mockSuccessfulLesson();
 
     renderCoursePlayer();
 
-    const areaNames = ['Texto da aula', 'Materiais', 'Menu lateral', 'Navegação inferior'];
+    const areaNames = ['Texto da aula', 'Materiais', 'Navegação inferior'];
 
     for (const areaName of areaNames) {
       const area = document.querySelector(`[data-area="${areaName}"]`);
@@ -167,6 +220,11 @@ describe('CoursePlayer', () => {
 
       expect(area).toBeEmptyDOMElement();
     }
+
+    expect(document.querySelector('[data-area="Menu lateral"]')).toHaveAttribute(
+      'aria-label',
+      'Menu lateral',
+    );
   });
 
   it('should render the access denied state and link to the course details', async () => {
@@ -266,5 +324,110 @@ describe('CoursePlayer', () => {
     expect(screen.queryByTestId('lesson-video-player')).not.toBeInTheDocument();
 
     expect(screen.getByTestId('non-video-lesson')).toBeInTheDocument();
+  });
+
+  describe('lesson menu (US-13)', () => {
+    const getLessonMenu = () =>
+      screen.getByRole('complementary', {
+        name: 'Menu lateral',
+      });
+
+    it('should show a skeleton in the menu while the curriculum loads', () => {
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      expect(
+        within(getLessonMenu()).getByRole('status', {
+          name: 'Carregando conteúdo do curso',
+        }),
+      ).toBeInTheDocument();
+
+      expect(screen.getByTestId('lesson-video-player')).toBeInTheDocument();
+    });
+
+    it('should fill the progress, modules and lessons from the API', async () => {
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      const menu = getLessonMenu();
+
+      expect(await within(menu).findByText('1/3')).toBeInTheDocument();
+
+      expect(getStudentCurriculumMock).toHaveBeenCalledWith(COURSE_ID, expect.any(AbortSignal));
+
+      expect(within(menu).getByRole('button', { name: /Módulo 1/ })).toBeInTheDocument();
+
+      expect(within(menu).getByRole('button', { name: /Módulo 2/ })).toBeInTheDocument();
+
+      expect(
+        within(menu).getByRole('link', {
+          name: /Mapeando a jornada do hóspede/,
+        }),
+      ).toHaveAttribute('href', `/aluno/cursos/${COURSE_ID}/aulas/${NEXT_LESSON_ID}`);
+    });
+
+    it('should not request the curriculum again when moving to another lesson of the course', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      const nextLessonLink = await within(getLessonMenu()).findByRole('link', {
+        name: /Mapeando a jornada do hóspede/,
+      });
+
+      await user.click(nextLessonLink);
+
+      await waitFor(() =>
+        expect(
+          within(getLessonMenu()).getByRole('link', {
+            name: /Mapeando a jornada do hóspede/,
+          }),
+        ).toHaveAttribute('aria-current', 'page'),
+      );
+
+      expect(getStudentCurriculumMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should show an error with retry inside the menu without affecting the player', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock
+        .mockRejectedValueOnce(new StudentCurriculumError(500, 'Internal Server Error'))
+        .mockResolvedValueOnce(curriculum);
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      const menu = getLessonMenu();
+
+      expect(await within(menu).findByRole('alert')).toHaveTextContent(
+        'Não foi possível carregar o conteúdo do curso.',
+      );
+
+      expect(screen.getByTestId('lesson-video-player')).toBeInTheDocument();
+
+      await user.click(within(menu).getByRole('button', { name: 'Tentar novamente' }));
+
+      expect(await within(menu).findByText('1/3')).toBeInTheDocument();
+
+      expect(getStudentCurriculumMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('should hide the menu when the student has no access to the course', async () => {
+      getStudentCurriculumMock.mockRejectedValue(new StudentCurriculumError(403, 'Acesso negado.'));
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      await waitFor(() => expect(getLessonMenu()).toBeEmptyDOMElement());
+
+      expect(screen.getByTestId('lesson-video-player')).toBeInTheDocument();
+    });
   });
 });
