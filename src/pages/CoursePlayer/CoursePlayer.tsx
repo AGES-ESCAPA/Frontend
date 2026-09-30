@@ -3,9 +3,13 @@ import { Button } from '@components/ui';
 import { LessonVideoPlayer } from '@components/course/LessonVideoPlayer/LessonVideoPlayer';
 import { AuthenticatedLayout } from '@components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '@components/layout/Sidebar/sidebarMenuPresets';
+import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
 import { useStudentLesson } from '@/hooks/useStudentLesson';
 import { mockUser } from '@pages/MyCourses/mockCourses';
+import { LessonMenu } from './components/LessonMenu';
 import styles from './CoursePlayer.module.css';
+import { LessonContent } from '@components/ui/LessonContent/LessonContent';
+import { LessonReferences } from '@components/ui/ReferenceAndExternalLinks/ReferenceAndExternalLinks';
 
 export const CoursePlayer = () => {
   const { courseId = '', lessonId = '' } = useParams<{
@@ -14,22 +18,47 @@ export const CoursePlayer = () => {
   }>();
 
   const { lesson, status, errorStatus, errorMessage, retry } = useStudentLesson(courseId, lessonId);
+  const curriculum = useStudentCurriculum(courseId);
 
   const courseDetailsPath = `/cursos/${courseId}`;
+
+  const buildLessonHref = (targetLessonId: string) =>
+    `/aluno/cursos/${courseId}/aulas/${targetLessonId}`;
+
+  // US-13: fica na mesma posição do layout enquanto a aula carrega e depois de
+  // carregada, para o menu não ser remontado (nem perder os módulos abertos) ao
+  // trocar de aula.
+  const lessonMenu = (
+    <aside className={styles.sidebarColumn} data-area="Menu lateral" aria-label="Menu lateral">
+      <LessonMenu
+        data={curriculum.data}
+        isLoading={curriculum.isLoading}
+        error={curriculum.error}
+        onRetry={curriculum.refetch}
+        currentLessonId={lessonId}
+        buildLessonHref={buildLessonHref}
+      />
+    </aside>
+  );
 
   const renderContent = () => {
     if (status === 'loading') {
       return (
-        <section className={styles.lesson} aria-busy="true" aria-label="Carregando aula">
+        <section className={styles.lesson}>
           <div className={styles.layout}>
-            <div className={styles.mainColumn}>
+            <div className={styles.mainColumn} aria-busy="true" aria-label="Carregando aula">
               <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
 
               <header className={styles.header}>
                 <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
                 <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
               </header>
+
+              <LessonContent isLoading />
+              <LessonReferences isLoading />
             </div>
+
+            {lessonMenu}
           </div>
         </section>
       );
@@ -119,22 +148,14 @@ export const CoursePlayer = () => {
             </header>
 
             {/* US-12: conteúdo textual da aula */}
-            <section
-              className={styles.reservedArea}
-              data-area="Texto da aula"
-              aria-label="Texto da aula"
-            />
+            <LessonContent description={lesson.description} concepts={lesson.concepts} />
+            <LessonReferences references={lesson.references} />
 
             {/* US-16: materiais complementares */}
             <section className={styles.reservedArea} data-area="Materiais" aria-label="Materiais" />
           </div>
 
-          {/* US-13: menu lateral da aula */}
-          <aside
-            className={styles.sidebarColumn}
-            data-area="Menu lateral"
-            aria-label="Menu lateral"
-          />
+          {lessonMenu}
 
           {/* US-14/US-15: navegação entre aulas */}
           <nav
