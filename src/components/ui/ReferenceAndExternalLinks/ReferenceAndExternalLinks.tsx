@@ -1,16 +1,12 @@
 import { useId, useState } from 'react';
 import { ExternalLink, Globe } from 'lucide-react';
+import type { LessonReference } from '@/types/lesson';
 
 import styles from './ReferenceAndExternalLinks.module.css';
 
-export interface LessonReference {
-  title: string;
-  url: string;
-  favicon?: string;
-}
-
 export interface LessonReferencesProps {
-  references: LessonReference[];
+  references?: LessonReference[] | null;
+  isLoading?: boolean;
 }
 
 interface ReferenceCardProps {
@@ -59,8 +55,23 @@ function ReferenceCard({ reference }: ReferenceCardProps) {
   );
 }
 
-export function LessonReferences({ references }: LessonReferencesProps) {
+export function LessonReferences({ references, isLoading = false }: LessonReferencesProps) {
   const headingId = useId();
+
+  if (isLoading) {
+    return (
+      <section
+        className={styles.section}
+        aria-busy="true"
+        aria-label="Carregando referências"
+        data-testid="lesson-references-skeleton"
+      >
+        <div className={`${styles.skeleton} ${styles.skeletonHeading}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonCard}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonCard}`} />
+      </section>
+    );
+  }
 
   if (!references || references.length === 0) {
     return null;

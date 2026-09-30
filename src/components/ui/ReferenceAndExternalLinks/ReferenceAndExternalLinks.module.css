@@ -91,6 +91,39 @@
   color: var(--color-text-muted);
 }
 
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-800) 25%,
+    var(--color-primary-700) 50%,
+    var(--color-primary-800) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-md);
+}
+
+.skeletonHeading {
+  height: 20px;
+  width: 220px;
+}
+
+.skeletonCard {
+  height: 44px;
+  width: 100%;
+  border-radius: var(--radius-lg);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
 @media (width <= 639px) {
   .card {
     gap: var(--space-2);
@@ -105,5 +138,9 @@
 @media (prefers-reduced-motion: reduce) {
   .card {
     transition: none;
+  }
+
+  .skeleton {
+    animation: none;
   }
 }

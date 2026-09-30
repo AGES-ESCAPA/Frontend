@@ -1,2 +1,2 @@
-export { LessonReferences, default } from './ReferenceAndExternalLinks';
-export type { LessonReference, LessonReferencesProps } from './ReferenceAndExternalLinks';
+export type { LessonReferencesProps } from './ReferenceAndExternalLinks';
+export type { LessonReference } from '@/types/lesson';

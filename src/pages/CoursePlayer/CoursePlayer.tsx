@@ -8,6 +8,8 @@ import { useStudentLesson } from '@/hooks/useStudentLesson';
 import { mockUser } from '@pages/MyCourses/mockCourses';
 import { LessonMenu } from './components/LessonMenu';
 import styles from './CoursePlayer.module.css';
+import { LessonContent } from '@components/ui/LessonContent/LessonContent';
+import { LessonReferences } from '@components/ui/ReferenceAndExternalLinks/ReferenceAndExternalLinks';
 
 export const CoursePlayer = () => {
   const { courseId = '', lessonId = '' } = useParams<{
@@ -51,6 +53,9 @@ export const CoursePlayer = () => {
                 <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
                 <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
               </header>
+
+              <LessonContent isLoading />
+              <LessonReferences isLoading />
             </div>
 
             {lessonMenu}
@@ -143,11 +148,8 @@ export const CoursePlayer = () => {
             </header>
 
             {/* US-12: conteúdo textual da aula */}
-            <section
-              className={styles.reservedArea}
-              data-area="Texto da aula"
-              aria-label="Texto da aula"
-            />
+            <LessonContent description={lesson.description} concepts={lesson.concepts} />
+            <LessonReferences references={lesson.references} />
 
             {/* US-16: materiais complementares */}
             <section className={styles.reservedArea} data-area="Materiais" aria-label="Materiais" />

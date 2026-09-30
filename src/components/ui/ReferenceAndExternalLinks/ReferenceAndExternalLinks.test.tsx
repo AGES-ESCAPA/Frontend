@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { LessonReferences, type LessonReference } from './ReferenceAndExternalLinks';
+import { LessonReferences } from './ReferenceAndExternalLinks';
+import type { LessonReference } from '@/types/lesson';
 
 const references: LessonReference[] = [
   {
@@ -105,6 +106,17 @@ describe('LessonReferences', () => {
 
       const link = screen.getByRole('link', { name: references[0].title });
       expect(link).toHaveAttribute('href', references[0].url);
+    });
+
+    it('exibe skeleton durante o carregamento', () => {
+      render(<LessonReferences isLoading />);
+      expect(screen.getByTestId('lesson-references-skeleton')).toBeInTheDocument();
+      expect(screen.queryByText('Referências e links externos')).not.toBeInTheDocument();
+    });
+
+    it('não exibe skeleton quando não está carregando', () => {
+      render(<LessonReferences references={[]} />);
+      expect(screen.queryByTestId('lesson-references-skeleton')).not.toBeInTheDocument();
     });
   });
 
