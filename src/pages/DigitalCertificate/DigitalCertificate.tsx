@@ -123,22 +123,20 @@ export const DigitalCertificate = () => {
               />
             </div>
 
-            {certificate.isOwner && (
-              <div className={styles.actions}>
-                <Button
-                  label="Baixar"
-                  variant="primary"
-                  icon={<Download size={18} />}
-                  onClick={handleDownload}
-                />
-                <Button
-                  label="Compartilhar"
-                  variant="primary"
-                  icon={<Share2 size={18} />}
-                  onClick={handleShare}
-                />
-              </div>
-            )}
+            <div className={styles.actions}>
+              <Button
+                label="Baixar"
+                variant="primary"
+                icon={<Download size={18} />}
+                onClick={handleDownload}
+              />
+              <Button
+                label="Compartilhar"
+                variant="primary"
+                icon={<Share2 size={18} />}
+                onClick={handleShare}
+              />
+            </div>
           </aside>
         </div>
       )}

@@ -11,6 +11,7 @@ export interface StudentCourseCardResponse {
   lessonsCount: number;
   progressPercentage: number | null;
   enrollmentStatus: EnrollmentStatus;
+  certificateCode?: string | null;
 }
 
 export interface PageResult<T> {

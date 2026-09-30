@@ -111,14 +111,14 @@ describe('DigitalCertificate', () => {
     expect(screen.getByRole('button', { name: /^compartilhar$/i })).toBeInTheDocument();
   });
 
-  it('hides the sidebar and the action buttons when isOwner is false (public view)', async () => {
+  it('hides the sidebar but keeps the download and share buttons when isOwner is false (public view)', async () => {
     getCertificateByCodeMock.mockResolvedValue(buildCertificate(false));
     renderPage();
 
     await screen.findByRole('heading', { name: 'Jorge Amado', level: 1 });
 
     expect(screen.queryByRole('link', { name: /meus cursos/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^baixar$/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^compartilhar$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^baixar$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^compartilhar$/i })).toBeInTheDocument();
   });
 });
