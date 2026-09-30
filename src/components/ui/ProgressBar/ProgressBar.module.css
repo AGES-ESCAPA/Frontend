@@ -15,6 +15,10 @@
   transition: width var(--transition-base);
 }
 
+.success .indicator {
+  background-color: var(--color-success-400);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .indicator {
     transition: none;

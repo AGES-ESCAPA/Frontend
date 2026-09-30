@@ -7,6 +7,7 @@ export interface ProgressBarProps {
   /** Teto da barra. O preenchimento é `value / max`. */
   max?: number;
   className?: string;
+  variant?: 'default' | 'success';
   'aria-label'?: string;
 }
 
@@ -23,13 +24,14 @@ export const ProgressBar = ({
   value,
   max = DEFAULT_MAX,
   className = '',
+  variant = 'default',
   'aria-label': ariaLabel,
 }: ProgressBarProps) => {
   const percent = toPercent(value, max);
 
   return (
     <Progress.Root
-      className={`${styles.root} ${className}`.trim()}
+      className={`${styles.root} ${variant === 'success' ? styles.success : ''} ${className}`.trim()}
       value={percent}
       max={DEFAULT_MAX}
       aria-label={ariaLabel}

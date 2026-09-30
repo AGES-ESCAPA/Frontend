@@ -14,12 +14,24 @@ const API_BASE_URL = getApiBaseUrl();
  * nenhum serviço monta o header por conta própria.
  */
 const DEFAULT_ADMIN_USER_ID = 'a0000000-0000-4000-a000-000000000001';
+const DEFAULT_STUDENT_USER_ID = 'b0000000-0000-4000-b000-000000000001';
 
 export const ADMIN_USER_ID: string = import.meta.env.VITE_ADMIN_USER_ID || DEFAULT_ADMIN_USER_ID;
+export const STUDENT_USER_ID: string =
+  import.meta.env.VITE_STUDENT_USER_ID || DEFAULT_STUDENT_USER_ID;
+
+export const getLoggedUserId = (): string | null => {
+  return localStorage.getItem('escapa_mock_user_id');
+};
 
 export const adminHeaders = (): Record<string, string> => ({
   'Content-Type': 'application/json',
-  'X-User-Id': ADMIN_USER_ID,
+  'X-User-Id': getLoggedUserId() || ADMIN_USER_ID,
+});
+
+export const studentHeaders = (): Record<string, string> => ({
+  'Content-Type': 'application/json',
+  'X-User-Id': getLoggedUserId() || STUDENT_USER_ID,
 });
 
 /** Envelope de sucesso devolvido pela API (`{ success, data, message }`). */

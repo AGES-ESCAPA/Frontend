@@ -1,5 +1,4 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 # Roda o lint-staged antes de cada commit.
 # O lint-staged só verifica os arquivos em staging (git add),

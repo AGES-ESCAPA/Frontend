@@ -1,19 +1,11 @@
 import { useEffect, useState, type FC } from 'react';
+import { toVimeoEmbedUrl } from '@utils/vimeo';
 import styles from './TeaserPlayer.module.css';
 
 export interface TeaserPlayerProps {
   src?: string;
   title: string;
 }
-
-const VIMEO_EMBED_QUERY =
-  'badge=0&autopause=0&player_id=0&app_id=58479&title=0&byline=0&portrait=0';
-
-const toVimeoEmbedUrl = (src?: string): string | null => {
-  if (!src) return null;
-  const match = src.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/i);
-  return match ? `https://player.vimeo.com/video/${match[1]}?${VIMEO_EMBED_QUERY}` : null;
-};
 
 export const TeaserPlayer: FC<TeaserPlayerProps> = ({ src, title }) => {
   const [hasError, setHasError] = useState(false);
@@ -28,6 +20,7 @@ export const TeaserPlayer: FC<TeaserPlayerProps> = ({ src, title }) => {
   return (
     <section className={styles.section} aria-labelledby="teaser-title">
       <h2 id="teaser-title">Conheça o curso</h2>
+
       <div className={styles.player}>
         {vimeoEmbedUrl ? (
           <iframe
