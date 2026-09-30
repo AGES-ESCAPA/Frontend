@@ -6,20 +6,52 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 // O .then((m) => ({ default: m.NomeDaPagina })) é necessário porque
 // usamos named exports (não default exports).
 
-const Home = lazy(() => import('@pages/Home/Home').then((m) => ({ default: m.Home })));
+const Home = lazy(() =>
+  import('@pages/Home/Home').then((m) => ({
+    default: m.Home,
+  })),
+);
+
 const MyCourses = lazy(() =>
-  import('@pages/MyCourses/MyCourses').then((m) => ({ default: m.MyCourses })),
+  import('@pages/MyCourses/MyCourses').then((m) => ({
+    default: m.MyCourses,
+  })),
 );
+
 const CourseDetails = lazy(() =>
-  import('@pages/CourseDetails/CourseDetails').then((m) => ({ default: m.CourseDetails })),
+  import('@pages/CourseDetails/CourseDetails').then((m) => ({
+    default: m.CourseDetails,
+  })),
 );
-const Login = lazy(() => import('@pages/Login/Login').then((m) => ({ default: m.Login })));
-const Courses = lazy(() => import('@pages/Courses/Courses').then((m) => ({ default: m.Courses })));
+
+const CoursePlayer = lazy(() =>
+  import('@pages/CoursePlayer/CoursePlayer').then((m) => ({
+    default: m.CoursePlayer,
+  })),
+);
+
+const Login = lazy(() =>
+  import('@pages/Login/Login').then((m) => ({
+    default: m.Login,
+  })),
+);
+
+const Courses = lazy(() =>
+  import('@pages/Courses/Courses').then((m) => ({
+    default: m.Courses,
+  })),
+);
+
 const CourseBuilder = lazy(() =>
-  import('@pages/CourseBuilder/CourseBuilder').then((m) => ({ default: m.CourseBuilder })),
+  import('@pages/CourseBuilder/CourseBuilder').then((m) => ({
+    default: m.CourseBuilder,
+  })),
 );
+
 const AdminCourses = lazy(() =>
-  import('@pages/AdminCourses/AdminCourses').then((m) => ({ default: m.AdminCourses })),
+  import('@pages/AdminCourses/AdminCourses').then((m) => ({
+    default: m.AdminCourses,
+  })),
 );
 const DigitalCertificate = lazy(() =>
   import('@pages/DigitalCertificate/DigitalCertificate').then((m) => ({
@@ -47,6 +79,7 @@ const PageLoader = () => (
 );
 
 // ─── Rotas ────────────────────────────────────────────────────────────────────
+
 /**
  * AppRouter — configuração central de rotas.
  *
@@ -65,6 +98,7 @@ export const AppRouter = () => {
           <Route path="/" element={<Home />} />
           <Route path="/meus-cursos" element={<MyCourses />} />
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
+          <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
           <Route path="/login" element={<Login />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/aluno/cursos" element={<Courses />} />
@@ -80,7 +114,6 @@ export const AppRouter = () => {
 
           {/* TODO: Adicionar as demais páginas conforme o desenvolvimento avança:
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/courses/:courseId/lessons/:lessonId" element={<CoursePlayer />} />
             <Route path="*" element={<NotFound />} />
           */}
         </Routes>
