@@ -1,7 +1,8 @@
 import type { ApiResponse } from '@services/api';
 import type { CertificateData } from '@/types/certificate';
+import { getApiBaseUrl } from '@services/runtimeEnv';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 const NOT_FOUND_MESSAGE = 'Certificado não encontrado. Verifique o código e tente novamente.';
 const GENERIC_ERROR_MESSAGE =
