@@ -13,8 +13,9 @@ import type {
   LessonResource,
   LessonType,
 } from '@/types/lesson';
+import { getApiBaseUrl } from '@services/runtimeEnv';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 type ApiLessonType = 'VIDEO' | 'TEXT' | 'FILE';
 
