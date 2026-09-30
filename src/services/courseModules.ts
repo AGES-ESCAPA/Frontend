@@ -7,9 +7,10 @@
  */
 import { adminHeaders, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
+import { getApiBaseUrl } from '@services/runtimeEnv';
 import type { AdminCourseModule, CourseModuleClient } from '@/types/module';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 const ADMIN_URL = `${API_BASE_URL}/admin`;
 
