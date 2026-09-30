@@ -151,6 +151,26 @@ export const formatWorkload = (durationTime: number | null): string => {
 };
 
 /**
+ * Formata uma data no formato ISO (`yyyy-MM-dd`, como o `LocalDate` do
+ * backend serializa) por extenso, em português.
+ *
+ * Monta a data com os componentes locais em vez de `new Date(iso)` porque
+ * esse construtor interpreta strings `yyyy-MM-dd` como UTC meia-noite, o que
+ * pode exibir o dia anterior em fusos horários negativos (ex.: Brasil).
+ * @example formatLongDate('2026-08-21') // → "21 de agosto de 2026"
+ */
+export const formatLongDate = (isoDate: string): string => {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
+};
+
+/**
  * Formata um valor numérico como moeda brasileira (BRL).
  * @example formatCurrency(1500) // → "R$ 1.500,00"
  */

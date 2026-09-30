@@ -1,11 +1,16 @@
 import { useId } from 'react';
 import { CalendarDays, Clock, IdCard } from 'lucide-react';
 import logo from '@assets/escapa_logo.png';
-import type { CertificateData } from '@/types/certificate';
 import styles from './CertificateCard.module.css';
 
 export interface CertificateCardProps {
-  certificate: CertificateData;
+  studentName: string;
+  courseTitle: string;
+  /** Carga horária já formatada para exibição (ex.: "16h"). */
+  workload: string;
+  /** Data de conclusão já formatada para exibição (ex.: "21 de agosto de 2026"). */
+  conclusionDate: string;
+  verificationCode: string;
 }
 
 /**
@@ -63,9 +68,13 @@ const SignatureStroke = () => (
  * Representação visual do certificado (US-18), reproduzindo a imagem do
  * protótipo: dados do aluno e do curso, selo com fita e assinatura da equipe.
  */
-export const CertificateCard = ({ certificate }: CertificateCardProps) => {
-  const { course, student, workload, conclusionDate, verificationCode } = certificate;
-
+export const CertificateCard = ({
+  studentName,
+  courseTitle,
+  workload,
+  conclusionDate,
+  verificationCode,
+}: CertificateCardProps) => {
   return (
     <article className={styles.card} aria-label="Certificado de conclusão">
       <Ribbon />
@@ -82,9 +91,9 @@ export const CertificateCard = ({ certificate }: CertificateCardProps) => {
 
         <div className={styles.intro}>
           <p className={styles.introLine}>Certificamos que</p>
-          <h1 className={styles.studentName}>{student}</h1>
+          <h1 className={styles.studentName}>{studentName}</h1>
           <p className={styles.introLine}>concluiu com sucesso o curso</p>
-          <h2 className={styles.courseName}>{course}</h2>
+          <h2 className={styles.courseName}>{courseTitle}</h2>
           <p className={styles.offeredBy}>
             oferecido pela Escapa! Cursos, com carga horária total de {workload}.
           </p>
