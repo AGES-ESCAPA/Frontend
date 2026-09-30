@@ -11,11 +11,31 @@ vi.mock('@services/certificateService', () => ({
 const getCertificateByCodeMock = vi.mocked(getCertificateByCode);
 
 const certificate: CertificateData = {
-  course: 'Marketing Digital para Hospitalidade',
-  student: 'Jorge Amado',
-  workload: '16 horas',
-  conclusionDate: '21 de agosto de 2026',
-  verificationCode: 'ESC-21AGO25-7X9L2M3N',
+  certificate: {
+    conclusionDate: '2026-08-21',
+    workload: 960,
+    verificationCode: 'ESC-21AGO25-7X9L2M3N',
+  },
+  student: {
+    name: 'Jorge Amado',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  course: {
+    id: 'e0000000-0000-4000-e000-000000000002',
+    title: 'Marketing Digital para Hospitalidade',
+    description: 'Estratégias de marketing digital para hotéis, pousadas e operadoras de turismo',
+    category: 'Marketing',
+    level: 'INTERMEDIARIO',
+    thumbnailUrl: null,
+    durationTime: 960,
+    lessonsCount: 44,
+    rating: 4.7,
+    reviewsCount: 98,
+    instructor: 'Paulo Henrique',
+    price: 249.9,
+  },
+  isOwner: false,
 };
 
 describe('useCertificate', () => {
@@ -26,7 +46,7 @@ describe('useCertificate', () => {
   it('starts loading and resolves with the certificate on success', async () => {
     getCertificateByCodeMock.mockResolvedValue(certificate);
 
-    const { result } = renderHook(() => useCertificate(certificate.verificationCode));
+    const { result } = renderHook(() => useCertificate(certificate.certificate.verificationCode));
 
     expect(result.current.status).toBe('loading');
 
@@ -35,7 +55,7 @@ describe('useCertificate', () => {
     expect(result.current.certificate).toEqual(certificate);
     expect(result.current.errorMessage).toBeNull();
     expect(getCertificateByCodeMock).toHaveBeenCalledWith(
-      certificate.verificationCode,
+      certificate.certificate.verificationCode,
       expect.any(AbortSignal),
     );
   });
