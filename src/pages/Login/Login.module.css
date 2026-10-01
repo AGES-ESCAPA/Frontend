@@ -32,53 +32,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-3);
-  margin-top: var(--space-6);
-}
-
-.demoSection {
-  width: 100%;
-  max-width: var(--container-sm);
-  margin-top: var(--space-6);
-  text-align: start;
-}
-
-.labelRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-2);
-}
-
-.inputLabel {
-  color: var(--color-text-secondary);
-  font-family: var(--font-family-base);
-  font-size: var(--text-body-4);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.forgotPassword {
-  color: var(--color-info-300);
-  font-family: var(--font-family-base);
-  font-size: var(--text-body-3);
-  text-decoration: none;
-  transition: opacity var(--transition-fast);
-}
-
-.forgotPassword:hover {
-  text-decoration: underline;
-}
-
-.toggleInvalid {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  color: var(--color-text-muted);
-  font-family: var(--font-family-base);
-  font-size: var(--text-body-4);
-  cursor: pointer;
+  margin-top: var(--space-4);
 }
 
 .cta {

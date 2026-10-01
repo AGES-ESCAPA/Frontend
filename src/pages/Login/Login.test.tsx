@@ -27,14 +27,4 @@ describe('Login', () => {
       '/empresa/cursos',
     );
   });
-
-  it('should render the password field and test toggle above profile buttons', () => {
-    renderLogin();
-
-    expect(screen.getByLabelText('SENHA')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('••••••••')).toHaveAttribute('type', 'password');
-    expect(screen.getByRole('button', { name: 'Mostrar senha' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Esqueci minha senha' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Simular estado inválido (erro)')).toBeInTheDocument();
-  });
 });
