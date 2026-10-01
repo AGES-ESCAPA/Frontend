@@ -19,6 +19,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
       icon = <Lock size={20} aria-hidden="true" />,
       autoComplete = 'current-password',
       disabled = false,
+      className,
       ...props
     },
     ref,
@@ -34,6 +35,8 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
       event.preventDefault();
     };
 
+    const combinedClassName = [styles.passwordWrapper, className].filter(Boolean).join(' ');
+
     return (
       <TextInput
         ref={ref}
@@ -41,6 +44,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         autoComplete={autoComplete}
         icon={icon}
         disabled={disabled}
+        className={combinedClassName}
         rightAction={
           <button
             type="button"
