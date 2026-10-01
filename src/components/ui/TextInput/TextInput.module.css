@@ -8,14 +8,11 @@
   border: 1px solid transparent;
   border-radius: var(--radius-lg);
   box-sizing: border-box;
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast);
 }
 
 .wrapper:focus-within {
   border-color: var(--color-info-300);
-  box-shadow: 0 0 0 1px var(--color-focus-ring-info);
 }
 
 .wrapper[data-invalid='true'] {
@@ -70,10 +67,31 @@
   color: var(--color-text-muted);
 }
 
+.input::-ms-reveal,
+.input::-ms-clear {
+  display: none;
+}
+
 .hasIcon .input {
-  padding-inline-start: var(--space-2);
+  padding-inline-start: var(--space-3);
 }
 
 .hasAddon .input {
   padding-inline-start: var(--space-5);
+}
+
+.rightAction {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-inline-end: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.wrapper:focus-within .rightAction {
+  color: var(--color-info-300);
+}
+
+.hasRightAction .input {
+  padding-inline-end: var(--space-3);
 }

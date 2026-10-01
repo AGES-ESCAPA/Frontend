@@ -46,6 +46,8 @@ export { TextArea } from './TextArea';
 export type { TextAreaProps } from './TextArea';
 export { TextInput } from './TextInput';
 export type { TextInputProps } from './TextInput';
+export { PasswordInput } from './PasswordInput';
+export type { PasswordInputProps } from './PasswordInput';
 export { Toast } from './Toast';
 export type { ToastProps, ToastVariant } from './Toast';
 
