@@ -77,3 +77,19 @@
 .hasAddon .input {
   padding-inline-start: var(--space-5);
 }
+
+.rightAction {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-inline-end: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.wrapper:focus-within .rightAction {
+  color: var(--color-info-300);
+}
+
+.hasRightAction .input {
+  padding-inline-end: var(--space-2);
+}
