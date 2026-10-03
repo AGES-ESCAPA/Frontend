@@ -73,18 +73,6 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
 
       {hasMenu && (
         <div className={styles.actions}>
-          {/* Ponto de entrada principal — sempre visível, nunca colapsa */}
-          {state === 'noAuth' && (
-            <Button
-              asChild
-              variant="ghost-dark"
-              label="Entrar"
-              className={`${styles.primaryEntry} ${styles.navButton}`}
-            >
-              <a href="/login" aria-label="Acessar a plataforma" />
-            </Button>
-          )}
-
           {(state === 'user' || state === 'company') && (
             <div
               id={menuId}
@@ -121,6 +109,14 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
               data-open={menuOpen}
               onClick={() => setMenuOpen(false)}
             >
+              <Button
+                asChild
+                variant="ghost-dark"
+                label="Entrar"
+                className={`${styles.primaryEntry} ${styles.navButton}`}
+              >
+                <a href="/login" aria-label="Acessar a plataforma" />
+              </Button>
               <Button
                 variant="primary"
                 type="button"

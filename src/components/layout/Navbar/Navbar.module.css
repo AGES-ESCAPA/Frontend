@@ -207,8 +207,12 @@
     display: none;
   }
 
-  .cluster .notificationButton {
+  .cluster .notificationButton,
+  .cluster .navButton {
     width: 100%;
+  }
+
+  .cluster .notificationButton {
     justify-content: flex-start;
     padding: var(--space-2) var(--space-3);
   }
