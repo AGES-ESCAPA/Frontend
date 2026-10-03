@@ -68,9 +68,7 @@ export const CourseDetails = () => {
               </section>
             ) : null}
             {course.instructor.name ? <CourseInstructor instructor={course.instructor} /> : null}
-            {course.materials.length > 0 ? (
-              <CourseMaterials materials={course.materials} isDownloadable />
-            ) : null}
+            {course.materials.length > 0 ? <CourseMaterials materials={course.materials} /> : null}
           </>
         )}
       </CourseDetailModal>
