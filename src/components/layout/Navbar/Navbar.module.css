@@ -186,9 +186,10 @@
   outline: none;
 }
 
-/* Tablet e mobile: colapsa as ações secundárias num menu suspenso */
+/* Tablet e mobile: colapsa as ações secundárias num menu suspenso.
+   O aluno logado (`data-collapsible='false'`) mantém o mesmo arranjo do iPad/web. */
 @media (width <= 768px) {
-  .cluster {
+  .navbar[data-collapsible='true'] .cluster {
     position: absolute;
     top: calc(100% + var(--space-2));
     right: 0;
@@ -203,34 +204,34 @@
     box-shadow: var(--shadow-md);
   }
 
-  .cluster[data-open='false'] {
+  .navbar[data-collapsible='true'] .cluster[data-open='false'] {
     display: none;
   }
 
-  .cluster .notificationButton,
-  .cluster .navButton {
+  .navbar[data-collapsible='true'] .cluster .notificationButton,
+  .navbar[data-collapsible='true'] .cluster .navButton {
     width: 100%;
   }
 
-  .cluster .notificationButton {
+  .navbar[data-collapsible='true'] .cluster .notificationButton {
     justify-content: flex-start;
     padding: var(--space-2) var(--space-3);
   }
 
-  .cluster .badge {
+  .navbar[data-collapsible='true'] .cluster .badge {
     position: static;
     margin-left: auto;
   }
 
-  .notificationText {
+  .navbar[data-collapsible='true'] .notificationText {
     display: inline;
   }
 
-  .menuToggle {
+  .navbar[data-collapsible='true'] .menuToggle {
     display: inline-flex;
   }
 
-  .profileText {
+  .navbar[data-collapsible='true'] .profileText {
     display: none;
   }
 }
@@ -238,6 +239,30 @@
 @media (width <= 640px) {
   .navbar {
     padding: 0 var(--space-3);
+  }
+
+  /* Reserva a faixa do hambúrguer da Sidebar sem esconder perfil ou notificações. */
+  .navbar[data-collapsible='false'] {
+    padding-left: calc(var(--space-12) + var(--space-4));
+  }
+
+  .navbar[data-collapsible='false'] .actions,
+  .navbar[data-collapsible='false'] .profileButton,
+  .navbar[data-collapsible='false'] .profileText {
+    min-width: 0;
+  }
+
+  .navbar[data-collapsible='false'] .profileText {
+    max-width: 8.5rem;
+  }
+
+  .navbar[data-collapsible='false'] .profileText strong,
+  .navbar[data-collapsible='false'] .profileText small {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* alvo de toque acessível no mobile */
