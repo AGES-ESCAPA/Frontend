@@ -1,5 +1,5 @@
 .root {
-  display: inline-flex;
+  display: flex;
   min-width: 0;
   max-width: 100%;
 }
@@ -8,14 +8,24 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  overflow: auto hidden;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  flex: 0 0 auto;
   flex-wrap: nowrap;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* overflow-y clip/hidden and the scrollbar gutter shave the pill edges */
+  padding-block: var(--space-1);
+  margin-block: calc(var(--space-1) * -1);
 }
 
 .list::-webkit-scrollbar {
   display: none;
+  height: 0;
+  width: 0;
 }
 
 .trigger {
