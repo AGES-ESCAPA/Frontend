@@ -173,7 +173,13 @@ export const MyCourses = () => {
           <EmptyState
             title="Nenhum curso encontrado"
             description="Não encontramos nenhum curso com os filtros atuais. Que tal explorar o catálogo?"
-            action={<Button label="Explorar Catálogo" variant="outlined" onClick={() => {}} />}
+            action={
+              <Button
+                label="Explorar Catálogo"
+                variant="outlined"
+                onClick={() => navigate('/aluno/cursos')}
+              />
+            }
           />
         ) : (
           <div className={styles.coursesContainer}>

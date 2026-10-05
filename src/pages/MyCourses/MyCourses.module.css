@@ -31,6 +31,8 @@
 .pageContent {
   padding: var(--space-10);
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .topHeader {
@@ -40,6 +42,9 @@
   margin-bottom: var(--space-12);
   gap: var(--space-8);
   flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .titleSection {
@@ -75,15 +80,22 @@
   align-items: center;
   gap: var(--space-6);
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .searchContainer {
-  width: 320px;
+  width: min(320px, 100%);
+  max-width: 100%;
+  min-width: 0;
 }
 
-.tabScroller {
+.tabContainer {
+  flex: 0 1 auto;
+  min-width: 0;
   max-width: 100%;
-  overflow-x: auto;
+  min-height: min-content;
+  overflow-x: clip;
 }
 
 .courseSection {
@@ -117,6 +129,20 @@
 
   .pageContent {
     padding: var(--space-4);
+  }
+
+  .controlsSection {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: var(--space-3);
+  }
+
+  .searchContainer,
+  .tabContainer {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
   }
 
   .courseGrid {
