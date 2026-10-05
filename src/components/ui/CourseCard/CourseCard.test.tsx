@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { CourseCard } from './CourseCard';
+import styles from './CourseCard.module.css';
 
 const defaultProps = {
   id: 'curso-ia-101',
@@ -94,6 +95,27 @@ describe('CourseCard', () => {
 
     const image = screen.getByRole('img', { hidden: true });
     expect(image).toHaveAttribute('src', defaultProps.imageUrl);
+  });
+
+  it('mostra capa em preto e branco, tag Adquirido e botão Acessar no lugar do preço', () => {
+    render(<CourseCard {...defaultProps} acquired />);
+
+    expect(screen.getByText('Adquirido')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /acessar o curso/i })).toBeInTheDocument();
+    expect(screen.queryByText(defaultProps.price)).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { hidden: true })).toHaveClass(styles.imageAcquired);
+  });
+
+  it('aciona o acesso do curso adquirido sem disparar o clique do card', () => {
+    const handleClick = vi.fn();
+    const handleAccess = vi.fn();
+    render(<CourseCard {...defaultProps} acquired onClick={handleClick} onAccess={handleAccess} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /acessar o curso/i }));
+
+    expect(handleAccess).toHaveBeenCalledTimes(1);
+    expect(handleAccess).toHaveBeenCalledWith(defaultProps.id);
+    expect(handleClick).not.toHaveBeenCalled();
   });
 
   it('exibe o placeholder quando a imagem falha ao carregar', () => {
