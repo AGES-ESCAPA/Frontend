@@ -1,3 +1,8 @@
+.panel {
+  position: relative;
+  z-index: 1;
+}
+
 .levelGroup {
   display: flex;
   flex-wrap: wrap;

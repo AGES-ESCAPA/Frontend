@@ -3,7 +3,13 @@ import type { RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { createCourse, getCourseById, publishCourse, updateCourse } from '@services/courseService';
+import {
+  createCourse,
+  getCourseById,
+  listCourseCategories,
+  publishCourse,
+  updateCourse,
+} from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
 import type { CourseDetail } from '@/types/course';
 import type { AdminCourseModule } from '@/types/module';
@@ -14,6 +20,7 @@ vi.mock('@services/courseService', () => ({
   getCourseById: vi.fn(),
   updateCourse: vi.fn(),
   publishCourse: vi.fn(),
+  listCourseCategories: vi.fn(),
 }));
 
 vi.mock('@services/courseModules', () => ({
@@ -69,10 +76,26 @@ describe('CourseBuilder', () => {
       .mockReset()
       .mockResolvedValue({ ...SAVED_COURSE, status: 'PUBLISHED' });
     vi.mocked(getCourseById).mockReset().mockResolvedValue(SAVED_COURSE);
+    vi.mocked(listCourseCategories)
+      .mockReset()
+      .mockResolvedValue(['Design & UX', 'Hospitalidade', 'Marketing']);
     vi.mocked(courseModulesApi.listModules).mockReset().mockResolvedValue(SAVED_MODULES);
   });
 
-  const fillRequiredFieldsForPublish = async () => {
+  const selectCategory = async (categoryName: string) => {
+    await userEvent.click(screen.getByRole('combobox', { name: /categoria principal/i }));
+    await userEvent.type(
+      screen.getByRole('searchbox', { name: /buscar categoria/i }),
+      categoryName,
+    );
+    const option = await screen.findByRole('option', {
+      name: (accessibleName) =>
+        accessibleName === categoryName || accessibleName === `Criar categoria "${categoryName}"`,
+    });
+    await userEvent.click(option);
+  };
+
+  const fillRequiredFieldsForPublish = async (categoryName = 'Hospitalidade') => {
     await userEvent.type(screen.getByRole('textbox', { name: /título/i }), 'Curso de Recepção');
     await userEvent.type(
       screen.getByRole('textbox', { name: /resumo curto/i }),
@@ -82,10 +105,7 @@ describe('CourseBuilder', () => {
       screen.getByRole('textbox', { name: /descrição completa/i }),
       'Descrição completa do curso.',
     );
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: /categoria principal/i }),
-      'Hospitalidade',
-    );
+    await selectCategory(categoryName);
     await userEvent.click(screen.getByRole('button', { name: 'Iniciante' }));
     await userEvent.type(screen.getByRole('textbox', { name: /carga horária/i }), '40');
     await userEvent.type(screen.getByRole('textbox', { name: /preço base/i }), '199');
@@ -187,7 +207,23 @@ describe('CourseBuilder', () => {
       expect(createCourse).toHaveBeenCalled();
     });
     expect(publishCourse).toHaveBeenCalledWith(SAVED_COURSE.id);
+    expect(createCourse).toHaveBeenCalledWith(
+      expect.objectContaining({ category: 'Hospitalidade' }),
+    );
     expect(await screen.findByText('Curso publicado com sucesso!')).toBeInTheDocument();
+  });
+
+  it('should publish a category created when the search does not match a registered one', async () => {
+    renderBuilder();
+
+    await fillRequiredFieldsForPublish('Enoturismo');
+    await userEvent.click(screen.getByRole('button', { name: 'Publicar Curso' }));
+
+    await waitFor(() => {
+      expect(createCourse).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 'Enoturismo' }),
+      );
+    });
   });
 
   it('should show the API validation error and keep the course as a draft when publish is rejected', async () => {
@@ -219,8 +255,8 @@ describe('CourseBuilder', () => {
     expect(screen.getByRole('textbox', { name: /descrição completa/i })).toHaveValue(
       SAVED_COURSE.description,
     );
-    expect(screen.getByRole('combobox', { name: /categoria principal/i })).toHaveValue(
-      SAVED_COURSE.category,
+    expect(screen.getByRole('combobox', { name: /categoria principal/i })).toHaveTextContent(
+      'Design & UX',
     );
     expect(screen.getByRole('textbox', { name: /carga horária/i })).toHaveValue('40');
     expect(screen.getByRole('textbox', { name: /prazo/i })).toHaveValue('365');

@@ -1,9 +1,9 @@
 import { memo } from 'react';
 import { Shapes } from 'lucide-react';
-import { Button, FormField, Panel, SelectInput } from '@components/ui';
-import type { SelectInputOption } from '@components/ui';
-import { COURSE_CATEGORIES, COURSE_DIFFICULTIES } from '@/types/course';
+import { Button, FormField, Panel } from '@components/ui';
+import { COURSE_DIFFICULTIES } from '@/types/course';
 import type { CourseFormField } from '@/types/course';
+import { CategoryCombobox } from './CategoryCombobox';
 import styles from './ClassificationCard.module.css';
 
 export interface ClassificationCardProps {
@@ -11,36 +11,36 @@ export interface ClassificationCardProps {
   difficulty: string;
   categoryError?: string;
   difficultyError?: string;
+  categories: readonly string[];
+  isCategoriesLoading?: boolean;
   disabled?: boolean;
   onFieldChange: (field: CourseFormField, value: string) => void;
 }
 
 const CATEGORY_ID = 'course-category';
 
-const CATEGORY_OPTIONS: readonly SelectInputOption[] = COURSE_CATEGORIES.map((category) => ({
-  value: category,
-  label: category,
-}));
-
 const ClassificationCardBase = ({
   category,
   difficulty,
   categoryError,
   difficultyError,
+  categories,
+  isCategoriesLoading = false,
   disabled = false,
   onFieldChange,
 }: ClassificationCardProps) => (
-  <Panel title="Classificação" icon={<Shapes size={22} />}>
+  <Panel title="Classificação" icon={<Shapes size={22} />} className={styles.panel}>
     <FormField label="Categoria Principal" htmlFor={CATEGORY_ID} required error={categoryError}>
-      <SelectInput
+      <CategoryCombobox
         id={CATEGORY_ID}
         value={category}
-        options={CATEGORY_OPTIONS}
+        categories={categories}
+        isLoading={isCategoriesLoading}
         placeholder="Selecione uma categoria"
         required
         disabled={disabled}
         invalid={categoryError !== undefined}
-        onChange={(event) => onFieldChange('category', event.target.value)}
+        onChange={(nextCategory) => onFieldChange('category', nextCategory)}
       />
     </FormField>
 
