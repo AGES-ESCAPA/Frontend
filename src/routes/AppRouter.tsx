@@ -58,6 +58,12 @@ const DigitalCertificate = lazy(() =>
     default: m.DigitalCertificate,
   })),
 );
+
+const UnderConstruction = lazy(() =>
+  import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
+    default: m.UnderConstruction,
+  })),
+);
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -112,10 +118,8 @@ export const AppRouter = () => {
           <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
           <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
 
-          {/* TODO: Adicionar as demais páginas conforme o desenvolvimento avança:
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="*" element={<NotFound />} />
-          */}
+          {/* Qualquer rota ainda sem página cai aqui. */}
+          <Route path="*" element={<UnderConstruction />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
