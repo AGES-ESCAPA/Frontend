@@ -244,8 +244,7 @@
 }
 
 /* ── Mobile do aluno: a barra vira drawer aberto pelo hambúrguer ── */
-.mobileToggle,
-.mobileLogout {
+.mobileToggle {
   display: none;
 }
 
@@ -276,16 +275,6 @@
     background-color: var(--color-border-subtle);
     border-color: var(--color-border-subtle);
     outline: none;
-  }
-
-  .mobileLogout {
-    display: inline-flex;
-    position: fixed;
-    bottom: var(--space-4);
-    left: var(--space-3);
-    z-index: 50;
-    width: var(--space-12);
-    height: var(--space-12);
   }
 
   .backdrop {

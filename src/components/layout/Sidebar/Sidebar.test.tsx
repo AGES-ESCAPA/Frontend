@@ -305,7 +305,7 @@ describe('Sidebar', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
 
     expect(screen.getByRole('complementary')).toHaveAttribute('data-mobile-open', 'true');
-    expect(screen.getByRole('button', { name: 'Fechar menu', exact: true })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Fechar menu' })).toHaveAttribute(
       'aria-expanded',
       'true',
     );
@@ -336,22 +336,25 @@ describe('Sidebar', () => {
     );
   });
 
-  it('should keep the logout icon visible while the student drawer is closed', async () => {
+  it('should hide the logout button while the student drawer is closed', () => {
+    stubMatchMedia(true);
+    renderStudent({ onLogout: vi.fn() });
+
+    expect(screen.queryByRole('button', { name: /sair da conta/i })).not.toBeInTheDocument();
+  });
+
+  it('should keep the logout icon inside the student drawer', async () => {
     stubMatchMedia(true);
     const handleLogout = vi.fn();
     renderStudent({ onLogout: handleLogout });
 
-    await userEvent.click(screen.getByRole('button', { name: /sair da conta/i }));
-    expect(handleLogout).toHaveBeenCalledOnce();
-  });
-
-  it('should keep the logout icon available after the student drawer opens', async () => {
-    stubMatchMedia(true);
-    renderStudent({ onLogout: vi.fn() });
-
     await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
 
-    expect(screen.getByRole('button', { name: /sair da conta/i })).toBeInTheDocument();
+    const logout = within(screen.getByRole('complementary')).getByRole('button', {
+      name: /sair da conta/i,
+    });
+    await userEvent.click(logout);
+    expect(handleLogout).toHaveBeenCalledOnce();
   });
 
   it('should not render the hamburger for other roles on mobile', () => {

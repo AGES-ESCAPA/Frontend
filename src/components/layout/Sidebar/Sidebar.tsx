@@ -183,17 +183,6 @@ export const Sidebar = ({
         </button>
       ) : null}
 
-      {isMobileStudent && !mobileOpen && onLogout ? (
-        <button
-          type="button"
-          className={`${styles.logoutButton} ${styles.mobileLogout}`}
-          onClick={onLogout}
-          aria-label="Sair da conta"
-        >
-          <LogOut size={SIDEBAR_ICON_SIZE} aria-hidden="true" />
-        </button>
-      ) : null}
-
       {isMobileStudent && mobileOpen ? (
         <button
           type="button"
