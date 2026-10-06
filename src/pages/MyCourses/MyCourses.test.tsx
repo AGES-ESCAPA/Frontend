@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { MyCourses } from './MyCourses';
 import { vi } from 'vitest';
 import * as enrollmentService from '../../services/enrollmentService';
@@ -94,5 +94,28 @@ describe('MyCourses', () => {
     await waitFor(() => {
       expect(screen.getByText('Nenhum curso encontrado')).toBeInTheDocument();
     });
+  });
+
+  it('navigates to the catalog when the empty state action is clicked', async () => {
+    vi.mocked(enrollmentService.getStudentEnrollments).mockResolvedValue({
+      content: [],
+      pageNumber: 0,
+      pageSize: 10,
+      totalPages: 0,
+      totalElements: 0,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/meus-cursos']}>
+        <Routes>
+          <Route path="/meus-cursos" element={<MyCourses />} />
+          <Route path="/aluno/cursos" element={<p>Catálogo</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Explorar Catálogo' }));
+
+    expect(await screen.findByText('Catálogo')).toBeInTheDocument();
   });
 });

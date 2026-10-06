@@ -96,6 +96,24 @@ describe('courseService', () => {
     );
   });
 
+  it('should derive filters from the published catalog', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve(page),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(courseService.getCourseFilters()).resolves.toEqual({
+      categories: ['Hospitalidade'],
+      levels: ['INICIANTE'],
+    });
+    const requestedUrl = String(fetchMock.mock.calls[0][0]);
+    expect(requestedUrl).toContain(PUBLIC_COURSES_PATH);
+    expect(requestedUrl).not.toContain('/filters');
+    expect(requestedUrl).toContain('size=100');
+  });
+
   it('should call GET /api/v1/public/courses/:id and return the payload data', async () => {
     const details = {
       id: 'e0000000-0000-4000-e000-000000000001',
@@ -148,6 +166,24 @@ describe('courseService', () => {
     );
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Atendimento de Excelencia em Hospedagem');
+  });
+
+  it('should call GET /api/v1/admin/courses/categories and return the registered names', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve({ success: true, data: ['Hospitalidade', 'Marketing'] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await courseService.listCourseCategories();
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses/categories');
+    expect((init.headers as Record<string, string>)['X-User-Id']).toBe(
+      'a0000000-0000-4000-a000-000000000001',
+    );
+    expect(result).toEqual(['Hospitalidade', 'Marketing']);
   });
 
   it('should call POST /api/v1/admin/courses/:id/publish to publish a course', async () => {

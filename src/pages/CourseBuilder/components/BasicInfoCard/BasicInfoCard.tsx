@@ -33,7 +33,7 @@ const BasicInfoCardBase = ({
       <TextInput
         id={TITLE_ID}
         value={title}
-        placeholder="Fundamentos de Design de Interfaces Corporativas"
+        placeholder="Turismo em Tempos de Escapismo"
         maxLength={160}
         required
         disabled={disabled}
@@ -47,7 +47,7 @@ const BasicInfoCardBase = ({
         id={TEASER_ID}
         type="url"
         value={teaserVideoUrl}
-        placeholder="https://youtube.com/..."
+        placeholder="https://vimeo.com/..."
         icon={<Link2 size={18} />}
         disabled={disabled}
         invalid={teaserVideoUrlError !== undefined}

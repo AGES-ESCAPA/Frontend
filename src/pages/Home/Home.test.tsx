@@ -7,10 +7,12 @@ import type { PublicCourseCard, PublicCoursesPage } from '@/types/course';
 import { Home } from './Home';
 
 const getCoursesMock = vi.mocked(courseService.getCourses);
+const getFiltersMock = vi.mocked(courseService.getCourseFilters);
 
 vi.mock('@services/courseService', () => ({
   courseService: {
     getCourses: vi.fn(),
+    getCourseFilters: vi.fn(),
   },
 }));
 
@@ -56,6 +58,10 @@ const renderHome = () =>
 describe('Home', () => {
   beforeEach(() => {
     getCoursesMock.mockReset();
+    getFiltersMock.mockReset().mockResolvedValue({
+      categories: ['Hospitalidade', 'Inteligência Artificial', 'Marketing'],
+      levels: ['INICIANTE', 'INTERMEDIARIO', 'AVANCADO'],
+    });
   });
 
   it('should render the public navbar and institutional footer', async () => {
@@ -72,6 +78,7 @@ describe('Home', () => {
 
   it('should show skeleton loading while the API request is pending', () => {
     getCoursesMock.mockReturnValue(new Promise(() => undefined));
+    getFiltersMock.mockReturnValue(new Promise(() => undefined));
     renderHome();
 
     expect(
@@ -131,7 +138,7 @@ describe('Home', () => {
     await waitFor(() => expect(screen.getByText(/0 cursos encontrados/i)).toBeInTheDocument());
     getCoursesMock.mockClear();
 
-    await user.click(screen.getByRole('tab', { name: 'Inteligência Artificial' }));
+    await user.click(await screen.findByRole('tab', { name: 'Inteligência Artificial' }));
     await user.click(screen.getByRole('tab', { name: 'Iniciante' }));
 
     await waitFor(() => {

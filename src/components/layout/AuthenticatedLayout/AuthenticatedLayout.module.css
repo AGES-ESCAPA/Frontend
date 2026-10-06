@@ -33,6 +33,12 @@
   .main {
     padding: var(--space-5) var(--space-4) var(--space-12);
   }
+
+  /* No mobile do aluno a Sidebar vira drawer; o conteúdo ocupa a largura toda. */
+  .layout:has([data-role='student']) .content {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

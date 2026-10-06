@@ -12,7 +12,7 @@ export interface NavbarUser {
   avatarUrl?: string;
 }
 
-export type NavbarProps =
+export type NavbarProps = (
   | {
       state: 'noAuth' | 'register';
       user?: never;
@@ -22,9 +22,21 @@ export type NavbarProps =
       state: 'user' | 'company';
       user: NavbarUser;
       notificationsCount?: number;
-    };
+    }
+) & {
+  /**
+   * No mobile, recolhe as ações num menu suspenso. O aluno logado mantém
+   * notificações e perfil visíveis, como no tablet e no desktop.
+   */
+  collapsible?: boolean;
+};
 
-export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => {
+export const Navbar = ({
+  state,
+  user,
+  notificationsCount = 0,
+  collapsible = true,
+}: NavbarProps) => {
   const isProfile = state === 'user' || state === 'company';
   const hasMenu = state === 'noAuth' || isProfile;
   const badgeLabel = notificationsCount > 99 ? '99+' : String(notificationsCount);
@@ -60,7 +72,13 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
   }, [menuOpen]);
 
   return (
-    <nav ref={navRef} className={styles.navbar} aria-label="Navegação principal" data-state={state}>
+    <nav
+      ref={navRef}
+      className={styles.navbar}
+      aria-label="Navegação principal"
+      data-state={state}
+      data-collapsible={collapsible}
+    >
       {!isProfile && (
         <div className={styles.leftGroup}>
           <a href="/" className={styles.brand} aria-label="Página inicial">
@@ -73,18 +91,6 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
 
       {hasMenu && (
         <div className={styles.actions}>
-          {/* Ponto de entrada principal — sempre visível, nunca colapsa */}
-          {state === 'noAuth' && (
-            <Button
-              asChild
-              variant="ghost-dark"
-              label="Entrar"
-              className={`${styles.primaryEntry} ${styles.navButton}`}
-            >
-              <a href="/login" aria-label="Acessar a plataforma" />
-            </Button>
-          )}
-
           {(state === 'user' || state === 'company') && (
             <div
               id={menuId}
@@ -122,6 +128,14 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
               onClick={() => setMenuOpen(false)}
             >
               <Button
+                asChild
+                variant="ghost-dark"
+                label="Entrar"
+                className={`${styles.primaryEntry} ${styles.navButton}`}
+              >
+                <a href="/login" aria-label="Acessar a plataforma" />
+              </Button>
+              <Button
                 variant="primary"
                 type="button"
                 label="Começar Agora"
@@ -130,18 +144,24 @@ export const Navbar = ({ state, user, notificationsCount = 0 }: NavbarProps) => 
             </div>
           )}
 
-          <button
-            ref={toggleRef}
-            type="button"
-            className={styles.menuToggle}
-            aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
-            aria-haspopup="true"
-            aria-expanded={menuOpen}
-            aria-controls={menuId}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
-          </button>
+          {collapsible && (
+            <button
+              ref={toggleRef}
+              type="button"
+              className={styles.menuToggle}
+              aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-haspopup="true"
+              aria-expanded={menuOpen}
+              aria-controls={menuId}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? (
+                <X size={20} aria-hidden="true" />
+              ) : (
+                <Menu size={20} aria-hidden="true" />
+              )}
+            </button>
+          )}
         </div>
       )}
     </nav>

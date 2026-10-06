@@ -19,7 +19,9 @@
   font-family: var(--font-family-base);
   overflow: hidden;
   user-select: none;
-  transition: width var(--transition-base);
+  transition:
+    width var(--transition-base),
+    transform var(--transition-base);
 }
 
 /* ── Topo: logo + perfil ───────────────────────────────────────────── */
@@ -241,8 +243,80 @@
   box-shadow: var(--shadow-md);
 }
 
+/* ── Mobile do aluno: a barra vira drawer aberto pelo hambúrguer ── */
+.mobileToggle {
+  display: none;
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (width <= 40rem) {
+  .mobileToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: calc((var(--header-height) - var(--space-12)) / 2);
+    left: var(--space-3);
+    z-index: 50;
+    width: var(--space-12);
+    height: var(--space-12);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+  }
+
+  .mobileToggle:hover,
+  .mobileToggle:focus-visible {
+    background-color: var(--color-border-subtle);
+    border-color: var(--color-border-subtle);
+    outline: none;
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    padding: 0;
+    border: 0;
+    background-color: var(--color-overlay-backdrop);
+    cursor: pointer;
+  }
+
+  .sidebar[data-role='student'] {
+    width: var(--sidebar-width);
+    transform: translateX(-100%);
+  }
+
+  .sidebar[data-role='student']:not([data-mobile-open='true']) {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .sidebar[data-role='student'][data-mobile-open='true'] {
+    transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+    box-shadow: var(--shadow-md);
+  }
+
+  .sidebar[data-role='student'] .header {
+    padding-left: calc(var(--space-12) + var(--space-3));
+  }
+
+  .sidebar[data-role='student'] .pinHint {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .sidebar {
+  .sidebar,
+  .mobileToggle {
     transition: none;
   }
 }

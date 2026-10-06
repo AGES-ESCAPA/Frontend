@@ -9,11 +9,13 @@ import { CourseDetails } from './CourseDetails';
 vi.mock('@services/courseService', () => ({
   courseService: {
     getCourses: vi.fn(),
+    getCourseFilters: vi.fn(),
     getPublicCourseById: vi.fn(),
   },
 }));
 
 const getCoursesMock = vi.mocked(courseService.getCourses);
+const getFiltersMock = vi.mocked(courseService.getCourseFilters);
 const getPublicCourseByIdMock = vi.mocked(courseService.getPublicCourseById);
 
 const emptyPage: PublicCoursesPage = {
@@ -70,6 +72,7 @@ const renderDetails = (courseId = details.id) =>
 describe('CourseDetails', () => {
   beforeEach(() => {
     getCoursesMock.mockReset().mockResolvedValue(emptyPage);
+    getFiltersMock.mockReset().mockResolvedValue({ categories: [], levels: [] });
     getPublicCourseByIdMock.mockReset();
   });
 
