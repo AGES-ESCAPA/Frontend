@@ -1,0 +1,232 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--space-12);
+  padding-inline: var(--space-3);
+  background-color: var(--color-primary-700);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast);
+}
+
+.field:focus-within {
+  border-color: var(--color-info-300);
+}
+
+.field[data-invalid='true'] {
+  border-color: var(--color-error-300);
+}
+
+.label {
+  flex: 0 0 auto;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.label::after {
+  content: ':';
+}
+
+.field .selectControl {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  min-height: var(--space-12);
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.field .selectControl:focus-within {
+  border: 0;
+  box-shadow: none;
+}
+
+.field .selectControl select {
+  padding: 0 var(--space-5) 0 0;
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.field .selectControl svg {
+  inset-inline-end: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.periodTrigger {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: inherit;
+  padding: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-text-primary);
+  text-align: start;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.periodTrigger:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.periodValue {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex-shrink: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.periodPanel {
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline-start: 0;
+  z-index: 10;
+  display: grid;
+  gap: var(--space-3);
+  width: max(100%, var(--container-xs));
+  max-width: calc(100vw - var(--space-8));
+  padding: var(--space-3);
+  box-sizing: border-box;
+  background-color: var(--color-primary-700);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.periodPanel[hidden] {
+  display: none;
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.dateLabel {
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  color: var(--color-text-muted);
+}
+
+.date {
+  width: 100%;
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-3);
+  box-sizing: border-box;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-text-primary);
+  background-color: var(--color-primary-800);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  color-scheme: dark;
+}
+
+.date:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: var(--space-1);
+}
+
+.date[aria-invalid='true'] {
+  border-color: var(--color-error-300);
+}
+
+.root .clearButton {
+  min-height: var(--space-12);
+  padding: 0 var(--space-3);
+  color: var(--color-text-primary);
+  background: var(--color-primary-700);
+  border-color: transparent;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--text-body-3--line-height);
+}
+
+.root .clearButton:focus-visible {
+  color: var(--color-text-primary);
+  background: var(--color-primary-700);
+}
+
+.root .clearButton:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background: var(--color-primary-700);
+}
+
+.error {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  color: var(--color-error-300);
+}
+
+@media (width >= 640px) {
+  .field,
+  .field .selectControl,
+  .root .clearButton {
+    min-height: var(--space-10);
+  }
+
+  .fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .periodField {
+    grid-column: span 1;
+  }
+}
+
+@media (width >= 1024px) {
+  .fields {
+    grid-template-columns:
+      minmax(8rem, 0.8fr)
+      minmax(9rem, 0.9fr)
+      minmax(12rem, 1.5fr)
+      minmax(10rem, 1fr)
+      auto;
+  }
+}
