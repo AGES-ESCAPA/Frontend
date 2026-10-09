@@ -1,0 +1,118 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 22rem;
+  aspect-ratio: 1.7;
+  padding: var(--space-5) var(--space-5) var(--space-10);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-primary-700);
+  border-radius: calc(var(--radius-2xl) * 1.75);
+  box-sizing: border-box;
+}
+
+.brand {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-5);
+  width: var(--space-10);
+  height: auto;
+}
+
+.brandText {
+  fill: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: 5px;
+  font-weight: var(--font-weight-medium);
+}
+
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cardNumber {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-variant-numeric: tabular-nums;
+  word-spacing: var(--space-4);
+}
+
+.cardHolder,
+.cardExpiry {
+  margin: 0;
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+}
+
+.cardExpiry {
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 30rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--tracking-badge);
+  text-transform: uppercase;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-error-300);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  font-weight: var(--font-weight-medium);
+}
+
+.input {
+  font-size: var(--text-body-3);
+}
+
+.field .input {
+  min-height: calc(var(--space-10) + var(--space-1));
+}
+
+.field .input input {
+  font-size: var(--text-body-3);
+}
+
+.field .input svg {
+  color: var(--color-text-primary);
+}
