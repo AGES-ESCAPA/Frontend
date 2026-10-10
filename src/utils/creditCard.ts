@@ -94,3 +94,36 @@ const CARD_HOLDER_NAME_MIN_LETTERS = 3;
  */
 export const isValidCardHolderName = (value: string): boolean =>
   (value.match(/\p{L}/gu) ?? []).length >= CARD_HOLDER_NAME_MIN_LETTERS;
+
+export type CardBrand =
+  'amex' | 'diners' | 'discover' | 'elo' | 'hipercard' | 'jcb' | 'mastercard' | 'visa';
+
+/**
+ * Bandeiras reconhecidas pelo início do número (BIN). A ordem importa: Elo e
+ * Hipercard compartilham prefixos com Visa, Mastercard e Discover e vêm antes.
+ */
+const CARD_BRAND_PATTERNS: ReadonlyArray<readonly [CardBrand, RegExp]> = [
+  [
+    'elo',
+    /^4011(78|79)|^43(1274|8935)|^45(1416|7393|763(1|2))|^50(4175|6699|67[0-6][0-9]|677[0-8]|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9])|^627780|^63(6297|6368|6369)|^65(0(0(3([1-3]|[5-9])|4([0-9])|5[0-1])|4(0[5-9]|[1-3][0-9]|8[5-9]|9[0-9])|5([0-2][0-9]|3[0-8]|4[1-9]|[5-8][0-9]|9[0-8])|7(0[0-9]|1[0-8]|2[0-7])|9(0[1-9]|[1-6][0-9]|7[0-8]))|16(5[2-9]|[6-7][0-9])|50(0[0-9]|1[0-9]|2[1-9]|[3-4][0-9]|5[0-8]))/,
+  ],
+  ['hipercard', /^606282|^3841[046]0/],
+  ['amex', /^3[47]/],
+  ['diners', /^3(0[0-5]|[689])/],
+  ['discover', /^6(011|5[0-9]{2})/],
+  ['jcb', /^(2131|1800|35[0-9]{2})/],
+  ['mastercard', /^(5[1-5]|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)/],
+  ['visa', /^4/],
+];
+
+/**
+ * Identifica a bandeira pelo início do número do cartão, aceitando o número
+ * com ou sem máscara. Devolve `null` quando nenhuma bandeira reconhecida bate.
+ * @example detectCardBrand('4539 1488') // → "visa"
+ */
+export const detectCardBrand = (value: string): CardBrand | null => {
+  const digits = onlyDigits(value);
+  if (digits === '') return null;
+
+  return CARD_BRAND_PATTERNS.find(([, pattern]) => pattern.test(digits))?.[0] ?? null;
+};

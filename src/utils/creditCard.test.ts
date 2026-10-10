@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  detectCardBrand,
   isValidCardCvv,
   isValidCardExpiry,
   isValidCardHolderName,
@@ -113,5 +114,33 @@ describe('card holder name', () => {
     expect(isValidCardHolderName("A-'B")).toBe(false);
     expect(isValidCardHolderName('  ')).toBe(false);
     expect(isValidCardHolderName('')).toBe(false);
+  });
+});
+
+describe('detectCardBrand', () => {
+  it.each([
+    ['4539 1488 0343 6467', 'visa'],
+    ['4', 'visa'],
+    ['5555 5555 5555 4444', 'mastercard'],
+    ['2221 0000 0000 0009', 'mastercard'],
+    ['3782 822463 10005', 'amex'],
+    ['3714', 'amex'],
+    ['3056 9309 0259 04', 'diners'],
+    ['6011 1111 1111 1117', 'discover'],
+    ['3530 1113 3330 0000', 'jcb'],
+    ['6062 8200 0000 0000', 'hipercard'],
+  ])('should identify %s as %s', (number, brand) => {
+    expect(detectCardBrand(number)).toBe(brand);
+  });
+
+  it('should prefer Elo over Visa and Discover when the BIN belongs to Elo', () => {
+    expect(detectCardBrand('4011 7800 0000 0000')).toBe('elo');
+    expect(detectCardBrand('6362 9700 0000 0000')).toBe('elo');
+    expect(detectCardBrand('6504 0500 0000 0000')).toBe('elo');
+  });
+
+  it('should return null for an empty or unrecognised number', () => {
+    expect(detectCardBrand('')).toBeNull();
+    expect(detectCardBrand('1234 5678 9101 1121')).toBeNull();
   });
 });

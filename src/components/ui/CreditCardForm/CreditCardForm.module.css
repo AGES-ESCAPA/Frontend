@@ -22,19 +22,22 @@
   box-sizing: border-box;
 }
 
-.brand {
+.brand,
+.brandFallback {
   position: absolute;
   top: var(--space-4);
   right: var(--space-5);
-  width: var(--space-10);
-  height: auto;
 }
 
-.brandText {
-  fill: var(--color-text-primary);
-  font-family: var(--font-family-base);
-  font-size: 5px;
-  font-weight: var(--font-weight-medium);
+.brand {
+  width: var(--space-12);
+  height: var(--space-8);
+  object-fit: contain;
+  object-position: right center;
+}
+
+.brandFallback {
+  color: var(--color-text-muted);
 }
 
 .cardInfo {

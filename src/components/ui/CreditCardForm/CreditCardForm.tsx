@@ -3,6 +3,7 @@ import type { ChangeEvent } from 'react';
 import { Calendar, CreditCard, Shield, User } from 'lucide-react';
 import { formatCurrency } from '@utils/formatters';
 import {
+  detectCardBrand,
   isValidCardCvv,
   isValidCardExpiry,
   isValidCardHolderName,
@@ -12,6 +13,15 @@ import {
   maskCardHolderName,
   maskCardNumber,
 } from '@utils/creditCard';
+import type { CardBrand } from '@utils/creditCard';
+import amexLogo from '@assets/card-brands/amex.svg';
+import dinersLogo from '@assets/card-brands/diners.svg';
+import discoverLogo from '@assets/card-brands/discover.svg';
+import eloLogo from '@assets/card-brands/elo.svg';
+import hipercardLogo from '@assets/card-brands/hipercard.svg';
+import jcbLogo from '@assets/card-brands/jcb.svg';
+import mastercardLogo from '@assets/card-brands/mastercard.svg';
+import visaLogo from '@assets/card-brands/visa.svg';
 import { SelectInput } from '../SelectInput';
 import { TextInput } from '../TextInput';
 import styles from './CreditCardForm.module.css';
@@ -55,27 +65,34 @@ const toPreviewNumber = (maskedNumber: string): string => {
   return shown.join(' ');
 };
 
-const MastercardMark = () => (
-  <svg
-    className={styles.brand}
-    viewBox="0 0 48 34"
-    role="img"
-    aria-label="Mastercard"
-    focusable="false"
-  >
-    <defs>
-      <clipPath id="credit-card-form-mc-clip">
-        <circle cx="30" cy="14" r="12" />
-      </clipPath>
-    </defs>
-    <circle cx="18" cy="14" r="12" fill="#eb001b" />
-    <circle cx="30" cy="14" r="12" fill="#f79e1b" />
-    <circle cx="18" cy="14" r="12" fill="#ff5f00" clipPath="url(#credit-card-form-mc-clip)" />
-    <text x="24" y="32" textAnchor="middle" className={styles.brandText}>
-      mastercard
-    </text>
-  </svg>
-);
+const BRAND_LABELS: Record<CardBrand, string> = {
+  amex: 'American Express',
+  diners: 'Diners Club',
+  discover: 'Discover',
+  elo: 'Elo',
+  hipercard: 'Hipercard',
+  jcb: 'JCB',
+  mastercard: 'Mastercard',
+  visa: 'Visa',
+};
+
+const BRAND_LOGOS: Record<CardBrand, string> = {
+  amex: amexLogo,
+  diners: dinersLogo,
+  discover: discoverLogo,
+  elo: eloLogo,
+  hipercard: hipercardLogo,
+  jcb: jcbLogo,
+  mastercard: mastercardLogo,
+  visa: visaLogo,
+};
+
+const CardBrandMark = ({ brand }: { brand: CardBrand | null }) =>
+  brand === null ? (
+    <CreditCard className={styles.brandFallback} size={32} aria-hidden="true" />
+  ) : (
+    <img className={styles.brand} src={BRAND_LOGOS[brand]} alt={BRAND_LABELS[brand]} />
+  );
 
 export const CreditCardForm = ({
   onChange,
@@ -152,7 +169,7 @@ export const CreditCardForm = ({
   return (
     <div className={`${styles.form} ${className}`.trim()}>
       <div className={styles.card} aria-hidden="true" data-testid="credit-card-preview">
-        <MastercardMark />
+        <CardBrandMark brand={detectCardBrand(number)} />
         <div className={styles.cardInfo}>
           <p className={styles.cardNumber}>{toPreviewNumber(number)}</p>
           <p className={styles.cardHolder}>{holderName.trim() || PLACEHOLDER_HOLDER}</p>

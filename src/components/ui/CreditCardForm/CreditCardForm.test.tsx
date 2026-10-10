@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { formatCurrency } from '@utils/formatters';
@@ -84,6 +84,46 @@ describe('CreditCardForm', () => {
       expect(preview).toHaveTextContent('JORGE AMADO');
       expect(preview).toHaveTextContent('03/28');
       expect(preview).not.toHaveTextContent('1234');
+    });
+  });
+
+  describe('card brand', () => {
+    it('should show no brand logo while the number is empty or unrecognised', async () => {
+      const { user } = setup();
+      const preview = screen.getByTestId('credit-card-preview');
+
+      expect(within(preview).queryByRole('img', { hidden: true })).not.toBeInTheDocument();
+
+      await user.type(getFields().number, '1234');
+
+      expect(within(preview).queryByRole('img', { hidden: true })).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['4539148803436467', 'Visa'],
+      ['5555555555554444', 'Mastercard'],
+      ['4011780000000000', 'Elo'],
+      ['378282246310005', 'American Express'],
+    ])('should show the %s brand matching the typed number (%s)', async (number, brandName) => {
+      const { user } = setup();
+
+      await user.type(getFields().number, number);
+
+      expect(screen.getByAltText(brandName)).toBeInTheDocument();
+    });
+
+    it('should switch the logo when the number changes to another brand', async () => {
+      const { user } = setup();
+      const { number } = getFields();
+
+      await user.type(number, '4111');
+      expect(screen.getByAltText('Visa')).toBeInTheDocument();
+
+      await user.clear(number);
+      await user.type(number, '5555');
+
+      expect(screen.queryByAltText('Visa')).not.toBeInTheDocument();
+      expect(screen.getByAltText('Mastercard')).toBeInTheDocument();
     });
   });
 
