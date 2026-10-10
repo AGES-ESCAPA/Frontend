@@ -85,5 +85,12 @@ export const isValidCardCvv = (value: string): boolean => /^\d{3,4}$/.test(value
 export const maskCardHolderName = (raw: string): string =>
   raw.replace(/[^\p{L}\s'-]/gu, '').toUpperCase();
 
-/** O nome impresso precisa ter ao menos 3 caracteres além dos espaços. */
-export const isValidCardHolderName = (value: string): boolean => value.trim().length >= 3;
+const CARD_HOLDER_NAME_MIN_LETTERS = 3;
+
+/**
+ * O nome impresso precisa ter ao menos 3 letras, sem contar espaços, apóstrofos
+ * e hifens ("A B" e "AB" são recusados).
+ * @example isValidCardHolderName('A B') // → false
+ */
+export const isValidCardHolderName = (value: string): boolean =>
+  (value.match(/\p{L}/gu) ?? []).length >= CARD_HOLDER_NAME_MIN_LETTERS;

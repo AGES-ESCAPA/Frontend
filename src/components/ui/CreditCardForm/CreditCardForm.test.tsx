@@ -157,6 +157,16 @@ describe('CreditCardForm', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
+    it('should refuse a holder name with fewer than 3 letters', async () => {
+      const { user } = setup();
+      const { holder, number } = getFields();
+
+      await user.type(holder, 'a b');
+      await user.click(number);
+
+      expect(screen.getByRole('alert')).toHaveTextContent('Informe o nome impresso no cartão.');
+    });
+
     it('should refuse an empty holder name', async () => {
       const { user } = setup();
       const { holder, number } = getFields();

@@ -100,9 +100,18 @@ describe('card holder name', () => {
     expect(maskCardHolderName("d'ávila-silva")).toBe("D'ÁVILA-SILVA");
   });
 
-  it('should require at least 3 characters besides spaces', () => {
+  it('should require at least 3 letters, not counting spaces', () => {
     expect(isValidCardHolderName('JORGE AMADO')).toBe(true);
-    expect(isValidCardHolderName('  ')).toBe(false);
+    expect(isValidCardHolderName('ANA')).toBe(true);
+    expect(isValidCardHolderName('A B C')).toBe(true);
+  });
+
+  it('should refuse names with fewer than 3 letters even when spaces make them look longer', () => {
+    expect(isValidCardHolderName('A B')).toBe(false);
     expect(isValidCardHolderName('AB')).toBe(false);
+    expect(isValidCardHolderName('A  B ')).toBe(false);
+    expect(isValidCardHolderName("A-'B")).toBe(false);
+    expect(isValidCardHolderName('  ')).toBe(false);
+    expect(isValidCardHolderName('')).toBe(false);
   });
 });
