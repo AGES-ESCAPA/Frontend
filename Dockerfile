@@ -43,7 +43,12 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Copia a configuração customizada (necessária para SPA com React Router)
 COPY nginx/nginx.conf /etc/nginx/conf.d/app.conf
 
-# Copia os arquivos compilados do estágio anterior
+# Gera env-config.js a partir de env vars do container no start (runtime config,
+# nao build time - permite trocar a URL da API sem rebuildar a imagem)
+COPY nginx/50-inject-runtime-env.sh /docker-entrypoint.d/50-inject-runtime-env.sh
+RUN chmod +x /docker-entrypoint.d/50-inject-runtime-env.sh
+
+# Copia os arquivos compilados do estágio anterior (inclui env-config.js.template)
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Nginx ouve na porta 80 por padrão

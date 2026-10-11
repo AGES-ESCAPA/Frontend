@@ -1,0 +1,176 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Button — CSS Module
+   Component: src/components/ui/Button/Button.tsx
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-body-1);
+  line-height: var(--text-body-1--line-height);
+  padding: var(--space-3) var(--space-6);
+  min-height: 44px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  transition: all var(--transition-fast);
+  box-sizing: border-box;
+}
+
+/* ── Width Modes ───────────────────────────────────────────────────── */
+.fullWidth {
+  width: 100%;
+}
+
+/* ── Variants ──────────────────────────────────────────────────────── */
+/* 1. primary — cyan gradient, dark text */
+.variant-primary {
+  background: linear-gradient(180deg, var(--color-info-200) 0%, var(--color-info-300) 100%);
+  color: var(--color-primary-900);
+  border-color: transparent;
+}
+
+.variant-primary:hover:not(.disabled, .loading) {
+  background: var(--color-info-200);
+}
+
+/* 2. secondary — navy gradient, white text */
+.variant-secondary {
+  background: linear-gradient(180deg, var(--color-primary-900) 0%, var(--color-primary-700) 100%);
+  color: var(--color-white);
+  border-color: transparent;
+}
+
+.variant-secondary:hover:not(.disabled, .loading) {
+  background: var(--color-primary-700);
+}
+
+/* 3. outlined — transparent bg, blue border + blue text */
+.variant-outlined {
+  background-color: transparent;
+  color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
+.variant-outlined:hover:not(.disabled, .loading) {
+  background-color: var(--color-surface-overlay);
+}
+
+/* 4. ghost — transparent bg, dark text */
+.variant-ghost {
+  background-color: transparent;
+  color: var(--color-primary-900);
+  border-color: transparent;
+}
+
+.variant-ghost:hover:not(.disabled, .loading) {
+  background-color: var(--color-surface-overlay);
+  color: var(--color-primary-900);
+}
+
+/* 5. ghost-dark — dark background, white text */
+.variant-ghost-dark {
+  background-color: var(--color-primary-900);
+  color: var(--color-white);
+  border-color: transparent;
+}
+
+.variant-ghost-dark:hover:not(.disabled, .loading) {
+  background-color: var(--color-primary-700);
+}
+
+/* 6. active — navy highlight with cyan text */
+.variant-active {
+  background-color: var(--color-primary-700);
+  color: var(--color-info-200);
+  border-color: transparent;
+}
+
+.variant-active:hover:not(.disabled, .loading) {
+  opacity: 0.85;
+}
+
+/* 7. danger — destructive action, red surface */
+.variant-danger {
+  background-color: var(--color-error-300);
+  color: var(--color-white);
+  border-color: transparent;
+}
+
+.variant-danger:hover:not(.disabled, .loading) {
+  background-color: var(--color-error-400);
+}
+
+/* ── Disabled State ────────────────────────────────────────────────── */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Loading State ─────────────────────────────────────────────────── */
+.loading {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Icon ──────────────────────────────────────────────────────────── */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Label ─────────────────────────────────────────────────────────── */
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Spinner ───────────────────────────────────────────────────────── */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Collapsed Icon Mode (Container Query) ─────────────────────────
+   Quando a div PAI é mais estreita que 100px, botões com ícone escondem o
+   label e mostram apenas o ícone (sidebar colapsada).
+
+   A div pai precisa declarar `container-type: inline-size`. Um elemento não
+   consulta a própria largura, e o botão não pode criar esse contêiner por
+   conta própria sem gerar uma caixa de bloco e alterar o layout de quem o
+   usa. No consumidor:
+
+     .sidebarItem { container-type: inline-size; }
+
+   Só botões com ícone colapsam: sem ícone, esconder o label deixaria o
+   botão vazio.
+   ──────────────────────────────────────────────────────────────────── */
+@container (width < 100px) {
+  .hasIcon .label {
+    display: none;
+  }
+
+  .hasIcon {
+    padding: var(--space-3);
+  }
+}

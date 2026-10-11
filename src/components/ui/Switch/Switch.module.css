@@ -1,0 +1,65 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Switch — CSS Module
+   Component: src/components/ui/Switch/Switch.tsx
+   ═══════════════════════════════════════════════════════════════════ */
+
+.track {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  /* 52px: trilho de 32px de altura com folga lateral para o curso do thumb. */
+  width: calc(var(--space-12) + var(--space-1));
+  height: var(--space-8);
+  padding: var(--space-1);
+  background-color: var(--color-neutral-600);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.track:focus-visible {
+  border-color: var(--color-info-300);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-focus-ring-info);
+}
+
+.track:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.track:hover:not(:disabled) {
+  background-color: var(--color-neutral-500);
+}
+
+.checked {
+  background-color: var(--color-info-300);
+}
+
+.checked:hover:not(:disabled) {
+  background-color: var(--color-info-200);
+}
+
+.thumb {
+  display: block;
+  width: var(--space-6);
+  height: var(--space-6);
+  background-color: var(--color-white);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast);
+  transform: translateX(0);
+}
+
+.checked .thumb {
+  transform: translateX(var(--space-5));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track,
+  .thumb {
+    transition: none;
+  }
+}

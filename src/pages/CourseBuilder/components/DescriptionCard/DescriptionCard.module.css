@@ -1,0 +1,91 @@
+.card {
+  --panel-gap: var(--space-3);
+}
+
+.label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-weight: var(--font-weight-medium);
+}
+
+.required {
+  margin-left: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+/* Sangra até as bordas do painel, como na referência: a barra atravessa o
+   card inteiro enquanto rótulo e editor mantêm o padding interno. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-inline: calc(var(--panel-padding) * -1);
+  padding: var(--space-2) var(--panel-padding);
+  background-color: var(--color-neutral-800);
+  overflow-x: auto;
+}
+
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.toolGroup + .toolGroup {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 1px solid var(--color-neutral-700);
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-8);
+  height: var(--space-8);
+  color: var(--color-neutral-200);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.tool:hover,
+.tool:focus-visible {
+  color: var(--color-white);
+  background-color: var(--color-overlay-hover-on-dark);
+  outline: none;
+}
+
+.tool:disabled {
+  cursor: not-allowed;
+  color: var(--color-neutral-500);
+  background: transparent;
+}
+
+/* Cresce junto com o card para que o editor absorva a altura sobrando quando a
+   linha do grid é esticada pelo card vizinho. */
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+/* Seletor aninhado de propósito: precisa vencer a altura padrão definida em
+   TextArea.module.css para o editor ocupar a área da referência. */
+.editor .textarea {
+  flex: 1;
+  min-height: calc(var(--space-16) * 3);
+}
+
+.error {
+  color: var(--color-error-300);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  font-weight: var(--font-weight-medium);
+}

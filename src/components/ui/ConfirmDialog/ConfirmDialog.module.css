@@ -1,0 +1,83 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: var(--color-backdrop);
+}
+
+.content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 51;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(calc(100% - var(--space-8)), var(--container-sm));
+  padding: var(--space-8) var(--space-6) var(--space-6);
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background-color: var(--color-primary-800);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-10);
+  height: var(--space-10);
+  margin-bottom: var(--space-5);
+  color: var(--color-error-300);
+  background-color: color-mix(in srgb, var(--color-error-400) 28%, transparent);
+  border-radius: var(--radius-full);
+}
+
+.title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-h5);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-h5--line-height);
+}
+
+.description {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-6);
+}
+
+.actions .cancelButton {
+  background-color: transparent;
+  color: var(--color-text-primary);
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--color-white) 18%, transparent);
+}
+
+.actions .cancelButton:hover:not(:disabled) {
+  background-color: var(--color-overlay-hover-on-dark);
+  color: var(--color-text-primary);
+  border-color: color-mix(in srgb, var(--color-white) 32%, transparent);
+}
+
+.actions .confirmButton {
+  background-color: var(--color-error-300);
+  color: var(--color-white);
+  border-color: transparent;
+}
+
+.actions .confirmButton:hover:not(:disabled) {
+  background-color: var(--color-error-400);
+}

@@ -1,0 +1,84 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.frame {
+  overflow-x: auto;
+  background-color: var(--color-primary-800);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-2xl);
+}
+
+.table {
+  width: 100%;
+  min-width: var(--container-lg);
+  border-collapse: collapse;
+}
+
+.headerCell,
+.cell,
+.emptyCell {
+  padding: var(--space-4) var(--space-5);
+  vertical-align: middle;
+}
+
+.headerCell {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-5);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-5--line-height);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.row {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.cell {
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.emptyCell {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  text-align: center;
+}
+
+.alignStart {
+  text-align: left;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+.alignCenter > * {
+  margin-inline: auto;
+}
+
+.alignEnd {
+  text-align: right;
+}
+
+.footer {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+}
+
+@media (width <= 40rem) {
+  .headerCell,
+  .cell,
+  .emptyCell {
+    padding: var(--space-3) var(--space-4);
+  }
+}

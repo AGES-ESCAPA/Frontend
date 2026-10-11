@@ -1,0 +1,25 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+.divider {
+  flex: 0 0 auto;
+  width: 1px;
+  align-self: stretch;
+  background-color: var(--color-neutral-700);
+}
+
+@media (width <= 639px) {
+  .bar {
+    flex-wrap: wrap;
+    row-gap: var(--space-3);
+  }
+
+  .divider {
+    display: none;
+  }
+}

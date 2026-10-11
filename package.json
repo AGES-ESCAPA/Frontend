@@ -68,8 +68,11 @@
     "vitest": "^2.0.5"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": [
+    "src/**/!(*.d).{ts,tsx}": [
       "eslint --max-warnings 0",
+      "prettier --check"
+    ],
+    "src/**/*.d.ts": [
       "prettier --check"
     ],
     "src/**/*.css": [

@@ -1,0 +1,48 @@
+.accordion {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.module {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-raised);
+}
+
+.moduleButton {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--space-12);
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.moduleButton:hover,
+.moduleButton:focus-visible {
+  background-color: var(--color-border-subtle);
+  outline: none;
+}
+
+.moduleButton strong {
+  flex: 1;
+  font-size: var(--text-body-3);
+}
+
+.moduleButton span {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+}
+
+.lessons {
+  list-style: none;
+}
+
+@media (width <= 640px) {
+  .moduleButton span {
+    display: none;
+  }
+}

@@ -1,0 +1,93 @@
+/* Mesmo cabeçalho e divisórias do CourseNavigationSidebar, para o menu não
+   "pular" quando os dados chegam. */
+.skeleton,
+.error {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: var(--font-family-base);
+}
+
+.title {
+  margin: 0;
+  padding: var(--space-4) var(--space-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border);
+}
+
+.bone {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+
+  /* Mesma cor das divisórias do menu: --color-surface-raised some sobre o fundo da página. */
+  background: var(--color-border);
+}
+
+.bone::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--color-overlay-hover-on-dark), transparent);
+  content: '';
+  transform: translateX(-100%);
+  animation: lesson-menu-loading 1.4s infinite;
+}
+
+.progressLabelBone {
+  width: 45%;
+  height: var(--space-3);
+}
+
+.progressBarBone {
+  width: 100%;
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.moduleTitleBone {
+  width: 70%;
+  height: var(--space-4);
+}
+
+.moduleMetaBone {
+  width: 30%;
+  height: var(--space-3);
+}
+
+.errorBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-3);
+}
+
+.errorMessage {
+  margin: 0;
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-text-secondary);
+}
+
+@keyframes lesson-menu-loading {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bone::after {
+    animation: none;
+  }
+}
