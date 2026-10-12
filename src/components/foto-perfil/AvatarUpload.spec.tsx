@@ -39,7 +39,7 @@ describe('AvatarUpload', () => {
     const file = new File(['dummy content'], 'avatar.png', { type: 'image/png' });
     const input = screen.getByTestId('avatar-file-input');
 
-    await userEvent.upload(input, file);
+    await userEvent.upload(input, file, { applyAccept: false });
 
     expect(global.URL.createObjectURL).toHaveBeenCalledWith(file);
     expect(onFileSelected).toHaveBeenCalledWith(file);
@@ -60,7 +60,7 @@ describe('AvatarUpload', () => {
     const file = new File(['text content'], 'doc.pdf', { type: 'application/pdf' });
     const input = screen.getByTestId('avatar-file-input');
 
-    await userEvent.upload(input, file);
+    await userEvent.upload(input, file, { applyAccept: false });
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(onFileSelected).not.toHaveBeenCalled();

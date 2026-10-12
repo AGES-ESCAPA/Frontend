@@ -25,6 +25,12 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const [previewUrl, setPreviewUrl] = React.useState<string>(imageUrl);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const currentImageUrl = previewUrl || imageUrl;
+  const nameParts = name.trim().split(/\s+/).filter(Boolean);
+  const firstInitial = nameParts[0]?.[0]?.toUpperCase() ?? '';
+  const lastInitial =
+    nameParts.length > 1 ? (nameParts[nameParts.length - 1]?.[0]?.toUpperCase() ?? '') : '';
+  const initials = `${firstInitial}${lastInitial}`;
 
   // Libera a URL temporária para evitar acúmulo de objetos no navegador.
   React.useEffect(() => {
@@ -73,10 +79,12 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   return React.createElement(
     'div',
     { className: 'flex flex-col items-center gap-3' },
-    React.createElement('img', {
-      src: previewUrl || imageUrl || undefined,
-      alt: name,
-    }),
+    currentImageUrl
+      ? React.createElement('img', {
+          src: currentImageUrl,
+          alt: name,
+        })
+      : React.createElement('span', null, initials),
     React.createElement('input', {
       type: 'file',
       ref: fileInputRef,
