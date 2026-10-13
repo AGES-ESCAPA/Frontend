@@ -3,4 +3,4 @@
 # Roda o lint-staged antes de cada commit.
 # O lint-staged só verifica os arquivos em staging (git add),
 # evitando rodar lint/format em todo o projeto.
-npx lint-staged
+npx lint-staged --concurrent false
