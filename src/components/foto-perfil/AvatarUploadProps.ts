@@ -5,17 +5,12 @@ export interface AvatarUploadProps {
   imageUrl: string;
   name: string;
   onFileSelected: (file: File) => void;
-  maxSizeBytes: number;
+  maxSizeBytes?: number;
 }
 
-// Tipos aceitos pelo campo de seleção de imagem.
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
 
-/**
- * Permite selecionar uma foto de perfil, exibir sua pré-visualização
- * e informar ao componente pai quando o arquivo for válido.
- */
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   imageUrl,
   name,
@@ -24,6 +19,8 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
 }) => {
   const [previewUrl, setPreviewUrl] = React.useState<string>(imageUrl);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
+  // Adicione estas declarações
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const currentImageUrl = previewUrl || imageUrl;
   const nameParts = name.trim().split(/\s+/).filter(Boolean);
@@ -32,7 +29,6 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     nameParts.length > 1 ? (nameParts[nameParts.length - 1]?.[0]?.toUpperCase() ?? '') : '';
   const initials = `${firstInitial}${lastInitial}`;
 
-  // Libera a URL temporária para evitar acúmulo de objetos no navegador.
   React.useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -41,14 +37,13 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     };
   }, [previewUrl]);
 
-  // Aciona o input nativo por meio do botão visível para o usuário.
   const handleButtonClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Valida o arquivo, atualiza a pré-visualização e notifica o componente pai.
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+
     if (!file) return;
 
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
@@ -60,6 +55,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
     if (file.size > maxSizeBytes) {
       const maxSizeMB = (maxSizeBytes / (1024 * 1024)).toFixed(2);
+
       setErrorMessage(
         `Arquivo muito grande. Por favor, selecione uma imagem menor que ${maxSizeMB}MB.`,
       );
@@ -67,11 +63,13 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     }
 
     setErrorMessage(null);
+
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
 
     const newPreviewUrl = URL.createObjectURL(file);
+
     setPreviewUrl(newPreviewUrl);
     onFileSelected(file);
   };
@@ -93,6 +91,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       className: 'hidden',
       'data-testid': 'avatar-file-input',
     }),
+
     React.createElement(
       'button',
       {
@@ -102,10 +101,14 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       },
       'Alterar foto',
     ),
+
     errorMessage &&
       React.createElement(
         'span',
-        { role: 'alert', className: 'text-xs text-red-500 mt-1' },
+        {
+          role: 'alert',
+          className: 'text-xs text-red-500 mt-1',
+        },
         errorMessage,
       ),
   );
