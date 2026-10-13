@@ -1,14 +1,15 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './AccountTypeCard.module.css';
 
 export interface AccountTypeCardProps {
   title: string;
   description: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   to: string;
 }
 
-export function AccountTypeCard({ title, description, icon, to }: AccountTypeCardProps) {
+export const AccountTypeCard = ({ title, description, icon, to }: AccountTypeCardProps) => {
   return (
     <Link to={to} className={styles.card} aria-label={title}>
       <div className={styles.iconWrapper} aria-hidden="true">
@@ -20,4 +21,4 @@ export function AccountTypeCard({ title, description, icon, to }: AccountTypeCar
       <p className={styles.description}>{description}</p>
     </Link>
   );
-}
+};
