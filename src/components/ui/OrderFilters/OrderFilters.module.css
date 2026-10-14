@@ -22,7 +22,7 @@
   min-height: var(--space-12);
   padding-inline: var(--space-3);
   background-color: var(--color-primary-700);
-  border: 1px solid transparent;
+  border: var(--border-width-thin) solid transparent;
   border-radius: var(--radius-lg);
   box-sizing: border-box;
   transition: border-color var(--transition-fast);
@@ -97,7 +97,7 @@
 }
 
 .periodTrigger:focus-visible {
-  outline: 2px solid var(--color-border-focus);
+  outline: var(--border-width-thin) solid var(--color-border-focus);
   outline-offset: var(--space-1);
   border-radius: var(--radius-sm);
 }
@@ -111,8 +111,8 @@
 
 .chevron {
   flex-shrink: 0;
-  width: var(--space-4);
-  height: var(--space-4);
+  width: var(--space-6);
+  height: var(--space-6);
   color: var(--color-text-muted);
 }
 
@@ -128,7 +128,7 @@
   padding: var(--space-3);
   box-sizing: border-box;
   background-color: var(--color-primary-700);
-  border: 1px solid var(--color-border-subtle);
+  border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
 }
@@ -152,7 +152,7 @@
 
 .date {
   width: 100%;
-  min-height: var(--space-10);
+  min-height: var(--space-12);
   padding: var(--space-2) var(--space-3);
   box-sizing: border-box;
   font-family: var(--font-family-base);
@@ -160,13 +160,13 @@
   line-height: var(--text-body-3--line-height);
   color: var(--color-text-primary);
   background-color: var(--color-primary-800);
-  border: 1px solid var(--color-border-subtle);
+  border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-md);
   color-scheme: dark;
 }
 
 .date:focus-visible {
-  outline: 2px solid var(--color-border-focus);
+  outline: var(--border-width-thin) solid var(--color-border-focus);
   outline-offset: var(--space-1);
 }
 
@@ -174,7 +174,10 @@
   border-color: var(--color-error-300);
 }
 
-.root .clearButton {
+/* O botão mantém a mesma aparência em repouso, hover e foco. */
+.root .clearButton,
+.root .clearButton:focus-visible,
+.root .clearButton:hover:not(:disabled) {
   min-height: var(--space-12);
   padding: 0 var(--space-3);
   color: var(--color-text-primary);
@@ -184,16 +187,6 @@
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-medium);
   line-height: var(--text-body-3--line-height);
-}
-
-.root .clearButton:focus-visible {
-  color: var(--color-text-primary);
-  background: var(--color-primary-700);
-}
-
-.root .clearButton:hover:not(:disabled) {
-  color: var(--color-text-primary);
-  background: var(--color-primary-700);
 }
 
 .error {
@@ -210,23 +203,15 @@
   .root .clearButton {
     min-height: var(--space-10);
   }
-
-  .fields {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .periodField {
-    grid-column: span 1;
-  }
 }
 
 @media (width >= 1024px) {
   .fields {
     grid-template-columns:
-      minmax(8rem, 0.8fr)
-      minmax(9rem, 0.9fr)
-      minmax(12rem, 1.5fr)
-      minmax(10rem, 1fr)
+      minmax(0, 0.8fr)
+      minmax(0, 0.9fr)
+      minmax(0, 1.5fr)
+      minmax(0, 1fr)
       auto;
   }
 }

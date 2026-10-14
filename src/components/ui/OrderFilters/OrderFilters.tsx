@@ -3,9 +3,15 @@ import { ChevronDown } from 'lucide-react';
 import { SelectInput } from '../SelectInput';
 import { Button } from '../Button';
 import styles from './OrderFilters.module.css';
-import { EMPTY_FILTERS } from './OrderFilters.constants';
-import type { OrderFiltersValue, OrderType, OrderStatus } from './OrderFilters.constants';
+import {
+  ALL_LABEL,
+  EMPTY_FILTERS,
+  ORDER_STATUS_FILTER_OPTIONS,
+  ORDER_TYPE_FILTER_OPTIONS,
+} from './OrderFilters.constants';
+import type { OrderFiltersValue } from './OrderFilters.constants';
 
+/** Curso disponível para filtragem, recebendo Id e nome diferente  do course usado em CoursePrerequisiteOption, ele descreve o formato de curso que o filtro recebe*/
 export interface Course {
   id: string;
   name: string;
@@ -15,20 +21,12 @@ export interface OrderFiltersProps {
   value: OrderFiltersValue;
   onChange: (value: OrderFiltersValue) => void;
   courses: Course[];
+  className?: string;
+  showClearButton?: boolean;
 }
 
-const TYPE_OPTIONS = [
-  { value: 'Todos', label: 'Todos' },
-  { value: 'individual', label: 'Individual' },
-  { value: 'corporate', label: 'Corporativo' },
-];
-
-const STATUS_OPTIONS = [
-  { value: 'Todos', label: 'Todos' },
-  { value: 'Aprovado', label: 'Aprovado' },
-  { value: 'Cancelado', label: 'Cancelado' },
-  { value: 'Reembolsado', label: 'Reembolsado' },
-];
+/*seção do calendario*/
+const PERIOD_ERROR = 'A data inicial não pode ser posterior à data final.';
 
 const formatShortDate = (isoDate: string): string => {
   const [year, month, day] = isoDate.split('-');
@@ -39,16 +37,20 @@ const getPeriodSummary = (startDate: string, endDate: string): string => {
   if (startDate && endDate) return `${formatShortDate(startDate)} – ${formatShortDate(endDate)}`;
   if (startDate) return `A partir de ${formatShortDate(startDate)}`;
   if (endDate) return `Até ${formatShortDate(endDate)}`;
-  return 'Todos';
+  return ALL_LABEL;
 };
 
-const PERIOD_ERROR = 'A data inicial não pode ser posterior à data final.';
-
-export function OrderFilters({ value, onChange, courses }: OrderFiltersProps) {
+export const OrderFilters = ({
+  value,
+  onChange,
+  courses,
+  className = '',
+  showClearButton = true,
+}: OrderFiltersProps) => {
   const [draft, setDraft] = useState({ startDate: value.startDate, endDate: value.endDate });
   const [error, setError] = useState<string | null>(null);
-  const errorId = useId();
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
+  const errorId = useId();
   const periodRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,8 +79,8 @@ export function OrderFilters({ value, onChange, courses }: OrderFiltersProps) {
   }, [isPeriodOpen]);
 
   const courseOptions = [
-    { value: 'Todos', label: 'Todos' },
-    ...courses.map((c) => ({ value: c.id, label: c.name })),
+    { value: 'all', label: ALL_LABEL },
+    ...courses.map((course) => ({ value: course.id, label: course.name })),
   ];
 
   const handleDate = (field: 'startDate' | 'endDate', date: string) => {
@@ -100,16 +102,23 @@ export function OrderFilters({ value, onChange, courses }: OrderFiltersProps) {
     onChange(EMPTY_FILTERS);
   };
 
+  const periodSummary = getPeriodSummary(value.startDate, value.endDate);
+
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${className}`.trim()}>
       <div className={styles.fields}>
         <label className={styles.field}>
           <span className={styles.label}>Tipo</span>
           <SelectInput
             className={styles.selectControl}
             value={value.type}
-            options={TYPE_OPTIONS}
-            onChange={(e) => onChange({ ...value, type: e.target.value as OrderType })}
+            options={ORDER_TYPE_FILTER_OPTIONS}
+            onChange={(e) => {
+              const selected = ORDER_TYPE_FILTER_OPTIONS.find(
+                (option) => option.value === e.target.value,
+              );
+              if (selected) onChange({ ...value, type: selected.value });
+            }}
           />
         </label>
 
@@ -118,8 +127,13 @@ export function OrderFilters({ value, onChange, courses }: OrderFiltersProps) {
           <SelectInput
             className={styles.selectControl}
             value={value.status}
-            options={STATUS_OPTIONS}
-            onChange={(e) => onChange({ ...value, status: e.target.value as OrderStatus })}
+            options={ORDER_STATUS_FILTER_OPTIONS}
+            onChange={(e) => {
+              const selected = ORDER_STATUS_FILTER_OPTIONS.find(
+                (option) => option.value === e.target.value,
+              );
+              if (selected) onChange({ ...value, status: selected.value });
+            }}
           />
         </label>
 
@@ -133,11 +147,7 @@ export function OrderFilters({ value, onChange, courses }: OrderFiltersProps) {
           />
         </label>
 
-        <div
-          ref={periodRef}
-          className={`${styles.field} ${styles.periodField}`}
-          data-invalid={!!error}
-        >
+        <div ref={periodRef} className={styles.field} data-invalid={!!error}>
           <span className={styles.label}>Período</span>
           <button
             type="button"
@@ -145,17 +155,13 @@ export function OrderFilters({ value, onChange, courses }: OrderFiltersProps) {
             aria-label="Período"
             aria-haspopup="true"
             aria-expanded={isPeriodOpen}
-            title={getPeriodSummary(draft.startDate, draft.endDate)}
+            title={periodSummary}
             onClick={() => setIsPeriodOpen((open) => !open)}
           >
-            <span className={styles.periodValue}>
-              {getPeriodSummary(value.startDate, value.endDate)}
-            </span>
-            <ChevronDown className={styles.chevron} size={16} aria-hidden="true" />
+            <span className={styles.periodValue}>{periodSummary}</span>
+            <ChevronDown className={styles.chevron} size={24} aria-hidden="true" />
           </button>
 
-          {/* Os campos ficam sempre no DOM (apenas ocultos): o rascunho e a validação
-              independem de o painel estar aberto. */}
           <div
             className={styles.periodPanel}
             role="group"
@@ -187,13 +193,15 @@ export function OrderFilters({ value, onChange, courses }: OrderFiltersProps) {
           </div>
         </div>
 
-        <Button
-          type="button"
-          label="Limpar filtros"
-          variant="secondary"
-          className={styles.clearButton}
-          onClick={handleClear}
-        />
+        {showClearButton ? (
+          <Button
+            type="button"
+            label="Limpar filtros"
+            variant="secondary"
+            className={styles.clearButton}
+            onClick={handleClear}
+          />
+        ) : null}
       </div>
 
       {error && (
@@ -203,4 +211,4 @@ export function OrderFilters({ value, onChange, courses }: OrderFiltersProps) {
       )}
     </div>
   );
-}
+};
