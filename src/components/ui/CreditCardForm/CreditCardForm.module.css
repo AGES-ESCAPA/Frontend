@@ -29,11 +29,15 @@
   right: var(--space-5);
 }
 
+/* Fundo branco: os logos são transparentes e alguns somem sobre o cartão escuro. */
 .brand {
   width: var(--space-12);
   height: var(--space-8);
+  padding: var(--space-1);
   object-fit: contain;
-  object-position: right center;
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
 }
 
 .brandFallback {
