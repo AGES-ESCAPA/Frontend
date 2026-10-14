@@ -78,7 +78,8 @@ describe('AdminCourses', () => {
     expect(screen.getByRole('article', { name: 'Total de Cursos' })).toHaveTextContent('3');
     expect(screen.getByRole('article', { name: 'Cursos Publicados' })).toHaveTextContent('2');
     expect(screen.getByText('1 em rascunho')).toBeInTheDocument();
-    expect(screen.getByRole('article', { name: 'Média de Preço' })).toHaveTextContent('R$');
+    // (249,90 + 329,90 + 189,90) / 3 = 256,57, exibido sem centavos.
+    expect(screen.getByRole('article', { name: 'Média de Preço' })).toHaveTextContent(/R\$\s*257/);
   });
 
   it('should list the catalog courses in the table', () => {

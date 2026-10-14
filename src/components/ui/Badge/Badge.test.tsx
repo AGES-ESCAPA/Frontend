@@ -27,9 +27,15 @@ describe('Badge', () => {
     expect(screen.getByText('Iniciante').className).toMatch(/variant-level/);
   });
 
-  it('should not wrap text (white-space nowrap applied via module class)', () => {
-    render(<Badge label="Inteligência Artificial" category="ia" />);
-    expect(screen.getByText('Inteligência Artificial').className).toMatch(/badge/);
+  // O jsdom não aplica o CSS dos módulos, então o `white-space: nowrap` não é testável aqui.
+  it('should resolve accented and spaced category names to the same variant', () => {
+    render(<Badge category="Inteligência Artificial" />);
+    expect(screen.getByText('Inteligência Artificial').className).toMatch(/variant-primary/);
+  });
+
+  it('should fall back to the category text as label when it is not mapped', () => {
+    render(<Badge category="Gastronomia" />);
+    expect(screen.getByText('Gastronomia').className).toMatch(/variant-neutral/);
   });
 
   it('should use the primary variant for Inteligência Artificial', () => {

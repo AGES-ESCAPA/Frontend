@@ -100,14 +100,22 @@ describe('PasswordInput', () => {
     expect(ref.current?.placeholder).toBe('Senha com ref');
   });
 
+  it('should show the lock icon by default', () => {
+    const { container } = render(<PasswordInput placeholder="Senha" />);
+
+    expect(container.querySelector('.lucide-lock')).toBeInTheDocument();
+  });
+
   it('should allow overriding the default lock icon or passing null', () => {
-    const { rerender } = render(
+    const { container, rerender } = render(
       <PasswordInput placeholder="Senha" icon={<span data-testid="custom-icon">Key</span>} />,
     );
     expect(screen.getByTestId('custom-icon')).toBeInTheDocument();
+    expect(container.querySelector('.lucide-lock')).not.toBeInTheDocument();
 
     rerender(<PasswordInput placeholder="Senha" icon={null} />);
     expect(screen.queryByTestId('custom-icon')).not.toBeInTheDocument();
+    expect(container.querySelector('.lucide-lock')).not.toBeInTheDocument();
   });
 
   it('should prevent default on mouse down of toggle button to prevent focus loss', () => {

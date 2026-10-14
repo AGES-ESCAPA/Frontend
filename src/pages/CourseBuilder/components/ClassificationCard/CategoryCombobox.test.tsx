@@ -58,10 +58,12 @@ describe('CategoryCombobox', () => {
       screen.getByRole('searchbox', { name: /buscar categoria/i }),
       'HOSPITALIDADE',
     );
+    // Com a lista ainda aberta: o nome já existe, então não há opção de criar outro.
+    expect(screen.queryByRole('option', { name: /criar categoria/i })).not.toBeInTheDocument();
+
     await userEvent.click(screen.getByRole('option', { name: 'Hospitalidade' }));
 
     expect(onChange).toHaveBeenCalledWith('Hospitalidade');
-    expect(screen.queryByRole('option', { name: /criar categoria/i })).not.toBeInTheDocument();
     expect(screen.getByRole('combobox')).toHaveTextContent('Hospitalidade');
   });
 

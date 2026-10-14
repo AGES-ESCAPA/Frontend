@@ -45,9 +45,12 @@ describe('CourseCard', () => {
   });
 
   it('não renderiza a seção de rating quando rating não é fornecido', () => {
-    render(<CourseCard {...defaultProps} />);
+    // reviewsCount é passado: se a seção aparecesse sem rating, "(247)" estaria na tela.
+    render(<CourseCard {...defaultProps} reviewsCount={247} />);
 
     expect(screen.queryByText('(247)')).not.toBeInTheDocument();
+    // Sem rating sobra só o separador entre duração e aulas.
+    expect(screen.getAllByText('•')).toHaveLength(1);
   });
 
   it('chama onClick com o id do curso ao clicar no card', () => {
@@ -125,6 +128,6 @@ describe('CourseCard', () => {
     fireEvent.error(image);
 
     expect(screen.queryByRole('img', { hidden: true })).not.toBeInTheDocument();
-    expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+    expect(container.querySelector(`.${styles.imagePlaceholder}`)).toBeInTheDocument();
   });
 });
