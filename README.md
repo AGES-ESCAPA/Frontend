@@ -14,6 +14,7 @@ A plataforma é acessada a partir de um link no website institucional da ESCAPA 
 - [Pré-requisitos](#-pré-requisitos)
 - [Instalação e Setup](#-instalação-e-setup)
 - [Comandos Disponíveis (Scripts npm)](#-comandos-disponíveis-scripts-npm)
+- [Testes Unitários: como criar, rodar e ver a cobertura](#-testes-unitários-como-criar-rodar-e-ver-a-cobertura)
 - [Fluxo de Validação de Tarefas (Evite falhas na CI)](#-fluxo-de-validação-de-tarefas-evite-falhas-na-ci)
 - [Padrão de Commits](#-padrão-de-commits)
 - [Estratégia de Branches & Pull Requests](#-estratégia-de-branches--pull-requests)
@@ -132,7 +133,7 @@ src/
 
 ## ⚙️ Pré-requisitos
 
-- **Node.js** na versão **20 LTS** ou superior ([Download Node.js](https://nodejs.org/))
+- **Node.js** na versão **20 LTS** ou superior, de preferência a **20**, que é a da CI e do Docker ([Download Node.js](https://nodejs.org/))
 - **npm** na versão **10** ou superior
 - **Git** ([Download Git](https://git-scm.com/))
 - **Docker** _(opcional, para testar a imagem de produção)_
@@ -176,6 +177,7 @@ src/
 | `npm run test`          | Executa todos os testes unitários uma vez com o Vitest.                | Antes de commitar ou abrir Pull Request.               |
 | `npm run test:watch`    | Executa os testes em modo interativo (reexecuta ao salvar).            | Enquanto desenvolve ou cria testes.                    |
 | `npm run test:coverage` | Gera relatório de cobertura de código em `coverage/`.                  | Para verificar a cobertura de testes do código criado. |
+| `npm run test:ui`       | Abre a interface web do Vitest com os testes e seus resultados.        | Para navegar pelos testes e depurar falhas.            |
 | `npm run lint`          | Valida regras de TypeScript e React com ESLint.                        | Para identificar erros de tipos e boas práticas.       |
 | `npm run lint:fix`      | Corrige automaticamente erros identificados pelo ESLint.               | Quando houver problemas simples de formatação/imports. |
 | `npm run stylelint`     | Valida se o CSS segue o Design System e **bloqueia cores hex brutas**. | Antes de commitar alterações em arquivos `.css`.       |
@@ -184,6 +186,165 @@ src/
 | `npm run format`        | Formata todo o código do projeto com o Prettier.                       | Para padronizar arquivos antes do commit.              |
 | `npm run build`         | Compila o TypeScript (`tsc -b`) e gera a build de produção em `dist/`. | Para checar se o código compila sem erros para deploy. |
 | `npm run preview`       | Sobe um servidor local com os arquivos compilados de `dist/`.          | Para inspecionar o comportamento real da build final.  |
+
+---
+
+## 🧪 Testes Unitários: como criar, rodar e ver a cobertura
+
+Os testes usam **[Vitest](https://vitest.dev/)** (executor) com **[React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)** (renderizar e consultar a tela como o usuário vê) e **user-event** (simular cliques e digitação). `describe`, `it`, `expect` e `vi` são globais, sem precisar importar. O setup global fica em `src/test/setup.ts`.
+
+### 1. Onde criar o teste
+
+O teste fica **ao lado do arquivo testado**, com o mesmo nome e o sufixo `.test`:
+
+```
+src/components/ui/Badge/
+├── Badge.tsx
+├── Badge.module.css
+└── Badge.test.tsx      ← componente: .test.tsx
+src/utils/
+├── formatters.ts
+└── formatters.test.ts  ← função pura, hook ou serviço: .test.ts
+```
+
+### 2. Como escrever
+
+Todo teste segue três passos: **preparar** (renderizar e mockar), **agir** (clicar, digitar) e **verificar** (`expect`). Teste o que o usuário vê e faz, não detalhes internos.
+
+#### Componente
+
+```tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { CourseCompletionMessage } from './CourseCompletionMessage';
+
+describe('CourseCompletionMessage', () => {
+  it('calls onViewCertificate when that button is clicked', async () => {
+    // Preparar
+    const onViewCertificate = vi.fn();
+    render(
+      <CourseCompletionMessage
+        courseTitle="Curso"
+        onViewOtherCourses={vi.fn()}
+        onViewCertificate={onViewCertificate}
+      />,
+    );
+
+    // Agir
+    await userEvent.click(screen.getByRole('button', { name: 'Ver Certificado' }));
+
+    // Verificar
+    expect(onViewCertificate).toHaveBeenCalledOnce();
+  });
+});
+```
+
+- Busque elementos como o usuário encontraria: `getByRole('button', { name: '...' })`, `getByLabelText`, `getByText`. Use `data-testid` só quando não houver alternativa.
+- `getBy*` falha se o elemento não existir; `queryBy*` devolve `null` (use para conferir ausência); `findBy*` espera o elemento aparecer (use depois de algo assíncrono).
+- Componente com `Link` ou `useNavigate` precisa estar dentro de `<MemoryRouter>`.
+
+#### Página ou hook que chama a API
+
+Mocke o **serviço**, nunca o backend de verdade:
+
+```tsx
+import { courseService } from '@services/courseService';
+
+vi.mock('@services/courseService', () => ({
+  courseService: { getCourses: vi.fn() },
+}));
+
+const getCoursesMock = vi.mocked(courseService.getCourses);
+
+beforeEach(() => {
+  getCoursesMock.mockReset();
+});
+
+it('shows a retry button when the API fails', async () => {
+  getCoursesMock.mockRejectedValue(new Error('network'));
+  render(/* página dentro de <MemoryRouter> */);
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(/não foi possível carregar/i);
+});
+```
+
+#### Serviço
+
+Mocke o `fetch` e confira a URL, o método e o retorno (ver `src/services/courseModules.test.ts`):
+
+```ts
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+it('should GET the course modules', async () => {
+  const fetchMock = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ success: true, data: [] }),
+  });
+  vi.stubGlobal('fetch', fetchMock);
+
+  await courseModulesApi.listModules('curso-1');
+
+  expect(fetchMock.mock.calls[0][0]).toContain('/admin/courses/curso-1/modules');
+});
+```
+
+### 3. Checklist para o teste validar de verdade
+
+Um teste que passa mesmo com o código quebrado (**falso positivo**) é pior que nenhum, porque dá falsa segurança. Antes de abrir o PR:
+
+- [ ] **Quebre o código de propósito e veja o teste falhar.** Comente a linha testada ou inverta o `if`: se o teste continuar verde, ele não testa nada.
+- [ ] **O nome do teste descreve exatamente o que ele confere.** "navega para a rota" precisa navegar, não só ler o `href`.
+- [ ] **Teste de ausência tem um cenário em que o elemento apareceria se houvesse bug.** Para "não mostra o rating", passe `reviewsCount` e confira que ele não aparece.
+- [ ] **Confira o valor exato quando ele é conhecido.** Prefira `toBe('Informe o título da aula.')` a `toBeDefined()` e `toHaveTextContent(/R\$\s*257/)` a `toHaveTextContent('R$')`.
+- [ ] **Teste também o erro, o vazio e o carregando**, não só o caminho feliz.
+- [ ] **Teclado se testa com `userEvent.tab()` / `userEvent.keyboard()`**, não com `element.focus()`.
+- [ ] **Não use `setTimeout` real para esperar**: use `findBy*` / `waitFor` ou `vi.useFakeTimers()`.
+- [ ] **Restaure o que mudou no ambiente** (`vi.unstubAllGlobals()`, `vi.restoreAllMocks()`).
+
+### 4. Como rodar
+
+```bash
+npm run test                                     # todos os testes, uma vez (igual à CI)
+npm run test:watch                               # reexecuta ao salvar (use enquanto escreve)
+npx vitest run src/components/ui/Badge           # só uma pasta ou arquivo
+npx vitest run -t "should resolve accented"      # só os testes com esse nome
+npm run test:ui                                  # interface web com os resultados
+```
+
+No modo `test:watch`, aperte `p` para filtrar por arquivo, `t` para filtrar por nome e `a` para rodar tudo.
+
+### 5. Como ver a cobertura
+
+```bash
+npm run test:coverage       # roda os testes e imprime a tabela de cobertura
+open coverage/index.html    # relatório linha a linha no navegador (Linux: xdg-open)
+```
+
+**Tabela no terminal:**
+
+```
+File      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+Home.tsx  |  92.85  |   92.3   |   100   |  92.85  | 85-88,146-152
+```
+
+| Coluna                | O que significa                                                                                                      |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **% Stmts**           | Instruções executadas pelos testes.                                                                                  |
+| **% Branch**          | Caminhos de decisão testados: os dois lados de cada `if/else`, ternário, `&&`, `??`. **É a coluna mais importante.** |
+| **% Funcs**           | Funções chamadas ao menos uma vez (inclui handlers como `onClick`).                                                  |
+| **% Lines**           | Linhas executadas ao menos uma vez.                                                                                  |
+| **Uncovered Line #s** | Linhas que nenhum teste executou (`85-88` = intervalo).                                                              |
+
+Uma linha pode estar coberta com o branch pela metade: `user?.name ?? 'Visitante'` roda sempre, mas o caso `'Visitante'` só é testado se algum teste passar `user` vazio.
+
+**Relatório HTML** (`coverage/index.html`): navegue por pasta e arquivo. Linha **vermelha** nunca rodou; marcação **amarela** (`E` / `I`) é um `else` ou `if` que nunca foi tomado; o número `Nx` na margem é quantas vezes a linha rodou.
+
+**O que entra na cobertura:** só o código em `src/`. Ficam de fora os próprios testes, `main.tsx`, `src/types/` e os dados mockados estáticos (lista `exclude` em `vitest.config.ts`). Se você criar um arquivo **só de dados**, sem lógica, adicione-o nessa lista.
+
+**Na CI:** o job de teste roda com cobertura. No GitHub Actions, a tabela aparece no resumo da execução (aba **Summary**) e o relatório completo fica no artifact **coverage-report**. No GitLab, a porcentagem aparece no MR e o diff mostra quais linhas alteradas estão cobertas.
 
 ---
 

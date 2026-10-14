@@ -172,6 +172,7 @@ describe('Home', () => {
   });
 
   it('should keep catalog filters independent from each other', async () => {
+    const user = userEvent.setup();
     getCoursesMock.mockResolvedValue(buildPage([]));
     renderHome();
 
@@ -180,13 +181,26 @@ describe('Home', () => {
     const categoryTabs = screen.getByRole('tablist', { name: 'Categoria' });
     const levelTabs = screen.getByRole('tablist', { name: 'Nível' });
 
-    expect(within(categoryTabs).getByRole('tab', { name: 'Todos' })).toHaveAttribute(
-      'data-state',
-      'active',
+    // Escolher a categoria não pode mexer no nível...
+    await user.click(
+      await within(categoryTabs).findByRole('tab', { name: 'Inteligência Artificial' }),
     );
+    expect(
+      within(categoryTabs).getByRole('tab', { name: 'Inteligência Artificial' }),
+    ).toHaveAttribute('data-state', 'active');
     expect(within(levelTabs).getByRole('tab', { name: 'Todos' })).toHaveAttribute(
       'data-state',
       'active',
     );
+
+    // ...e escolher o nível não pode desfazer a categoria.
+    await user.click(within(levelTabs).getByRole('tab', { name: 'Iniciante' }));
+    expect(within(levelTabs).getByRole('tab', { name: 'Iniciante' })).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+    expect(
+      within(categoryTabs).getByRole('tab', { name: 'Inteligência Artificial' }),
+    ).toHaveAttribute('data-state', 'active');
   });
 });

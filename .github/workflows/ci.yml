@@ -88,8 +88,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Publish coverage summary
+        if: always() && hashFiles('coverage/coverage-summary.json') != ''
+        run: |
+          node -e '
+            const { total } = require("./coverage/coverage-summary.json");
+            const rows = [
+              ["Statements", total.statements],
+              ["Branches", total.branches],
+              ["Functions", total.functions],
+              ["Lines", total.lines],
+            ].map(([name, m]) => `| ${name} | ${m.pct}% | ${m.covered}/${m.total} |`);
+            console.log(["## Cobertura de testes", "", "| Métrica | % | Cobertos/Total |", "|---|---|---|", ...rows].join("\n"));
+          ' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
 
   build:
     name: Production Build
