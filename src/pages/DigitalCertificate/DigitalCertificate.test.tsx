@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCertificateByCode } from '@services/certificateService';
 import type { CertificateData } from '@/types/certificate';
 import { DigitalCertificate } from './DigitalCertificate';
@@ -52,6 +52,22 @@ const renderPage = (verificationCode = 'ESC-21AGO25-7X9L2M3N') =>
 describe('DigitalCertificate', () => {
   beforeEach(() => {
     getCertificateByCodeMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    // O teste de compartilhar substitui o clipboard; remove para não vazar entre testes.
+    Reflect.deleteProperty(navigator, 'clipboard');
+  });
+
+  it('opens the certificate PDF in a new tab when downloading', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+    getCertificateByCodeMock.mockResolvedValue(buildCertificate(true));
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: /^baixar$/i }));
+
+    expect(openSpy).toHaveBeenCalledWith('/mock-download/ESC-21AGO25-7X9L2M3N', '_blank');
   });
 
   it('loads and renders the real certificate data from the API on success', async () => {

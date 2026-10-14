@@ -139,9 +139,10 @@ describe('formatLongDate', () => {
 });
 
 describe('formatCurrency', () => {
-  it('should format a value as BRL', () => {
-    expect(formatCurrency(1500)).toContain('1.500');
-    expect(formatCurrency(1500)).toContain('R$');
+  it('should format a value as BRL with two decimal places', () => {
+    // O Intl separa "R$" do valor com espaço não separável (\u00a0).
+    expect(formatCurrency(1500)).toBe('R$\u00a01.500,00');
+    expect(formatCurrency(249.9)).toBe('R$\u00a0249,90');
   });
 });
 

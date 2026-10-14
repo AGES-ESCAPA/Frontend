@@ -134,11 +134,14 @@ describe('Courses', () => {
     expect(coursesLink).toHaveAttribute('aria-current', 'page');
   });
 
-  it('should offer the Course Builder only to the admin profile', async () => {
+  it('should not offer the Course Builder to the student profile', async () => {
     renderCourses('/aluno/cursos');
     await waitForCatalog();
-    expect(screen.queryByRole('link', { name: 'Novo Curso' })).not.toBeInTheDocument();
 
+    expect(screen.queryByRole('link', { name: 'Novo Curso' })).not.toBeInTheDocument();
+  });
+
+  it('should offer the Course Builder to the admin profile', async () => {
     renderCourses('/admin/cursos');
     await waitForCatalog();
 

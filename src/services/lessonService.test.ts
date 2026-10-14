@@ -171,18 +171,13 @@ describe('lessonService', () => {
 
       vi.stubGlobal('fetch', fetchMock);
 
-      try {
-        await getStudentLesson(COURSE_ID, LESSON_ID);
+      const request = getStudentLesson(COURSE_ID, LESSON_ID);
 
-        throw new Error('Expected getStudentLesson to throw an error.');
-      } catch (error) {
-        expect(error).toBeInstanceOf(StudentLessonError);
-
-        expect(error).toMatchObject({
-          status: 403,
-          message: 'Acesso à aula indisponível.',
-        });
-      }
+      await expect(request).rejects.toBeInstanceOf(StudentLessonError);
+      await expect(request).rejects.toMatchObject({
+        status: 403,
+        message: 'Acesso à aula indisponível.',
+      });
     });
 
     it('should throw StudentLessonError when the lesson is not found', async () => {
@@ -199,18 +194,13 @@ describe('lessonService', () => {
 
       vi.stubGlobal('fetch', fetchMock);
 
-      try {
-        await getStudentLesson(COURSE_ID, LESSON_ID);
+      const request = getStudentLesson(COURSE_ID, LESSON_ID);
 
-        throw new Error('Expected getStudentLesson to throw an error.');
-      } catch (error) {
-        expect(error).toBeInstanceOf(StudentLessonError);
-
-        expect(error).toMatchObject({
-          status: 404,
-          message: 'Aula não encontrada.',
-        });
-      }
+      await expect(request).rejects.toBeInstanceOf(StudentLessonError);
+      await expect(request).rejects.toMatchObject({
+        status: 404,
+        message: 'Aula não encontrada.',
+      });
     });
 
     it('should propagate a network error', async () => {

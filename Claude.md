@@ -21,13 +21,15 @@
 src/
 ├── assets/           # Arquivos estáticos (imagens, fontes, SVGs)
 ├── components/
-│   ├── ui/           # Wrappers sobre primitivas Radix UI (Button, Dialog, etc.)
-│   └── layout/       # Componentes estruturais (Sidebar, Header, Footer)
-├── contexts/         # React Contexts globais (AuthContext, etc.)
-├── hooks/            # Custom hooks reutilizáveis (useAuth, useCourseProgress, etc.)
-├── pages/            # Uma pasta por rota principal (Home, Login, Dashboard, etc.)
+│   ├── ui/           # Componentes atômicos, muitos sobre Radix UI (Button, ConfirmDialog, etc.)
+│   ├── layout/       # Casca da aplicação (Sidebar, Navbar, Footer, AuthenticatedLayout)
+│   └── course/       # Componentes do domínio de cursos (CourseHeader, LessonVideoPlayer, etc.)
+├── contexts/         # React Contexts globais (vazio; AuthContext virá com o login)
+├── data/             # Dados mockados enquanto o endpoint real não existe
+├── hooks/            # Estado assíncrono reutilizável (usePublicCourses, useStudentLesson, etc.)
+├── pages/            # Uma pasta por rota principal (Home, Courses, CoursePlayer, etc.)
 ├── routes/           # Configuração central do React Router (AppRouter.tsx)
-├── services/         # Chamadas a APIs externas e backend (courseService, authService)
+├── services/         # Chamadas HTTP ao backend (api.ts, courseService, lessonService, etc.)
 ├── test/             # Setup global do Vitest (setup.ts)
 ├── types/            # Interfaces e tipos TypeScript compartilhados
 ├── utils/            # Funções puras e helpers reutilizáveis (formatCurrency, formatDuration)
@@ -129,10 +131,21 @@ O **Stylelint** bloqueia commits com valores hardcoded.
 
 - **Componentes**: Function components com named export (`export const MyComponent = () => ...`).
 - **TypeScript**: Proibido uso de `any`. Use tipagens explícitas ou `unknown` com narrowing.
-- **Imports**: Utilize sempre os aliases configurados (`@components/`, `@pages/`, `@services/`, `@hooks/`, `@utils/`, `@types/`, `@contexts/`).
+- **Imports**: Utilize sempre os aliases configurados (`@components/`, `@pages/`, `@services/`, `@hooks/`, `@utils/`, `@contexts/`); tipos via `@/types/...`. Componentes pelo barrel (`@components/ui`).
 - **Testes**: Todo componente e utilitário deve ter teste unitário correspondente (`.test.tsx` / `.test.ts`).
 
-### 3. Commits e Branches
+### 3. Convenções de Implementação (resumo)
+
+Detalhes e exemplos em `AGENTS.md`, seções "Convenções de Implementação" e "Testes".
+
+- Serviços usam `getApiBaseUrl()` e `adminHeaders()` / `studentHeaders()` de `api.ts`; nunca `import.meta.env` direto nem `X-User-Id` montado à mão (header provisório até o JWT da US-23).
+- Respostas no envelope `ApiResponse`, erros lidos com `readApiErrorMessage`. Alguns endpoints públicos não usam envelope de propósito: não mude o parse sem combinar com o backend.
+- Hooks de dados expõem `status` (`LoadStatus`), dados e `errorMessage`, e cancelam a requisição com `AbortController`.
+- Testes: mock do serviço em páginas/hooks, `vi.stubGlobal('fetch')` em serviços; consultas por papel acessível; `userEvent`; sem `setTimeout` real. Teste de ausência precisa de cenário em que o elemento existiria se houvesse bug, e o nome do teste descreve o que é verificado.
+- Cobertura: `npm run test:coverage` e `coverage/index.html`. Passo a passo de como criar, rodar e ler a cobertura no `README.md` ("Testes Unitários"). Arquivo só de dados mockados entra no `exclude` do `vitest.config.ts`.
+- Node 20 (igual à CI e ao Docker).
+
+### 4. Commits e Branches
 
 - **Commits**: `<tipo>(#<issue_id>): <descrição curta>` (ex: `feat(#12): add course catalog cards`)
 - **Branches**: Criadas a partir de **`develop`** no formato `<tipo>/#<issue_id>-<descricao>` (ex: `feat/#12-course-catalog`)
@@ -140,4 +153,4 @@ O **Stylelint** bloqueia commits com valores hardcoded.
 
 ---
 
-_Última atualização: Agosto/2026_
+_Última atualização: Outubro/2026_
