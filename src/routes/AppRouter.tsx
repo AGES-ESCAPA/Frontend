@@ -59,6 +59,12 @@ const DigitalCertificate = lazy(() =>
   })),
 );
 
+const RegisterAccountType = lazy(() =>
+  import('@pages/RegisterAccountType/RegisterAccountType').then((m) => ({
+    default: m.RegisterAccountType,
+  })),
+);
+
 const UnderConstruction = lazy(() =>
   import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
     default: m.UnderConstruction,
@@ -102,6 +108,7 @@ export const AppRouter = () => {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
+          <Route path="/cadastro" element={<RegisterAccountType />} />
           <Route path="/meus-cursos" element={<MyCourses />} />
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
           <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
