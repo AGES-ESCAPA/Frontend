@@ -11,8 +11,8 @@ import {
 } from './OrderFilters.constants';
 import type { OrderFiltersValue } from './OrderFilters.constants';
 
-/** Curso disponível para filtragem, recebendo Id e nome diferente  do course usado em CoursePrerequisiteOption, ele descreve o formato de curso que o filtro recebe*/
-export interface Course {
+/** Curso disponível para filtragem: apenas o id e o nome que o filtro precisa. */
+export interface OrderFilterCourse {
   id: string;
   name: string;
 }
@@ -20,7 +20,7 @@ export interface Course {
 export interface OrderFiltersProps {
   value: OrderFiltersValue;
   onChange: (value: OrderFiltersValue) => void;
-  courses: Course[];
+  courses: OrderFilterCourse[];
   className?: string;
   showClearButton?: boolean;
 }
@@ -78,10 +78,7 @@ export const OrderFilters = ({
     };
   }, [isPeriodOpen]);
 
-  const courseOptions = [
-    { value: 'all', label: ALL_LABEL },
-    ...courses.map((course) => ({ value: course.id, label: course.name })),
-  ];
+  const courseOptions = courses.map((course) => ({ value: course.id, label: course.name }));
 
   const handleDate = (field: 'startDate' | 'endDate', date: string) => {
     const next = { ...draft, [field]: date };
@@ -113,6 +110,7 @@ export const OrderFilters = ({
             className={styles.selectControl}
             value={value.type}
             options={ORDER_TYPE_FILTER_OPTIONS}
+            placeholder={ALL_LABEL}
             onChange={(e) => {
               const selected = ORDER_TYPE_FILTER_OPTIONS.find(
                 (option) => option.value === e.target.value,
@@ -128,6 +126,7 @@ export const OrderFilters = ({
             className={styles.selectControl}
             value={value.status}
             options={ORDER_STATUS_FILTER_OPTIONS}
+            placeholder={ALL_LABEL}
             onChange={(e) => {
               const selected = ORDER_STATUS_FILTER_OPTIONS.find(
                 (option) => option.value === e.target.value,
@@ -143,6 +142,7 @@ export const OrderFilters = ({
             className={styles.selectControl}
             value={value.courseId}
             options={courseOptions}
+            placeholder={ALL_LABEL}
             onChange={(e) => onChange({ ...value, courseId: e.target.value })}
           />
         </label>

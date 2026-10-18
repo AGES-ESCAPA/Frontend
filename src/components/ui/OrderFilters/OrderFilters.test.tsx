@@ -11,11 +11,11 @@ const courses = [
 ];
 
 const FILLED: OrderFiltersValue = {
-  type: 'individual',
+  type: 'INDIVIDUAL',
   courseId: 'Filter1',
   startDate: '2026-01-01',
   endDate: '2026-02-01',
-  status: 'Approved',
+  status: 'APPROVED',
 };
 
 function setup(initial: OrderFiltersValue = EMPTY_FILTERS) {
@@ -56,8 +56,8 @@ describe('OrderFilters', () => {
 
     it('reflete o value recebido (componente controlado)', () => {
       setup(FILLED);
-      expect(screen.getByLabelText('Tipo')).toHaveValue('individual');
-      expect(screen.getByLabelText('Status')).toHaveValue('Approved');
+      expect(screen.getByLabelText('Tipo')).toHaveValue('INDIVIDUAL');
+      expect(screen.getByLabelText('Status')).toHaveValue('APPROVED');
       expect(screen.getByLabelText('Curso')).toHaveValue('Filter1');
       expect(screen.getByLabelText('Data inicial')).toHaveValue('2026-01-01');
       expect(screen.getByLabelText('Data final')).toHaveValue('2026-02-01');
@@ -68,8 +68,8 @@ describe('OrderFilters', () => {
   describe('cada filtro altera o valor entregue em onChange', () => {
     it('altera o tipo', async () => {
       const { onChange } = setup();
-      await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'corporate');
-      expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, type: 'corporate' });
+      await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'CORPORATE');
+      expect(onChange).toHaveBeenCalledWith({ ...EMPTY_FILTERS, type: 'CORPORATE' });
     });
 
     /*Teste 2*/
@@ -82,7 +82,7 @@ describe('OrderFilters', () => {
 
     /*Teste 3*/
 
-    it.each(['Approved', 'Cancelled', 'Refunded'] as const)(
+    it.each(['APPROVED', 'CANCELLED', 'REFUNDED'] as const)(
       'altera o status para %s',
       async (status) => {
         const { onChange } = setup();
@@ -109,8 +109,8 @@ describe('OrderFilters', () => {
 
     it('preserva os demais filtros ao alterar um deles', async () => {
       const { onChange } = setup(FILLED);
-      await userEvent.selectOptions(screen.getByLabelText('Status'), 'Refunded');
-      expect(onChange).toHaveBeenCalledWith({ ...FILLED, status: 'Refunded' });
+      await userEvent.selectOptions(screen.getByLabelText('Status'), 'REFUNDED');
+      expect(onChange).toHaveBeenCalledWith({ ...FILLED, status: 'REFUNDED' });
     });
   });
 

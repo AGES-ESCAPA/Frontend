@@ -1,52 +1,47 @@
-export const ORDER_STATUSES = ['Approved', 'Cancelled', 'Refunded'] as const;
+export const ORDER_STATUSES = ['APPROVED', 'CANCELLED', 'REFUNDED'] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const ORDER_TYPES = ['individual', 'corporate'] as const;
+export const ORDER_TYPES = ['INDIVIDUAL', 'CORPORATE'] as const;
 export type OrderType = (typeof ORDER_TYPES)[number];
 
-/*Dicionario para que apareceça para o usuario em PT mais o back entenda em EN*/
+/*Dicionario para que apareça para o usuario em PT mas o back entenda em EN*/
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  Approved: 'Aprovado',
-  Cancelled: 'Cancelado',
-  Refunded: 'Reembolsado',
+  APPROVED: 'Aprovado',
+  CANCELLED: 'Cancelado',
+  REFUNDED: 'Reembolsado',
 };
 
 export const ORDER_TYPE_LABELS: Record<OrderType, string> = {
-  individual: 'Individual',
-  corporate: 'Corporativo',
+  INDIVIDUAL: 'Individual',
+  CORPORATE: 'Corporativo',
 };
 
-export type OrderTypeFilter = 'all' | OrderType;
-export type OrderStatusFilter = 'all' | OrderStatus;
-
+/** Texto exibido enquanto o filtro está sem valor. */
 export const ALL_LABEL = 'Todos';
 
-export const ORDER_TYPE_FILTER_OPTIONS = [
-  { value: 'all', label: ALL_LABEL },
-  ...ORDER_TYPES.map((type) => ({ value: type, label: ORDER_TYPE_LABELS[type] })),
-] as const;
+export const ORDER_TYPE_FILTER_OPTIONS = ORDER_TYPES.map((type) => ({
+  value: type,
+  label: ORDER_TYPE_LABELS[type],
+}));
 
-export const ORDER_STATUS_FILTER_OPTIONS = [
-  { value: 'all', label: ALL_LABEL },
-  ...ORDER_STATUSES.map((status) => ({
-    value: status,
-    label: ORDER_STATUS_LABELS[status],
-  })),
-] as const;
+export const ORDER_STATUS_FILTER_OPTIONS = ORDER_STATUSES.map((status) => ({
+  value: status,
+  label: ORDER_STATUS_LABELS[status],
+}));
 
-/*   courseId: 'all' é um valor em strings*/
+/** Cada filtro vazio ('') significa "sem filtro" e não é enviado ao backend. */
 export interface OrderFiltersValue {
-  type: OrderTypeFilter;
+  type: OrderType | '';
   courseId: string;
   startDate: string;
   endDate: string;
-  status: OrderStatusFilter;
+  status: OrderStatus | '';
 }
 
 export const EMPTY_FILTERS: OrderFiltersValue = {
-  type: 'all',
-  courseId: 'all',
+  type: '',
+  courseId: '',
   startDate: '',
   endDate: '',
-  status: 'all',
+  status: '',
 };

@@ -1,5 +1,5 @@
 export { OrderFilters } from './OrderFilters';
-export type { Course, OrderFiltersProps } from './OrderFilters';
+export type { OrderFilterCourse, OrderFiltersProps } from './OrderFilters';
 export {
   ALL_LABEL,
   EMPTY_FILTERS,
@@ -11,10 +11,4 @@ export {
   ORDER_TYPE_FILTER_OPTIONS,
 } from './OrderFilters.constants';
 
-export type {
-  OrderFiltersValue,
-  OrderStatus,
-  OrderStatusFilter,
-  OrderType,
-  OrderTypeFilter,
-} from './OrderFilters.constants';
+export type { OrderFiltersValue, OrderStatus, OrderType } from './OrderFilters.constants';

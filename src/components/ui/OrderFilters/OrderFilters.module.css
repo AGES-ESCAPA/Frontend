@@ -174,10 +174,7 @@
   border-color: var(--color-error-300);
 }
 
-/* O botão mantém a mesma aparência em repouso, hover e foco. */
-.root .clearButton,
-.root .clearButton:focus-visible,
-.root .clearButton:hover:not(:disabled) {
+.root .clearButton {
   min-height: var(--space-12);
   padding: 0 var(--space-3);
   color: var(--color-text-primary);
