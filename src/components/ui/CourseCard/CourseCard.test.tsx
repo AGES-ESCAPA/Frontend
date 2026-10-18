@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { CourseCard } from './CourseCard';
+import styles from './CourseCard.module.css';
 
 const defaultProps = {
   id: 'curso-ia-101',
@@ -44,9 +45,12 @@ describe('CourseCard', () => {
   });
 
   it('não renderiza a seção de rating quando rating não é fornecido', () => {
-    render(<CourseCard {...defaultProps} />);
+    // reviewsCount é passado: se a seção aparecesse sem rating, "(247)" estaria na tela.
+    render(<CourseCard {...defaultProps} reviewsCount={247} />);
 
     expect(screen.queryByText('(247)')).not.toBeInTheDocument();
+    // Sem rating sobra só o separador entre duração e aulas.
+    expect(screen.getAllByText('•')).toHaveLength(1);
   });
 
   it('chama onClick com o id do curso ao clicar no card', () => {
@@ -96,6 +100,27 @@ describe('CourseCard', () => {
     expect(image).toHaveAttribute('src', defaultProps.imageUrl);
   });
 
+  it('mostra capa em preto e branco, tag Adquirido e botão Acessar no lugar do preço', () => {
+    render(<CourseCard {...defaultProps} acquired />);
+
+    expect(screen.getByText('Adquirido')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /acessar o curso/i })).toBeInTheDocument();
+    expect(screen.queryByText(defaultProps.price)).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { hidden: true })).toHaveClass(styles.imageAcquired);
+  });
+
+  it('aciona o acesso do curso adquirido sem disparar o clique do card', () => {
+    const handleClick = vi.fn();
+    const handleAccess = vi.fn();
+    render(<CourseCard {...defaultProps} acquired onClick={handleClick} onAccess={handleAccess} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /acessar o curso/i }));
+
+    expect(handleAccess).toHaveBeenCalledTimes(1);
+    expect(handleAccess).toHaveBeenCalledWith(defaultProps.id);
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+
   it('exibe o placeholder quando a imagem falha ao carregar', () => {
     const { container } = render(<CourseCard {...defaultProps} />);
 
@@ -103,6 +128,6 @@ describe('CourseCard', () => {
     fireEvent.error(image);
 
     expect(screen.queryByRole('img', { hidden: true })).not.toBeInTheDocument();
-    expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+    expect(container.querySelector(`.${styles.imagePlaceholder}`)).toBeInTheDocument();
   });
 });

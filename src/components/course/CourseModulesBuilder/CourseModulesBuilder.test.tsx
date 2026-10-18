@@ -136,7 +136,7 @@ describe('CourseModulesBuilder', () => {
     const user = userEvent.setup();
     const { client } = renderBuilder();
 
-    await user.click(screen.getByRole('button', { name: /\+ adicionar módulo/i }));
+    await user.click(screen.getByRole('button', { name: /adicionar módulo/i }));
 
     await waitFor(() => {
       expect(client.createModule).toHaveBeenCalledWith(COURSE_ID, 'Novo módulo 3');

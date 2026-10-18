@@ -58,6 +58,18 @@ const DigitalCertificate = lazy(() =>
     default: m.DigitalCertificate,
   })),
 );
+
+const RegisterAccountType = lazy(() =>
+  import('@pages/RegisterAccountType/RegisterAccountType').then((m) => ({
+    default: m.RegisterAccountType,
+  })),
+);
+
+const UnderConstruction = lazy(() =>
+  import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
+    default: m.UnderConstruction,
+  })),
+);
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -96,6 +108,7 @@ export const AppRouter = () => {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
+          <Route path="/cadastro" element={<RegisterAccountType />} />
           <Route path="/meus-cursos" element={<MyCourses />} />
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
           <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
@@ -112,10 +125,8 @@ export const AppRouter = () => {
           <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
           <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
 
-          {/* TODO: Adicionar as demais páginas conforme o desenvolvimento avança:
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="*" element={<NotFound />} />
-          */}
+          {/* Qualquer rota ainda sem página cai aqui. */}
+          <Route path="*" element={<UnderConstruction />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

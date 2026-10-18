@@ -30,24 +30,30 @@ A aplicação é **containerizada** e será publicada em um cluster **k3s** gere
 src/
 ├── assets/           → Arquivos estáticos (imagens, SVGs, fontes)
 ├── components/
-│   ├── ui/           → Primitivas e componentes atômicos Radix UI (Button, Dialog, Toast...)
-│   └── layout/       → Componentes estruturais de casca (Sidebar, Header, Footer)
-├── contexts/         → React Contexts globais (ex: AuthContext)
-├── hooks/            → Custom hooks reutilizáveis (useAuth, useCourseProgress...)
+│   ├── ui/           → Componentes atômicos, muitos sobre Radix UI (Button, ConfirmDialog, Table...)
+│   ├── layout/       → Casca da aplicação (Sidebar, Navbar, Footer, AuthenticatedLayout)
+│   └── course/       → Componentes do domínio de cursos (CourseHeader, LessonVideoPlayer...)
+├── contexts/         → React Contexts globais (vazio por enquanto; AuthContext virá com o login)
+├── data/             → Dados mockados enquanto o endpoint real não existe (ex.: publicCourses.ts)
+├── hooks/            → Estado assíncrono reutilizável (usePublicCourses, useStudentLesson...)
 ├── pages/            → Uma pasta por rota (NomeDaPagina.tsx + .module.css + .test.tsx)
-├── routes/           → AppRouter.tsx com Lazy Loading + ProtectedRoute.tsx
-├── services/         → Comunicação e requisições HTTP para a API backend (courseService, authService...)
+├── routes/           → AppRouter.tsx (rotas com React.lazy + Suspense)
+├── services/         → Chamadas HTTP ao backend (api.ts, courseService, lessonService...)
 ├── test/             → setup.ts do Vitest
 ├── types/            → Tipos e interfaces TypeScript compartilhados
-├── utils/            # Helpers e funções puras sem estado (formatCurrency, formatDuration...)
+├── utils/            → Funções puras sem estado (formatters, mapPublicCourse...)
 └── index.css         → Tokens e variáveis globais do Design System
 ```
+
+Cada componente tem sua pasta (`Nome.tsx`, `Nome.module.css`, `Nome.test.tsx`) e é reexportado no
+`index.ts` da pasta-mãe, então importe pelo barrel: `import { Button } from '@components/ui'`.
 
 ### 📌 Diretrizes de Arquitetura:
 
 1. **Páginas (`src/pages/`)**: Cuidam do estado da tela, formulários e renderização de componentes. **Nunca fazem `fetch` direto**.
 2. **Serviços (`src/services/`)**: Centralizam todas as chamadas HTTP para o backend. As páginas e hooks chamam os serviços.
 3. **Hooks (`src/hooks/`)**: Centralizam lógicas de negócio e estados assíncronos compartilhados entre múltiplas telas.
+4. **Utils (`src/utils/`)**: Conversão de resposta da API para o modelo da tela (ex.: `mapPublicCourse.ts`) e formatação. Funções puras, sem React.
 
 ---
 
@@ -56,10 +62,10 @@ src/
 ### ⚠️ Regras Invioláveis
 
 1. **Nunca use `any` em TypeScript.** Use `unknown` e faça narrowing.
-2. **Nunca gere default exports.** Use sempre named exports.
+2. **Nunca gere default exports.** Use sempre named exports. (`FilterTabs` e `ReferenceAndExternalLinks` ainda têm default export por legado; não copie o padrão.)
 3. **Nunca manipule o DOM diretamente.** Use refs do React (`useRef`).
 4. **Nunca faça chamadas de API direto nos componentes.** Extraia para `src/services/`.
-5. **Nunca importe com caminhos relativos longos** (`../../../`). Use os aliases (`@components/`, `@hooks/`, `@pages/`, `@services/`, `@utils/`, `@types/`, `@contexts/`).
+5. **Nunca importe com caminhos relativos longos** (`../../../`). Use os aliases (`@components/`, `@hooks/`, `@pages/`, `@services/`, `@utils/`, `@contexts/`). Para tipos, use **`@/types/...`** (padrão do código): o alias `@types/` se confunde com os pacotes `@types/*` do npm.
 6. **NUNCA escreva cores, tamanhos, tipografia ou espaçamentos hardcoded em CSS.**
 
 ---
@@ -175,75 +181,159 @@ Esta regra é validada automaticamente pelo **Stylelint** (`npm run stylelint`).
 
 ### ✅ Padrões Obrigatórios de Código
 
+> Os exemplos abaixo são simplificados: consulte `CourseInstructor`, `curriculumService`,
+> `usePublicCourseDetails` e os testes deles para a versão real.
+
 #### 1. Componentes
 
 ```tsx
-import type { FC } from 'react';
-import styles from './CourseCard.module.css';
+import styles from './CourseInstructor.module.css';
 
-interface CourseCardProps {
-  title: string;
-  thumbnailUrl: string;
-  duration: number; // em segundos
-  onSelect: () => void;
+interface CourseInstructorProps {
+  instructor: { name: string; role: string; avatarUrl?: string | null };
 }
 
-export const CourseCard: FC<CourseCardProps> = ({ title, thumbnailUrl, duration, onSelect }) => {
-  return (
-    <article className={styles.card}>
-      <img src={thumbnailUrl} alt={title} className={styles.thumbnail} />
-      <h2 className={styles.title}>{title}</h2>
-      <button onClick={onSelect} className={styles.btn} aria-label={`Ver detalhes de ${title}`}>
-        Ver Curso
-      </button>
-    </article>
-  );
-};
+export const CourseInstructor = ({ instructor }: CourseInstructorProps) => (
+  <section className={styles.card} aria-labelledby="course-instructor-title">
+    <h2 id="course-instructor-title">Sobre o Instrutor</h2>
+    {instructor.avatarUrl ? (
+      <img src={instructor.avatarUrl} alt={`Foto de ${instructor.name}`} />
+    ) : (
+      <span aria-hidden="true">{instructor.name.charAt(0)}</span>
+    )}
+    <p>{instructor.name}</p>
+  </section>
+);
 ```
 
 #### 2. Serviços (API calls em `src/services/`)
 
+Nunca leia `import.meta.env.VITE_API_BASE_URL` direto nem monte o header `X-User-Id` à mão: use
+`getApiBaseUrl()` (lê a configuração injetada em runtime pelo nginx) e `adminHeaders()` /
+`studentHeaders()` de `api.ts`.
+
 ```ts
-// src/services/courseService.ts
-import type { Course } from '@types/course';
+// src/services/curriculumService.ts
+import { getApiBaseUrl } from '@services/runtimeEnv';
+import { readApiErrorMessage, studentHeaders, type ApiResponse } from '@services/api';
+import type { StudentCurriculum } from '@/types/curriculum';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
-export const getCourseById = async (id: string): Promise<Course> => {
-  const response = await fetch(`${API_BASE}/courses/${id}`);
-  if (!response.ok) throw new Error(`Falha ao buscar curso ${id}`);
-  return response.json() as Promise<Course>;
+export class StudentCurriculumError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'StudentCurriculumError';
+    this.status = status;
+  }
+}
+
+export const getStudentCurriculum = async (
+  courseId: string,
+  signal?: AbortSignal,
+): Promise<StudentCurriculum> => {
+  const response = await fetch(`${API_BASE_URL}/student/courses/${courseId}/curriculum`, {
+    method: 'GET',
+    headers: studentHeaders(),
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new StudentCurriculumError(
+      response.status,
+      (await readApiErrorMessage(response)) ?? 'Não foi possível carregar o conteúdo do curso.',
+    );
+  }
+
+  const json: ApiResponse<StudentCurriculumResponse> = await response.json();
+  return mapStudentCurriculum(json.data); // resposta da API → modelo da tela
 };
 ```
 
-#### 3. Testes Unitários
+#### 3. Hooks de dados
+
+Hooks expõem `status: 'loading' | 'success' | 'error'` (`LoadStatus`), os dados e `errorMessage`.
+A requisição recebe o `signal` de um `AbortController` cancelado no cleanup do `useEffect`, e o
+erro de cancelamento é ignorado (ver `usePublicCourseDetails`).
+
+#### 4. Testes Unitários
 
 ```tsx
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CourseCard } from './CourseCard';
+import { CourseCompletionMessage } from './CourseCompletionMessage';
 
-describe('CourseCard', () => {
-  it('should render the course title', () => {
+describe('CourseCompletionMessage', () => {
+  it('shows the completed course name', () => {
     render(
-      <CourseCard
-        title="Hospitalidade de Luxo"
-        thumbnailUrl=""
-        duration={3600}
-        onSelect={vi.fn()}
+      <CourseCompletionMessage
+        courseTitle="Experiências Imersivas na Prática"
+        onViewOtherCourses={vi.fn()}
+        onViewCertificate={vi.fn()}
       />,
     );
-    expect(screen.getByText('Hospitalidade de Luxo')).toBeInTheDocument();
+
+    expect(screen.getByText('Experiências Imersivas na Prática')).toBeInTheDocument();
   });
 
-  it('should call onSelect when the button is clicked', async () => {
-    const onSelect = vi.fn();
-    render(<CourseCard title="Test" thumbnailUrl="" duration={0} onSelect={onSelect} />);
-    await userEvent.click(screen.getByRole('button', { name: /ver detalhes de test/i }));
-    expect(onSelect).toHaveBeenCalledOnce();
+  it('calls onViewCertificate when that button is clicked', async () => {
+    const onViewCertificate = vi.fn();
+    render(
+      <CourseCompletionMessage
+        courseTitle="Curso"
+        onViewOtherCourses={vi.fn()}
+        onViewCertificate={onViewCertificate}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ver Certificado' }));
+
+    expect(onViewCertificate).toHaveBeenCalledOnce();
   });
 });
 ```
+
+---
+
+### 🧩 Convenções de Implementação
+
+- **Contrato com o backend**: sucesso vem no envelope `ApiResponse` (`success`, `data`, `message`) e erro no `ApiError` (`status`, `error`, `message`, `path`, `timestamp`); leia a mensagem de erro com `readApiErrorMessage`. Alguns endpoints **não** usam o envelope de propósito (lista e filtros públicos de cursos, regras do curso, change-log, busca de pré-requisitos): não "corrija" o parse desses sem combinar com o backend.
+- **Identificação do usuário é provisória**: até o login com JWT (US-23), rotas `/admin` e `/student` exigem o header `X-User-Id`, montado só por `adminHeaders()` / `studentHeaders()`. Quando o JWT entrar, a troca acontece apenas em `api.ts`.
+- **Erros com status**: quando a tela precisa reagir ao status HTTP (403 sem acesso, 404 não encontrado), o serviço lança uma classe de erro própria com `status` (`StudentLessonError`, `StudentCurriculumError`).
+- **Mapeamento fora do componente**: converter a resposta da API para o modelo da tela fica no serviço ou em `src/utils/` (ex.: `mapPublicCourseToCardProps`), nunca no JSX.
+- **Rotas novas** entram em `AppRouter.tsx` com `React.lazy`. Rota de menu sem tela ainda cai em `UnderConstruction`.
+- **Ambiente**: o projeto roda em **Node 20** (mesma versão da CI e do `Dockerfile`).
+
+---
+
+### 🧪 Testes
+
+> Guia passo a passo (onde criar, exemplos de componente/página/serviço, como rodar e como ler a
+> cobertura) no `README.md`, seção **"Testes Unitários: como criar, rodar e ver a cobertura"**.
+
+- **Onde mockar**: páginas e hooks mockam o **serviço** (`vi.mock('@services/courseService')`); testes de serviço mockam o **`fetch`** com `vi.stubGlobal('fetch', ...)` e limpam com `vi.unstubAllGlobals()` / `vi.restoreAllMocks()` no `afterEach`. Não atribua globais à mão (`URL.createObjectURL = vi.fn()`): use `vi.stubGlobal` ou `vi.spyOn`, que são restaurados.
+- **Consultas**: prefira `getByRole` / `getByLabelText` com nome acessível. Use `container.querySelector`, `data-testid` e `className` só quando não houver papel acessível ou quando a classe for o próprio comportamento testado.
+- **Interação**: use `userEvent` (com `await`). Chamar `.focus()` à mão não testa teclado: use `user.tab()` / `user.keyboard(...)`.
+- **Assíncrono**: use `findBy*` / `waitFor`. Não espere com `setTimeout` real; para debounce e timers use `vi.useFakeTimers()`.
+- **Rejeições**: `await expect(promise).rejects.toThrow(...)` / `.rejects.toMatchObject(...)`, sem `try/catch` no teste.
+- **Rotas**: componentes com `Link` ou `useNavigate` são renderizados dentro de `MemoryRouter`; para conferir a navegação, renderize a rota de destino ou um `LocationProbe` com `useLocation`.
+- **`localStorage`**: o `src/test/setup.ts` restaura o `localStorage` do jsdom (o Node 25 substitui o global por um objeto vazio). Não remova esse trecho.
+
+#### Asserts que validam de verdade (evite falso positivo)
+
+- **Teste de ausência precisa de um cenário em que o elemento existiria se o código estivesse errado.** Ex.: para "não mostra o rating sem `rating`", passe `reviewsCount` e confira que ele não aparece; procurar um texto que o teste nunca passou passa sempre.
+- **O nome do teste descreve o que é verificado.** Se o nome diz "mantém filtros independentes", o teste precisa clicar num filtro e conferir o outro; se diz "aria-label", confira o atributo `aria-label`.
+- **Confira o valor esperado**, não só que algo existe: evite `toBeDefined()`, `toBeTruthy()`, `length > 0` e `toHaveTextContent('R$')` quando o valor exato é conhecido.
+- **Cubra os caminhos de erro e de carregamento** (branch), não só o caminho feliz.
+- Não escreva teste que só repete outro com nome diferente.
+
+#### Cobertura
+
+- `npm run test:coverage` mostra a tabela no terminal (a coluna **Uncovered Line #s** lista as linhas não executadas) e gera `coverage/index.html` com o detalhe linha a linha.
+- A cobertura mede só `src/` sem testes, `main.tsx`, `types/` e dados mockados estáticos (ver `exclude` em `vitest.config.ts`). Arquivo novo **só de dados**, sem lógica, entra nessa lista.
+- A CI roda os testes com cobertura e publica o relatório (resumo no GitHub Actions, artifact `coverage/` e relatório de linhas no MR do GitLab).
 
 ---
 
@@ -255,4 +345,4 @@ describe('CourseCard', () => {
 
 ---
 
-_Última atualização: Agosto/2026_
+_Última atualização: Outubro/2026_

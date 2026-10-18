@@ -31,9 +31,14 @@ describe('ProgressBar', () => {
   it('supports a success appearance without changing its value', () => {
     render(<ProgressBar value={100} variant="success" aria-label="Curso concluído" />);
 
-    expect(screen.getByRole('progressbar', { name: 'Curso concluído' })).toHaveAttribute(
-      'aria-valuenow',
-      '100',
-    );
+    const bar = screen.getByRole('progressbar', { name: 'Curso concluído' });
+    expect(bar).toHaveAttribute('aria-valuenow', '100');
+    expect(bar.className).toMatch(/success/);
+  });
+
+  it('uses the default appearance when no variant is given', () => {
+    render(<ProgressBar value={40} aria-label="Progresso" />);
+
+    expect(screen.getByRole('progressbar').className).not.toMatch(/success/);
   });
 });

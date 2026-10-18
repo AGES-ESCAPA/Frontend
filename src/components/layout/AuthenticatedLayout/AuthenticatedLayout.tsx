@@ -39,6 +39,7 @@ export const AuthenticatedLayout = ({
         state={role === 'company' ? 'company' : 'user'}
         user={{ name: user.name, role: user.role, avatarUrl: user.avatarUrl }}
         notificationsCount={notificationsCount}
+        collapsible={role !== 'student'}
       />
 
       <main className={styles.main}>{children}</main>

@@ -8,7 +8,13 @@ import { CourseModulesBuilder } from '@components/course';
 import { Badge, Button, Toast } from '@components/ui';
 import { useCourseForm } from '@hooks/useCourseForm';
 import { useToast } from '@hooks/useToast';
-import { createCourse, getCourseById, publishCourse, updateCourse } from '@services/courseService';
+import {
+  createCourse,
+  getCourseById,
+  listCourseCategories,
+  publishCourse,
+  updateCourse,
+} from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
 import type { AdminCourseModule } from '@/types/module';
 import type {
@@ -100,6 +106,8 @@ export const CourseBuilder = () => {
   const { values, errors, changeField, replaceValues, replaceErrors } = useCourseForm();
   const { toast, isOpen: isToastOpen, showToast, dismissToast } = useToast();
 
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
   const [status, setStatus] = useState<CourseStatus>('DRAFT');
   const [savingStatus, setSavingStatus] = useState<CourseStatus | null>(null);
   const [isLoading, setIsLoading] = useState(courseId !== undefined);
@@ -156,6 +164,32 @@ export const CourseBuilder = () => {
     ],
     [],
   );
+
+  useEffect(() => {
+    let isCurrent = true;
+    setIsCategoriesLoading(true);
+
+    listCourseCategories()
+      .then((loadedCategories) => {
+        if (isCurrent) setCategories(loadedCategories);
+      })
+      .catch((error: unknown) => {
+        if (!isCurrent) return;
+        setCategories([]);
+        showToast(
+          'error',
+          'Não foi possível carregar as categorias',
+          error instanceof Error ? error.message : undefined,
+        );
+      })
+      .finally(() => {
+        if (isCurrent) setIsCategoriesLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [showToast]);
 
   useEffect(() => {
     if (courseId === undefined) return undefined;
@@ -412,6 +446,8 @@ export const CourseBuilder = () => {
                 difficulty={values.difficulty}
                 categoryError={errors.category}
                 difficultyError={errors.difficulty}
+                categories={categories}
+                isCategoriesLoading={isCategoriesLoading}
                 disabled={isFormDisabled}
                 onFieldChange={changeField}
               />

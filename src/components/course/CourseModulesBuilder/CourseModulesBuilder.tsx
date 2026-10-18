@@ -502,7 +502,7 @@ export const CourseModulesBuilder = ({
         disabled={status === 'saving'}
       >
         <CirclePlus size={28} aria-hidden="true" />
-        <strong>+ Adicionar Módulo</strong>
+        <strong>Adicionar Módulo</strong>
         <span>Crie uma nova seção para organizar o conteúdo do curso.</span>
       </button>
 

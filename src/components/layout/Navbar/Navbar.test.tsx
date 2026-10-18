@@ -73,6 +73,23 @@ describe('Navbar', () => {
     );
   });
 
+  it('keeps profile and notifications inline when the menu is not collapsible', () => {
+    render(
+      <Navbar
+        state="user"
+        collapsible={false}
+        user={{ name: 'Jorge Amado', role: 'Aluno' }}
+        notificationsCount={3}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Notificações' })).toBeInTheDocument();
+    expect(screen.getByText('Jorge Amado')).toBeInTheDocument();
+    expect(screen.getByText('Aluno')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
   it('closes the collapsible menu on Escape', async () => {
     const user = userEvent.setup();
     render(<Navbar state="user" user={{ name: 'Jorge Amado', role: 'Aluno' }} />);

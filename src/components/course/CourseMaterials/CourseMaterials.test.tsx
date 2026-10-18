@@ -8,6 +8,8 @@ describe('CourseMaterials', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    Reflect.deleteProperty(URL, 'createObjectURL');
+    Reflect.deleteProperty(URL, 'revokeObjectURL');
   });
 
   /*Testa/prova se com a inserção do isDownloadable, algo quebrou*/
@@ -46,6 +48,7 @@ describe('CourseMaterials', () => {
     });
 
     vi.stubGlobal('fetch', fetchMock);
+    // O jsdom não implementa esses métodos; o afterEach os remove de novo.
     URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
     URL.revokeObjectURL = vi.fn();
     const anchorClickSpy = vi

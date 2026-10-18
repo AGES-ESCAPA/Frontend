@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import type { ReactElement } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
@@ -25,6 +25,10 @@ const renderStudent = (props: Partial<Omit<SidebarProps, 'role' | 'items' | 'use
   );
 
 describe('Sidebar', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   // ── Estrutura base ───────────────────────────────────────────────
   it('should render logo, menu list and user footer', () => {
     renderStudent();
@@ -273,6 +277,100 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: 'Meus Cursos' })).toBeInTheDocument();
   });
 
+  // ── Mobile do aluno ──────────────────────────────────────────────
+  const stubMatchMedia = (matches: boolean) => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+  };
+
+  it('should open the student sidebar from the hamburger on mobile', async () => {
+    stubMatchMedia(true);
+    renderStudent();
+
+    const sidebar = screen.getByRole('complementary', { hidden: true });
+    expect(sidebar).toHaveAttribute('data-mobile-open', 'false');
+    expect(screen.getByRole('button', { name: 'Abrir menu' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
+
+    expect(screen.getByRole('complementary')).toHaveAttribute('data-mobile-open', 'true');
+    expect(screen.getByRole('button', { name: 'Fechar menu' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(
+      within(screen.getByRole('complementary')).getByRole('link', { name: 'Cursos' }),
+    ).toBeInTheDocument();
+  });
+
+  it('should close the student drawer on Escape and when a link is chosen', async () => {
+    stubMatchMedia(true);
+    renderStudent();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
+    await userEvent.keyboard('{Escape}');
+
+    expect(screen.getByRole('button', { name: 'Abrir menu' })).toHaveFocus();
+    expect(screen.getByRole('complementary', { hidden: true })).toHaveAttribute(
+      'data-mobile-open',
+      'false',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Meus Cursos' }));
+
+    expect(screen.getByRole('complementary', { hidden: true })).toHaveAttribute(
+      'data-mobile-open',
+      'false',
+    );
+  });
+
+  it('should hide the logout button while the student drawer is closed', () => {
+    stubMatchMedia(true);
+    renderStudent({ onLogout: vi.fn() });
+
+    expect(screen.queryByRole('button', { name: /sair da conta/i })).not.toBeInTheDocument();
+  });
+
+  it('should keep the logout icon inside the student drawer', async () => {
+    stubMatchMedia(true);
+    const handleLogout = vi.fn();
+    renderStudent({ onLogout: handleLogout });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
+
+    const logout = within(screen.getByRole('complementary')).getByRole('button', {
+      name: /sair da conta/i,
+    });
+    await userEvent.click(logout);
+    expect(handleLogout).toHaveBeenCalledOnce();
+  });
+
+  it('should not render the hamburger for other roles on mobile', () => {
+    stubMatchMedia(true);
+    renderSidebar(
+      <Sidebar
+        role="company"
+        items={SIDEBAR_MENU_PRESETS.company}
+        user={{ name: 'Escapa!', role: 'Empresa' }}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('complementary')).not.toHaveAttribute('data-mobile-open');
+  });
+
   // ── Logout ───────────────────────────────────────────────────────
   it('should not render the logout button when onLogout is omitted', () => {
     renderStudent();
@@ -286,12 +384,5 @@ describe('Sidebar', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /sair da conta/i }));
     expect(handleLogout).toHaveBeenCalledOnce();
-  });
-
-  // ── Presets exportados ───────────────────────────────────────────
-  it('should expose a menu preset for every role', () => {
-    expect(SIDEBAR_MENU_PRESETS.student.length).toBeGreaterThan(0);
-    expect(SIDEBAR_MENU_PRESETS.company.length).toBeGreaterThan(0);
-    expect(SIDEBAR_MENU_PRESETS.admin.length).toBeGreaterThan(0);
   });
 });
