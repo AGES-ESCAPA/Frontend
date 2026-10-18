@@ -52,9 +52,15 @@ export { PasswordInput } from './PasswordInput';
 export type { PasswordInputProps } from './PasswordInput';
 export { Toast } from './Toast';
 export type { ToastProps, ToastVariant } from './Toast';
-
 export { AccountTypeCard } from './AccountTypeCard';
 export type { AccountTypeCardProps } from './AccountTypeCard';
-
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
+export { EMPTY_FILTERS, OrderFilters } from './OrderFilters';
+export type {
+  OrderFilterCourse,
+  OrderFiltersProps,
+  OrderFiltersValue,
+  OrderStatus,
+  OrderType,
+} from './OrderFilters';
