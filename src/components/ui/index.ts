@@ -27,6 +27,8 @@ export { SearchBar } from './SearchBar';
 export type { SearchBarProps, SearchBarTheme } from './SearchBar';
 export { Switch } from './Switch';
 export type { SwitchProps } from './Switch';
+export { CreditCardForm } from './CreditCardForm';
+export type { CreditCardFormChange, CreditCardFormProps } from './CreditCardForm';
 export { FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 export { Panel } from './Panel';
