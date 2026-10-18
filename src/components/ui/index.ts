@@ -58,3 +58,6 @@ export type { AccountTypeCardProps } from './AccountTypeCard';
 
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
+
+export { OrderSummary } from './OrderSummary';
+export type { OrderSummaryProps, OrderItem, OrderBuyer } from './OrderSummary';

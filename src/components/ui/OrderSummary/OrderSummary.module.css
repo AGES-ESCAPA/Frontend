@@ -1,0 +1,129 @@
+.card {
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+}
+
+.hero {
+  display: flex;
+  min-height: 12rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  background: var(--color-primary-700);
+  color: var(--color-info-200);
+}
+
+.hero span {
+  font-size: var(--text-body-5);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-primary);
+}
+
+.content,
+.course,
+.details,
+.buyer {
+  padding: var(--space-5);
+}
+
+.title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-h6);
+}
+
+.muted {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+}
+
+.quantity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: 0;
+}
+
+.quantity svg {
+  color: var(--color-info-200);
+}
+
+.course {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.cover {
+  width: 35%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.price {
+  color: var(--color-info-200);
+  font-weight: var(--font-weight-semibold);
+}
+
+.details {
+  padding-top: 0;
+}
+
+.details div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+
+.details dt {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+}
+
+.details dd {
+  margin: 0;
+  color: var(--color-info-200);
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+
+.details .total {
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: var(--text-body-1);
+}
+
+.total dt {
+  font-size: inherit;
+  font-weight: var(--font-weight-semibold);
+}
+
+.buyer {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.buyer h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-body-2);
+}
+
+.buyer p {
+  margin: var(--space-2) 0;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  margin: 0;
+  padding: var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+}
