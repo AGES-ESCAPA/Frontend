@@ -64,3 +64,5 @@ export type {
   OrderStatus,
   OrderType,
 } from './OrderFilters';
+export { MaskedInput } from './MaskedInput';
+export type { MaskedInputProps, MaskType } from './MaskedInput';
