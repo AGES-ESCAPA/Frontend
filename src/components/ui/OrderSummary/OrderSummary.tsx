@@ -1,4 +1,6 @@
 import { Clock3, UsersRound } from 'lucide-react';
+import { formatCurrency } from '../../../utils/formatters';
+import { CourseCover } from './CourseCover';
 import styles from './OrderSummary.module.css';
 
 export type OrderItem =
@@ -35,12 +37,6 @@ export interface OrderSummaryProps {
   status?: 'loading' | 'error' | 'success';
   errorMessage?: string;
 }
-
-const currency = (value: number): string =>
-  new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
 
 const maskBuyerDocument = (document: string, kind: OrderBuyer['kind']): string => {
   const digits = document.replace(/\D/g, '');
@@ -89,14 +85,13 @@ export const OrderSummary = ({
   }
 
   const subtotal = item.kind === 'course' ? item.price : item.total;
-
   const total = Math.max(0, subtotal - Math.max(0, discount));
 
   return (
     <section className={styles.card} aria-label="Resumo do pedido">
       {item.kind === 'course' ? (
         <div className={styles.course}>
-          <img className={styles.cover} src={item.imageUrl} alt={`Capa do curso ${item.title}`} />
+          <CourseCover imageUrl={item.imageUrl} title={item.title} />
 
           <div>
             <h2 className={styles.title}>{item.title}</h2>
@@ -106,7 +101,7 @@ export const OrderSummary = ({
               {item.duration}
             </p>
 
-            <p className={styles.price}>{currency(item.price)}</p>
+            <p className={styles.price}>{formatCurrency(item.price)}</p>
           </div>
         </div>
       ) : (
@@ -135,12 +130,12 @@ export const OrderSummary = ({
       <dl className={styles.details}>
         <div>
           <dt>Subtotal</dt>
-          <dd>{currency(subtotal)}</dd>
+          <dd>{formatCurrency(subtotal)}</dd>
         </div>
 
         <div>
           <dt>Desconto</dt>
-          <dd>{discount > 0 ? `− ${currency(discount)}` : '–'}</dd>
+          <dd>{discount > 0 ? `− ${formatCurrency(discount)}` : '–'}</dd>
         </div>
 
         {paymentMethod && (
@@ -152,7 +147,7 @@ export const OrderSummary = ({
 
         <div className={styles.total}>
           <dt>Total</dt>
-          <dd>{currency(total)}</dd>
+          <dd>{formatCurrency(total)}</dd>
         </div>
       </dl>
 

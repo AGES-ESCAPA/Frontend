@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { OrderSummary } from './OrderSummary';
 
@@ -17,6 +17,52 @@ const seats = {
 };
 
 describe('OrderSummary', () => {
+  it('shows fallback when course image URL is empty', () => {
+    render(
+      <OrderSummary
+        item={{
+          kind: 'course',
+          title: 'IA Aplicada ao Turismo',
+          imageUrl: '',
+          duration: '12h',
+          price: 97,
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('img', {
+        name: /capa indisponível para o curso/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows fallback when course image fails to load', () => {
+    render(
+      <OrderSummary
+        item={{
+          kind: 'course',
+          title: 'IA Aplicada ao Turismo',
+          imageUrl: '/imagem-inexistente.jpg',
+          duration: '12h',
+          price: 97,
+        }}
+      />,
+    );
+
+    const image = screen.getByRole('img', {
+      name: /capa do curso ia aplicada ao turismo/i,
+    });
+
+    fireEvent.error(image);
+
+    expect(
+      screen.getByRole('img', {
+        name: /capa indisponível para o curso/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
   it('shows course cover, title, duration and price', () => {
     render(<OrderSummary item={course} />);
 
