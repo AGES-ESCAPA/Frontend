@@ -36,6 +36,12 @@ const Login = lazy(() =>
   })),
 );
 
+const Checkout = lazy(() =>
+  import('@pages/Checkout/Checkout').then((m) => ({
+    default: m.Checkout,
+  })),
+);
+
 const Courses = lazy(() =>
   import('@pages/Courses/Courses').then((m) => ({
     default: m.Courses,
@@ -56,6 +62,12 @@ const AdminCourses = lazy(() =>
 const DigitalCertificate = lazy(() =>
   import('@pages/DigitalCertificate/DigitalCertificate').then((m) => ({
     default: m.DigitalCertificate,
+  })),
+);
+
+const RegisterAccountType = lazy(() =>
+  import('@pages/RegisterAccountType/RegisterAccountType').then((m) => ({
+    default: m.RegisterAccountType,
   })),
 );
 
@@ -102,10 +114,13 @@ export const AppRouter = () => {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/" element={<Home />} />
+          <Route path="/cadastro" element={<RegisterAccountType />} />
           <Route path="/meus-cursos" element={<MyCourses />} />
           <Route path="/cursos/:courseId" element={<CourseDetails />} />
           <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/checkout/:courseId" element={<Checkout />} />
+          <Route path="/empresa/checkout/:courseId" element={<Checkout />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/aluno/cursos" element={<Courses />} />
           <Route path="/empresa/cursos" element={<Courses />} />
