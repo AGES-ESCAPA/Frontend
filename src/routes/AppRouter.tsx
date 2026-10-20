@@ -71,11 +71,18 @@ const RegisterAccountType = lazy(() =>
   })),
 );
 
+const Ordermanagement = lazy(() =>
+  import('@pages/OrderManagement/Ordermanagement').then((m) => ({
+    default: m.Ordermanagement,
+  })),
+);
+
 const UnderConstruction = lazy(() =>
   import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
     default: m.UnderConstruction,
   })),
 );
+
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -132,6 +139,7 @@ export const AppRouter = () => {
           <Route path="/admin/cursos" element={<AdminCourses />} />
           <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
           <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
+          <Route path="/admin/pedidos" element={<Ordermanagement />} />
 
           {/* Qualquer rota ainda sem página cai aqui. */}
           <Route path="*" element={<UnderConstruction />} />

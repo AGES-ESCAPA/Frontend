@@ -1,0 +1,541 @@
+.catalog,
+.stats,
+.ordersPanel {
+  width: 100%;
+  max-width: var(--container-7xl);
+  margin-inline: auto;
+}
+
+.catalog {
+  margin-bottom: var(--space-4);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-1);
+  color: var(--color-info-300);
+  font-size: var(--text-body-5);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-h5);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-h5--line-height);
+}
+
+.description {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.toolbar > div {
+  min-width: 0;
+}
+
+.search {
+  flex: 0 1 var(--container-sm);
+  min-width: var(--container-xs);
+  max-width: var(--container-md);
+}
+
+.search > div {
+  min-height: var(--space-10);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-lg);
+}
+
+.search input {
+  min-width: 0;
+  font-size: var(--text-body-4);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.stats > article {
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  overflow-wrap: anywhere;
+}
+
+.stats > article > p:nth-child(2) {
+  font-size: var(--text-h4);
+}
+
+.stats > article:nth-child(2) > p:nth-child(2) {
+  color: var(--color-info-300);
+}
+
+/* Painel de pedidos  */
+
+.ordersPanel {
+  min-width: 0;
+  margin-top: var(--space-1);
+  overflow: hidden;
+  background-color: var(--color-primary-800);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-2xl);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-bottom: var(--border-width-thin) solid var(--color-border);
+}
+
+.panelTitle {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.panelTitle h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-2);
+  font-weight: var(--font-weight-semibold);
+}
+
+.panelTitle > span {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--space-6);
+  height: var(--space-6);
+  padding-inline: var(--space-1);
+  color: var(--color-info-200);
+  background-color: var(--color-info-500);
+  border-radius: var(--radius-full);
+  font-size: var(--text-body-5);
+  font-weight: var(--font-weight-semibold);
+}
+
+.panelControls {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.inlineFilters {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Tabela */
+
+.ordersTable {
+  min-width: 0;
+  gap: 0;
+}
+
+.ordersTable > div:first-child {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.ordersTable > div:nth-child(2) {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.tableFooter {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 var(--space-4) var(--space-3);
+  font-size: var(--text-body-5);
+}
+
+.ordersTable table {
+  width: 100%;
+  min-width: var(--container-7xl);
+  table-layout: fixed;
+}
+
+.ordersTable th,
+.ordersTable td {
+  padding-block: var(--space-3);
+}
+
+.ordersTable th:nth-child(1),
+.ordersTable td:nth-child(1) {
+  width: 8%;
+}
+
+.ordersTable th:nth-child(2),
+.ordersTable td:nth-child(2) {
+  width: 13%;
+}
+
+.ordersTable th:nth-child(3),
+.ordersTable td:nth-child(3) {
+  width: 9%;
+}
+
+.inlineFilters > div:first-child {
+  grid-template-columns:
+    minmax(0, 0.8fr)
+    minmax(0, 0.9fr)
+    minmax(0, 1.5fr)
+    minmax(0, 1fr)
+    auto;
+}
+
+.inlineFilters > div:first-child > div,
+.inlineFilters > div:first-child > label {
+  min-height: var(--space-12);
+  padding-inline: var(--space-2);
+}
+
+.inlineFilters select {
+  font-size: var(--text-body-4);
+}
+
+.ordersTable th:nth-child(4),
+.ordersTable td:nth-child(4) {
+  width: 13%;
+}
+
+.ordersTable th:nth-child(5),
+.ordersTable td:nth-child(5) {
+  width: 11%;
+}
+
+.ordersTable th:nth-child(6),
+.ordersTable td:nth-child(6) {
+  width: 14%;
+}
+
+.ordersTable th:nth-child(7),
+.ordersTable td:nth-child(7) {
+  width: 8%;
+  padding-inline: var(--space-2);
+}
+
+.ordersTable th:nth-child(8),
+.ordersTable td:nth-child(8) {
+  width: 10%;
+}
+
+.ordersTable th:nth-child(9),
+.ordersTable td:nth-child(9) {
+  width: 14%;
+  padding-inline: var(--space-2);
+}
+
+.panelNote {
+  text-align: end;
+}
+
+.code {
+  color: var(--color-info-300);
+  font-weight: var(--font-weight-semibold);
+}
+
+.clientCell {
+  min-width: 0;
+}
+
+.clientSecondary {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-5);
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+  white-space: nowrap;
+}
+
+.individualBadge {
+  color: var(--color-text-muted);
+  background-color: var(--color-primary-700);
+}
+
+.corporateBadge {
+  color: var(--color-info-200);
+  background-color: var(--color-info-500);
+}
+
+.paymentMethod {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.statusBadge {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: var(--font-weight-regular);
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: var(--space-12);
+  height: var(--space-12);
+  color: var(--color-info-300);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.iconButton:hover,
+.iconButton:focus-visible {
+  color: var(--color-info-200);
+  background-color: var(--color-primary-700);
+}
+
+.iconButton:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.iconButton:focus-visible {
+  outline: var(--border-width-thin) solid var(--color-border-focus);
+  outline-offset: var(--space-1);
+}
+
+/* Tablet */
+
+@media (width <= 64rem) {
+  .panelHeader,
+  .panelControls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inlineFilters {
+    width: 100%;
+  }
+
+  .inlineFilters > div:first-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inlineFilters > div:first-child > button:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .search {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .tableFooter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats > article:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .panelNote {
+    text-align: start;
+  }
+}
+
+/* Celular */
+
+@media (width < 40rem) {
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .stats > article {
+    padding: var(--space-4);
+  }
+
+  .stats > article > p:nth-child(2) {
+    font-size: var(--text-h5);
+  }
+
+  .search > div {
+    min-height: 2.75rem;
+  }
+
+  .ordersTable > div:nth-child(2) {
+    overflow-x: visible;
+  }
+
+  .inlineFilters > div:first-child {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inlineFilters > div:first-child > label,
+  .inlineFilters > div:first-child > div,
+  .inlineFilters > div:first-child > button {
+    min-height: 2.75rem;
+  }
+
+  .iconButton {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .panelHeader {
+    padding: var(--space-3);
+  }
+
+  /* Tabela vira lista de cards (sem scroll horizontal) */
+  .ordersTable table,
+  .ordersTable tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Cabeçalho oculto visualmente, mas mantido para leitores de tela */
+  .ordersTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .ordersTable tbody tr {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-3);
+    border-bottom: var(--border-width-thin) solid var(--color-border);
+  }
+
+  .ordersTable td:nth-child(n) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    width: auto;
+    padding: 0;
+    text-align: end;
+    overflow-wrap: anywhere;
+  }
+
+  /* Mensagem de lista vazia: mantém célula única, centralizada */
+  .ordersTable td[colspan] {
+    display: table-cell;
+    width: 100%;
+    text-align: center;
+  }
+
+  .ordersTable td:not([colspan])::before {
+    flex: 0 0 auto;
+    color: var(--color-text-muted);
+    font-size: var(--text-body-5);
+    text-align: start;
+  }
+
+  .ordersTable td:nth-child(1)::before {
+    content: 'ID pedido';
+  }
+
+  .ordersTable td:nth-child(2)::before {
+    content: 'Solicitante';
+  }
+
+  .ordersTable td:nth-child(3)::before {
+    content: 'Tipo';
+  }
+
+  .ordersTable td:nth-child(4)::before {
+    content: 'Curso / Assentos';
+  }
+
+  .ordersTable td:nth-child(5)::before {
+    content: 'Data da compra';
+  }
+
+  .ordersTable td:nth-child(6)::before {
+    content: 'Pagamento';
+  }
+
+  .ordersTable td:nth-child(7)::before {
+    content: 'Valor';
+  }
+
+  .ordersTable td:nth-child(8)::before {
+    content: 'Status';
+  }
+
+  .ordersTable td:nth-child(9)::before {
+    content: 'Ações';
+  }
+
+  /* Conteúdo da célula sempre colado à direita do card */
+  .ordersTable td:nth-child(n) > * {
+    margin-inline: auto 0;
+  }
+
+  .clientCell {
+    text-align: end;
+  }
+
+  .rowActions {
+    justify-content: flex-end;
+    width: auto;
+  }
+
+  .tableFooter {
+    padding-top: var(--space-3);
+  }
+}
