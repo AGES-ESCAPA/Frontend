@@ -1,5 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '@contexts/AuthContext';
+import { ProtectedRoute } from './ProtectedRoute';
 
 // ─── Lazy Loading ─────────────────────────────────────────────────────────────
 // Adicione novas páginas aqui seguindo este padrão.
@@ -110,33 +112,131 @@ const PageLoader = () => (
 export const AppRouter = () => {
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {/* Rotas Públicas */}
-          <Route path="/" element={<Home />} />
-          <Route path="/cadastro" element={<RegisterAccountType />} />
-          <Route path="/meus-cursos" element={<MyCourses />} />
-          <Route path="/cursos/:courseId" element={<CourseDetails />} />
-          <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/checkout/:courseId" element={<Checkout />} />
-          <Route path="/empresa/checkout/:courseId" element={<Checkout />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/aluno/cursos" element={<Courses />} />
-          <Route path="/empresa/cursos" element={<Courses />} />
-          {/* Sidebar/Navbar autenticadas e os botões de Baixar/Compartilhar são
+      <AuthProvider>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/" element={<Home />} />
+            <Route path="/cadastro" element={<RegisterAccountType />} />
+            <Route
+              path="/meus-cursos"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <MyCourses />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/cursos/:courseId" element={<CourseDetails />} />
+            <Route
+              path="/aluno/cursos/:courseId/aulas/:lessonId"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <CoursePlayer />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/checkout/:courseId"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'COMPANY']}>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/checkout/:courseId"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/courses" element={<Courses />} />
+            <Route
+              path="/aluno/cursos"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <Courses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/cursos"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Courses />
+                </ProtectedRoute>
+              }
+            />
+            {/* Sidebar/Navbar autenticadas e os botões de Baixar/Compartilhar são
               decididos pelo isOwner da API, não pela rota (ver DigitalCertificate). */}
-          <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
+            <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
 
-          {/* Painel Administrativo */}
-          <Route path="/admin/cursos" element={<AdminCourses />} />
-          <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
-          <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
+            {/* Painel Administrativo */}
+            <Route
+              path="/admin/cursos"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminCourses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cursos/novo"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <CourseBuilder />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cursos/:id/editar"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <CourseBuilder />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Qualquer rota ainda sem página cai aqui. */}
-          <Route path="*" element={<UnderConstruction />} />
-        </Routes>
-      </Suspense>
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/*"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/aluno/*"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/meu-perfil"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Qualquer rota ainda sem página cai aqui. */}
+            <Route path="*" element={<UnderConstruction />} />
+          </Routes>
+        </Suspense>
+      </AuthProvider>
     </BrowserRouter>
   );
 };

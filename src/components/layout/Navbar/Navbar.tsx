@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Bell, Menu, X } from 'lucide-react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Avatar, Button } from '@components/ui';
 import logo from '@assets/escapa_logo.png';
 import styles from './Navbar.module.css';
@@ -29,6 +30,7 @@ export type NavbarProps = (
    * notificações e perfil visíveis, como no tablet e no desktop.
    */
   collapsible?: boolean;
+  onLogout?: () => void;
 };
 
 export const Navbar = ({
@@ -36,6 +38,7 @@ export const Navbar = ({
   user,
   notificationsCount = 0,
   collapsible = true,
+  onLogout,
 }: NavbarProps) => {
   const isProfile = state === 'user' || state === 'company';
   const hasMenu = state === 'noAuth' || isProfile;
@@ -107,17 +110,34 @@ export const Navbar = ({
           )}
 
           {(state === 'user' || state === 'company') && (
-            <button
-              type="button"
-              className={styles.profileButton}
-              aria-label={`Perfil de ${user.name}`}
-            >
-              <Avatar name={user.name} imageUrl={user.avatarUrl} theme="dark" />
-              <span className={styles.profileText}>
-                <strong>{user.name}</strong>
-                <small>{user.role}</small>
-              </span>
-            </button>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  type="button"
+                  className={styles.profileButton}
+                  aria-label={`Perfil de ${user.name}`}
+                >
+                  <Avatar name={user.name} imageUrl={user.avatarUrl} theme="dark" />
+                  <span className={styles.profileText}>
+                    <strong>{user.name}</strong>
+                    <small>{user.role}</small>
+                  </span>
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content className={styles.profileMenu} align="end" sideOffset={8}>
+                  <DropdownMenu.Item asChild className={styles.profileMenuItem}>
+                    <a href="/meu-perfil">Meu perfil</a>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    className={styles.profileMenuItem}
+                    onSelect={() => onLogout?.()}
+                  >
+                    Sair
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
           )}
 
           {state === 'noAuth' && (

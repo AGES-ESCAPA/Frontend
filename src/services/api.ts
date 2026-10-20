@@ -2,37 +2,39 @@ import { getApiBaseUrl } from '@services/runtimeEnv';
 
 const API_BASE_URL = getApiBaseUrl();
 
-/**
- * Identificação do administrador nas rotas `/admin/**`.
- *
- * O backend ainda não tem autenticação por token: todo endpoint administrativo
- * exige o header `X-User-Id` com o UUID de um usuário ADMIN (ver guia da US-06,
- * seção 2). Enquanto o login não existir, o valor vem do ambiente com fallback
- * para o admin "Beatriz Nunes" do seed local.
- *
- * Quando o JWT entrar, basta trocar este helper por `Authorization: Bearer` —
- * nenhum serviço monta o header por conta própria.
- */
-const DEFAULT_ADMIN_USER_ID = 'a0000000-0000-4000-a000-000000000001';
-const DEFAULT_STUDENT_USER_ID = 'b0000000-0000-4000-b000-000000000001';
+/** Chave única usada para persistir a sessão do usuário autenticado. */
+const ACCESS_TOKEN_KEY = 'access_token';
 
-export const ADMIN_USER_ID: string = import.meta.env.VITE_ADMIN_USER_ID || DEFAULT_ADMIN_USER_ID;
-export const STUDENT_USER_ID: string =
-  import.meta.env.VITE_STUDENT_USER_ID || DEFAULT_STUDENT_USER_ID;
+let onUnauthorized: (() => void) | null = null;
 
-export const getLoggedUserId = (): string | null => {
-  return localStorage.getItem('escapa_mock_user_id');
+export const setUnauthorizedHandler = (handler: (() => void) | null): (() => void) => {
+  onUnauthorized = handler;
+  return () => {
+    if (onUnauthorized === handler) onUnauthorized = null;
+  };
 };
 
-export const adminHeaders = (): Record<string, string> => ({
-  'Content-Type': 'application/json',
-  'X-User-Id': getLoggedUserId() || ADMIN_USER_ID,
-});
+export const authHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
 
-export const studentHeaders = (): Record<string, string> => ({
-  'Content-Type': 'application/json',
-  'X-User-Id': getLoggedUserId() || STUDENT_USER_ID,
-});
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
+
+export const authenticatedFetch = async (
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+): Promise<Response> => {
+  const headers = new Headers(authHeaders());
+  new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+  const response = await fetch(input, { ...init, headers });
+
+  if (response.status === 401) onUnauthorized?.();
+
+  return response;
+};
 
 /** Envelope de sucesso devolvido pela API (`{ success, data, message }`). */
 export interface ApiResponse<T> {

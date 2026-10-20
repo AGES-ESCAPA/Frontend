@@ -12,6 +12,8 @@
   align-items: center;
   padding: var(--space-8);
   text-align: center;
+  width: 100%;
+  max-width: var(--container-xs);
 }
 
 .logo {
@@ -27,21 +29,36 @@
   line-height: var(--text-body-2--line-height);
 }
 
-.ctaGroup {
+.form {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
+  flex-direction: column;
+  width: 100%;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
 }
 
-.cta {
-  min-width: 9rem;
+.formError {
+  margin: 0;
+  color: var(--color-error-300);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.links a {
+  color: var(--color-info-300);
+  font-size: var(--text-body-3);
 }
 
 @media (width <= 40rem) {
-  .ctaGroup,
-  .cta {
-    width: 100%;
+  .main {
+    max-width: none;
   }
 }
