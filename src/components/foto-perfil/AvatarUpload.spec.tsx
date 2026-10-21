@@ -43,6 +43,7 @@ describe('AvatarUpload', () => {
 
     expect(global.URL.createObjectURL).toHaveBeenCalledWith(file);
     expect(onFileSelected).toHaveBeenCalledWith(file);
+    expect(screen.getByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute('src', 'mock-url');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -84,5 +85,47 @@ describe('AvatarUpload', () => {
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(onFileSelected).not.toHaveBeenCalled();
+  });
+
+  it('deve exibir a foto existente', () => {
+    render(
+      <AvatarUpload
+        name="Nome do Usuário"
+        onFileSelected={vi.fn()}
+        imageUrl="foto-atual.png"
+        maxSizeBytes={2 * 1024 * 1024}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute(
+      'src',
+      'foto-atual.png',
+    );
+  });
+
+  it('deve manter a foto atual quando o arquivo selecionado for inválido', async () => {
+    render(
+      <AvatarUpload
+        name="Nome do Usuário"
+        onFileSelected={vi.fn()}
+        imageUrl="foto-atual.png"
+        maxSizeBytes={2 * 1024 * 1024}
+      />,
+    );
+
+    const arquivoInvalido = new File(['conteudo'], 'documento.pdf', {
+      type: 'application/pdf',
+    });
+
+    await userEvent.upload(screen.getByTestId('avatar-file-input'), arquivoInvalido, {
+      applyAccept: false,
+    });
+
+    expect(screen.getByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute(
+      'src',
+      'foto-atual.png',
+    );
+
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 });
