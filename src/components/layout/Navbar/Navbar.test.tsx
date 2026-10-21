@@ -53,6 +53,19 @@ describe('Navbar', () => {
     expect(screen.getByText('Empresa')).toBeInTheDocument();
   });
 
+  it('opens the profile menu and calls logout', async () => {
+    const user = userEvent.setup();
+    const onLogout = vi.fn();
+    render(
+      <Navbar state="user" user={{ name: 'Jorge Amado', role: 'Aluno' }} onLogout={onLogout} />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Perfil de Jorge Amado' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Sair' }));
+
+    expect(onLogout).toHaveBeenCalledOnce();
+  });
+
   it('toggles the collapsible menu open and closed', async () => {
     const user = userEvent.setup();
     render(<Navbar state="noAuth" />);

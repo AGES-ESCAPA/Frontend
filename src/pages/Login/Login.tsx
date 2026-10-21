@@ -29,8 +29,7 @@ export const Login = () => {
 
   const returnTo = (location.state as LoginLocationState | null)?.returnTo;
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submitLogin = async () => {
     if (isSubmitting) return;
 
     setFormError(null);
@@ -56,12 +55,17 @@ export const Login = () => {
     }
   };
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void submitLogin();
+  };
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
         <img src={escapaLogo} alt="escapa! - Plataforma de Cursos" className={styles.logo} />
         <p className={styles.subtitle}>Plataforma de cursos</p>
-        <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
+        <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <FormField label="E-mail" htmlFor="login-email" required>
             <TextInput
               id="login-email"
@@ -108,6 +112,8 @@ export const Login = () => {
         variant="error"
         title="Não foi possível entrar"
         description="Verifique sua conexão e tente novamente."
+        actionLabel="Tentar novamente"
+        onAction={() => void submitLogin()}
       />
     </div>
   );

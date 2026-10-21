@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import { setUnauthorizedHandler } from '@services/api';
 import { AuthServiceError, authService } from '@services/authService';
 import type { AuthUser } from '@/types/auth';
-import { AuthContext } from './authContext';
-import type { AuthContextValue } from './authContext';
+import { AuthContext } from './authContextDefinition';
+import type { AuthContextValue } from './authContextDefinition';
 
 const ACCESS_TOKEN_KEY = 'access_token';
 

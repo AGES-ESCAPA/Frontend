@@ -1,6 +1,6 @@
 import { useContext } from 'react';
-import { AuthContext } from './authContext';
-import type { AuthContextValue } from './authContext';
+import { AuthContext } from './authContextDefinition';
+import type { AuthContextValue } from './authContextDefinition';
 
 export const useOptionalAuth = (): AuthContextValue | null => useContext(AuthContext);
 

@@ -14,6 +14,13 @@ const student: AuthUser = {
   role: 'STUDENT',
 };
 
+const profileDestinations: Array<{ role: AuthUser['role']; destination: string }> = [
+  { role: 'STUDENT', destination: '/meus-cursos' },
+  { role: 'EMPLOYEE', destination: '/meus-cursos' },
+  { role: 'COMPANY', destination: '/empresa/colaboradores' },
+  { role: 'ADMIN', destination: '/admin/cursos' },
+];
+
 const LocationProbe = () => {
   const location = useLocation();
   return <output data-testid="location">{location.pathname}</output>;
@@ -52,18 +59,25 @@ describe('Login', () => {
     );
   });
 
-  it('starts the session and sends a student to their default panel', async () => {
-    const user = userEvent.setup();
-    vi.spyOn(authService, 'login').mockResolvedValue({ token: 'jwt-token', user: student });
-    renderLogin();
+  it.each(profileDestinations)(
+    'starts the session and sends a $role to their panel',
+    async ({ role, destination }) => {
+      const user = userEvent.setup();
+      const authenticatedUser = { ...student, id: `user-${role}`, role };
+      vi.spyOn(authService, 'login').mockResolvedValue({
+        token: 'jwt-token',
+        user: authenticatedUser,
+      });
+      renderLogin();
 
-    await user.type(screen.getByLabelText(/E-mail/), student.email);
-    await user.type(screen.getByLabelText(/Senha/), 'senha-segura');
-    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+      await user.type(screen.getByLabelText(/E-mail/), authenticatedUser.email);
+      await user.type(screen.getByLabelText(/Senha/), 'senha-segura');
+      await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/meus-cursos'));
-    expect(localStorage.getItem('access_token')).toBe('jwt-token');
-  });
+      await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(destination));
+      expect(localStorage.getItem('access_token')).toBe('jwt-token');
+    },
+  );
 
   it('returns to the protected route that originated the login', async () => {
     const user = userEvent.setup();
@@ -89,6 +103,22 @@ describe('Login', () => {
     );
   });
 
+  it('returns to the pending purchase route after login', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('escapa:purchase-redirect', '/cursos/course-1');
+    vi.spyOn(authService, 'login').mockResolvedValue({ token: 'jwt-token', user: student });
+    renderLogin();
+
+    await user.type(screen.getByLabelText(/E-mail/), student.email);
+    await user.type(screen.getByLabelText(/Senha/), 'senha-segura');
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('/cursos/course-1'),
+    );
+    expect(localStorage.getItem('escapa:purchase-redirect')).toBeNull();
+  });
+
   it('shows a generic error for invalid credentials without clearing the e-mail', async () => {
     const user = userEvent.setup();
     vi.spyOn(authService, 'login').mockRejectedValue(new AuthServiceError(401, 'Unauthorized'));
@@ -112,11 +142,15 @@ describe('Login', () => {
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Esta conta está desativada.');
+    expect(screen.getByLabelText(/E-mail/)).toHaveValue(student.email);
   });
 
-  it('shows a retry toast for network failures', async () => {
+  it('preserves the form and retries after a network failure', async () => {
     const user = userEvent.setup();
-    vi.spyOn(authService, 'login').mockRejectedValue(new TypeError('Failed to fetch'));
+    const login = vi
+      .spyOn(authService, 'login')
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({ token: 'jwt-token', user: student });
     renderLogin();
 
     await user.type(screen.getByLabelText(/E-mail/), student.email);
@@ -124,5 +158,41 @@ describe('Login', () => {
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
     expect(await screen.findByText('Não foi possível entrar')).toBeInTheDocument();
+    expect(screen.getByLabelText(/E-mail/)).toHaveValue(student.email);
+
+    await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect(login).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/meus-cursos'));
+  });
+
+  it('prevents duplicate submissions while the login is in progress', async () => {
+    const user = userEvent.setup();
+    let resolveLogin: (session: { token: string; user: AuthUser }) => void = () => undefined;
+    const pendingLogin = new Promise<{ token: string; user: AuthUser }>((resolve) => {
+      resolveLogin = resolve;
+    });
+    const login = vi.spyOn(authService, 'login').mockReturnValue(pendingLogin);
+    renderLogin();
+
+    await user.type(screen.getByLabelText(/E-mail/), student.email);
+    await user.type(screen.getByLabelText(/Senha/), 'senha-segura');
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    expect(login).toHaveBeenCalledTimes(1);
+
+    resolveLogin({ token: 'jwt-token', user: student });
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/meus-cursos'));
+  });
+
+  it('sends an already authenticated user to their own panel', async () => {
+    localStorage.setItem('access_token', 'jwt-token');
+    vi.spyOn(authService, 'getCurrentUser').mockResolvedValue({ ...student, role: 'COMPANY' });
+    renderLogin();
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('/empresa/colaboradores'),
+    );
   });
 });

@@ -1,10 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthServiceError, authService } from './authService';
 
-const user = {
+const backendUser = {
   id: 'user-1',
   name: 'Jorge Amado',
   email: 'jorge@example.com',
+  profile: 'STUDENT',
+};
+
+const user = {
+  id: backendUser.id,
+  name: backendUser.name,
+  email: backendUser.email,
   role: 'STUDENT' as const,
 };
 
@@ -17,7 +24,8 @@ describe('authService', () => {
   it('sends credentials and returns the normalized login session', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ success: true, data: { accessToken: 'jwt-token', user } }),
+      json: () =>
+        Promise.resolve({ success: true, data: { accessToken: 'jwt-token', user: backendUser } }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -52,7 +60,7 @@ describe('authService', () => {
   it('sends the bearer token when restoring the current user', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ success: true, data: user }),
+      json: () => Promise.resolve({ success: true, data: backendUser }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -61,5 +69,24 @@ describe('authService', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/auth/me');
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer jwt-token');
+  });
+
+  it('rejects a response with an unknown backend profile', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { accessToken: 'jwt-token', user: { ...backendUser, profile: 'UNKNOWN' } },
+          }),
+      }),
+    );
+
+    await expect(authService.login(user.email, 'senha-segura')).rejects.toMatchObject({
+      name: AuthServiceError.name,
+      status: 500,
+    });
   });
 });
