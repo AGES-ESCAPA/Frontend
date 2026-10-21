@@ -1,0 +1,107 @@
+import React from 'react';
+import type { AvatarUploadProps } from './AvatarUploadProps';
+
+const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
+
+export const AvatarUpload: React.FC<AvatarUploadProps> = ({
+  imageUrl,
+  name,
+  onFileSelected,
+  maxSizeBytes = MAX_FILE_SIZE_BYTES,
+}) => {
+  const [previewUrl, setPreviewUrl] = React.useState<string>(imageUrl);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const currentImageUrl = previewUrl || imageUrl;
+  const nameParts = name.trim().split(/\s+/).filter(Boolean);
+  const firstInitial = nameParts[0]?.[0]?.toUpperCase() ?? '';
+  const lastInitial =
+    nameParts.length > 1 ? (nameParts[nameParts.length - 1]?.[0]?.toUpperCase() ?? '') : '';
+  const initials = `${firstInitial}${lastInitial}`;
+
+  React.useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      setErrorMessage(
+        'Tipo de arquivo não permitido. Por favor, selecione uma imagem JPEG, PNG ou WEBP.',
+      );
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      const maxSizeMB = (maxSizeBytes / (1024 * 1024)).toFixed(2);
+
+      setErrorMessage(
+        `Arquivo muito grande. Por favor, selecione uma imagem menor que ${maxSizeMB}MB.`,
+      );
+      return;
+    }
+
+    setErrorMessage(null);
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    const newPreviewUrl = URL.createObjectURL(file);
+
+    setPreviewUrl(newPreviewUrl);
+    onFileSelected(file);
+  };
+
+  return React.createElement(
+    'div',
+    { className: 'flex flex-col items-center gap-3' },
+    currentImageUrl
+      ? React.createElement('img', {
+          src: currentImageUrl,
+          alt: name,
+        })
+      : React.createElement('span', null, initials),
+    React.createElement('input', {
+      type: 'file',
+      ref: fileInputRef,
+      onChange: handleFileChange,
+      accept: 'image/jpeg,image/png,image/webp',
+      className: 'hidden',
+      'data-testid': 'avatar-file-input',
+    }),
+
+    React.createElement(
+      'button',
+      {
+        type: 'button',
+        onClick: handleButtonClick,
+        className: 'btn-secondary text-sm font-medium',
+      },
+      'Alterar foto',
+    ),
+
+    errorMessage &&
+      React.createElement(
+        'span',
+        {
+          role: 'alert',
+          className: 'text-xs text-red-500 mt-1',
+        },
+        errorMessage,
+      ),
+  );
+};
