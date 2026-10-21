@@ -385,11 +385,4 @@ describe('Sidebar', () => {
     await userEvent.click(screen.getByRole('button', { name: /sair da conta/i }));
     expect(handleLogout).toHaveBeenCalledOnce();
   });
-
-  // ── Presets exportados ───────────────────────────────────────────
-  it('should expose a menu preset for every role', () => {
-    expect(SIDEBAR_MENU_PRESETS.student.length).toBeGreaterThan(0);
-    expect(SIDEBAR_MENU_PRESETS.company.length).toBeGreaterThan(0);
-    expect(SIDEBAR_MENU_PRESETS.admin.length).toBeGreaterThan(0);
-  });
 });

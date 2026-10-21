@@ -50,23 +50,39 @@ describe('validateLessonForm', () => {
   it('should require title and video URL for a video lesson', () => {
     const errors = validateLessonForm(createLessonFormState());
 
-    expect(errors.title).toBeDefined();
-    expect(errors.videoUrl).toBeDefined();
+    expect(errors.title).toBe('Informe o título da aula.');
+    expect(errors.videoUrl).toBe('Informe a URL do vídeo.');
     expect(hasLessonFormErrors(errors)).toBe(true);
   });
 
   it('should reject a malformed duration', () => {
     const state = { ...createLessonFormState(videoLesson), duration: '1299' };
 
-    expect(validateLessonForm(state).duration).toBeDefined();
+    expect(validateLessonForm(state).duration).toBe('Use o formato 000:00 (ex.: 012:40).');
+  });
+
+  it('should reject a video URL that is not http(s)', () => {
+    const state = { ...createLessonFormState(videoLesson), videoUrl: 'youtube.com/watch?v=abc' };
+
+    expect(validateLessonForm(state).videoUrl).toBe(
+      'Informe uma URL válida, começando com https://.',
+    );
   });
 
   it('should require the article content for a text lesson', () => {
     const state = { ...createLessonFormState(), type: 'text' as const, title: 'Aula em texto' };
     const errors = validateLessonForm(state);
 
-    expect(errors.textContent).toBeDefined();
+    expect(errors.textContent).toBe('Escreva o conteúdo da aula.');
     expect(errors.videoUrl).toBeUndefined();
+  });
+
+  it('should require a file or URL for a file lesson', () => {
+    const state = { ...createLessonFormState(), type: 'file' as const, title: 'Checklist' };
+
+    expect(validateLessonForm(state).fileUrl).toBe(
+      'Envie um arquivo ou informe a URL do material.',
+    );
   });
 
   it('should accept a file lesson sent as upload, without URL', () => {
@@ -85,8 +101,10 @@ describe('validateLessonForm', () => {
     const state = { ...createLessonFormState(videoLesson), resources: [{ ...draft }] };
     const errors = validateLessonForm(state);
 
-    expect(errors.resources[draft.id]?.title).toBeDefined();
-    expect(errors.resources[draft.id]?.url).toBeDefined();
+    expect(errors.resources[draft.id]).toEqual({
+      title: 'Informe o título do material.',
+      url: 'Informe o link.',
+    });
   });
 
   it('should pass with a fully filled video lesson', () => {

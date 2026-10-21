@@ -368,12 +368,27 @@ describe('LessonVideoPlayer', () => {
 
       player.focus();
 
-      fireEvent.keyDown(player, {
+      // fireEvent devolve false quando o handler chama preventDefault. No Vimeo o
+      // Espaço precisa seguir para o iframe, então o player não pode interceptá-lo.
+      const notPrevented = fireEvent.keyDown(player, {
         code: 'Space',
         key: ' ',
       });
 
-      expect(screen.getByTitle(TITLE)).toBeInTheDocument();
+      expect(notPrevented).toBe(true);
+    });
+
+    it('intercepts Space on the native video so the page does not scroll', () => {
+      renderPlayer();
+
+      const player = screen.getByLabelText(`Player da aula ${TITLE}`);
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+      vi.spyOn(video, 'play').mockResolvedValue(undefined);
+      Object.defineProperty(video, 'paused', { configurable: true, value: true });
+
+      const notPrevented = fireEvent.keyDown(player, { code: 'Space', key: ' ' });
+
+      expect(notPrevented).toBe(false);
     });
   });
 });
