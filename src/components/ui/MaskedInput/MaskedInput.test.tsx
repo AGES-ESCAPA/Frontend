@@ -173,3 +173,46 @@ describe('MaskedInput', () => {
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
   });
 });
+
+describe('MaskedInput with an alphanumeric CNPJ', () => {
+  it('accepts letters, uppercases them and reports the unmasked value', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(<Harness mask="cnpj" onValueChange={onValueChange} />);
+
+    const input = screen.getByLabelText('Campo');
+    await user.type(input, '12abc34501de35');
+
+    expect(input).toHaveValue('12.ABC.345/01DE-35');
+    expect(onValueChange).toHaveBeenLastCalledWith('12ABC34501DE35');
+  });
+
+  it('ignores letters typed in the check digit positions', async () => {
+    const user = userEvent.setup();
+    render(<Harness mask="cnpj" />);
+
+    const input = screen.getByLabelText('Campo');
+    await user.type(input, '12ABC34501DEX35');
+
+    expect(input).toHaveValue('12.ABC.345/01DE-35');
+  });
+
+  it('formats a pasted alphanumeric CNPJ', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(<Harness mask="cnpj" onValueChange={onValueChange} />);
+
+    const input = screen.getByLabelText('Campo');
+    await user.click(input);
+    await user.paste('12.abc.345/01de-35');
+
+    expect(input).toHaveValue('12.ABC.345/01DE-35');
+    expect(onValueChange).toHaveBeenLastCalledWith('12ABC34501DE35');
+  });
+
+  it('opens a text keyboard for the CNPJ so letters can be typed', () => {
+    render(<MaskedInput aria-label="Campo" mask="cnpj" value="" onValueChange={vi.fn()} />);
+
+    expect(screen.getByLabelText('Campo')).toHaveAttribute('inputmode', 'text');
+  });
+});

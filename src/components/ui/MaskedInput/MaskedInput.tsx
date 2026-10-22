@@ -1,35 +1,43 @@
 import { forwardRef } from 'react';
 import type { ChangeEvent } from 'react';
-import { maskCnpj, maskCpf, maskPhone, onlyDigits } from '@utils/masks';
+import { maskCnpj, maskCpf, maskPhone, normalizeCnpj, onlyDigits } from '@utils/masks';
 import { TextInput } from '../TextInput';
 import type { TextInputProps } from '../TextInput';
 
 export type MaskType = 'cpf' | 'cnpj' | 'phone';
 
+const CPF_DIGITS = 11;
+const PHONE_DIGITS = 11;
+
 interface MaskConfig {
+  /** Aplica a máscara a um valor já normalizado. */
   format: (value: string) => string;
-  maxDigits: number;
+  /** Extrai do texto digitado o valor sem máscara que sobe para o formulário. */
+  normalize: (value: string) => string;
   placeholder: string;
-  inputMode: 'numeric' | 'tel';
+  inputMode: 'numeric' | 'tel' | 'text';
   autoComplete?: string;
+  autoCapitalize?: 'characters';
 }
 
 const MASK_CONFIG: Record<MaskType, MaskConfig> = {
   cpf: {
     format: maskCpf,
-    maxDigits: 11,
+    normalize: (value) => onlyDigits(value).slice(0, CPF_DIGITS),
     placeholder: '000.000.000-00',
     inputMode: 'numeric',
   },
+  // CNPJ alfanumérico (desde julho/2026): letras nas 12 primeiras posições.
   cnpj: {
     format: maskCnpj,
-    maxDigits: 14,
+    normalize: normalizeCnpj,
     placeholder: '00.000.000/0000-00',
-    inputMode: 'numeric',
+    inputMode: 'text',
+    autoCapitalize: 'characters',
   },
   phone: {
     format: maskPhone,
-    maxDigits: 11,
+    normalize: (value) => onlyDigits(value).slice(0, PHONE_DIGITS),
     placeholder: '(00) 00000-0000',
     inputMode: 'tel',
     autoComplete: 'tel-national',
@@ -42,10 +50,13 @@ export interface MaskedInputProps extends Omit<
 > {
   /** Tipo de máscara aplicada ao campo. */
   mask: MaskType;
-  /** Valor atual somente com dígitos (sem pontos, traços ou parênteses). */
+  /**
+   * Valor atual sem máscara: só dígitos no CPF e no telefone; no CNPJ, números e
+   * letras maiúsculas (sem pontos, barra ou traço).
+   */
   value: string;
-  /** Chamado a cada alteração, sempre com somente os dígitos. */
-  onValueChange: (digits: string) => void;
+  /** Chamado a cada alteração, sempre com o valor sem máscara. */
+  onValueChange: (value: string) => void;
 }
 
 export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
@@ -53,7 +64,7 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
     const config = MASK_CONFIG[mask];
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-      onValueChange(onlyDigits(event.target.value).slice(0, config.maxDigits));
+      onValueChange(config.normalize(event.target.value));
     };
 
     return (
@@ -61,6 +72,7 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
         ref={ref}
         inputMode={config.inputMode}
         autoComplete={config.autoComplete}
+        autoCapitalize={config.autoCapitalize}
         placeholder={placeholder ?? config.placeholder}
         {...props}
         value={config.format(value)}

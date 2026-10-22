@@ -73,3 +73,32 @@ describe('isValidEmail', () => {
     expect(isValidEmail('maria @escapa.com')).toBe(false);
   });
 });
+
+describe('isValidCnpj (alphanumeric)', () => {
+  it('accepts the official alphanumeric example with and without mask', () => {
+    expect(isValidCnpj('12.ABC.345/01DE-35')).toBe(true);
+    expect(isValidCnpj('12ABC34501DE35')).toBe(true);
+  });
+
+  it('accepts lowercase letters', () => {
+    expect(isValidCnpj('12.abc.345/01de-35')).toBe(true);
+  });
+
+  it('rejects wrong check digits', () => {
+    expect(isValidCnpj('12.ABC.345/01DE-36')).toBe(false);
+    expect(isValidCnpj('12.ABC.345/01DE-45')).toBe(false);
+  });
+
+  it('rejects letters in the check digit positions', () => {
+    expect(isValidCnpj('12ABC34501DEA5')).toBe(false);
+  });
+
+  it('rejects the wrong length', () => {
+    expect(isValidCnpj('12ABC34501DE3')).toBe(false);
+    expect(isValidCnpj('12ABC34501DE355')).toBe(false);
+  });
+
+  it('rejects repeated characters', () => {
+    expect(isValidCnpj('AAAAAAAAAAAA00')).toBe(false);
+  });
+});

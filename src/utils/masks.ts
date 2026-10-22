@@ -1,9 +1,26 @@
 const CPF_LENGTH = 11;
 const CNPJ_LENGTH = 14;
+const CNPJ_BASE_LENGTH = 12;
 const PHONE_MAX_LENGTH = 11;
 
 /** Remove tudo que não for dígito. */
 export const onlyDigits = (value: string): string => value.replace(/\D/g, '');
+
+/**
+ * Normaliza um CNPJ numérico ou alfanumérico: remove a pontuação e converte para
+ * maiúsculas. As 12 primeiras posições aceitam letras e números; as 2 últimas
+ * (dígitos verificadores) aceitam somente números. O excedente é descartado.
+ */
+export const normalizeCnpj = (value: string): string => {
+  const cleaned = value.replace(/[^0-9a-z]/gi, '').toUpperCase();
+  const base = cleaned.slice(0, CNPJ_BASE_LENGTH);
+  const checkDigits = onlyDigits(cleaned.slice(CNPJ_BASE_LENGTH)).slice(
+    0,
+    CNPJ_LENGTH - CNPJ_BASE_LENGTH,
+  );
+
+  return base + checkDigits;
+};
 
 /** 000.000.000-00, formatando progressivamente enquanto o usuário digita. */
 export const maskCpf = (value: string): string => {
@@ -17,19 +34,19 @@ export const maskCpf = (value: string): string => {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 };
 
-/** 00.000.000/0000-00, formatando progressivamente enquanto o usuário digita. */
+/** AA.AAA.AAA/AAAA-00 (numérico ou alfanumérico), formatando progressivamente. */
 export const maskCnpj = (value: string): string => {
-  const digits = onlyDigits(value).slice(0, CNPJ_LENGTH);
+  const chars = normalizeCnpj(value);
 
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
-  if (digits.length <= 8) {
-    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+  if (chars.length <= 2) return chars;
+  if (chars.length <= 5) return `${chars.slice(0, 2)}.${chars.slice(2)}`;
+  if (chars.length <= 8) {
+    return `${chars.slice(0, 2)}.${chars.slice(2, 5)}.${chars.slice(5)}`;
   }
-  if (digits.length <= 12) {
-    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+  if (chars.length <= 12) {
+    return `${chars.slice(0, 2)}.${chars.slice(2, 5)}.${chars.slice(5, 8)}/${chars.slice(8)}`;
   }
-  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+  return `${chars.slice(0, 2)}.${chars.slice(2, 5)}.${chars.slice(5, 8)}/${chars.slice(8, 12)}-${chars.slice(12)}`;
 };
 
 /**

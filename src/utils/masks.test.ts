@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maskCnpj, maskCpf, maskPhone, onlyDigits } from './masks';
+import { maskCnpj, maskCpf, maskPhone, normalizeCnpj, onlyDigits } from './masks';
 
 describe('onlyDigits', () => {
   it('removes every non-digit character', () => {
@@ -87,5 +87,48 @@ describe('maskPhone', () => {
 
   it('ignores digits beyond 11', () => {
     expect(maskPhone('5199999000199')).toBe('(51) 99999-0001');
+  });
+});
+
+describe('normalizeCnpj', () => {
+  it('removes punctuation and uppercases letters', () => {
+    expect(normalizeCnpj('12.abc.345/01de-35')).toBe('12ABC34501DE35');
+  });
+
+  it('keeps numeric CNPJs unchanged', () => {
+    expect(normalizeCnpj('11.222.333/0001-81')).toBe('11222333000181');
+  });
+
+  it('accepts only digits in the last two positions', () => {
+    expect(normalizeCnpj('12ABC34501DEXY')).toBe('12ABC34501DE');
+    expect(normalizeCnpj('12ABC34501DE3X5')).toBe('12ABC34501DE35');
+  });
+
+  it('ignores characters beyond 14', () => {
+    expect(normalizeCnpj('12ABC34501DE3599')).toBe('12ABC34501DE35');
+  });
+
+  it('returns an empty string for empty input', () => {
+    expect(normalizeCnpj('')).toBe('');
+  });
+});
+
+describe('maskCnpj with letters (alphanumeric CNPJ)', () => {
+  it('formats progressively while typing', () => {
+    expect(maskCnpj('12A')).toBe('12.A');
+    expect(maskCnpj('12ABC')).toBe('12.ABC');
+    expect(maskCnpj('12ABC345')).toBe('12.ABC.345');
+    expect(maskCnpj('12ABC3450')).toBe('12.ABC.345/0');
+    expect(maskCnpj('12ABC34501DE')).toBe('12.ABC.345/01DE');
+    expect(maskCnpj('12ABC34501DE3')).toBe('12.ABC.345/01DE-3');
+    expect(maskCnpj('12ABC34501DE35')).toBe('12.ABC.345/01DE-35');
+  });
+
+  it('uppercases a pasted value typed in lowercase', () => {
+    expect(maskCnpj('12.abc.345/01de-35')).toBe('12.ABC.345/01DE-35');
+  });
+
+  it('ignores letters in the check digit positions', () => {
+    expect(maskCnpj('12ABC34501DE3X5')).toBe('12.ABC.345/01DE-35');
   });
 });
