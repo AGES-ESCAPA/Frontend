@@ -11,6 +11,12 @@
   border: 1px solid var(--color-border-subtle);
 }
 
+/* Foto de perfil (AvatarUpload): a foto é o elemento principal da tela. */
+.large {
+  width: var(--space-20);
+  height: var(--space-20);
+}
+
 .light {
   background-color: var(--color-primary-100);
   color: var(--color-primary-900);
@@ -40,4 +46,9 @@
   font-weight: var(--font-weight-bold);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-wide);
+}
+
+.large .fallback {
+  font-size: var(--text-h5);
+  line-height: var(--text-h5--line-height);
 }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Camera } from 'lucide-react';
 import { Avatar } from '@components/ui/Avatar/Avatar';
 import { Button } from '@components/ui/Button';
@@ -6,7 +6,15 @@ import type { AvatarUploadProps } from './AvatarUploadProps';
 import styles from './AvatarUpload.module.css';
 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
+const KILOBYTE = 1024;
+const MEGABYTE = 1024 * KILOBYTE;
+const MAX_FILE_SIZE_BYTES = 2 * MEGABYTE;
+
+/** Limite legível para a mensagem de erro: "2 MB", "0,1 MB" ou, abaixo de 100 KB, "50 KB". */
+const formatFileSize = (bytes: number): string =>
+  bytes >= 100 * KILOBYTE
+    ? `${(bytes / MEGABYTE).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} MB`
+    : `${Math.round(bytes / KILOBYTE)} KB`;
 
 export const AvatarUpload = ({
   imageUrl,
@@ -14,10 +22,10 @@ export const AvatarUpload = ({
   onFileSelected,
   maxSizeBytes = MAX_FILE_SIZE_BYTES,
 }: AvatarUploadProps) => {
-  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!previewUrl) return;
@@ -31,7 +39,7 @@ export const AvatarUpload = ({
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
 
@@ -45,11 +53,7 @@ export const AvatarUpload = ({
     }
 
     if (file.size > maxSizeBytes) {
-      const maxSizeMB = (maxSizeBytes / (1024 * 1024)).toFixed(2);
-
-      setErrorMessage(
-        `Arquivo muito grande. Por favor, selecione uma imagem menor que ${maxSizeMB}MB.`,
-      );
+      setErrorMessage(`A imagem deve ter no máximo ${formatFileSize(maxSizeBytes)}.`);
       return;
     }
     setErrorMessage(null);
@@ -62,7 +66,7 @@ export const AvatarUpload = ({
 
   return (
     <div className={styles.root}>
-      <Avatar imageUrl={previewUrl ?? imageUrl} name={name} theme="dark" />
+      <Avatar imageUrl={previewUrl ?? imageUrl ?? undefined} name={name} theme="dark" size="lg" />
       {errorMessage && (
         <p role="alert" className={styles.error}>
           {errorMessage}
