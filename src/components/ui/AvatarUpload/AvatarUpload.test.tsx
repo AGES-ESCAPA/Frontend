@@ -1,7 +1,23 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { AvatarUpload } from './AvatarUpload';
+
+vi.mock('@components/ui/Avatar/Avatar', () => ({
+  Avatar: ({ imageUrl, name }: { imageUrl?: string; name: string }) =>
+    imageUrl ? (
+      <img src={imageUrl} alt={name} />
+    ) : (
+      <span>
+        {name
+          .trim()
+          .split(/\s+/)
+          .map((parte) => parte[0])
+          .join('')
+          .slice(0, 1) + name.trim().split(/\s+/)[name.trim().split(/\s+/).length - 1].slice(0, 1)}
+      </span>
+    ),
+}));
 
 describe('AvatarUpload', () => {
   beforeEach(() => {
@@ -13,7 +29,18 @@ describe('AvatarUpload', () => {
     vi.clearAllMocks();
   });
 
-  it('deve exibir as iniciais quando não houver foto', () => {
+  it('deve abrir o seletor de arquivos ao clicar em Alterar foto', () => {
+    render(<AvatarUpload name="Nome do Usuário" onFileSelected={vi.fn()} imageUrl="" />);
+
+    const input = screen.getByTestId('avatar-file-input');
+    const clickSpy = vi.spyOn(input, 'click');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alterar foto' }));
+
+    expect(clickSpy).toHaveBeenCalled();
+  });
+
+  it('deve exibir as iniciais quando não houver foto', async () => {
     render(
       <AvatarUpload
         name="Nome do Usuário"
@@ -22,7 +49,7 @@ describe('AvatarUpload', () => {
         maxSizeBytes={2 * 1024 * 1024}
       />,
     );
-    expect(screen.getByText('NU')).toBeInTheDocument();
+    expect(await screen.findByText('NU')).toBeInTheDocument();
   });
 
   it('deve gerar pré-visualização e disparar onFileSelected com arquivo válido', async () => {
@@ -43,7 +70,10 @@ describe('AvatarUpload', () => {
 
     expect(global.URL.createObjectURL).toHaveBeenCalledWith(file);
     expect(onFileSelected).toHaveBeenCalledWith(file);
-    expect(screen.getByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute('src', 'mock-url');
+    expect(await screen.findByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute(
+      'src',
+      'mock-url',
+    );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -87,7 +117,7 @@ describe('AvatarUpload', () => {
     expect(onFileSelected).not.toHaveBeenCalled();
   });
 
-  it('deve exibir a foto existente', () => {
+  it('deve exibir a foto existente', async () => {
     render(
       <AvatarUpload
         name="Nome do Usuário"
@@ -97,7 +127,7 @@ describe('AvatarUpload', () => {
       />,
     );
 
-    expect(screen.getByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute(
+    expect(await screen.findByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute(
       'src',
       'foto-atual.png',
     );
@@ -121,7 +151,7 @@ describe('AvatarUpload', () => {
       applyAccept: false,
     });
 
-    expect(screen.getByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute(
+    expect(await screen.findByRole('img', { name: 'Nome do Usuário' })).toHaveAttribute(
       'src',
       'foto-atual.png',
     );
