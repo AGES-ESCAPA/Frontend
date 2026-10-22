@@ -64,5 +64,7 @@ export type {
   OrderStatus,
   OrderType,
 } from './OrderFilters';
+export { MaskedInput } from './MaskedInput';
+export type { MaskedInputProps, MaskType } from './MaskedInput';
 export { OrderSummary } from './OrderSummary';
 export type { OrderSummaryProps, OrderItem, OrderBuyer } from './OrderSummary';
