@@ -117,20 +117,20 @@
 }
 
 .periodPanel {
-  position: absolute;
-  inset-block-start: calc(100% + var(--space-1));
-  inset-inline-start: 0;
-  z-index: 10;
+  position: fixed;
+  z-index: 1000;
   display: grid;
   gap: var(--space-3);
-  width: max(100%, var(--container-xs));
+  width: var(--container-xs);
   max-width: calc(100vw - var(--space-8));
+  max-height: calc(100vh - var(--space-8));
   padding: var(--space-3);
   box-sizing: border-box;
   background-color: var(--color-primary-700);
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
+  overflow-y: auto;
 }
 
 .periodPanel[hidden] {
@@ -175,6 +175,7 @@
 }
 
 .root .clearButton {
+  align-self: stretch;
   min-height: var(--space-12);
   padding: 0 var(--space-3);
   color: var(--color-text-primary);
@@ -194,7 +195,7 @@
   color: var(--color-error-300);
 }
 
-@media (width >= 640px) {
+@media (width >= 40rem) {
   .field,
   .field .selectControl,
   .root .clearButton {
@@ -202,7 +203,7 @@
   }
 }
 
-@media (width >= 1024px) {
+@media (width >= 64rem) {
   .fields {
     grid-template-columns:
       minmax(0, 0.8fr)

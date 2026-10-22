@@ -5,7 +5,7 @@
   color: var(--color-text-primary);
   /* Cor das linhas divisórias */
   --order-divider: var(--color-neutral-800);
-  --order-line: var(--border-width, 0.0625rem);
+  --order-line: var(--border-width-thin);
 }
 
 .statusRow {
@@ -18,7 +18,7 @@
 .statusRow .value {
   font-size: var(--text-h5);
   font-weight: var(--font-weight-bold);
-  line-height: 1;
+  line-height: var(--text-h5--line-height);
   color: var(--color-text-primary);
   white-space: nowrap;
 }
@@ -51,7 +51,7 @@
   color: var(--tone-fg);
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.25;
+  line-height: var(--text-body-3--line-height);
 }
 
 .statusBadge::before {
@@ -64,17 +64,16 @@
   flex-shrink: 0;
 }
 
-/* Títulos de seção */
+/* Título de seção */
 .sectionTitle {
   margin: 0 0 var(--space-3);
   font-size: var(--text-body-4);
   font-weight: var(--font-weight-bold);
-  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-info-300);
 }
 
-/* Linhas Nome / E-mail / CPF / Telefone / Tipo de conta */
+/* Linhas */
 .detailGrid {
   display: flex;
   flex-direction: column;
@@ -120,7 +119,7 @@
   padding: var(--space-4) var(--space-5);
   background-color: var(--color-primary-700);
   border: var(--order-line) solid var(--color-border);
-  border-radius: var(--radius-lg, var(--radius-md));
+  border-radius: var(--radius-lg);
 }
 
 .itemsCardHeader {
@@ -135,7 +134,7 @@
   font-size: var(--text-body-2);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  line-height: 1.35;
+  line-height: var(--text-body-2--line-height);
 }
 
 .itemsCardPrice {
@@ -143,14 +142,14 @@
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   white-space: nowrap;
-  line-height: 1.35;
+  line-height: var(--text-body-2--line-height);
 }
 
 .itemsCardMeta {
   margin: 0;
   font-size: var(--text-body-3);
   color: var(--color-text-muted);
-  line-height: 1.4;
+  line-height: var(--text-body-3--line-height);
 }
 
 .itemsCardPayment {
@@ -229,7 +228,7 @@
   color: var(--tone-fg);
   font-size: var(--text-body-4);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.2;
+  line-height: var(--text-body-4--line-height);
 }
 
 .historyTop time {
@@ -241,7 +240,7 @@
   margin: 0;
   font-size: var(--text-body-3);
   color: var(--color-text-muted);
-  line-height: 1.4;
+  line-height: var(--text-body-3--line-height);
 }
 
 /* Rodapé — ações (Reembolsar / Cancelar) */

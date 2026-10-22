@@ -72,9 +72,8 @@ export type {
 export {
   OrderDetailModal,
   PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
-  formatCurrency,
-  formatDate,
   formatDateTime,
 } from './OrderDetailModal';
 export type {

@@ -16,7 +16,6 @@ const renderPage = () =>
   );
 
 describe('Ordermanagement', () => {
-  /*Teste 1 */
   it('exibe o resumo e a listagem de pedidos', () => {
     renderPage();
 
@@ -31,7 +30,16 @@ describe('Ordermanagement', () => {
     expect(screen.getByText('Mostrando 7 de 7 pedidos')).toBeInTheDocument();
   });
 
-  /*Teste 2 */
+  it('formata datas e métodos de pagamento para exibição', () => {
+    renderPage();
+
+    expect(screen.getByText('17 de agosto de 2026')).toBeInTheDocument();
+    expect(screen.getAllByText('Cartão de Crédito')).toHaveLength(2);
+    expect(screen.getAllByText('PIX')).toHaveLength(4);
+    expect(screen.getByText('Boleto')).toBeInTheDocument();
+    expect(screen.queryByText('CARD')).not.toBeInTheDocument();
+    expect(screen.queryByText('BOLETO')).not.toBeInTheDocument();
+  });
 
   it('filtra por tipo de pedido', async () => {
     const user = userEvent.setup();
@@ -41,8 +49,6 @@ describe('Ordermanagement', () => {
 
     expect(getOrderRows()).toHaveLength(3);
   });
-
-  /*Teste 3 */
 
   it('filtra por status', async () => {
     const user = userEvent.setup();
@@ -54,8 +60,6 @@ describe('Ordermanagement', () => {
     expect(getOrderRows()[0]).toHaveTextContent('Roberto Alves');
   });
 
-  /*Teste 4*/
-
   it('filtra por curso', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -64,8 +68,6 @@ describe('Ordermanagement', () => {
 
     expect(getOrderRows()).toHaveLength(2);
   });
-
-  /*Teste 5*/
 
   it('filtra por período', async () => {
     const user = userEvent.setup();
@@ -79,8 +81,6 @@ describe('Ordermanagement', () => {
     expect(getOrderRows()).toHaveLength(2);
   });
 
-  /*Teste 6*/
-
   it('combina filtros de tipo e curso', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -91,8 +91,6 @@ describe('Ordermanagement', () => {
     expect(getOrderRows()).toHaveLength(1);
     expect(getOrderRows()[0]).toHaveTextContent('Marina Oliveira');
   });
-
-  /*Teste 7 */
 
   it('limpa todos os filtros e restaura a contagem de pedidos', async () => {
     const user = userEvent.setup();
@@ -107,8 +105,6 @@ describe('Ordermanagement', () => {
     expect(screen.getByText('Mostrando 7 de 7 pedidos')).toBeInTheDocument();
   });
 
-  /*Teste 7 */
-
   it('busca pedidos pelo nome do solicitante', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -118,8 +114,6 @@ describe('Ordermanagement', () => {
     expect(getOrderRows()).toHaveLength(1);
     expect(getOrderRows()[0]).toHaveTextContent('Marina Oliveira');
   });
-
-  /*Teste 8 */
 
   it('exibe os detalhes do pedido corporativo, com assentos e histórico', async () => {
     const user = userEvent.setup();
@@ -133,7 +127,18 @@ describe('Ordermanagement', () => {
     expect(dialog).toHaveTextContent('Pagamento aprovado.');
   });
 
-  /*Teste 8 */
+  it('exibe o título "Detalhe do pedido" acima do código no modal', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Ver pedido PED-00142' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Detalhe do pedido' });
+    const title = within(dialog).getByRole('heading', { name: 'Detalhe do pedido' });
+    const code = within(dialog).getByText('PED-00142');
+
+    expect(title.compareDocumentPosition(code) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 
   it('exibe o histórico completo de um pedido reembolsado', async () => {
     const user = userEvent.setup();
@@ -145,8 +150,6 @@ describe('Ordermanagement', () => {
     expect(dialog).toHaveTextContent('Pagamento aprovado.');
     expect(dialog).toHaveTextContent('Reembolso solicitado pelo administrador.');
   });
-
-  /*Teste 9 */
 
   it('exibe os ícones de ação em cada pedido, mantendo cancelamento e reembolso indisponíveis', () => {
     renderPage();
@@ -162,8 +165,6 @@ describe('Ordermanagement', () => {
       .forEach((button) => expect(button).toBeDisabled());
   });
 
-  /*Teste 10*/
-
   it('mantém a opção "Todos" do tipo como placeholder desabilitado', () => {
     renderPage();
 
@@ -172,20 +173,16 @@ describe('Ordermanagement', () => {
     expect(option).toBeDisabled();
   });
 
-  /*Teste 10b*/
-
   it('abre o modal do pedido clicado e o fecha ao clicar em Fechar', async () => {
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getByRole('button', { name: 'Ver pedido PED-00139' }));
-    const dialog = screen.getByRole('dialog', { name: 'PED-00139' });
+    const dialog = screen.getByRole('dialog', { name: 'Detalhe do pedido' });
     await user.click(within(dialog).getByRole('button', { name: 'Fechar' }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
-
-  /*Teste 11 */
 
   it('mostra zero pedidos quando a busca não encontra ninguém', async () => {
     const user = userEvent.setup();
