@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Bell, Menu, X } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Link } from 'react-router-dom';
 import { Avatar, Button } from '@components/ui';
 import logo from '@assets/escapa_logo.png';
 import styles from './Navbar.module.css';
@@ -31,6 +32,8 @@ export type NavbarProps = (
    */
   collapsible?: boolean;
   onLogout?: () => void;
+  profileHref?: string;
+  showProfileLink?: boolean;
 };
 
 export const Navbar = ({
@@ -39,6 +42,8 @@ export const Navbar = ({
   notificationsCount = 0,
   collapsible = true,
   onLogout,
+  profileHref = state === 'company' ? '/empresa/perfil' : '/meu-perfil',
+  showProfileLink = true,
 }: NavbarProps) => {
   const isProfile = state === 'user' || state === 'company';
   const hasMenu = state === 'noAuth' || isProfile;
@@ -126,9 +131,11 @@ export const Navbar = ({
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content className={styles.profileMenu} align="end" sideOffset={8}>
-                  <DropdownMenu.Item asChild className={styles.profileMenuItem}>
-                    <a href="/meu-perfil">Meu perfil</a>
-                  </DropdownMenu.Item>
+                  {showProfileLink && (
+                    <DropdownMenu.Item asChild className={styles.profileMenuItem}>
+                      <Link to={profileHref}>Meu perfil</Link>
+                    </DropdownMenu.Item>
+                  )}
                   <DropdownMenu.Item
                     className={styles.profileMenuItem}
                     onSelect={() => onLogout?.()}

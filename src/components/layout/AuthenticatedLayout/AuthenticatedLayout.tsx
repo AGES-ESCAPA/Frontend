@@ -70,6 +70,8 @@ export const AuthenticatedLayout = ({
           notificationsCount={notificationsCount}
           collapsible={role !== 'student'}
           onLogout={resolvedLogout}
+          profileHref={role === 'company' ? '/empresa/perfil' : '/meu-perfil'}
+          showProfileLink={role !== 'admin'}
         />
 
         <main className={styles.main}>{children}</main>
