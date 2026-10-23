@@ -4,6 +4,7 @@
   width: 100%;
   min-height: var(--space-12);
   overflow: hidden;
+  color-scheme: dark;
   background-color: var(--color-primary-700);
   border: 1px solid transparent;
   border-radius: var(--radius-lg);
@@ -92,4 +93,12 @@
 
 .hasRightAction .input {
   padding-inline-end: var(--space-2);
+}
+
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus {
+  caret-color: var(--color-text-primary);
+  -webkit-text-fill-color: var(--color-text-primary);
+  -webkit-box-shadow: 0 0 0 var(--space-20) var(--color-primary-700) inset;
 }
