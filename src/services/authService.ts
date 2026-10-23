@@ -15,6 +15,7 @@ const API_BASE_URL = getApiBaseUrl();
 
 interface LoginResponse {
   accessToken: string;
+  expiresIn: number;
   user: AuthUserResponse;
 }
 
@@ -155,7 +156,10 @@ export const authService = {
     );
   },
 
-  async login(email: string, password: string): Promise<{ token: string; user: AuthUser }> {
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ token: string; user: AuthUser; expiresIn: number }> {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -171,7 +175,18 @@ export const authService = {
       throw new AuthServiceError(500, 'A resposta de autenticação não contém um token.');
     }
 
-    return { token, user: mapAuthUser(data.user) };
+    if (
+      typeof data.expiresIn !== 'number' ||
+      !Number.isFinite(data.expiresIn) ||
+      data.expiresIn <= 0
+    ) {
+      throw new AuthServiceError(
+        500,
+        'A resposta de autenticação contém um prazo de sessão inválido.',
+      );
+    }
+
+    return { token, user: mapAuthUser(data.user), expiresIn: data.expiresIn };
   },
 
   async getCurrentUser(token: string): Promise<AuthUser> {

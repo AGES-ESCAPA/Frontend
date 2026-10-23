@@ -36,7 +36,7 @@ export const Login = () => {
 
     try {
       const session = await authService.login(email, password);
-      login(session.token, session.user);
+      login(session.token, session.user, session.expiresIn);
       navigate(getPostLoginDestination(session.user.role, returnTo), { replace: true });
     } catch (error: unknown) {
       hasStartedLogin.current = false;
