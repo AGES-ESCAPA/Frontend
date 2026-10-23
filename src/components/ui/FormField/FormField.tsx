@@ -40,10 +40,18 @@ export const FormField = ({
 
       {children}
 
-      {hint === undefined ? null : <p className={styles.hint}>{hint}</p>}
+      {hint === undefined ? null : (
+        <p id={htmlFor === undefined ? undefined : `${htmlFor}-hint`} className={styles.hint}>
+          {hint}
+        </p>
+      )}
 
       {error === undefined ? null : (
-        <p className={styles.error} role="alert">
+        <p
+          id={htmlFor === undefined ? undefined : `${htmlFor}-error`}
+          className={styles.error}
+          role="alert"
+        >
           {error}
         </p>
       )}

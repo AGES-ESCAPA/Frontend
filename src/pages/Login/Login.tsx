@@ -6,11 +6,8 @@ import escapaLogo from '@assets/escapa_logo.png';
 import { useAuth } from '@contexts/useAuth';
 import { AuthServiceError, authService } from '@services/authService';
 import { getDefaultRoute, getPostLoginDestination } from '@routes/access';
+import { authPath, getAuthReturnTo } from '@utils/authReturnTo';
 import styles from './Login.module.css';
-
-interface LoginLocationState {
-  returnTo?: string;
-}
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -27,7 +24,7 @@ export const Login = () => {
     return <div className={styles.page} role="status" aria-label="Restaurando sessão" />;
   if (user && !hasStartedLogin.current) return <Navigate to={getDefaultRoute(user.role)} replace />;
 
-  const returnTo = (location.state as LoginLocationState | null)?.returnTo;
+  const returnTo = getAuthReturnTo(location.state, location.search);
 
   const submitLogin = async () => {
     if (isSubmitting) return;
@@ -103,7 +100,7 @@ export const Login = () => {
         </form>
         <div className={styles.links}>
           <Link to="/esqueci-minha-senha">Esqueci minha senha</Link>
-          <Link to="/cadastro">Criar uma conta</Link>
+          <Link to={authPath('/cadastro', returnTo)}>Criar uma conta</Link>
         </div>
       </main>
       <Toast

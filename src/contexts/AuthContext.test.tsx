@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { authenticatedFetch, setUnauthorizedHandler } from '@services/api';
 import { AuthServiceError, authService } from '@services/authService';
 import type { AuthUser } from '@/types/auth';
@@ -25,6 +25,7 @@ describe('AuthProvider', () => {
     setUnauthorizedHandler(null);
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('restores the session from a saved access token', async () => {
@@ -72,6 +73,36 @@ describe('AuthProvider', () => {
     });
 
     await waitFor(() => expect(screen.getByText('false|false|anonymous')).toBeInTheDocument());
+    expect(localStorage.getItem('access_token')).toBeNull();
+  });
+
+  it('uses the registration lifetime in seconds and ends the session at expiration', () => {
+    vi.useFakeTimers();
+    const now = Date.now();
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    act(() => result.current.login('registration-token', student, 120));
+    expect(localStorage.getItem('access_token')).toBe('registration-token');
+    expect(localStorage.getItem('access_token_expires_at')).toBe(String(now + 120_000));
+    expect(result.current.user).toEqual(student);
+    expect(result.current.isAuthenticated).toBe(true);
+    act(() => vi.advanceTimersByTime(120_000));
+    expect(result.current.user).toBeNull();
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('access_token_expires_at')).toBeNull();
+  });
+
+  it('does not restore a session whose persisted lifetime has already elapsed', async () => {
+    localStorage.setItem('access_token', 'expired-registration-token');
+    localStorage.setItem('access_token_expires_at', String(Date.now() - 1000));
+    const getCurrentUser = vi.spyOn(authService, 'getCurrentUser');
+    render(
+      <AuthProvider>
+        <SessionProbe />
+      </AuthProvider>,
+    );
+    await screen.findByText('false|false|anonymous');
+    expect(getCurrentUser).not.toHaveBeenCalled();
     expect(localStorage.getItem('access_token')).toBeNull();
   });
 });

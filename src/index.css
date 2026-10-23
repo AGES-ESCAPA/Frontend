@@ -228,6 +228,8 @@
   --course-card-image-ratio: 16 / 9;
   --opacity-card-pending: 0.6;
   --border-width-thin: 1px;
+  --touch-target-min: 2.75rem;
+  --viewport-height: 100dvh;
 
   /* ── Espaçamento ────────────────────────────────────────────────
      Unidade base: --spacing = 0.25rem (4px).
