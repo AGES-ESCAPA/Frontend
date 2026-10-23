@@ -2,7 +2,19 @@ import type { ReactNode } from 'react';
 import { Navbar } from '../Navbar/Navbar';
 import { Sidebar } from '../Sidebar';
 import type { SidebarMenuItem, SidebarRole, SidebarUser } from '../Sidebar';
+import { useOptionalAuth } from '@contexts/useAuth';
 import styles from './AuthenticatedLayout.module.css';
+
+const getRoleLabel = (role: string): string => {
+  const labels: Record<string, string> = {
+    ADMIN: 'Administrador',
+    COMPANY: 'Empresa',
+    STUDENT: 'Aluno',
+    EMPLOYEE: 'Colaborador',
+  };
+
+  return labels[role] ?? role;
+};
 
 export interface AuthenticatedLayoutProps {
   /** Perfil do usuário logado — define a variante da Sidebar e da Navbar. */
@@ -30,19 +42,40 @@ export const AuthenticatedLayout = ({
   notificationsCount,
   onLogout,
   children,
-}: AuthenticatedLayoutProps) => (
-  <div className={styles.layout}>
-    <Sidebar role={role} items={items} user={user} onLogout={onLogout} />
+}: AuthenticatedLayoutProps) => {
+  const auth = useOptionalAuth();
+  const sessionUser = auth?.user;
+  const resolvedUser: SidebarUser = sessionUser
+    ? {
+        name: sessionUser.name,
+        role: getRoleLabel(sessionUser.role),
+        email: sessionUser.email,
+        avatarUrl: sessionUser.avatarUrl ?? undefined,
+      }
+    : user;
+  const resolvedLogout = sessionUser ? auth.logout : onLogout;
 
-    <div className={styles.content}>
-      <Navbar
-        state={role === 'company' ? 'company' : 'user'}
-        user={{ name: user.name, role: user.role, avatarUrl: user.avatarUrl }}
-        notificationsCount={notificationsCount}
-        collapsible={role !== 'student'}
-      />
+  return (
+    <div className={styles.layout}>
+      <Sidebar role={role} items={items} user={resolvedUser} onLogout={resolvedLogout} />
 
-      <main className={styles.main}>{children}</main>
+      <div className={styles.content}>
+        <Navbar
+          state={role === 'company' ? 'company' : 'user'}
+          user={{
+            name: resolvedUser.name,
+            role: resolvedUser.role,
+            avatarUrl: resolvedUser.avatarUrl,
+          }}
+          notificationsCount={notificationsCount}
+          collapsible={role !== 'student'}
+          onLogout={resolvedLogout}
+          profileHref={role === 'company' ? '/empresa/perfil' : '/meu-perfil'}
+          showProfileLink={role !== 'admin'}
+        />
+
+        <main className={styles.main}>{children}</main>
+      </div>
     </div>
-  </div>
-);
+  );
+};

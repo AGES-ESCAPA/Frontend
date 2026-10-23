@@ -4,7 +4,7 @@
  * Comunicação com a API de aulas (TSK-05-BACK). As telas e o modal nunca
  * chamam `fetch` diretamente: elas usam estas funções.
  */
-import { adminHeaders, studentHeaders } from '@services/api';
+import { authenticatedFetch } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import type {
   Lesson,
@@ -190,11 +190,13 @@ export const getStudentLesson = async (
   lessonId: string,
   signal?: AbortSignal,
 ): Promise<Lesson> => {
-  const response = await fetch(`${API_BASE_URL}/student/courses/${courseId}/lessons/${lessonId}`, {
-    method: 'GET',
-    headers: studentHeaders(),
-    signal,
-  });
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/student/courses/${courseId}/lessons/${lessonId}`,
+    {
+      method: 'GET',
+      signal,
+    },
+  );
 
   if (!response.ok) {
     const errorData: unknown = await response.json().catch(() => null);
@@ -211,19 +213,20 @@ export const getStudentLesson = async (
 };
 
 export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
-  const response = await fetch(`${API_BASE_URL}/admin/modules/${payload.moduleId}/contents`, {
-    method: 'POST',
-    headers: adminHeaders(),
-    body: JSON.stringify(buildCreateContentRequest(payload)),
-  });
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/admin/modules/${payload.moduleId}/contents`,
+    {
+      method: 'POST',
+      body: JSON.stringify(buildCreateContentRequest(payload)),
+    },
+  );
 
   return parseLessonResponse(response, 'Não foi possível criar a aula.');
 };
 
 export const updateLesson = async (lessonId: string, payload: LessonPayload): Promise<Lesson> => {
-  const response = await fetch(`${API_BASE_URL}/admin/contents/${lessonId}`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/admin/contents/${lessonId}`, {
     method: 'PUT',
-    headers: adminHeaders(),
     body: JSON.stringify(buildCreateContentRequest(payload)),
   });
 
