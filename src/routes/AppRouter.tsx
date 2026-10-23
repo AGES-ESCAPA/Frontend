@@ -105,7 +105,7 @@ const PageLoader = () => (
  *  1. Crie a página em src/pages/NomeDaPagina/NomeDaPagina.tsx
  *  2. Adicione o lazy import acima
  *  3. Adicione um <Route> abaixo
- *  4. Para rotas protegidas, envolva com <ProtectedRoute> (a criar)
+ *  4. Pfara rotas protegidas, envolva com <ProtectedRoute> (a criar)
  */
 export const AppRouter = () => {
   return (

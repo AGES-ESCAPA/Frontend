@@ -2,15 +2,22 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { courseService } from '@services/courseService';
+import { courseService, CourseRequestError } from '@services/courseService';
+import type * as CourseServiceModule from '@services/courseService';
 import type { PublicCourseDetails } from '@/types/course';
 import { Checkout } from './Checkout';
 
-vi.mock('@services/courseService', () => ({
-  courseService: {
-    getPublicCourseById: vi.fn(),
-  },
-}));
+vi.mock('@services/courseService', async (importOriginal) => {
+  const actual = await importOriginal<typeof CourseServiceModule>();
+
+  return {
+    ...actual,
+    courseService: {
+      ...actual.courseService,
+      getPublicCourseById: vi.fn(),
+    },
+  };
+});
 
 const getPublicCourseByIdMock = vi.mocked(courseService.getPublicCourseById);
 
@@ -57,85 +64,146 @@ describe('Checkout', () => {
   it('should show the page heading', async () => {
     renderCheckout();
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Finalizar Compra' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Finalizar Compra',
+      }),
+    ).toBeInTheDocument();
+
     expect(screen.getByText('Pagamento')).toBeInTheDocument();
-    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+
+    await screen.findByRole('button', {
+      name: 'Pagar R$167,00',
+    });
   });
 
-  it('should load the course value and show it on the pay button', async () => {
+  it('should display the loading state while fetching the course', async () => {
     renderCheckout();
 
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando os dados da compra');
-    expect(await screen.findByRole('button', { name: 'Pagar R$167,00' })).toBeInTheDocument();
+    expect(screen.getByText('Carregando os dados da compra...')).toBeInTheDocument();
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'Pagar R$167,00',
+      }),
+    ).toBeInTheDocument();
+
     expect(getPublicCourseByIdMock).toHaveBeenCalledWith(COURSE_ID, expect.any(AbortSignal));
   });
 
-  it('should show a single credit card payment method with the card form', async () => {
+  it('should display the credit card form without a payment method selector', async () => {
     renderCheckout();
 
     await screen.findByLabelText('Número do cartão');
 
-    expect(screen.getAllByRole('radio')).toHaveLength(1);
-    expect(screen.getByText('Cartão de Crédito')).toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+
+    expect(screen.getByLabelText('Nome impresso no cartão')).toBeInTheDocument();
+
+    expect(screen.getByLabelText('Número do cartão')).toBeInTheDocument();
+
     expect(screen.queryByText(/pix/i)).not.toBeInTheDocument();
+
     expect(screen.queryByText(/boleto/i)).not.toBeInTheDocument();
   });
 
   it('should only enable the pay button when the card form is valid', async () => {
     const user = userEvent.setup();
+
     renderCheckout();
-    const button = await screen.findByRole('button', { name: 'Pagar R$167,00' });
+
+    const button = await screen.findByRole('button', {
+      name: 'Pagar R$167,00',
+    });
 
     expect(button).toBeDisabled();
+
     await user.type(screen.getByLabelText('Nome impresso no cartão'), 'jorge amado');
+
     await user.type(screen.getByLabelText('Número do cartão'), VALID_NUMBER);
+
     await user.type(screen.getByLabelText('Data de vencimento'), '1299');
+
     expect(button).toBeDisabled();
+
     await user.type(screen.getByLabelText('CVV'), '123');
 
     expect(button).toBeEnabled();
   });
 
-  it('should trigger the purchase confirmation with only the method and installments', async () => {
+  it('should trigger confirmation with CARD and installments', async () => {
     const user = userEvent.setup();
     const onConfirm = vi.fn();
-    renderCheckout(`/checkout/${COURSE_ID}`, { onConfirm });
-    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+
+    renderCheckout(`/checkout/${COURSE_ID}`, {
+      onConfirm,
+    });
+
+    await screen.findByRole('button', {
+      name: 'Pagar R$167,00',
+    });
+
     await user.type(screen.getByLabelText('Nome impresso no cartão'), 'jorge amado');
+
     await user.type(screen.getByLabelText('Número do cartão'), VALID_NUMBER);
+
     await user.type(screen.getByLabelText('Data de vencimento'), '1299');
+
     await user.type(screen.getByLabelText('CVV'), '123');
 
-    await user.click(screen.getByRole('button', { name: 'Pagar R$167,00' }));
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Pagar R$167,00',
+      }),
+    );
 
-    expect(onConfirm).toHaveBeenCalledWith({ paymentMethod: 'CARD', installments: 1 });
+    expect(onConfirm).toHaveBeenCalledWith({
+      paymentMethod: 'CARD',
+      installments: 1,
+    });
+
     expect(JSON.stringify(onConfirm.mock.calls)).not.toContain(VALID_NUMBER);
   });
 
-  it('should render the order summary in the side column when it is provided', async () => {
-    renderCheckout(`/checkout/${COURSE_ID}`, { summary: <p>Pacote 10 Assentos Corporativos</p> });
+  it('should render a custom order summary when provided', async () => {
+    renderCheckout(`/checkout/${COURSE_ID}`, {
+      summary: <p>Pacote 10 Assentos Corporativos</p>,
+    });
 
-    await screen.findByRole('button', { name: 'Pagar R$167,00' });
-
-    expect(screen.getByRole('complementary', { name: 'Resumo do pedido' })).toHaveTextContent(
-      'Pacote 10 Assentos Corporativos',
-    );
-  });
-
-  it('should not render the summary column when there is no summary', async () => {
-    renderCheckout();
-
-    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+    await screen.findByRole('button', {
+      name: 'Pagar R$167,00',
+    });
 
     expect(
-      screen.queryByRole('complementary', { name: 'Resumo do pedido' }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('complementary', {
+        name: 'Resumo do pedido',
+      }),
+    ).toHaveTextContent('Pacote 10 Assentos Corporativos');
+  });
+
+  it('should automatically render the course summary', async () => {
+    renderCheckout();
+
+    await screen.findByRole('button', {
+      name: 'Pagar R$167,00',
+    });
+
+    const summary = screen.getByRole('complementary', {
+      name: 'Resumo do pedido',
+    });
+
+    expect(summary).toBeInTheDocument();
+
+    expect(summary).toHaveTextContent('Hospitalidade de Luxo');
   });
 
   it('should use the student layout on the default route', async () => {
     renderCheckout();
 
-    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+    await screen.findByRole('button', {
+      name: 'Pagar R$167,00',
+    });
 
     expect(screen.getAllByText('Meus Cursos').length).toBeGreaterThan(0);
   });
@@ -143,23 +211,61 @@ describe('Checkout', () => {
   it('should use the company layout on the company route', async () => {
     renderCheckout(`/empresa/checkout/${COURSE_ID}`);
 
-    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+    await screen.findByRole('button', {
+      name: 'Pagar R$167,00',
+    });
 
     expect(screen.getAllByText('Colaboradores').length).toBeGreaterThan(0);
   });
 
-  it('should show an error with a link back to the catalog when the course cannot be loaded', async () => {
-    getPublicCourseByIdMock.mockRejectedValue(new Error('Course not found'));
+  it('should display a not-found message when the course returns HTTP 404', async () => {
+    getPublicCourseByIdMock.mockRejectedValue(new CourseRequestError('Curso não encontrado', 404));
 
     renderCheckout();
 
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('Course not found');
-    expect(screen.getByRole('link', { name: 'Voltar ao catálogo' })).toHaveAttribute(
-      'href',
-      '/aluno/cursos',
+
+    expect(alert).toHaveTextContent('Curso não encontrado');
+
+    expect(
+      screen.getByRole('link', {
+        name: 'Voltar ao catálogo',
+      }),
+    ).toHaveAttribute('href', '/aluno/cursos');
+
+    expect(
+      screen.queryByRole('button', {
+        name: /Pagar/,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('should display an error and allow retrying after an API failure', async () => {
+    const user = userEvent.setup();
+
+    getPublicCourseByIdMock
+      .mockRejectedValueOnce(new Error('Falha de rede'))
+      .mockResolvedValueOnce(details);
+
+    renderCheckout();
+
+    const alert = await screen.findByRole('alert');
+
+    expect(alert).toHaveTextContent('Falha de rede');
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Tentar novamente',
+      }),
     );
-    expect(screen.queryByRole('button', { name: /Pagar/ })).not.toBeInTheDocument();
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'Pagar R$167,00',
+      }),
+    ).toBeInTheDocument();
+
+    expect(getPublicCourseByIdMock).toHaveBeenCalledTimes(2);
   });
 
   it('should send a company back to the company catalog on error', async () => {
@@ -167,11 +273,12 @@ describe('Checkout', () => {
 
     renderCheckout(`/empresa/checkout/${COURSE_ID}`);
 
-    await waitFor(() =>
-      expect(screen.getByRole('link', { name: 'Voltar ao catálogo' })).toHaveAttribute(
-        'href',
-        '/empresa/cursos',
-      ),
-    );
+    await waitFor(() => {
+      expect(
+        screen.getByRole('link', {
+          name: 'Voltar ao catálogo',
+        }),
+      ).toHaveAttribute('href', '/empresa/cursos');
+    });
   });
 });

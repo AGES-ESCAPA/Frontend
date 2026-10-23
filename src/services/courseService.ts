@@ -49,6 +49,16 @@ const extractErrorMessage = async (response: Response, fallback: string): Promis
   return fallback;
 };
 
+export class CourseRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'CourseRequestError';
+  }
+}
+
 const getPublicCourseById = async (
   id: string,
   signal?: AbortSignal,
@@ -60,8 +70,9 @@ const getPublicCourseById = async (
   }
 
   if (!response.ok) {
-    throw new Error(
+    throw new CourseRequestError(
       await extractErrorMessage(response, 'Não foi possível carregar os dados do curso.'),
+      response.status,
     );
   }
 
