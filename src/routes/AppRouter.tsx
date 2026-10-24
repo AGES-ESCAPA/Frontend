@@ -80,8 +80,8 @@ const RegisterAccountType = lazy(() =>
   })),
 );
 
-const Ordermanagement = lazy(() =>
-  import('@pages/OrderManagement/Ordermanagement').then((m) => ({
+const OrderManagement = lazy(() =>
+  import('@/pages/OrderManagement/OrderManagement').then((m) => ({
     default: m.Ordermanagement,
   })),
 );
@@ -125,7 +125,7 @@ const PageLoader = () => (
  *  1. Crie a página em src/pages/NomeDaPagina/NomeDaPagina.tsx
  *  2. Adicione o lazy import acima
  *  3. Adicione um <Route> abaixo
- *  4. Pfara rotas protegidas, envolva com <ProtectedRoute> (a criar)
+ *  4. Para rotas protegidas, envolva com <ProtectedRoute> e informe os papéis permitidos.
  */
 export const AppRouter = () => {
   return (
@@ -222,7 +222,7 @@ export const AppRouter = () => {
               path="/admin/pedidos"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <Ordermanagement />
+                  <OrderManagement />
                 </ProtectedRoute>
               }
             />

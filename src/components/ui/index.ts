@@ -85,6 +85,8 @@ export type {
   OrderHistoryEntry,
   OrderRow,
 } from './OrderDetailModal';
+export { OrderCancellationAndRefund } from './OrderCancellationAndRefund';
+export type { OrderCancellationAndRefundProps } from './OrderCancellationAndRefund';
 export { MaskedInput } from './MaskedInput';
 export type { MaskedInputProps, MaskType } from './MaskedInput';
 export { OrderSummary } from './OrderSummary';

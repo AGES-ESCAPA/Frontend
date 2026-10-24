@@ -72,19 +72,19 @@ describe('ProtectedRoute', () => {
   });
 
   it('redirects an anonymous user to login and preserves the original route', () => {
-    renderGuard(buildContext(null), '/admin/cursos?tab=active', ['ADMIN']);
+    renderGuard(buildContext(null), '/admin/pedidos?status=APPROVED#latest', ['ADMIN']);
 
-    expect(screen.getByText('/login|/admin/cursos?tab=active')).toBeInTheDocument();
+    expect(screen.getByText('/login|/admin/pedidos?status=APPROVED#latest')).toBeInTheDocument();
   });
 
   it('redirects a user without permission to their own default panel', () => {
-    renderGuard(buildContext(student), '/admin/cursos', ['ADMIN']);
+    renderGuard(buildContext(student), '/admin/pedidos', ['ADMIN']);
 
     expect(screen.getByText('/meus-cursos|')).toBeInTheDocument();
   });
 
   it('renders the requested route for a permitted profile', () => {
-    renderGuard(buildContext(admin), '/admin/cursos', ['ADMIN']);
+    renderGuard(buildContext(admin), '/admin/pedidos', ['ADMIN']);
 
     expect(screen.getByText('Conteúdo protegido')).toBeInTheDocument();
   });

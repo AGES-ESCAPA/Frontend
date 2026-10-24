@@ -92,6 +92,17 @@ describe('OrderDetailModal', () => {
     expect(screen.queryByText(/colaboradores? com acesso/)).not.toBeInTheDocument();
   });
 
+  it('exibe "Detalhe do pedido" acima do código do pedido', () => {
+    renderModal(individualOrder);
+
+    const subtitle = screen.getByText('Detalhe do pedido');
+    const orderCode = screen.getByText(individualOrder.code);
+
+    expect(
+      subtitle.compareDocumentPosition(orderCode) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   /*Teste 2*/
   it('mostra a data do pedido por extenso, em português', () => {
     renderModal(individualOrder);
