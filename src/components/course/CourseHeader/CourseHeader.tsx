@@ -2,6 +2,7 @@ import { Badge, Button } from '@components/ui';
 import { Book, Check, Clock3, GraduationCap, Users } from 'lucide-react';
 import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useOptionalAuth } from '@contexts/useAuth';
 import type { CourseModule, CourseSummary } from '@/types/course';
 import { mapCourseCategory } from '@utils/mapPublicCourse';
 import styles from './CourseHeader.module.css';
@@ -18,15 +19,16 @@ const listLessons = (modules: CourseModule[]) =>
 
 export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons }) => {
   const navigate = useNavigate();
+  const auth = useOptionalAuth();
   const lessons = listLessons(course.modules);
   const freeLessonCount = lessons.filter((lesson) => lesson.isFree).length;
   const isFreeOnly = lessons.length > 0 && freeLessonCount === lessons.length;
 
   const handlePurchase = () => {
     const destination = `/cursos/${course.id}`;
-    const token = localStorage.getItem('access_token') ?? localStorage.getItem('token');
+    const isAuthenticated = auth?.isAuthenticated ?? Boolean(localStorage.getItem('access_token'));
 
-    if (!token) {
+    if (!isAuthenticated) {
       localStorage.setItem(PURCHASE_REDIRECT_KEY, destination);
       navigate('/login', { state: { returnTo: destination } });
       return;

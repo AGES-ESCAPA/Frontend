@@ -1,12 +1,28 @@
-import type { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
-import { getMockUserRole, type MockUserRole } from '@services/mockAuthService';
+import type { ReactElement } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@contexts/useAuth';
+import { getDefaultRoute } from './access';
+import type { UserRole } from '@/types/auth';
 
-export interface ProtectedRouteProps {
-  role: MockUserRole;
-  children: ReactNode;
+interface ProtectedRouteProps {
+  allowedRoles: UserRole[];
+  children: ReactElement;
 }
 
-// Restringe a navegação pelo perfil demo; não substitui a autorização da API.
-export const ProtectedRoute = ({ role, children }: ProtectedRouteProps) =>
-  getMockUserRole() === role ? children : <Navigate to="/login" replace />;
+export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
+  const { isAuthenticated, isRestoring, user } = useAuth();
+  const location = useLocation();
+
+  if (isRestoring) return <div role="status" aria-label="Restaurando sessão" />;
+
+  if (!isAuthenticated || !user) {
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to="/login" replace state={{ returnTo }} />;
+  }
+
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to={getDefaultRoute(user.role)} replace />;
+  }
+
+  return children;
+};

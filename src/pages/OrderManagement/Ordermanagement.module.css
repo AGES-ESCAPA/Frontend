@@ -409,7 +409,7 @@
   }
 
   .search > div {
-    min-height: 2.75rem;
+    min-height: var(--space-12);
   }
 
   .ordersTable > div:nth-child(2) {
@@ -423,12 +423,12 @@
   .inlineFilters > div:first-child > label,
   .inlineFilters > div:first-child > div,
   .inlineFilters > div:first-child > button {
-    min-height: 2.75rem;
+    min-height: var(--space-12);
   }
 
   .iconButton {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
+    min-width: var(--space-12);
+    min-height: var(--space-12);
   }
 
   .panelHeader {
@@ -446,8 +446,8 @@
   /* Cabeçalho oculto visualmente, mas mantido para leitores de tela */
   .ordersTable thead {
     position: absolute;
-    width: 1px;
-    height: 1px;
+    width: var(--border-width-thin);
+    height: var(--border-width-thin);
     overflow: hidden;
     clip-path: inset(50%);
   }

@@ -5,7 +5,7 @@
  * diretamente: elas usam estas funções.
  */
 import type { CurriculumLessonStatus, StudentCurriculum } from '@/types/curriculum';
-import { readApiErrorMessage, studentHeaders } from '@services/api';
+import { authenticatedFetch, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 
@@ -73,11 +73,13 @@ export const getStudentCurriculum = async (
   courseId: string,
   signal?: AbortSignal,
 ): Promise<StudentCurriculum> => {
-  const response = await fetch(`${API_BASE_URL}/student/courses/${courseId}/curriculum`, {
-    method: 'GET',
-    headers: studentHeaders(),
-    signal,
-  });
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/student/courses/${courseId}/curriculum`,
+    {
+      method: 'GET',
+      signal,
+    },
+  );
 
   if (!response.ok) {
     throw new StudentCurriculumError(

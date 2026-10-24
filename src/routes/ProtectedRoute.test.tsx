@@ -1,55 +1,126 @@
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { setMockUserRole } from '@services/mockAuthService';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthProvider } from '@contexts/AuthContext';
+import { AuthContext } from '@contexts/authContextDefinition';
+import type { AuthContextValue } from '@contexts/authContextDefinition';
+import { useAuth } from '@contexts/useAuth';
+import { authService } from '@services/authService';
+import type { AuthUser } from '@/types/auth';
 import { ProtectedRoute } from './ProtectedRoute';
 
-afterEach(() => {
-  cleanup();
-  localStorage.clear();
+const student: AuthUser = {
+  id: 'student-1',
+  name: 'Jorge Amado',
+  email: 'jorge@example.com',
+  role: 'STUDENT',
+};
+
+const admin: AuthUser = { ...student, id: 'admin-1', role: 'ADMIN' };
+
+const LocationProbe = () => {
+  const location = useLocation();
+  const returnTo = (location.state as { returnTo?: string } | null)?.returnTo ?? '';
+  return <output>{`${location.pathname}|${returnTo}`}</output>;
+};
+
+const buildContext = (user: AuthUser | null, isRestoring = false): AuthContextValue => ({
+  user,
+  isAuthenticated: user !== null,
+  isRestoring,
+  login: vi.fn(),
+  logout: vi.fn(),
 });
 
-const renderProtectedRoute = () =>
+const LogoutButton = () => {
+  const { logout } = useAuth();
+
+  return (
+    <button type="button" onClick={logout}>
+      Sair
+    </button>
+  );
+};
+
+const renderGuard = (context: AuthContextValue, path: string, allowedRoles: AuthUser['role'][]) =>
   render(
-    <MemoryRouter initialEntries={['/admin/pedidos']}>
-      <Routes>
-        <Route
-          path="/admin/pedidos"
-          element={
-            <ProtectedRoute role="admin">
-              <h1>Gestão de Pedidos</h1>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/login" element={<h1>Login</h1>} />
-      </Routes>
-    </MemoryRouter>,
+    <AuthContext.Provider value={context}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/meus-cursos" element={<LocationProbe />} />
+          <Route
+            path="*"
+            element={
+              <ProtectedRoute allowedRoles={allowedRoles}>
+                <p>Conteúdo protegido</p>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>
+    </AuthContext.Provider>,
   );
 
-// Cobrem o redirecionamento sem perfil/não admin e o acesso permitido ao admin demo.
 describe('ProtectedRoute', () => {
-  it('redirects to login when no profile is selected', () => {
-    renderProtectedRoute();
-
-    expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Gestão de Pedidos' })).not.toBeInTheDocument();
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+    vi.restoreAllMocks();
   });
 
-  it('redirects non-admin profiles away from the orders page', () => {
-    setMockUserRole('student');
+  it('redirects an anonymous user to login and preserves the original route', () => {
+    renderGuard(buildContext(null), '/admin/pedidos?status=APPROVED#latest', ['ADMIN']);
 
-    renderProtectedRoute();
-
-    expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Gestão de Pedidos' })).not.toBeInTheDocument();
+    expect(screen.getByText('/login|/admin/pedidos?status=APPROVED#latest')).toBeInTheDocument();
   });
 
-  it('allows the admin profile to access the orders page', () => {
-    setMockUserRole('admin');
+  it('redirects a user without permission to their own default panel', () => {
+    renderGuard(buildContext(student), '/admin/pedidos', ['ADMIN']);
 
-    renderProtectedRoute();
+    expect(screen.getByText('/meus-cursos|')).toBeInTheDocument();
+  });
 
-    expect(screen.getByRole('heading', { name: 'Gestão de Pedidos' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Login' })).not.toBeInTheDocument();
+  it('renders the requested route for a permitted profile', () => {
+    renderGuard(buildContext(admin), '/admin/pedidos', ['ADMIN']);
+
+    expect(screen.getByText('Conteúdo protegido')).toBeInTheDocument();
+  });
+
+  it('waits for session restoration before redirecting', () => {
+    renderGuard(buildContext(null, true), '/admin/cursos', ['ADMIN']);
+
+    expect(screen.getByRole('status', { name: 'Restaurando sessão' })).toBeInTheDocument();
+    expect(screen.queryByText('/login|/admin/cursos')).not.toBeInTheDocument();
+  });
+
+  it('clears the session and redirects to login after logout', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('access_token', 'jwt-token');
+    vi.spyOn(authService, 'getCurrentUser').mockResolvedValue(student);
+
+    render(
+      <MemoryRouter initialEntries={['/meus-cursos']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LocationProbe />} />
+            <Route
+              path="/meus-cursos"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <LogoutButton />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Sair' }));
+
+    await waitFor(() => expect(screen.getByText('/login|/meus-cursos')).toBeInTheDocument());
+    expect(localStorage.getItem('access_token')).toBeNull();
   });
 });

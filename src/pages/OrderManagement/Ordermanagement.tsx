@@ -9,17 +9,32 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
   OrderDetailModal,
+  OrderCancellationAndRefund,
   OrderFilters,
   PAYMENT_ICONS,
   STATUS_VARIANTS,
   SearchBar,
   SumCard,
   Table,
+  Toast,
   formatCurrency,
   formatDate,
 } from '@components/ui';
 import type { OrderFiltersValue, OrderRow, TableColumn } from '@components/ui';
+import { useToast } from '@hooks/useToast';
+import {
+  createOrderCancellationMockService,
+  OrderActionError,
+} from '@services/orderCancellationMockService';
+import type {
+  OrderManagementAction,
+  OrderManagementService,
+} from '@services/orderCancellationMockService';
 import styles from './Ordermanagement.module.css';
+
+export interface OrdermanagementProps {
+  orderService?: OrderManagementService;
+}
 
 const ADMIN_USER: SidebarUser = {
   name: 'Admin',
@@ -214,10 +229,6 @@ const menuItems = SIDEBAR_MENU_PRESETS.admin.map((item, index) => ({
   active: index === 0,
 }));
 
-const approvedOrders = ORDERS.filter((order) => order.status === 'APPROVED');
-const approvedRevenue = approvedOrders.reduce((sum, order) => sum + order.total, 0);
-const canceledOrRefundedCount = ORDERS.length - approvedOrders.length;
-
 const columns: TableColumn<OrderRow>[] = [
   {
     id: 'code',
@@ -304,18 +315,66 @@ const columns: TableColumn<OrderRow>[] = [
   },
 ];
 
-export const Ordermanagement = () => {
+export const Ordermanagement = ({ orderService }: OrdermanagementProps = {}) => {
+  const [mockService] = useState(
+    () =>
+      orderService ??
+      createOrderCancellationMockService(ORDERS, {
+        enrollmentProgress: { '1': 42, '2': 68, '3': 15, '4': 0, '5': 100, '6': 73, '7': 0 },
+        occupiedCorporateSeats: { '7': 2 },
+      }),
+  );
+  const [orders, setOrders] = useState<OrderRow[]>(() => mockService.listOrders());
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<OrderFiltersValue>(EMPTY_FILTERS);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const { toast, isOpen, showToast, dismissToast } = useToast();
 
   const filteredOrders = useMemo(
-    () => ORDERS.filter((order) => matchesSearch(order, search) && matchesFilters(order, filters)),
-    [filters, search],
+    () => orders.filter((order) => matchesSearch(order, search) && matchesFilters(order, filters)),
+    [filters, orders, search],
   );
 
-  const selectedOrder = ORDERS.find((order) => order.id === selectedOrderId) ?? null;
+  const approvedOrders = orders.filter((order) => order.status === 'APPROVED');
+  const approvedRevenue = approvedOrders.reduce((sum, order) => sum + order.total, 0);
+  const canceledOrRefundedCount = orders.length - approvedOrders.length;
+  const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
   const closeDetails = () => setSelectedOrderId(null);
+
+  const handleOrderAction = async (
+    order: OrderRow,
+    action: OrderManagementAction,
+  ): Promise<void> => {
+    setPendingOrderId(order.id);
+    try {
+      const result = mockService.executeAction(order.id, action, order.status);
+      setOrders(mockService.listOrders());
+      if (action === 'cancel') {
+        showToast(
+          'success',
+          'Pedido cancelado',
+          `Acesso revogado. Progresso do aluno preservado em ${result.enrollmentAccess.progressPercent}%.`,
+        );
+      } else {
+        showToast(
+          'success',
+          'Reembolso registrado',
+          'O acesso continua revogado e o progresso foi preservado.',
+        );
+      }
+    } catch (error) {
+      if (!(error instanceof OrderActionError)) throw error;
+      setOrders(mockService.listOrders());
+      showToast(
+        'error',
+        error.status === 409 ? 'Não foi possível concluir a ação' : 'Pedido não encontrado',
+        error.message,
+      );
+    } finally {
+      setPendingOrderId(null);
+    }
+  };
 
   const tableColumns: TableColumn<OrderRow>[] = [
     ...columns,
@@ -336,7 +395,7 @@ export const Ordermanagement = () => {
             type="button"
             className={styles.iconButton}
             aria-label={`Reembolsar pedido ${order.code}`}
-            title="Reembolso disponível na próxima etapa"
+            title="Disponível nos detalhes do pedido"
             disabled
           >
             <RotateCcw size={24} aria-hidden="true" />
@@ -345,7 +404,7 @@ export const Ordermanagement = () => {
             type="button"
             className={styles.iconButton}
             aria-label={`Cancelar pedido ${order.code}`}
-            title="Cancelamento disponível na próxima etapa"
+            title="Disponível nos detalhes do pedido"
             disabled
           >
             <CircleX size={24} aria-hidden="true" />
@@ -423,7 +482,7 @@ export const Ordermanagement = () => {
           footer={
             <div className={styles.tableFooter}>
               <p>
-                Mostrando {filteredOrders.length} de {ORDERS.length} pedidos
+                Mostrando {filteredOrders.length} de {orders.length} pedidos
               </p>
               <p className={styles.panelNote}>Liberação de acesso automática via checkout</p>
             </div>
@@ -435,9 +494,25 @@ export const Ordermanagement = () => {
         <OrderDetailModal
           order={selectedOrder}
           open
+          actions={
+            <OrderCancellationAndRefund
+              order={selectedOrder}
+              isSubmitting={pendingOrderId === selectedOrder.id}
+              onAction={(action) => handleOrderAction(selectedOrder, action)}
+            />
+          }
           onOpenChange={(open) => {
             if (!open) closeDetails();
           }}
+        />
+      ) : null}
+      {toast ? (
+        <Toast
+          open={isOpen}
+          onOpenChange={dismissToast}
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
         />
       ) : null}
     </AuthenticatedLayout>
