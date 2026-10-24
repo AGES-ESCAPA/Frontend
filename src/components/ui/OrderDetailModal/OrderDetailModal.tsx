@@ -70,9 +70,8 @@ export const OrderDetailModal = ({ order, open, onOpenChange, actions }: OrderDe
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      subtitle="Detalhe do pedido"
-      subtitleAboveTitle
-      title={order.code}
+      title="Detalhe do pedido"
+      subtitle={order.code}
       size="sm"
       footer={footer}
     >
