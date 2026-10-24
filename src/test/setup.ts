@@ -21,3 +21,9 @@ if (jsdom) {
     }
   }
 }
+
+// O Radix Toast consulta a captura de ponteiro para distinguir clique e arrasto.
+// O navegador possui esta API; o JSDOM ainda nao a implementa.
+if (!HTMLElement.prototype.hasPointerCapture) {
+  HTMLElement.prototype.hasPointerCapture = () => false;
+}

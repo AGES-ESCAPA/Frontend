@@ -81,14 +81,10 @@ describe('curriculumService', () => {
         `/student/courses/${COURSE_ID}/curriculum`,
       );
 
-      expect(fetchMock.mock.calls[0][1]).toEqual({
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': 'b0000000-0000-4000-b000-000000000001',
-        },
-        signal: controller.signal,
-      });
+      const request = fetchMock.mock.calls[0][1] as RequestInit;
+      expect(request.method).toBe('GET');
+      expect(request.signal).toBe(controller.signal);
+      expect(new Headers(request.headers).get('authorization')).toBeNull();
 
       expect(curriculum).toEqual({
         courseId: COURSE_ID,

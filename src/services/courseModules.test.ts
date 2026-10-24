@@ -5,7 +5,6 @@ import { courseModulesApi } from './courseModules';
 const COURSE_ID = 'e0000000-0000-4000-e000-000000000001';
 const FIRST_MODULE_ID = '01000000-0000-4000-9000-000000000001';
 const SECOND_MODULE_ID = '01000000-0000-4000-9000-000000000002';
-const ADMIN_ID = 'a0000000-0000-4000-a000-000000000001';
 
 const modules: AdminCourseModule[] = [
   {
@@ -73,7 +72,7 @@ describe('courseModulesApi', () => {
     const [url, init] = lastCall(fetchMock);
     expect(url).toContain(`/admin/courses/${COURSE_ID}/modules`);
     expect(init.method).toBeUndefined();
-    expect((init.headers as Record<string, string>)['X-User-Id']).toBe(ADMIN_ID);
+    expect(new Headers(init.headers).get('authorization')).toBeNull();
     expect(result).toEqual(modules);
   });
 
@@ -88,8 +87,8 @@ describe('courseModulesApi', () => {
     expect(url).toContain(`/admin/courses/${COURSE_ID}/modules`);
     expect(init.method).toBe('POST');
     expect(init.body).toBe(JSON.stringify({ title: 'Novo módulo' }));
-    expect((init.headers as Record<string, string>)['X-User-Id']).toBe(ADMIN_ID);
-    expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+    expect(new Headers(init.headers).get('authorization')).toBeNull();
+    expect(new Headers(init.headers).get('content-type')).toBe('application/json');
     expect(result.order).toBe(3);
   });
 
@@ -163,7 +162,7 @@ describe('courseModulesApi', () => {
     const [url, init] = lastCall(fetchMock);
     expect(url).toContain(`/admin/modules/${FIRST_MODULE_ID}`);
     expect(init.method).toBe('DELETE');
-    expect((init.headers as Record<string, string>)['X-User-Id']).toBe(ADMIN_ID);
+    expect(new Headers(init.headers).get('authorization')).toBeNull();
   });
 
   it('should fall back to a friendly message when the error body is not JSON', async () => {

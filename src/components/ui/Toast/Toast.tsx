@@ -9,6 +9,8 @@ export interface ToastProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
+  actionLabel?: string;
+  onAction?: () => void;
   variant?: ToastVariant;
   duration?: number;
 }
@@ -20,6 +22,8 @@ export const Toast = ({
   onOpenChange,
   title,
   description,
+  actionLabel,
+  onAction,
   variant = 'success',
   duration = DEFAULT_DURATION,
 }: ToastProps) => (
@@ -42,6 +46,12 @@ export const Toast = ({
           </ToastPrimitive.Description>
         )}
       </div>
+
+      {actionLabel && onAction ? (
+        <ToastPrimitive.Action className={styles.action} altText={actionLabel} onClick={onAction}>
+          {actionLabel}
+        </ToastPrimitive.Action>
+      ) : null}
 
       <ToastPrimitive.Close className={styles.close} aria-label="Fechar notificação">
         <X size={16} aria-hidden="true" />
