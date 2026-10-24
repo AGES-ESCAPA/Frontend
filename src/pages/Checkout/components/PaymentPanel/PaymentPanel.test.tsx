@@ -159,6 +159,18 @@ describe('PaymentPanel', () => {
     });
   });
 
+  it('should show the purchase error above the pay button', () => {
+    setup({ errorMessage: 'Você já tem acesso ativo a este curso.' });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Você já tem acesso ativo a este curso.');
+  });
+
+  it('should not show an alert when there is no error', () => {
+    setup({ errorMessage: null });
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('should disable the pay button and show it as busy when submitting', () => {
     setup({ isSubmitting: true });
 

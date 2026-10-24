@@ -48,6 +48,7 @@ describe('useCheckoutAmount', () => {
     expect(result.current.status).toBe('loading');
     await waitFor(() => expect(result.current.status).toBe('success'));
     expect(result.current.amount).toBe(167);
+    expect(result.current.courseTitle).toBe('Hospitalidade de Luxo');
     expect(getPublicCourseByIdMock).toHaveBeenCalledWith(COURSE_ID, expect.any(AbortSignal));
   });
 

@@ -12,9 +12,9 @@ import {
 } from '@components/ui';
 import { useCourseFilters } from '@hooks/useCourseFilters';
 import { usePublicCourses } from '@hooks/usePublicCourses';
-import { getStudentCurriculum } from '@services/curriculumService';
 import { getStudentEnrollments } from '@services/enrollmentService';
 import type { PublicCourseCard } from '@/types/course';
+import { getCourseAccessPath } from '@utils/courseAccess';
 import { mapPublicCourseToCardProps, toDisplayLevel } from '@utils/mapPublicCourse';
 import styles from './Courses.module.css';
 
@@ -151,19 +151,7 @@ export const Courses = () => {
   };
 
   const handleAccess = async (courseId: string) => {
-    try {
-      const curriculum = await getStudentCurriculum(courseId);
-      const lessons = curriculum.modules.flatMap((module) => module.lessons);
-      const nextLesson = lessons.find((lesson) => lesson.status === 'AVAILABLE') ?? lessons[0];
-      if (nextLesson) {
-        navigate(`/aluno/cursos/${courseId}/aulas/${nextLesson.id}`);
-        return;
-      }
-    } catch {
-      // Sem grade disponível, a página do curso ainda permite consultar o conteúdo.
-    }
-
-    navigate(`/cursos/${courseId}`);
+    navigate(await getCourseAccessPath(courseId));
   };
 
   const ownedStateReady = !isStudent || enrollmentsReady;

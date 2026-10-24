@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, CreditCardForm } from '@components/ui';
 import type { CreditCardFormChange } from '@components/ui';
 import { formatCurrency } from '@utils/formatters';
@@ -13,6 +13,8 @@ export interface PaymentPanelProps {
   amount: number;
   maxInstallments?: number;
   isSubmitting?: boolean;
+  /** Erro da última tentativa de confirmar a compra, mostrado acima do botão. */
+  errorMessage?: string | null;
   onConfirm: (selection: PaymentSelection) => void;
 }
 
@@ -22,6 +24,7 @@ export const PaymentPanel = ({
   amount,
   maxInstallments,
   isSubmitting = false,
+  errorMessage = null,
   onConfirm,
 }: PaymentPanelProps) => {
   const [form, setForm] = useState<CreditCardFormChange>({
@@ -29,14 +32,20 @@ export const PaymentPanel = ({
     installments: 1,
   });
 
-  const confirmationLocked = useRef(false);
+  const [confirmationLocked, setConfirmationLocked] = useState(false);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setConfirmationLocked(false);
+    }
+  }, [isSubmitting]);
 
   const handleConfirm = () => {
-    if (!form.isValid || isSubmitting || confirmationLocked.current) {
+    if (!form.isValid || isSubmitting || confirmationLocked) {
       return;
     }
 
-    confirmationLocked.current = true;
+    setConfirmationLocked(true);
 
     onConfirm({
       paymentMethod: 'CARD',
@@ -53,11 +62,16 @@ export const PaymentPanel = ({
       <CreditCardForm amount={amount} maxInstallments={maxInstallments} onChange={setForm} />
 
       <div className={styles.confirm}>
+        {errorMessage ? (
+          <p className={styles.error} role="alert">
+            {errorMessage}
+          </p>
+        ) : null}
         <Button
           variant="primary"
           fullWidth
           label={`Pagar ${toButtonAmount(amount)}`}
-          disabled={!form.isValid || isSubmitting || confirmationLocked.current}
+          disabled={!form.isValid || isSubmitting || confirmationLocked}
           isLoading={isSubmitting}
           onClick={handleConfirm}
         />

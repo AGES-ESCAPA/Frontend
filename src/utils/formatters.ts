@@ -270,3 +270,16 @@ export const formatCourseVersion = (
   majorVersion: number | null,
   minorVersion: number | null,
 ): string => `v${majorVersion ?? 0}.${minorVersion ?? 0}`;
+
+/**
+ * Formata uma data e hora sem fuso, como o backend serializa um `LocalDateTime`
+ * (ex.: "2026-10-24T15:32:49.461540389"), por extenso e em português. O JavaScript só lê
+ * milissegundos, então as casas decimais a mais são descartadas; entrada inválida vira "".
+ * @example formatDateTime('2026-10-24T15:32:49.461540389') // → "24 de outubro de 2026 às 15:32"
+ */
+export const formatDateTime = (localDateTime: string): string => {
+  const date = new Date(localDateTime.replace(/(\.\d{3})\d+$/, '$1'));
+  if (Number.isNaN(date.getTime())) return '';
+
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(date);
+};

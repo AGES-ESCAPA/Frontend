@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
-import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
-import type { SidebarRole, SidebarUser } from '@components/layout';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { AuthenticatedLayout } from '@components/layout';
 import { useCheckoutCourse } from '@hooks/useCheckoutCourse';
+import { useCheckoutLayout } from '@hooks/useCheckoutLayout';
+import { OrderServiceError, createOrder } from '@services/orderService';
+import type { OrderConfirmationState } from '@/types/order';
 import { OrderSummary } from '@components/ui/OrderSummary/OrderSummary';
+import { formatWorkload } from '@utils/formatters';
 import { PaymentPanel } from './components/PaymentPanel';
 import type { PaymentSelection } from './components/PaymentPanel';
 import styles from './Checkout.module.css';
@@ -13,52 +17,57 @@ export interface CheckoutProps {
   onConfirm?: (selection: PaymentSelection) => void;
 }
 
-// Temporário: substituir pela sessão real após integração da US-23.
-const usersByRole: Record<Exclude<SidebarRole, 'admin'>, SidebarUser> = {
-  student: {
-    name: 'Jorge Amado',
-    role: 'Aluno',
-    email: 'aluno@email.com',
-  },
-  company: {
-    name: 'Escapa!',
-    role: 'Empresa',
-    email: 'escapa@email.com',
-  },
-};
-
-const getRoleFromPathname = (pathname: string): Exclude<SidebarRole, 'admin'> =>
-  pathname.startsWith('/empresa') ? 'company' : 'student';
+const SUBMIT_ERROR_MESSAGE = 'Não foi possível concluir a compra. Tente novamente em instantes.';
 
 export const Checkout = ({ summary, onConfirm }: CheckoutProps) => {
-  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { courseId = '' } = useParams();
-
-  const role = getRoleFromPathname(pathname);
+  const { role, menuItems, user, catalogPath } = useCheckoutLayout();
   const { course, status, errorMessage, retry } = useCheckoutCourse(courseId);
+  const amount = course ? (course.price ?? 0) : null;
+  const courseTitle = course?.title ?? null;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const amount = course?.price;
-
-  const menuItems = SIDEBAR_MENU_PRESETS[role].map((item, index) => ({
-    ...item,
-    active: index === 0,
-  }));
-
-  const catalogPath = role === 'company' ? '/empresa/cursos' : '/aluno/cursos';
+  const confirmationPath =
+    role === 'company' ? '/empresa/checkout/confirmacao' : '/checkout/confirmacao';
 
   const handleLogout = () => {
     window.location.assign('/');
   };
 
-  const handleConfirm = (selection: PaymentSelection) => {
+  /**
+   * Registra a compra: a API aprova o pedido e libera o acesso na hora. Em seguida a tela de
+   * confirmação substitui o checkout no histórico, para o "voltar" não reabrir o formulário e
+   * permitir pagar duas vezes.
+   */
+  const handleConfirm = async (selection: PaymentSelection) => {
+    if (isSubmitting) return;
+
     onConfirm?.(selection);
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const order = await createOrder({
+        itemType: 'COURSE',
+        courseId,
+        paymentMethod: selection.paymentMethod,
+        installments: selection.installments,
+      });
+      const confirmation: OrderConfirmationState = { order, itemTitle: courseTitle };
+      navigate(confirmationPath, { replace: true, state: confirmation });
+    } catch (error: unknown) {
+      setSubmitError(error instanceof OrderServiceError ? error.message : SUBMIT_ERROR_MESSAGE);
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <AuthenticatedLayout
       role={role}
       items={menuItems}
-      user={usersByRole[role]}
+      user={user}
       notificationsCount={2}
       onLogout={handleLogout}
     >
@@ -99,24 +108,24 @@ export const Checkout = ({ summary, onConfirm }: CheckoutProps) => {
         </section>
       )}
 
-      {status === 'success' && course && amount !== null && amount !== undefined && (
+      {status === 'success' && amount !== null && (
         <div className={`${styles.grid} ${styles.withSummary}`}>
-          <PaymentPanel amount={amount} onConfirm={handleConfirm} />
-
+          <PaymentPanel
+            amount={amount}
+            isSubmitting={isSubmitting}
+            errorMessage={submitError}
+            onConfirm={(selection) => void handleConfirm(selection)}
+          />
           <aside className={styles.summary} aria-label="Resumo do pedido">
             {summary ?? (
               <OrderSummary
                 item={{
                   kind: 'course',
-                  title: course.title,
-                  imageUrl: course.thumbnailUrl ?? '',
-                  duration:
-                    course.durationTime === null
-                      ? 'Duração não informada'
-                      : `${course.durationTime} horas`,
+                  title: course?.title ?? '',
+                  imageUrl: course?.thumbnailUrl ?? '',
+                  duration: formatWorkload(course?.durationTime ?? null),
                   price: amount,
                 }}
-                paymentMethod="Cartão de crédito"
               />
             )}
           </aside>
