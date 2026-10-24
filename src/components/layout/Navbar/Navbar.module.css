@@ -148,6 +148,34 @@
   line-height: var(--leading-tight);
 }
 
+.profileMenu {
+  z-index: 30;
+  min-width: var(--container-xs);
+  padding: var(--space-1);
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.profileMenuItem {
+  display: flex;
+  align-items: center;
+  min-height: var(--space-10);
+  padding: 0 var(--space-3);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-body-3);
+  outline: none;
+  text-decoration: none;
+}
+
+.profileMenuItem:focus,
+.profileMenuItem:hover {
+  background-color: var(--color-primary-700);
+}
+
 .badge {
   position: absolute;
   top: 0;

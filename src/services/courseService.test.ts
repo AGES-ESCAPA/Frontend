@@ -161,9 +161,7 @@ describe('courseService', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/admin/courses');
     expect(url).not.toMatch(/\/admin\/courses\/.+/);
-    expect((init.headers as Record<string, string>)['X-User-Id']).toBe(
-      'a0000000-0000-4000-a000-000000000001',
-    );
+    expect(new Headers(init.headers).get('authorization')).toBeNull();
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Atendimento de Excelencia em Hospedagem');
   });
@@ -180,9 +178,7 @@ describe('courseService', () => {
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/admin/courses/categories');
-    expect((init.headers as Record<string, string>)['X-User-Id']).toBe(
-      'a0000000-0000-4000-a000-000000000001',
-    );
+    expect(new Headers(init.headers).get('authorization')).toBeNull();
     expect(result).toEqual(['Hospitalidade', 'Marketing']);
   });
 

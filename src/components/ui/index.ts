@@ -2,7 +2,9 @@
 // Adicione novos componentes conforme forem criados:
 
 export { Avatar } from './Avatar/Avatar';
-export type { AvatarProps, AvatarTheme } from './Avatar/Avatar';
+export type { AvatarProps, AvatarSize, AvatarTheme } from './Avatar/Avatar';
+export { AvatarUpload } from './AvatarUpload';
+export type { AvatarUploadProps } from './AvatarUpload';
 export { Badge } from './Badge';
 export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
 export { Button } from './Button';
@@ -83,3 +85,7 @@ export type {
   OrderHistoryEntry,
   OrderRow,
 } from './OrderDetailModal';
+export { MaskedInput } from './MaskedInput';
+export type { MaskedInputProps, MaskType } from './MaskedInput';
+export { OrderSummary } from './OrderSummary';
+export type { OrderSummaryProps, OrderItem, OrderBuyer } from './OrderSummary';

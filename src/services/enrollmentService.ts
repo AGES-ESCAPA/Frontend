@@ -1,4 +1,4 @@
-import { api, studentHeaders } from './api';
+import { api, authenticatedFetch } from './api';
 import type { ApiResponse } from './api';
 import type { EnrollmentStatus } from '../components/ui/StudentCourseCard';
 
@@ -41,9 +41,7 @@ export const getStudentEnrollments = async (
   const queryString = searchParams.toString();
   const url = `${api.baseUrl}/student/enrollments${queryString ? `?${queryString}` : ''}`;
 
-  const response = await fetch(url, {
-    headers: studentHeaders(),
-  });
+  const response = await authenticatedFetch(url);
 
   if (!response.ok) {
     throw new Error(`Falha ao buscar matrículas: ${response.statusText}`);

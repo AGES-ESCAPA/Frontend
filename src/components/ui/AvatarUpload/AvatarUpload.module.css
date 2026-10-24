@@ -1,0 +1,17 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.input {
+  display: none;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--text-body-4);
+  color: var(--color-error);
+  text-align: center;
+}

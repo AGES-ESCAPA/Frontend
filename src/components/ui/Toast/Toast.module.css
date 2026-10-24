@@ -77,6 +77,26 @@
   line-height: var(--text-body-4--line-height);
 }
 
+.action {
+  flex-shrink: 0;
+  padding: var(--space-1);
+  color: var(--color-info-200);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.action:hover,
+.action:focus-visible {
+  color: var(--color-text-primary);
+  background-color: var(--color-overlay-hover-on-dark);
+  outline: none;
+}
+
 .close {
   display: inline-flex;
   align-items: center;
