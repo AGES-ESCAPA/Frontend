@@ -20,6 +20,12 @@ const MyCourses = lazy(() =>
   })),
 );
 
+const Profile = lazy(() =>
+  import('@pages/Profile/Profile').then((m) => ({
+    default: m.Profile,
+  })),
+);
+
 const CourseDetails = lazy(() =>
   import('@pages/CourseDetails/CourseDetails').then((m) => ({
     default: m.CourseDetails,
@@ -208,6 +214,14 @@ export const AppRouter = () => {
               }
             />
             <Route
+              path="/empresa/perfil"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/empresa/*"
               element={
                 <ProtectedRoute allowedRoles={['COMPANY']}>
@@ -227,7 +241,7 @@ export const AppRouter = () => {
               path="/meu-perfil"
               element={
                 <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <UnderConstruction />
+                  <Profile />
                 </ProtectedRoute>
               }
             />

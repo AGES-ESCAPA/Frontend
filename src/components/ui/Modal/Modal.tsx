@@ -5,6 +5,9 @@ import styles from './Modal.module.css';
 
 export type ModalSize = 'sm' | 'md' | 'lg';
 
+/** `confirm` é o diálogo curto da desativação: sem fechar, sem divisórias. */
+export type ModalAppearance = 'default' | 'confirm';
+
 export interface ModalProps {
   /** Controla a visibilidade do modal (componente controlado). */
   open: boolean;
@@ -18,6 +21,7 @@ export interface ModalProps {
   /** Conteúdo da barra inferior, normalmente os botões de ação. */
   footer?: ReactNode;
   size?: ModalSize;
+  appearance?: ModalAppearance;
   /**
    * Quando informado, corpo e rodapé são envolvidos por um `<form>`, permitindo
    * que um botão `type="submit"` no rodapé envie os campos do corpo.
@@ -35,6 +39,7 @@ export const Modal = ({
   icon,
   footer,
   size = 'md',
+  appearance = 'default',
   onSubmit,
   closeButtonLabel = 'Fechar',
   children,
@@ -55,7 +60,12 @@ export const Modal = ({
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
 
-        <Dialog.Content className={`${styles.content} ${styles[`size-${size}`]}`} {...describedBy}>
+        <Dialog.Content
+          className={`${styles.content} ${styles[`size-${size}`]} ${
+            appearance === 'confirm' ? styles.confirm : ''
+          }`}
+          {...describedBy}
+        >
           <header className={styles.header}>
             {icon ? (
               <span className={styles.icon} aria-hidden="true">
@@ -70,9 +80,11 @@ export const Modal = ({
               ) : null}
             </div>
 
-            <Dialog.Close className={styles.close} aria-label={closeButtonLabel}>
-              <X size={18} strokeWidth={2} aria-hidden="true" />
-            </Dialog.Close>
+            {appearance === 'confirm' ? null : (
+              <Dialog.Close className={styles.close} aria-label={closeButtonLabel}>
+                <X size={18} strokeWidth={2} aria-hidden="true" />
+              </Dialog.Close>
+            )}
           </header>
 
           {onSubmit ? (

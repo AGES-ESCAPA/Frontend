@@ -98,15 +98,22 @@
   opacity: 0.85;
 }
 
-/* 7. danger — destructive action, red surface */
+/* 7. danger — fundo rosa translúcido, borda e 8px de raio (Figma, 41px) */
 .variant-danger {
-  background-color: var(--color-error-300);
-  color: var(--color-white);
-  border-color: transparent;
+  height: 41px;
+  min-height: 41px;
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-body-3);
+  line-height: 15px;
+  background-color: var(--color-danger-surface);
+  color: var(--color-danger);
+  border-width: 1px;
+  border-color: var(--color-danger-border);
+  border-radius: var(--radius-lg);
 }
 
 .variant-danger:hover:not(.disabled, .loading) {
-  background-color: var(--color-error-400);
+  background-color: var(--color-danger-surface-hover);
 }
 
 /* ── Disabled State ────────────────────────────────────────────────── */
