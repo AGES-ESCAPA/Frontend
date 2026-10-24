@@ -1,5 +1,6 @@
 import type { SidebarRole } from '@components/layout';
 import type { UserRole } from '@/types/auth';
+import { PURCHASE_REDIRECT_KEY, safeAuthReturnTo } from '@utils/authReturnTo';
 
 export const getDefaultRoute = (role: UserRole): string => {
   switch (role) {
@@ -25,15 +26,12 @@ export const toSidebarRole = (role: UserRole): SidebarRole => {
   }
 };
 
-const isInternalPath = (path: string | null | undefined): path is string =>
-  typeof path === 'string' && path.startsWith('/') && !path.startsWith('//');
-
 export const getPostLoginDestination = (role: UserRole, returnTo?: string): string => {
-  const purchaseRedirect = localStorage.getItem('escapa:purchase-redirect');
-  if (purchaseRedirect) localStorage.removeItem('escapa:purchase-redirect');
+  const purchaseRedirect = localStorage.getItem(PURCHASE_REDIRECT_KEY);
+  if (purchaseRedirect) localStorage.removeItem(PURCHASE_REDIRECT_KEY);
 
-  if (isInternalPath(returnTo)) return returnTo;
-  if (isInternalPath(purchaseRedirect)) return purchaseRedirect;
+  const destination = safeAuthReturnTo(returnTo) ?? safeAuthReturnTo(purchaseRedirect);
+  if (destination) return destination;
 
   return getDefaultRoute(role);
 };

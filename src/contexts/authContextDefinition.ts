@@ -8,7 +8,7 @@ export interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isRestoring: boolean;
-  login: (token: string, user: AuthUser) => void;
+  login: (token: string, user: AuthUser, expiresIn?: number) => void;
   logout: () => void;
   updateUser: (changes: AuthUserChanges) => void;
 }
