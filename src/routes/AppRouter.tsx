@@ -80,6 +80,12 @@ const RegisterAccountType = lazy(() =>
   })),
 );
 
+const RegisterCompany = lazy(() =>
+  import('@pages/RegisterCompany/RegisterCompany').then((m) => ({
+    default: m.RegisterCompany,
+  })),
+);
+
 const OrderManagement = lazy(() =>
   import('@/pages/OrderManagement/OrderManagement').then((m) => ({
     default: m.Ordermanagement,
@@ -137,6 +143,7 @@ export const AppRouter = () => {
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
             <Route path="/cadastro" element={<RegisterAccountType />} />
+            <Route path="/cadastro/empresa" element={<RegisterCompany />} />
             <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
             <Route
               path="/meus-cursos"

@@ -1,6 +1,7 @@
 import { getApiBaseUrl } from '@services/runtimeEnv';
 import { readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
+import type { CompanyRegistrationPayload, DuplicateRegistrationField } from '@/types/auth';
 import type {
   AuthUser,
   UserRole,
@@ -41,6 +42,27 @@ export class AuthServiceError extends Error {
     this.status = status;
   }
 }
+
+/**
+ * Cadastro recusado porque o CNPJ ou o e-mail já existe (409). `field` é `null`
+ * quando o backend não diz qual dos dois (conflito genérico de constraint).
+ */
+export class DuplicateRegistrationError extends AuthServiceError {
+  field: DuplicateRegistrationField | null;
+
+  constructor(field: DuplicateRegistrationField | null, message: string) {
+    super(409, message);
+    this.name = 'DuplicateRegistrationError';
+    this.field = field;
+  }
+}
+
+// O backend responde "cnpj already registered" ou "email already registered".
+const toDuplicateField = (message: string | null): DuplicateRegistrationField | null => {
+  if (message?.startsWith('cnpj')) return 'cnpj';
+  if (message?.startsWith('email')) return 'email';
+  return null;
+};
 
 const getResponseData = async <T>(response: Response, fallback: string): Promise<T> => {
   if (!response.ok) {
@@ -200,5 +222,35 @@ export const authService = {
     );
 
     return mapAuthUser(user);
+  },
+
+  async registerCompany(
+    payload: CompanyRegistrationPayload,
+  ): Promise<{ token: string; user: AuthUser }> {
+    const response = await fetch(`${API_BASE_URL}/auth/register/company`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.status === 409) {
+      const message = await readApiErrorMessage(response);
+      throw new DuplicateRegistrationError(
+        toDuplicateField(message),
+        message ?? 'CNPJ ou e-mail já cadastrado.',
+      );
+    }
+
+    const data = await getResponseData<LoginResponse>(
+      response,
+      'Não foi possível concluir o cadastro.',
+    );
+    const token = data.accessToken;
+
+    if (!token) {
+      throw new AuthServiceError(500, 'A resposta de cadastro não contém um token.');
+    }
+
+    return { token, user: mapAuthUser(data.user) };
   },
 };
