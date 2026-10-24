@@ -1,6 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { afterEach } from 'vitest';
 import { Login } from './Login';
+
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+});
 
 const renderLogin = () =>
   render(
@@ -26,5 +33,15 @@ describe('Login', () => {
       'href',
       '/empresa/cursos',
     );
+  });
+
+  // Confirma que o perfil escolhido fica disponível para a guarda após o clique.
+  it('stores the selected demo profile before navigating', async () => {
+    const user = userEvent.setup();
+    renderLogin();
+
+    await user.click(screen.getByRole('link', { name: 'Admin' }));
+
+    expect(localStorage.getItem('escapa_mock_user_role')).toBe('admin');
   });
 });

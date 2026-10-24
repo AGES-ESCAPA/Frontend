@@ -13,6 +13,8 @@ export interface ModalProps {
   title: string;
   /** Linha de apoio abaixo do título (ex.: módulo de destino). */
   subtitle?: string;
+  /** Exibe o subtítulo antes do título quando o layout do modal exigir essa ordem. */
+  subtitleAboveTitle?: boolean;
   /** Ícone exibido à esquerda do título. */
   icon?: ReactNode;
   /** Conteúdo da barra inferior, normalmente os botões de ação. */
@@ -32,6 +34,7 @@ export const Modal = ({
   onOpenChange,
   title,
   subtitle,
+  subtitleAboveTitle = false,
   icon,
   footer,
   size = 'md',
@@ -64,8 +67,11 @@ export const Modal = ({
             ) : null}
 
             <div className={styles.headings}>
+              {subtitle && subtitleAboveTitle ? (
+                <Dialog.Description className={styles.subtitle}>{subtitle}</Dialog.Description>
+              ) : null}
               <Dialog.Title className={styles.title}>{title}</Dialog.Title>
-              {subtitle ? (
+              {subtitle && !subtitleAboveTitle ? (
                 <Dialog.Description className={styles.subtitle}>{subtitle}</Dialog.Description>
               ) : null}
             </div>

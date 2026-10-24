@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ProtectedRoute } from './ProtectedRoute';
 
 // ─── Lazy Loading ─────────────────────────────────────────────────────────────
 // Adicione novas páginas aqui seguindo este padrão.
@@ -71,8 +72,8 @@ const RegisterAccountType = lazy(() =>
   })),
 );
 
-const Ordermanagement = lazy(() =>
-  import('@pages/OrderManagement/Ordermanagement').then((m) => ({
+const OrderManagement = lazy(() =>
+  import('@/pages/OrderManagement/OrderManagement').then((m) => ({
     default: m.Ordermanagement,
   })),
 );
@@ -112,7 +113,7 @@ const PageLoader = () => (
  *  1. Crie a página em src/pages/NomeDaPagina/NomeDaPagina.tsx
  *  2. Adicione o lazy import acima
  *  3. Adicione um <Route> abaixo
- *  4. Para rotas protegidas, envolva com <ProtectedRoute> (a criar)
+ *  4. Para rotas protegidas no demo, envolva com <ProtectedRoute>.
  */
 export const AppRouter = () => {
   return (
@@ -139,8 +140,15 @@ export const AppRouter = () => {
           <Route path="/admin/cursos" element={<AdminCourses />} />
           <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
           <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
-          <Route path="/admin/pedidos" element={<Ordermanagement />} />
-
+          {/* Exige o perfil admin selecionado no login demo para abrir a gestão de pedidos. */}
+          <Route
+            path="/admin/pedidos"
+            element={
+              <ProtectedRoute role="admin">
+                <OrderManagement />
+              </ProtectedRoute>
+            }
+          />
           {/* Qualquer rota ainda sem página cai aqui. */}
           <Route path="*" element={<UnderConstruction />} />
         </Routes>

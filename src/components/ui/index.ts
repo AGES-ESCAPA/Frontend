@@ -86,3 +86,5 @@ export type {
   OrderHistoryEntry,
   OrderRow,
 } from './OrderDetailModal';
+export { OrderCancellationAndRefund } from './Order Cancellation and Refund';
+export type { OrderCancellationAndRefundProps } from './Order Cancellation and Refund';
