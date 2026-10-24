@@ -1,0 +1,305 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  color: var(--color-text-primary);
+  /* Cor das linhas divisórias */
+  --order-divider: var(--color-neutral-800);
+  --order-line: var(--border-width-thin);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.statusRow .value {
+  font-size: var(--text-h5);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-h5--line-height);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+[data-tone='info'] {
+  --tone-fg: var(--color-info-300);
+}
+
+[data-tone='success'] {
+  --tone-fg: var(--color-success-300);
+}
+
+[data-tone='warning'] {
+  --tone-fg: var(--color-warning-300);
+}
+
+[data-tone='error'] {
+  --tone-fg: var(--color-error-300);
+}
+
+/* Badge */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: var(--order-line) solid color-mix(in srgb, var(--tone-fg) 25%, transparent);
+  background-color: color-mix(in srgb, var(--tone-fg) 15%, transparent);
+  color: var(--tone-fg);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-3--line-height);
+}
+
+.statusBadge::before {
+  content: '';
+  display: block;
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  background-color: var(--tone-fg);
+  flex-shrink: 0;
+}
+
+/* Título de seção */
+.sectionTitle {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-info-300);
+}
+
+/* Linhas */
+.detailGrid {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-3) 0;
+  border: 0;
+  box-shadow: inset 0 calc(-1 * var(--order-line)) 0 var(--order-divider);
+}
+
+.detailItem dt {
+  margin: 0;
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.detailItem dd {
+  margin: 0;
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Card Itens do pedido */
+.itemsCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  background-color: var(--color-primary-700);
+  border: var(--order-line) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.itemsCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.itemsCardTitle {
+  margin: 0;
+  font-size: var(--text-body-2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--text-body-2--line-height);
+}
+
+.itemsCardPrice {
+  font-size: var(--text-body-2);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  line-height: var(--text-body-2--line-height);
+}
+
+.itemsCardMeta {
+  margin: 0;
+  font-size: var(--text-body-3);
+  color: var(--color-text-muted);
+  line-height: var(--text-body-3--line-height);
+}
+
+.itemsCardPayment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border: 0;
+  box-shadow: inset 0 var(--order-line) 0 var(--order-divider);
+  font-size: var(--text-body-3);
+  color: var(--color-text-muted);
+}
+
+.itemsCardPayment svg {
+  flex-shrink: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+  opacity: 0.85;
+  color: var(--color-text-muted);
+}
+
+/* Histórico de status */
+.history {
+  margin: 0;
+}
+
+.history ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.history li {
+  display: grid;
+  grid-template-columns: var(--space-4) 1fr;
+  column-gap: var(--space-2);
+  align-items: start;
+}
+
+/* Bolinha */
+.history li::before {
+  content: '';
+  grid-column: 1;
+  width: var(--space-4);
+  height: var(--space-4);
+  margin-top: var(--space-1);
+  border-radius: var(--radius-full);
+  background-color: var(--tone-fg, var(--color-info-300));
+}
+
+.historyBody {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.historyTop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Badge do históricos */
+.historyBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background-color: color-mix(in srgb, var(--tone-fg) 25%, transparent);
+  color: var(--tone-fg);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-4--line-height);
+}
+
+.historyTop time {
+  font-size: var(--text-body-4);
+  color: var(--color-text-muted);
+}
+
+.historyDesc {
+  margin: 0;
+  font-size: var(--text-body-3);
+  color: var(--color-text-muted);
+  line-height: var(--text-body-3--line-height);
+}
+
+/* Rodapé — ações (Reembolsar / Cancelar) */
+.modalActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+/* passados em `actions`*/
+.btnRefund,
+.btnCancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--space-12);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  background-color: transparent;
+  transition: background-color var(--transition-fast);
+}
+
+.btnRefund {
+  border: var(--order-line) solid color-mix(in srgb, var(--color-warning-300) 35%, transparent);
+  color: var(--color-warning-300);
+}
+
+.btnRefund:hover {
+  background-color: color-mix(in srgb, var(--color-warning-300) 10%, transparent);
+}
+
+.btnCancel {
+  border: var(--order-line) solid color-mix(in srgb, var(--color-error-300) 35%, transparent);
+  color: var(--color-error-400);
+}
+
+.btnCancel:hover {
+  background-color: color-mix(in srgb, var(--color-error-300) 10%, transparent);
+}
+
+@media (width < 40rem) {
+  .itemsCardHeader {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .detailItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .detailItem dd {
+    text-align: left;
+  }
+}

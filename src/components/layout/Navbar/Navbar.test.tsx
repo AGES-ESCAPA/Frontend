@@ -16,14 +16,17 @@ describe('Navbar', () => {
       'href',
       '/login',
     );
-    expect(screen.getByRole('button', { name: 'Começar Agora' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Começar Agora' })).toHaveAttribute(
+      'href',
+      '/cadastro',
+    );
   });
 
   it('renders the register variant without right-side actions', () => {
     renderNavbar(<Navbar state="register" />);
 
     expect(screen.getByText('cursos')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Começar Agora' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Começar Agora' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument();
   });
 

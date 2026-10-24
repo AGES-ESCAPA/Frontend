@@ -1,0 +1,31 @@
+.labelButton {
+  width: 100%;
+  min-height: var(--space-10);
+  font-size: var(--text-body-3);
+}
+
+.labelButton.refundButton {
+  border-color: color-mix(in srgb, var(--color-warning-300) 35%, transparent);
+  background-color: transparent;
+  color: var(--color-warning-300);
+}
+
+.labelButton.cancelButton {
+  border-color: color-mix(in srgb, var(--color-error-300) 35%, transparent);
+  background-color: transparent;
+  color: var(--color-error-300);
+}
+
+.labelButton.refundButton:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-warning-300) 10%, transparent);
+}
+
+.labelButton.cancelButton:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-error-300) 10%, transparent);
+}
+
+@media (width < 40rem) {
+  .labelButton {
+    white-space: normal;
+  }
+}

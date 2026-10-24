@@ -51,11 +51,18 @@ const renderHome = () =>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/cursos/:courseId" element={<LocationProbe />} />
+        <Route path="/cadastro" element={<LocationProbe />} />
       </Routes>
     </MemoryRouter>,
   );
 
 describe('Home', () => {
+  it('opens account type selection from Começar Agora', async () => {
+    const user = userEvent.setup();
+    renderHome();
+    await user.click(screen.getByRole('link', { name: 'Começar Agora' }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/cadastro');
+  });
   beforeEach(() => {
     getCoursesMock.mockReset();
     getFiltersMock.mockReset().mockResolvedValue({

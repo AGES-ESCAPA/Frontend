@@ -194,3 +194,33 @@
     animation: none;
   }
 }
+
+/* Confirmação curta (desativar conta): ícone e título em rosa, sem divisórias. */
+.confirm .header {
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-6) 0;
+  border-bottom: 0;
+}
+
+.confirm .icon {
+  width: 40px;
+  height: 40px;
+  color: var(--color-danger);
+  background-color: transparent;
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-lg);
+}
+
+.confirm .title {
+  color: var(--color-danger);
+}
+
+.confirm .body {
+  padding: var(--space-4) var(--space-6) var(--space-2);
+}
+
+.confirm .footer {
+  justify-content: center;
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  border-top: 0;
+}
