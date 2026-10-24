@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, CreditCardForm } from '@components/ui';
 import type { CreditCardFormChange } from '@components/ui';
 import { formatCurrency } from '@utils/formatters';
@@ -32,14 +32,20 @@ export const PaymentPanel = ({
     installments: 1,
   });
 
-  const confirmationLocked = useRef(false);
+  const [confirmationLocked, setConfirmationLocked] = useState(false);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setConfirmationLocked(false);
+    }
+  }, [isSubmitting]);
 
   const handleConfirm = () => {
-    if (!form.isValid || isSubmitting || confirmationLocked.current) {
+    if (!form.isValid || isSubmitting || confirmationLocked) {
       return;
     }
 
-    confirmationLocked.current = true;
+    setConfirmationLocked(true);
 
     onConfirm({
       paymentMethod: 'CARD',
@@ -65,7 +71,7 @@ export const PaymentPanel = ({
           variant="primary"
           fullWidth
           label={`Pagar ${toButtonAmount(amount)}`}
-          disabled={!form.isValid || isSubmitting || confirmationLocked.current}
+          disabled={!form.isValid || isSubmitting || confirmationLocked}
           isLoading={isSubmitting}
           onClick={handleConfirm}
         />

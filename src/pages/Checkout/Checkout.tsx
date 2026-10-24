@@ -7,22 +7,24 @@ import { useCheckoutLayout } from '@hooks/useCheckoutLayout';
 import { OrderServiceError, createOrder } from '@services/orderService';
 import type { OrderConfirmationState } from '@/types/order';
 import { OrderSummary } from '@components/ui/OrderSummary/OrderSummary';
+import { formatWorkload } from '@utils/formatters';
 import { PaymentPanel } from './components/PaymentPanel';
 import type { PaymentSelection } from './components/PaymentPanel';
 import styles from './Checkout.module.css';
 
 export interface CheckoutProps {
   summary?: ReactNode;
+  onConfirm?: (selection: PaymentSelection) => void;
 }
 
 const SUBMIT_ERROR_MESSAGE = 'Não foi possível concluir a compra. Tente novamente em instantes.';
 
-export const Checkout = ({ summary }: CheckoutProps) => {
+export const Checkout = ({ summary, onConfirm }: CheckoutProps) => {
   const navigate = useNavigate();
   const { courseId = '' } = useParams();
   const { role, menuItems, user, catalogPath } = useCheckoutLayout();
   const { course, status, errorMessage, retry } = useCheckoutCourse(courseId);
-  const amount = course?.price ?? null;
+  const amount = course ? (course.price ?? 0) : null;
   const courseTitle = course?.title ?? null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export const Checkout = ({ summary }: CheckoutProps) => {
   const handleConfirm = async (selection: PaymentSelection) => {
     if (isSubmitting) return;
 
+    onConfirm?.(selection);
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -106,18 +109,26 @@ export const Checkout = ({ summary }: CheckoutProps) => {
       )}
 
       {status === 'success' && amount !== null && (
-        <div className={summary ? `${styles.grid} ${styles.withSummary}` : styles.grid}>
+        <div className={`${styles.grid} ${styles.withSummary}`}>
           <PaymentPanel
             amount={amount}
             isSubmitting={isSubmitting}
             errorMessage={submitError}
             onConfirm={(selection) => void handleConfirm(selection)}
           />
-          {summary ? (
-            <aside className={styles.summary} aria-label="Resumo do pedido">
-              {summary}
-            </aside>
-          ) : null}
+          <aside className={styles.summary} aria-label="Resumo do pedido">
+            {summary ?? (
+              <OrderSummary
+                item={{
+                  kind: 'course',
+                  title: course?.title ?? '',
+                  imageUrl: course?.thumbnailUrl ?? '',
+                  duration: formatWorkload(course?.durationTime ?? null),
+                  price: amount,
+                }}
+              />
+            )}
+          </aside>
         </div>
       )}
     </AuthenticatedLayout>
