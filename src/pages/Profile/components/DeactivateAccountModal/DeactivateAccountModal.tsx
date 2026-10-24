@@ -75,26 +75,28 @@ export const DeactivateAccountModal = ({
       open={open}
       onOpenChange={handleOpenChange}
       title="Tem certeza?"
-      icon={<AlertTriangle size={20} />}
+      icon={<AlertTriangle size={18} />}
       size="sm"
+      appearance="confirm"
       onSubmit={(event) => void handleSubmit(event)}
       footer={
-        <>
+        <div className={styles.actions}>
           <Button
             type="button"
             variant="ghost-dark"
             label="Cancelar"
+            className={styles.cancel}
             disabled={isSubmitting}
             onClick={() => handleOpenChange(false)}
           />
           <Button type="submit" variant="danger" label="Sim, desativar" isLoading={isSubmitting} />
-        </>
+        </div>
       }
     >
       <div className={styles.body}>
         <p className={styles.description}>
-          Esta ação irá desativar sua conta. Você perderá acesso imediato aos cursos e certificados
-          emitidos.
+          Esta ação irá desativar temporariamente sua conta. Você perderá acesso imediato aos cursos
+          e certificados emitidos.
         </p>
         <FormField
           label="Confirme sua senha atual"
