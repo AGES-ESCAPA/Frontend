@@ -26,12 +26,16 @@ describe('authService', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: () =>
-        Promise.resolve({ success: true, data: { accessToken: 'jwt-token', user: backendUser } }),
+        Promise.resolve({
+          success: true,
+          data: { accessToken: 'jwt-token', expiresIn: 120, user: backendUser },
+        }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(authService.login(user.email, 'senha-segura')).resolves.toEqual({
       token: 'jwt-token',
+      expiresIn: 120,
       user,
     });
 
@@ -40,6 +44,27 @@ describe('authService', () => {
     expect(init.method).toBe('POST');
     expect(init.body).toBe(JSON.stringify({ email: user.email, password: 'senha-segura' }));
   });
+
+  it.each([undefined, null, 0, -1, '120', NaN, Infinity])(
+    'rejects an invalid login lifetime: %s',
+    async (expiresIn) => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: { accessToken: 'jwt-token', user: backendUser, expiresIn },
+          }),
+        }),
+      );
+      await expect(authService.login(user.email, 'senha-segura')).rejects.toMatchObject({
+        name: AuthServiceError.name,
+        status: 500,
+        message: 'A resposta de autenticação contém um prazo de sessão inválido.',
+      });
+    },
+  );
 
   it('surfaces the backend status and message for invalid credentials', async () => {
     vi.stubGlobal(
@@ -80,7 +105,11 @@ describe('authService', () => {
         json: () =>
           Promise.resolve({
             success: true,
-            data: { accessToken: 'jwt-token', user: { ...backendUser, profile: 'UNKNOWN' } },
+            data: {
+              accessToken: 'jwt-token',
+              expiresIn: 120,
+              user: { ...backendUser, profile: 'UNKNOWN' },
+            },
           }),
       }),
     );

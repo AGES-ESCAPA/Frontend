@@ -32,3 +32,24 @@ export interface CompanyRegistrationPayload {
 
 /** Campo que o backend acusa como já cadastrado ao responder 409. */
 export type DuplicateRegistrationField = 'cnpj' | 'email';
+export interface StudentRegistrationPayload {
+  name: string;
+  cpf: string;
+  email: string;
+  phone?: string;
+  password: string;
+}
+
+export interface StudentRegistrationValues extends StudentRegistrationPayload {
+  phone: string;
+  confirmPassword: string;
+}
+
+export interface StudentRegistrationSession {
+  token: string;
+  user: AuthUser;
+  expiresIn: number;
+}
+
+export type RegistrationField = keyof StudentRegistrationValues;
+export type RegistrationErrors = Partial<Record<RegistrationField, string>>;

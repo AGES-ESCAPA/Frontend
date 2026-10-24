@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@contexts/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
+import { RegistrationFeedback } from '@routes/RegistrationFeedback';
 
 // ─── Lazy Loading ─────────────────────────────────────────────────────────────
 // Adicione novas páginas aqui seguindo este padrão.
@@ -17,6 +18,12 @@ const Home = lazy(() =>
 const MyCourses = lazy(() =>
   import('@pages/MyCourses/MyCourses').then((m) => ({
     default: m.MyCourses,
+  })),
+);
+
+const Profile = lazy(() =>
+  import('@pages/Profile/Profile').then((m) => ({
+    default: m.Profile,
   })),
 );
 
@@ -76,12 +83,20 @@ const RegisterAccountType = lazy(() =>
 const RegisterCompany = lazy(() =>
   import('@pages/RegisterCompany/RegisterCompany').then((m) => ({
     default: m.RegisterCompany,
+const Ordermanagement = lazy(() =>
+  import('@pages/OrderManagement/Ordermanagement').then((m) => ({
+    default: m.Ordermanagement,
   })),
 );
 
 const UnderConstruction = lazy(() =>
   import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
     default: m.UnderConstruction,
+  })),
+);
+const RegisterIndividual = lazy(() =>
+  import('@pages/RegisterIndividual/RegisterIndividual').then((m) => ({
+    default: m.RegisterIndividual,
   })),
 );
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
@@ -113,18 +128,20 @@ const PageLoader = () => (
  *  1. Crie a página em src/pages/NomeDaPagina/NomeDaPagina.tsx
  *  2. Adicione o lazy import acima
  *  3. Adicione um <Route> abaixo
- *  4. Para rotas protegidas, envolva com <ProtectedRoute> (a criar)
+ *  4. Pfara rotas protegidas, envolva com <ProtectedRoute> (a criar)
  */
 export const AppRouter = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <RegistrationFeedback />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
             <Route path="/cadastro" element={<RegisterAccountType />} />
             <Route path="/cadastro/empresa" element={<RegisterCompany />} />
+            <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
             <Route
               path="/meus-cursos"
               element={
@@ -205,12 +222,28 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <Ordermanagement />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/admin/*"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
                   <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/perfil"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Profile />
                 </ProtectedRoute>
               }
             />
@@ -234,7 +267,7 @@ export const AppRouter = () => {
               path="/meu-perfil"
               element={
                 <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <UnderConstruction />
+                  <Profile />
                 </ProtectedRoute>
               }
             />
