@@ -25,6 +25,27 @@ export interface ProfileDataCardProps {
 
 const READ_ONLY_HINT = 'Identifica sua conta e não pode ser alterado.';
 
+const LockedField = ({
+  id,
+  label,
+  value,
+  type = 'text',
+}: {
+  id: string;
+  label: string;
+  value: string;
+  type?: 'text' | 'email';
+}) => (
+  <FormField label={label} htmlFor={id}>
+    <div className={styles.lockedField}>
+      <TextInput id={id} type={type} value={value} readOnly aria-describedby={`${id}-hint`} />
+      <p id={`${id}-hint`} className={styles.lockHint} role="tooltip">
+        {READ_ONLY_HINT}
+      </p>
+    </div>
+  </FormField>
+);
+
 const formatOrDash = (value: string | null, format: (raw: string) => string = (raw) => raw) =>
   value ? format(value) : '—';
 
@@ -159,24 +180,15 @@ export const ProfileDataCard = ({ profile, onSaved, onNotify }: ProfileDataCardP
               </FormField>
             ) : null}
 
-            <FormField label="E-mail" htmlFor="profile-email" hint={READ_ONLY_HINT}>
-              <TextInput id="profile-email" type="email" value={profile.email} readOnly />
-            </FormField>
-
-            <FormField
+            <LockedField id="profile-email" label="E-mail" type="email" value={profile.email} />
+            <LockedField
+              id="profile-document"
               label={isCompany ? 'CNPJ' : 'CPF'}
-              htmlFor="profile-document"
-              hint={READ_ONLY_HINT}
-            >
-              <TextInput
-                id="profile-document"
-                value={formatOrDash(
-                  isCompany ? profile.cnpj : profile.cpf,
-                  isCompany ? maskCnpj : maskCpf,
-                )}
-                readOnly
-              />
-            </FormField>
+              value={formatOrDash(
+                isCompany ? profile.cnpj : profile.cpf,
+                isCompany ? maskCnpj : maskCpf,
+              )}
+            />
 
             <FormField label="Telefone" htmlFor="profile-phone" error={errors.phone}>
               <MaskedInput
