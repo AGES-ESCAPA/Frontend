@@ -16,6 +16,8 @@ export interface PaymentPanelProps {
   maxInstallments?: number;
   /** Bloqueia o botão e mostra o carregando enquanto a confirmação está em andamento. */
   isSubmitting?: boolean;
+  /** Erro da última tentativa de confirmar a compra, mostrado acima do botão. */
+  errorMessage?: string | null;
   onConfirm: (selection: PaymentSelection) => void;
 }
 
@@ -31,6 +33,7 @@ export const PaymentPanel = ({
   amount,
   maxInstallments,
   isSubmitting = false,
+  errorMessage = null,
   onConfirm,
 }: PaymentPanelProps) => {
   const [form, setForm] = useState<CreditCardFormChange>({ isValid: false, installments: 1 });
@@ -55,6 +58,11 @@ export const PaymentPanel = ({
       <CreditCardForm amount={amount} maxInstallments={maxInstallments} onChange={setForm} />
 
       <div className={styles.confirm}>
+        {errorMessage ? (
+          <p className={styles.error} role="alert">
+            {errorMessage}
+          </p>
+        ) : null}
         <Button
           variant="primary"
           fullWidth
