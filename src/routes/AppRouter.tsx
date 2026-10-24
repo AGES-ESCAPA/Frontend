@@ -73,6 +73,12 @@ const RegisterAccountType = lazy(() =>
   })),
 );
 
+const RegisterCompany = lazy(() =>
+  import('@pages/RegisterCompany/RegisterCompany').then((m) => ({
+    default: m.RegisterCompany,
+  })),
+);
+
 const UnderConstruction = lazy(() =>
   import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
     default: m.UnderConstruction,
@@ -118,6 +124,7 @@ export const AppRouter = () => {
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
             <Route path="/cadastro" element={<RegisterAccountType />} />
+            <Route path="/cadastro/empresa" element={<RegisterCompany />} />
             <Route
               path="/meus-cursos"
               element={
