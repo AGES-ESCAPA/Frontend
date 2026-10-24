@@ -1,0 +1,19 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.error {
+  margin: 0;
+  color: var(--color-error-200);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
