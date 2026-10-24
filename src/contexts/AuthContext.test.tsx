@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { authenticatedFetch, setUnauthorizedHandler } from '@services/api';
 import { AuthServiceError, authService } from '@services/authService';
 import type { AuthUser } from '@/types/auth';
@@ -19,6 +20,22 @@ const SessionProbe = () => {
   return <output>{`${isRestoring}|${isAuthenticated}|${user?.name ?? 'anonymous'}`}</output>;
 };
 
+const RenameProbe = () => {
+  const { user, updateUser } = useAuth();
+
+  return (
+    <>
+      <output>{`${user?.name ?? 'anonymous'}|${user?.email ?? ''}|${user?.avatarUrl ?? ''}`}</output>
+      <button
+        type="button"
+        onClick={() => updateUser({ name: 'Jorge Amado Filho', avatarUrl: 'http://minio/a.png' })}
+      >
+        Atualizar
+      </button>
+    </>
+  );
+};
+
 describe('AuthProvider', () => {
   afterEach(() => {
     localStorage.clear();
@@ -26,6 +43,24 @@ describe('AuthProvider', () => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
     vi.useRealTimers();
+  });
+
+  it('updates the name and photo of the session user keeping the other fields', async () => {
+    localStorage.setItem('access_token', 'jwt-token');
+    vi.spyOn(authService, 'getCurrentUser').mockResolvedValue(student);
+
+    render(
+      <AuthProvider>
+        <RenameProbe />
+      </AuthProvider>,
+    );
+
+    await screen.findByText('Jorge Amado|jorge@example.com|');
+    await userEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
+
+    expect(
+      screen.getByText('Jorge Amado Filho|jorge@example.com|http://minio/a.png'),
+    ).toBeInTheDocument();
   });
 
   it('restores the session from a saved access token', async () => {

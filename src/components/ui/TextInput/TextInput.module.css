@@ -19,6 +19,18 @@
   box-shadow: 0 0 0 1px var(--color-focus-ring-info);
 }
 
+.wrapper:has(.input:disabled),
+.wrapper:has(.input[readonly]) {
+  background-color: var(--color-primary-800);
+  cursor: not-allowed;
+}
+
+.wrapper:has(.input:disabled):focus-within,
+.wrapper:has(.input[readonly]):focus-within {
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .wrapper[data-invalid='true'] {
   border-color: var(--color-error-300);
 }
@@ -66,9 +78,10 @@
   color: var(--color-text-muted);
 }
 
-.input:disabled {
+.input:disabled,
+.input[readonly] {
   cursor: not-allowed;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-200);
 }
 
 .hasIcon .input {

@@ -4,7 +4,7 @@ import { setUnauthorizedHandler } from '@services/api';
 import { AuthServiceError, authService } from '@services/authService';
 import type { AuthUser } from '@/types/auth';
 import { AuthContext } from './authContextDefinition';
-import type { AuthContextValue } from './authContextDefinition';
+import type { AuthContextValue, AuthUserChanges } from './authContextDefinition';
 
 const ACCESS_TOKEN_KEY = 'access_token';
 const EXPIRES_AT_KEY = 'access_token_expires_at';
@@ -47,6 +47,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     scheduleExpiration();
     return () => window.clearTimeout(timer);
   }, [expiresAt, logout]);
+  const updateUser = useCallback((changes: AuthUserChanges) => {
+    setUser((current) => (current ? { ...current, ...changes } : current));
+  }, []);
 
   useEffect(() => setUnauthorizedHandler(logout), [logout]);
 
@@ -82,8 +85,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [logout]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, isAuthenticated: user !== null, isRestoring, login, logout }),
-    [isRestoring, login, logout, user],
+    () => ({ user, isAuthenticated: user !== null, isRestoring, login, logout, updateUser }),
+    [isRestoring, login, logout, updateUser, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

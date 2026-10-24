@@ -21,6 +21,12 @@ const MyCourses = lazy(() =>
   })),
 );
 
+const Profile = lazy(() =>
+  import('@pages/Profile/Profile').then((m) => ({
+    default: m.Profile,
+  })),
+);
+
 const CourseDetails = lazy(() =>
   import('@pages/CourseDetails/CourseDetails').then((m) => ({
     default: m.CourseDetails,
@@ -71,6 +77,12 @@ const DigitalCertificate = lazy(() =>
 const RegisterAccountType = lazy(() =>
   import('@pages/RegisterAccountType/RegisterAccountType').then((m) => ({
     default: m.RegisterAccountType,
+  })),
+);
+
+const Ordermanagement = lazy(() =>
+  import('@pages/OrderManagement/Ordermanagement').then((m) => ({
+    default: m.Ordermanagement,
   })),
 );
 
@@ -206,12 +218,28 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <Ordermanagement />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/admin/*"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
                   <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/perfil"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Profile />
                 </ProtectedRoute>
               }
             />
@@ -235,7 +263,7 @@ export const AppRouter = () => {
               path="/meu-perfil"
               element={
                 <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <UnderConstruction />
+                  <Profile />
                 </ProtectedRoute>
               }
             />

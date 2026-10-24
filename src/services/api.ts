@@ -29,6 +29,8 @@ export const authenticatedFetch = async (
 ): Promise<Response> => {
   const headers = new Headers(authHeaders());
   new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+  // Com FormData o navegador define o Content-Type com o boundary do multipart.
+  if (init.body instanceof FormData) headers.delete('Content-Type');
   const response = await fetch(input, { ...init, headers });
 
   if (response.status === 401) onUnauthorized?.();

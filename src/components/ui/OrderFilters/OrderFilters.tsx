@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import { SelectInput } from '../SelectInput';
 import { Button } from '../Button';
@@ -11,7 +12,7 @@ import {
 } from './OrderFilters.constants';
 import type { OrderFiltersValue } from './OrderFilters.constants';
 
-/** Curso disponível para filtragem: apenas o id e o nome que o filtro precisa. */
+/** Curso disponível para filtragem*/
 export interface OrderFilterCourse {
   id: string;
   name: string;
@@ -52,6 +53,8 @@ export const OrderFilters = ({
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const errorId = useId();
   const periodRef = useRef<HTMLDivElement>(null);
+  const periodTriggerRef = useRef<HTMLButtonElement>(null);
+  const periodPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setDraft({ startDate: value.startDate, endDate: value.endDate });
@@ -62,7 +65,8 @@ export const OrderFilters = ({
     if (!isPeriodOpen) return undefined;
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (periodRef.current && !periodRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (!periodRef.current?.contains(target) && !periodPanelRef.current?.contains(target)) {
         setIsPeriodOpen(false);
       }
     };
@@ -75,6 +79,46 @@ export const OrderFilters = ({
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPeriodOpen]);
+
+  useLayoutEffect(() => {
+    if (!isPeriodOpen) return undefined;
+
+    const positionPanel = () => {
+      const trigger = periodTriggerRef.current;
+      const panel = periodPanelRef.current;
+      if (!trigger || !panel) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const viewportPadding = 16;
+      const width = Math.min(
+        Math.max(triggerRect.width, 320),
+        window.innerWidth - viewportPadding * 2,
+      );
+      const left = Math.min(
+        Math.max(triggerRect.left, viewportPadding),
+        window.innerWidth - width - viewportPadding,
+      );
+      const panelHeight = panel.getBoundingClientRect().height;
+      const below = window.innerHeight - triggerRect.bottom - viewportPadding;
+      const above = triggerRect.top - viewportPadding;
+      const top =
+        below >= panelHeight + 8 || below >= above
+          ? Math.min(triggerRect.bottom + 8, window.innerHeight - panelHeight - viewportPadding)
+          : triggerRect.top - panelHeight - 8;
+
+      panel.style.left = `${left}px`;
+      panel.style.top = `${Math.max(viewportPadding, top)}px`;
+      panel.style.width = `${width}px`;
+    };
+
+    positionPanel();
+    window.addEventListener('resize', positionPanel);
+    document.addEventListener('scroll', positionPanel, true);
+    return () => {
+      window.removeEventListener('resize', positionPanel);
+      document.removeEventListener('scroll', positionPanel, true);
     };
   }, [isPeriodOpen]);
 
@@ -150,6 +194,7 @@ export const OrderFilters = ({
         <div ref={periodRef} className={styles.field} data-invalid={!!error}>
           <span className={styles.label}>Período</span>
           <button
+            ref={periodTriggerRef}
             type="button"
             className={styles.periodTrigger}
             aria-label="Período"
@@ -161,37 +206,43 @@ export const OrderFilters = ({
             <span className={styles.periodValue}>{periodSummary}</span>
             <ChevronDown className={styles.chevron} size={24} aria-hidden="true" />
           </button>
-
-          <div
-            className={styles.periodPanel}
-            role="group"
-            aria-label="Período da compra"
-            hidden={!isPeriodOpen}
-          >
-            <label className={styles.dateField}>
-              <span className={styles.dateLabel}>Data inicial</span>
-              <input
-                type="date"
-                className={styles.date}
-                value={draft.startDate}
-                aria-invalid={!!error}
-                aria-describedby={error ? errorId : undefined}
-                onChange={(e) => handleDate('startDate', e.target.value)}
-              />
-            </label>
-            <label className={styles.dateField}>
-              <span className={styles.dateLabel}>Data final</span>
-              <input
-                type="date"
-                className={styles.date}
-                value={draft.endDate}
-                aria-invalid={!!error}
-                aria-describedby={error ? errorId : undefined}
-                onChange={(e) => handleDate('endDate', e.target.value)}
-              />
-            </label>
-          </div>
         </div>
+
+        {typeof document !== 'undefined'
+          ? createPortal(
+              <div
+                ref={periodPanelRef}
+                className={styles.periodPanel}
+                role="group"
+                aria-label="Período da compra"
+                hidden={!isPeriodOpen}
+              >
+                <label className={styles.dateField}>
+                  <span className={styles.dateLabel}>Data inicial</span>
+                  <input
+                    type="date"
+                    className={styles.date}
+                    value={draft.startDate}
+                    aria-invalid={!!error}
+                    aria-describedby={error ? errorId : undefined}
+                    onChange={(e) => handleDate('startDate', e.target.value)}
+                  />
+                </label>
+                <label className={styles.dateField}>
+                  <span className={styles.dateLabel}>Data final</span>
+                  <input
+                    type="date"
+                    className={styles.date}
+                    value={draft.endDate}
+                    aria-invalid={!!error}
+                    aria-describedby={error ? errorId : undefined}
+                    onChange={(e) => handleDate('endDate', e.target.value)}
+                  />
+                </label>
+              </div>,
+              document.body,
+            )
+          : null}
 
         {showClearButton ? (
           <Button
