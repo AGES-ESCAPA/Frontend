@@ -5,7 +5,7 @@
  * `fetch` diretamente: ela consome `courseModulesApi` (ou um `CourseModuleClient`
  * injetado nos testes).
  */
-import { adminHeaders, readApiErrorMessage } from '@services/api';
+import { authenticatedFetch, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 import type { AdminCourseModule, CourseModuleClient } from '@/types/module';
@@ -19,7 +19,7 @@ const modulesUrl = (courseId: string) => `${ADMIN_URL}/courses/${courseId}/modul
 const moduleUrl = (moduleId: string) => `${ADMIN_URL}/modules/${moduleId}`;
 
 const requestJson = async <T>(url: string, fallback: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(url, { ...init, headers: adminHeaders() });
+  const response = await authenticatedFetch(url, init);
 
   if (!response.ok) {
     throw new Error((await readApiErrorMessage(response)) ?? fallback);
@@ -30,7 +30,7 @@ const requestJson = async <T>(url: string, fallback: string, init?: RequestInit)
 };
 
 const requestNoContent = async (url: string, fallback: string, init?: RequestInit) => {
-  const response = await fetch(url, { ...init, headers: adminHeaders() });
+  const response = await authenticatedFetch(url, init);
 
   if (!response.ok) {
     throw new Error((await readApiErrorMessage(response)) ?? fallback);

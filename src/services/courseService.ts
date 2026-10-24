@@ -1,4 +1,4 @@
-import { adminHeaders } from '@services/api';
+import { authenticatedFetch } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 import { toApiLevel } from '@utils/mapPublicCourse';
@@ -135,14 +135,13 @@ const readCourse = async (response: Response, fallback: string): Promise<CourseD
 };
 
 export const getCourseById = async (id: string): Promise<CourseDetail> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, { headers: adminHeaders() });
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}`);
   return readCourse(response, 'Não foi possível carregar os dados do curso.');
 };
 
 export const createCourse = async (payload: CoursePayload): Promise<CourseDetail> => {
-  const response = await fetch(ADMIN_COURSES_URL, {
+  const response = await authenticatedFetch(ADMIN_COURSES_URL, {
     method: 'POST',
-    headers: adminHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -150,9 +149,8 @@ export const createCourse = async (payload: CoursePayload): Promise<CourseDetail
 };
 
 export const updateCourse = async (id: string, payload: CoursePayload): Promise<CourseDetail> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}`, {
     method: 'PUT',
-    headers: adminHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -160,7 +158,7 @@ export const updateCourse = async (id: string, payload: CoursePayload): Promise<
 };
 
 export const listCourseCategories = async (): Promise<string[]> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/categories`, { headers: adminHeaders() });
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/categories`);
 
   if (!isJsonResponse(response)) {
     throw new Error('Não foi possível carregar as categorias.');
@@ -177,16 +175,15 @@ export const listCourseCategories = async (): Promise<string[]> => {
 };
 
 export const publishCourse = async (id: string): Promise<CourseDetail> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}/publish`, {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}/publish`, {
     method: 'POST',
-    headers: adminHeaders(),
   });
 
   return readCourse(response, 'Não foi possível publicar o curso.');
 };
 
 const listAdminCourses = async (signal?: AbortSignal): Promise<AdminCourseListItem[]> => {
-  const response = await fetch(ADMIN_COURSES_URL, { headers: adminHeaders(), signal });
+  const response = await authenticatedFetch(ADMIN_COURSES_URL, { signal });
 
   if (!isJsonResponse(response)) {
     throw new Error('Não foi possível carregar os cursos.');
@@ -201,9 +198,8 @@ const listAdminCourses = async (signal?: AbortSignal): Promise<AdminCourseListIt
 };
 
 const archiveCourse = async (id: string): Promise<void> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}`, {
     method: 'DELETE',
-    headers: adminHeaders(),
   });
 
   if (!response.ok) {

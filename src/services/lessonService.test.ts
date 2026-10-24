@@ -61,10 +61,6 @@ describe('lessonService', () => {
       expect(fetchMock.mock.calls[0][1]).toEqual(
         expect.objectContaining({
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': 'a0000000-0000-4000-a000-000000000001',
-          },
           body: JSON.stringify({
             title: payload.title,
             type: 'VIDEO',
@@ -75,6 +71,8 @@ describe('lessonService', () => {
           }),
         }),
       );
+      const request = fetchMock.mock.calls[0][1] as RequestInit;
+      expect(new Headers(request.headers).get('authorization')).toBeNull();
 
       expect(lesson).toEqual(
         expect.objectContaining({
@@ -128,13 +126,9 @@ describe('lessonService', () => {
         `/student/courses/${COURSE_ID}/lessons/${LESSON_ID}`,
       );
 
-      expect(fetchMock.mock.calls[0][1]).toEqual({
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': 'b0000000-0000-4000-b000-000000000001',
-        },
-      });
+      const request = fetchMock.mock.calls[0][1] as RequestInit;
+      expect(request.method).toBe('GET');
+      expect(new Headers(request.headers).get('authorization')).toBeNull();
 
       expect(lesson).toEqual({
         id: LESSON_ID,
