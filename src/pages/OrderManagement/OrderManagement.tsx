@@ -30,7 +30,7 @@ import type {
   OrderManagementAction,
   OrderManagementService,
 } from '@services/orderCancellationMockService';
-import styles from './Ordermanagement.module.css';
+import styles from './OrderManagement.module.css';
 
 export interface OrdermanagementProps {
   orderService?: OrderManagementService;
