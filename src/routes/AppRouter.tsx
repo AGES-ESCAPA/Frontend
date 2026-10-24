@@ -79,11 +79,18 @@ const RegisterAccountType = lazy(() =>
   })),
 );
 
+const Ordermanagement = lazy(() =>
+  import('@pages/OrderManagement/Ordermanagement').then((m) => ({
+    default: m.Ordermanagement,
+  })),
+);
+
 const UnderConstruction = lazy(() =>
   import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
     default: m.UnderConstruction,
   })),
 );
+
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -201,6 +208,14 @@ export const AppRouter = () => {
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
                   <CourseBuilder />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <Ordermanagement />
                 </ProtectedRoute>
               }
             />

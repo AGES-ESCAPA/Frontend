@@ -58,7 +58,12 @@ export { AccountTypeCard } from './AccountTypeCard';
 export type { AccountTypeCardProps } from './AccountTypeCard';
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
-export { EMPTY_FILTERS, OrderFilters } from './OrderFilters';
+export {
+  EMPTY_FILTERS,
+  ORDER_STATUS_LABELS,
+  ORDER_TYPE_LABELS,
+  OrderFilters,
+} from './OrderFilters';
 export type {
   OrderFilterCourse,
   OrderFiltersProps,
@@ -66,6 +71,20 @@ export type {
   OrderStatus,
   OrderType,
 } from './OrderFilters';
+export {
+  OrderDetailModal,
+  PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
+  STATUS_VARIANTS,
+  formatDateTime,
+} from './OrderDetailModal';
+export type {
+  CorporateOrderKind,
+  OrderAction,
+  OrderDetailModalProps,
+  OrderHistoryEntry,
+  OrderRow,
+} from './OrderDetailModal';
 export { MaskedInput } from './MaskedInput';
 export type { MaskedInputProps, MaskType } from './MaskedInput';
 export { OrderSummary } from './OrderSummary';
