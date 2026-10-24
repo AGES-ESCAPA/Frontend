@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../Navbar/Navbar';
 import { Sidebar } from '../Sidebar';
 import type { SidebarMenuItem, SidebarRole, SidebarUser } from '../Sidebar';
@@ -44,6 +45,7 @@ export const AuthenticatedLayout = ({
   children,
 }: AuthenticatedLayoutProps) => {
   const auth = useOptionalAuth();
+  const navigate = useNavigate();
   const sessionUser = auth?.user;
   const resolvedUser: SidebarUser = sessionUser
     ? {
@@ -53,7 +55,14 @@ export const AuthenticatedLayout = ({
         avatarUrl: sessionUser.avatarUrl ?? undefined,
       }
     : user;
-  const resolvedLogout = sessionUser ? auth.logout : onLogout;
+  // Sair vai direto para o login: sem isso, o ProtectedRoute guarda a página atual em
+  // `returnTo` e o próximo login (até de outra pessoa) voltaria para ela.
+  const resolvedLogout = sessionUser
+    ? () => {
+        auth.logout();
+        navigate('/login', { replace: true });
+      }
+    : onLogout;
 
   return (
     <div className={styles.layout}>

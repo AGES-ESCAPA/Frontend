@@ -96,7 +96,7 @@ describe('ProtectedRoute', () => {
     expect(screen.queryByText('/login|/admin/cursos')).not.toBeInTheDocument();
   });
 
-  it('clears the session and redirects to login after logout', async () => {
+  it('keeps the current route as returnTo when the session ends without navigating (e.g. expired token)', async () => {
     const user = userEvent.setup();
     localStorage.setItem('access_token', 'jwt-token');
     vi.spyOn(authService, 'getCurrentUser').mockResolvedValue(student);
