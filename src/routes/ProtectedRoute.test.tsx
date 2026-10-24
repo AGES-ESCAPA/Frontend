@@ -31,6 +31,7 @@ const buildContext = (user: AuthUser | null, isRestoring = false): AuthContextVa
   isRestoring,
   login: vi.fn(),
   logout: vi.fn(),
+  updateUser: vi.fn(),
 });
 
 const LogoutButton = () => {
