@@ -38,6 +38,12 @@ const Login = lazy(() =>
   })),
 );
 
+const OrderConfirmation = lazy(() =>
+  import('@pages/OrderConfirmation/OrderConfirmation').then((m) => ({
+    default: m.OrderConfirmation,
+  })),
+);
+
 const Checkout = lazy(() =>
   import('@pages/Checkout/Checkout').then((m) => ({
     default: m.Checkout,
@@ -136,6 +142,22 @@ export const AppRouter = () => {
               }
             />
             <Route path="/login" element={<Login />} />
+            <Route
+              path="/checkout/confirmacao"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'COMPANY']}>
+                  <OrderConfirmation />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/checkout/confirmacao"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <OrderConfirmation />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/checkout/:courseId"
               element={
