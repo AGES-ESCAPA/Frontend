@@ -1,9 +1,13 @@
 import { User, Building2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { Navbar, Footer } from '@components/layout';
 import { AccountTypeCard } from '@components/ui';
+import { authPath, getAuthReturnTo } from '@utils/authReturnTo';
 import styles from './RegisterAccountType.module.css';
 
 export const RegisterAccountType = () => {
+  const location = useLocation();
+  const returnTo = getAuthReturnTo(location.state, location.search);
   return (
     <div className={styles.page}>
       <Navbar state="register" />
@@ -21,13 +25,13 @@ export const RegisterAccountType = () => {
             title="Pessoa Física"
             description="Cadastre-se como indivíduo e acesse nossos serviços com facilidade."
             icon={<User size={32} />}
-            to="/cadastro/usuario"
+            to={authPath('/cadastro/usuario', returnTo)}
           />
           <AccountTypeCard
             title="Pessoa Jurídica"
             description="Cadastre sua empresa e gerencie seus dados corporativos de forma centralizada."
             icon={<Building2 size={32} />}
-            to="/cadastro/empresa"
+            to={authPath('/cadastro/empresa', returnTo)}
           />
         </section>
       </main>

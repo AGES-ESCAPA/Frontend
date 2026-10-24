@@ -26,6 +26,19 @@ describe('authenticatedFetch', () => {
     });
   });
 
+  it('lets the browser set the multipart Content-Type when the body is FormData', async () => {
+    localStorage.setItem('access_token', 'jwt-token');
+    const fetchMock = vi.fn().mockResolvedValue({ status: 200 });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await authenticatedFetch('/me/avatar', { method: 'PUT', body: new FormData() });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+    expect(headers.get('content-type')).toBeNull();
+    expect(headers.get('authorization')).toBe('Bearer jwt-token');
+  });
+
   it('notifies the session when an authenticated request receives 401', async () => {
     const onUnauthorized = vi.fn();
     setUnauthorizedHandler(onUnauthorized);

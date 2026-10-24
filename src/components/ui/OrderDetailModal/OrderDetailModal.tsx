@@ -2,15 +2,14 @@ import type { ReactNode } from 'react';
 import { Modal } from '../Modal';
 import { ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from '../OrderFilters';
 import type { OrderStatus } from '../OrderFilters';
-import { CreditCard } from 'lucide-react';
+import { formatCurrency, formatLongDate } from '@utils/formatters';
 import {
   PAYMENT_ICONS,
-  formatCurrency,
-  formatDate,
+  PAYMENT_METHOD_LABELS,
   formatDateTime,
   type OrderRow,
-} from './Orderdetail.constants';
-import styles from './Orderdetail.module.css';
+} from './OrderDetailModal.constants';
+import styles from './OrderDetailModal.module.css';
 
 export type OrderDetailModalProps = {
   order: OrderRow;
@@ -38,11 +37,12 @@ const DetailItem = ({ label, children }: { label: string; children: ReactNode })
 );
 
 const paymentLabel = (order: OrderRow): string => {
+  const method = PAYMENT_METHOD_LABELS[order.paymentMethod];
   if (order.installments && order.installments > 1) {
     const installmentValue = order.total / order.installments;
-    return `${order.paymentMethod} em ${order.installments}x de ${formatCurrency(installmentValue)}`;
+    return `${method} em ${order.installments}x de ${formatCurrency(installmentValue)}`;
   }
-  return order.paymentMethod;
+  return method;
 };
 
 const accessLabel = (order: OrderRow): string => {
@@ -62,7 +62,7 @@ const sortedHistory = (order: OrderRow) =>
 
 export const OrderDetailModal = ({ order, open, onOpenChange, actions }: OrderDetailModalProps) => {
   const isCorporate = order.type === 'CORPORATE';
-  const PaymentIcon = PAYMENT_ICONS[order.paymentMethod] ?? CreditCard;
+  const PaymentIcon = PAYMENT_ICONS[order.paymentMethod];
 
   const footer = actions ? <div className={styles.modalActions}>{actions}</div> : undefined;
 
@@ -120,7 +120,7 @@ export const OrderDetailModal = ({ order, open, onOpenChange, actions }: OrderDe
             <div className={styles.itemsCardPayment}>
               <PaymentIcon size={16} aria-hidden="true" />
               <span>
-                {paymentLabel(order)} · {formatDate(order.createdAt)}
+                {paymentLabel(order)} · {formatLongDate(order.createdAt.slice(0, 10))}
               </span>
             </div>
           </div>

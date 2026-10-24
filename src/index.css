@@ -202,6 +202,11 @@
   --color-warning: var(--color-warning-300);
   --color-error: var(--color-error-300);
   --color-info: var(--color-info-300);
+  /* Botão danger (Figma): rosa #ff426b, fundo a ~15% e borda a 40%. */
+  --color-danger: #ff426b;
+  --color-danger-surface: rgba(255, 66, 107, 0.149);
+  --color-danger-surface-hover: rgba(255, 66, 107, 0.28);
+  --color-danger-border: rgba(255, 66, 107, 0.4);
 
   --color-badge-level-surface: rgba(8, 8, 14, 0.8);
   --color-badge-level-text: #fbedd0;
@@ -228,6 +233,8 @@
   --course-card-image-ratio: 16 / 9;
   --opacity-card-pending: 0.6;
   --border-width-thin: 1px;
+  --touch-target-min: 2.75rem;
+  --viewport-height: 100dvh;
 
   /* ── Espaçamento ────────────────────────────────────────────────
      Unidade base: --spacing = 0.25rem (4px).

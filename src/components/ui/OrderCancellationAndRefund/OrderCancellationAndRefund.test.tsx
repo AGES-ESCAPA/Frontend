@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { OrderRow } from '@components/ui/OrderDetailModal/Orderdetail.constants';
+import type { OrderRow } from '@components/ui/OrderDetailModal/OrderDetailModal.constants';
 import { OrderCancellationAndRefund } from './OrderCancellationAndRefund';
 
 afterEach(cleanup);
@@ -17,7 +17,7 @@ const makeOrder = (status: OrderRow['status']): OrderRow => ({
   courseId: 'curso-design',
   courseName: 'Escape Room Design Avançado',
   seats: 1,
-  paymentMethod: 'Pix',
+  paymentMethod: 'PIX',
   total: 297,
   createdAt: '2026-08-17T12:00:00.000Z',
   status,

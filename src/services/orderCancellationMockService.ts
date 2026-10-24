@@ -1,7 +1,7 @@
 import type {
   OrderHistoryEntry,
   OrderRow,
-} from '@components/ui/OrderDetailModal/Orderdetail.constants';
+} from '@components/ui/OrderDetailModal/OrderDetailModal.constants';
 import type { OrderStatus } from '@components/ui/OrderFilters';
 
 export type OrderManagementAction = 'cancel' | 'refund';

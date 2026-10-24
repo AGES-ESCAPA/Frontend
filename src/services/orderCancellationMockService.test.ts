@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { OrderRow } from '@components/ui/OrderDetailModal/Orderdetail.constants';
+import type { OrderRow } from '@components/ui/OrderDetailModal/OrderDetailModal.constants';
 import { createOrderCancellationMockService } from './orderCancellationMockService';
 
 const makeOrder = (overrides: Partial<OrderRow> = {}): OrderRow => ({
@@ -13,7 +13,7 @@ const makeOrder = (overrides: Partial<OrderRow> = {}): OrderRow => ({
   courseId: 'curso-design',
   courseName: 'Escape Room Design Avançado',
   seats: 1,
-  paymentMethod: 'Pix',
+  paymentMethod: 'PIX',
   total: 297,
   createdAt: '2026-08-17T12:00:00.000Z',
   status: 'APPROVED',

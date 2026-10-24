@@ -8,6 +8,11 @@ export default defineConfig({
     // Simula um ambiente de navegador real
     environment: 'jsdom',
 
+    // URL fixa para os testes, independente dos arquivos .env locais.
+    env: {
+      VITE_API_BASE_URL: 'http://localhost:8080/api/v1',
+    },
+
     // Roda o setup global antes de cada arquivo de teste
     setupFiles: ['./src/test/setup.ts'],
 

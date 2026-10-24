@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Building2, CircleX, CreditCard, Eye, RotateCcw, UserRound } from 'lucide-react';
+import { Building2, CircleX, Eye, RotateCcw, UserRound } from 'lucide-react';
 
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
+import { formatCurrency, formatLongDate } from '@utils/formatters';
 import {
   Badge,
   EMPTY_FILTERS,
@@ -12,13 +13,12 @@ import {
   OrderCancellationAndRefund,
   OrderFilters,
   PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
   SearchBar,
   SumCard,
   Table,
   Toast,
-  formatCurrency,
-  formatDate,
 } from '@components/ui';
 import type { OrderFiltersValue, OrderRow, TableColumn } from '@components/ui';
 import { useToast } from '@hooks/useToast';
@@ -63,7 +63,7 @@ const ORDERS: OrderRow[] = [
     courseId: 'curso-design',
     courseName: 'Escape Room Design Avançado',
     seats: 1,
-    paymentMethod: 'Pix',
+    paymentMethod: 'PIX',
     total: 297,
     createdAt: '2026-08-17T12:00:00.000Z',
     status: 'APPROVED',
@@ -84,7 +84,7 @@ const ORDERS: OrderRow[] = [
     courseId: 'curso-excel',
     courseName: 'Excel para Negócios',
     seats: 5,
-    paymentMethod: 'Cartão',
+    paymentMethod: 'CARD',
     installments: 3,
     total: 1185,
     createdAt: '2026-08-16T12:00:00.000Z',
@@ -104,7 +104,7 @@ const ORDERS: OrderRow[] = [
     courseId: 'curso-gestao',
     courseName: 'Gestão de Experiências',
     seats: 1,
-    paymentMethod: 'Pix',
+    paymentMethod: 'PIX',
     total: 197,
     createdAt: '2026-08-14T12:00:00.000Z',
     status: 'CANCELLED',
@@ -129,7 +129,7 @@ const ORDERS: OrderRow[] = [
     courseId: 'curso-lideranca',
     courseName: 'Liderança e Gestão de Pessoas',
     seats: 10,
-    paymentMethod: 'Pix',
+    paymentMethod: 'PIX',
     total: 1970,
     createdAt: '2026-08-13T12:00:00.000Z',
     status: 'APPROVED',
@@ -148,7 +148,7 @@ const ORDERS: OrderRow[] = [
     courseId: 'curso-marketing',
     courseName: 'Marketing para Escape Rooms',
     seats: 1,
-    paymentMethod: 'Cartão',
+    paymentMethod: 'CARD',
     installments: 3,
     total: 247,
     createdAt: '2026-08-11T12:00:00.000Z',
@@ -173,7 +173,7 @@ const ORDERS: OrderRow[] = [
     courseId: 'curso-design',
     courseName: 'Escape Room Design Avançado',
     seats: 1,
-    paymentMethod: 'Pix',
+    paymentMethod: 'PIX',
     total: 297,
     createdAt: '2026-08-09T12:00:00.000Z',
     status: 'APPROVED',
@@ -193,7 +193,7 @@ const ORDERS: OrderRow[] = [
     courseId: 'curso-gestao',
     courseName: 'Gestão de Experiências',
     seats: 3,
-    paymentMethod: 'Boleto',
+    paymentMethod: 'BOLETO',
     total: 711,
     createdAt: '2026-08-07T12:00:00.000Z',
     status: 'APPROVED',
@@ -278,18 +278,18 @@ const columns: TableColumn<OrderRow>[] = [
   {
     id: 'createdAt',
     header: 'Data da compra',
-    render: (order) => formatDate(order.createdAt),
+    render: (order) => formatLongDate(order.createdAt.slice(0, 10)),
   },
   {
     id: 'paymentMethod',
     header: 'Forma de pagamento',
     render: (order) => {
-      const PaymentIcon = PAYMENT_ICONS[order.paymentMethod] ?? CreditCard;
+      const PaymentIcon = PAYMENT_ICONS[order.paymentMethod];
 
       return (
         <span className={styles.paymentMethod}>
           <PaymentIcon size={24} aria-hidden="true" />
-          {order.paymentMethod}
+          {PAYMENT_METHOD_LABELS[order.paymentMethod]}
         </span>
       );
     },

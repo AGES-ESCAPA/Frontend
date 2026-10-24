@@ -521,7 +521,6 @@
     content: 'Ações';
   }
 
-  /* Conteúdo da célula sempre colado à direita do card */
   .ordersTable td:nth-child(n) > * {
     margin-inline: auto 0;
   }

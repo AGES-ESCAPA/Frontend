@@ -1,16 +1,16 @@
-export { OrderDetailModal, Orderdetail } from './Orderdetail';
-export type { OrderDetailModalProps } from './Orderdetail';
+export { OrderDetailModal, Orderdetail } from './OrderDetailModal';
+export type { OrderDetailModalProps } from './OrderDetailModal';
 export {
   PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
-  formatCurrency,
-  formatDate,
   formatDateTime,
-} from './Orderdetail.constants';
+} from './OrderDetailModal.constants';
 
 export type {
   CorporateOrderKind,
   OrderAction,
   OrderHistoryEntry,
   OrderRow,
-} from './Orderdetail.constants';
+  PaymentMethod,
+} from './OrderDetailModal.constants';

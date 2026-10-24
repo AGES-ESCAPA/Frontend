@@ -22,7 +22,7 @@ export type { LessonModalProps } from './LessonModal';
 export { LessonNavItem } from './LessonNavItem';
 export type { LessonNavItemProps, LessonStatus } from './LessonNavItem';
 export { Modal } from './Modal';
-export type { ModalProps, ModalSize } from './Modal';
+export type { ModalAppearance, ModalProps, ModalSize } from './Modal';
 export { ModuleNavSection } from './ModuleNavSection';
 export type { ModuleNavLesson, ModuleNavSectionProps } from './ModuleNavSection';
 export { SearchBar } from './SearchBar';
@@ -74,9 +74,8 @@ export type {
 export {
   OrderDetailModal,
   PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
-  formatCurrency,
-  formatDate,
   formatDateTime,
 } from './OrderDetailModal';
 export type {
@@ -88,3 +87,7 @@ export type {
 } from './OrderDetailModal';
 export { OrderCancellationAndRefund } from './OrderCancellationAndRefund';
 export type { OrderCancellationAndRefundProps } from './OrderCancellationAndRefund';
+export { MaskedInput } from './MaskedInput';
+export type { MaskedInputProps, MaskType } from './MaskedInput';
+export { OrderSummary } from './OrderSummary';
+export type { OrderSummaryProps, OrderItem, OrderBuyer } from './OrderSummary';

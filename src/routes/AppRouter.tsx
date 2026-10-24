@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@contexts/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
+import { RegistrationFeedback } from '@routes/RegistrationFeedback';
 
 // ─── Lazy Loading ─────────────────────────────────────────────────────────────
 // Adicione novas páginas aqui seguindo este padrão.
@@ -17,6 +18,12 @@ const Home = lazy(() =>
 const MyCourses = lazy(() =>
   import('@pages/MyCourses/MyCourses').then((m) => ({
     default: m.MyCourses,
+  })),
+);
+
+const Profile = lazy(() =>
+  import('@pages/Profile/Profile').then((m) => ({
+    default: m.Profile,
   })),
 );
 
@@ -84,7 +91,11 @@ const UnderConstruction = lazy(() =>
     default: m.UnderConstruction,
   })),
 );
-
+const RegisterIndividual = lazy(() =>
+  import('@pages/RegisterIndividual/RegisterIndividual').then((m) => ({
+    default: m.RegisterIndividual,
+  })),
+);
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -120,11 +131,13 @@ export const AppRouter = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <RegistrationFeedback />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
             <Route path="/cadastro" element={<RegisterAccountType />} />
+            <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
             <Route
               path="/meus-cursos"
               element={
@@ -223,6 +236,14 @@ export const AppRouter = () => {
               }
             />
             <Route
+              path="/empresa/perfil"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/empresa/*"
               element={
                 <ProtectedRoute allowedRoles={['COMPANY']}>
@@ -242,7 +263,7 @@ export const AppRouter = () => {
               path="/meu-perfil"
               element={
                 <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <UnderConstruction />
+                  <Profile />
                 </ProtectedRoute>
               }
             />

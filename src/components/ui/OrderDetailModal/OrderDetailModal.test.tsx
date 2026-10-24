@@ -2,8 +2,8 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import type { OrderStatus } from '../OrderFilters';
-import { OrderDetailModal } from './Orderdetail';
-import type { OrderRow } from './Orderdetail.constants';
+import { OrderDetailModal } from './OrderDetailModal';
+import type { OrderRow } from './OrderDetailModal.constants';
 
 afterEach(cleanup);
 
@@ -18,9 +18,9 @@ const individualOrder: OrderRow = {
   courseId: 'curso-design',
   courseName: 'Escape Room Design Avançado',
   seats: 1,
-  paymentMethod: 'Pix',
+  paymentMethod: 'PIX',
   total: 297,
-  createdAt: '2026-08-17T12:00:00.000Z',
+  createdAt: '2026-08-17',
   status: 'APPROVED',
   statusHistory: [
     {
@@ -41,7 +41,7 @@ const corporateCourseOrder: OrderRow = {
   type: 'CORPORATE',
   corporateKind: 'course',
   seats: 5,
-  paymentMethod: 'Cartão',
+  paymentMethod: 'CARD',
   installments: 3,
   total: 1185,
 };
@@ -52,7 +52,7 @@ const corporateSeatsOrder: OrderRow = {
   code: 'PED-00130',
   corporateKind: 'seats',
   seats: 3,
-  paymentMethod: 'Boleto',
+  paymentMethod: 'BOLETO',
   installments: undefined,
   total: 711,
 };
@@ -73,7 +73,12 @@ describe('OrderDetailModal', () => {
   it('mostra os dados completos de um pedido individual', () => {
     renderModal(individualOrder);
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'Detalhe do pedido' });
+    const title = within(dialog).getByRole('heading', { name: 'Detalhe do pedido' });
+    const code = within(dialog).getByText(individualOrder.code);
+
+    expect(dialog).toBeInTheDocument();
+    expect(title.compareDocumentPosition(code) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('PED-00142')).toBeInTheDocument();
     expect(getDefinition('Nome')).toHaveTextContent('Ana Paula Ferreira');
     expect(getDefinition('E-mail')).toHaveTextContent('ana.ferreira@email.com');
@@ -82,7 +87,7 @@ describe('OrderDetailModal', () => {
     expect(getDefinition('Tipo de conta')).toHaveTextContent('Individual');
     expect(screen.getByText('Escape Room Design Avançado')).toBeInTheDocument();
     expect(screen.getByText('1 acesso individual')).toBeInTheDocument();
-    expect(screen.getByText(/^Pix ·/)).toBeInTheDocument();
+    expect(screen.getByText(/^PIX ·/)).toBeInTheDocument();
     expect(screen.getAllByText(/297,00/)).toHaveLength(2);
     expect(screen.queryByText(/colaboradores? com acesso/)).not.toBeInTheDocument();
   });
@@ -99,9 +104,15 @@ describe('OrderDetailModal', () => {
   });
 
   /*Teste 2*/
-  it('mostra a data do pedido no formato brasileiro', () => {
+  it('mostra a data do pedido por extenso, em português', () => {
     renderModal(individualOrder);
-    expect(screen.getByText(/^Pix · 17\/08\/2026$/)).toBeInTheDocument();
+    expect(screen.getByText(/^PIX · 17 de agosto de 2026$/)).toBeInTheDocument();
+  });
+
+  /*Teste 2b*/
+  it('não desloca o dia quando a data vem sem hora', () => {
+    renderModal({ ...individualOrder, createdAt: '2026-08-21' });
+    expect(screen.getByText(/^PIX · 21 de agosto de 2026$/)).toBeInTheDocument();
   });
 
   /*Teste 3*/
@@ -128,7 +139,7 @@ describe('OrderDetailModal', () => {
   /*Teste 5*/
   it('mostra as parcelas quando o pagamento é parcelado', () => {
     renderModal(corporateCourseOrder);
-    expect(screen.getByText(/Cartão em 3x de .*395,00/)).toBeInTheDocument();
+    expect(screen.getByText(/Cartão de Crédito em 3x de .*395,00/)).toBeInTheDocument();
   });
 
   /*Teste 6*/
@@ -158,7 +169,6 @@ describe('OrderDetailModal', () => {
         ],
       });
 
-      // badge do topo + badge do histórico
       expect(screen.getAllByText(STATUS_TEXT[status])).toHaveLength(2);
     },
   );
@@ -271,7 +281,6 @@ describe('OrderDetailModal', () => {
       .getByRole('heading', { name: 'Histórico de status' })
       .closest('section') as HTMLElement;
 
-    // o conteúdo de actions vem depois do corpo (histórico), ou seja, no rodapé
     expect(history.compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(history).not.toContainElement(action);
   });

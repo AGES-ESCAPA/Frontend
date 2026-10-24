@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CircleX, RotateCcw } from 'lucide-react';
-import type { OrderRow } from '@components/ui/OrderDetailModal/Orderdetail.constants';
+import type { OrderRow } from '@components/ui/OrderDetailModal/OrderDetailModal.constants';
 import type { OrderManagementAction } from '@services/orderCancellationMockService';
 import { Button } from '../Button';
 import { ConfirmDialog } from '../ConfirmDialog';
