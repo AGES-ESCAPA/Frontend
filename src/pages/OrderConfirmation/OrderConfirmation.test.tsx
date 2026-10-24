@@ -63,6 +63,7 @@ const renderConfirmation = (
         isRestoring: false,
         login: vi.fn(),
         logout: vi.fn(),
+        updateUser: vi.fn(),
       }}
     >
       <MemoryRouter initialEntries={[{ pathname: path, state }]}>

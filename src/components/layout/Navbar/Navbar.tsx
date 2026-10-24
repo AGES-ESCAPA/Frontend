@@ -162,12 +162,9 @@ export const Navbar = ({
               >
                 <a href="/login" aria-label="Acessar a plataforma" />
               </Button>
-              <Button
-                variant="primary"
-                type="button"
-                label="Começar Agora"
-                className={styles.navButton}
-              />
+              <Button asChild variant="primary" label="Começar Agora" className={styles.navButton}>
+                <Link to="/cadastro" />
+              </Button>
             </div>
           )}
 

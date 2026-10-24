@@ -24,6 +24,7 @@ const wrapperFor =
         isRestoring: false,
         login: vi.fn(),
         logout: vi.fn(),
+        updateUser: vi.fn(),
       }}
     >
       <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>

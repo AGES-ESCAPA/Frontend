@@ -63,9 +63,12 @@ describe('Login', () => {
     'starts the session and sends a $role to their panel',
     async ({ role, destination }) => {
       const user = userEvent.setup();
+      const now = Date.now();
+      vi.spyOn(Date, 'now').mockReturnValue(now);
       const authenticatedUser = { ...student, id: `user-${role}`, role };
       vi.spyOn(authService, 'login').mockResolvedValue({
         token: 'jwt-token',
+        expiresIn: 120,
         user: authenticatedUser,
       });
       renderLogin();
@@ -76,12 +79,17 @@ describe('Login', () => {
 
       await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(destination));
       expect(localStorage.getItem('access_token')).toBe('jwt-token');
+      expect(localStorage.getItem('access_token_expires_at')).toBe(String(now + 120_000));
     },
   );
 
   it('returns to the protected route that originated the login', async () => {
     const user = userEvent.setup();
-    vi.spyOn(authService, 'login').mockResolvedValue({ token: 'jwt-token', user: student });
+    vi.spyOn(authService, 'login').mockResolvedValue({
+      token: 'jwt-token',
+      expiresIn: 120,
+      user: student,
+    });
 
     render(
       <MemoryRouter
@@ -106,7 +114,11 @@ describe('Login', () => {
   it('returns to the pending purchase route after login', async () => {
     const user = userEvent.setup();
     localStorage.setItem('escapa:purchase-redirect', '/cursos/course-1');
-    vi.spyOn(authService, 'login').mockResolvedValue({ token: 'jwt-token', user: student });
+    vi.spyOn(authService, 'login').mockResolvedValue({
+      token: 'jwt-token',
+      expiresIn: 120,
+      user: student,
+    });
     renderLogin();
 
     await user.type(screen.getByLabelText(/E-mail/), student.email);
@@ -150,7 +162,7 @@ describe('Login', () => {
     const login = vi
       .spyOn(authService, 'login')
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
-      .mockResolvedValueOnce({ token: 'jwt-token', user: student });
+      .mockResolvedValueOnce({ token: 'jwt-token', expiresIn: 120, user: student });
     renderLogin();
 
     await user.type(screen.getByLabelText(/E-mail/), student.email);
@@ -168,10 +180,16 @@ describe('Login', () => {
 
   it('prevents duplicate submissions while the login is in progress', async () => {
     const user = userEvent.setup();
-    let resolveLogin: (session: { token: string; user: AuthUser }) => void = () => undefined;
-    const pendingLogin = new Promise<{ token: string; user: AuthUser }>((resolve) => {
-      resolveLogin = resolve;
-    });
+    let resolveLogin: (session: {
+      token: string;
+      user: AuthUser;
+      expiresIn: number;
+    }) => void = () => undefined;
+    const pendingLogin = new Promise<{ token: string; user: AuthUser; expiresIn: number }>(
+      (resolve) => {
+        resolveLogin = resolve;
+      },
+    );
     const login = vi.spyOn(authService, 'login').mockReturnValue(pendingLogin);
     renderLogin();
 
@@ -182,7 +200,7 @@ describe('Login', () => {
 
     expect(login).toHaveBeenCalledTimes(1);
 
-    resolveLogin({ token: 'jwt-token', user: student });
+    resolveLogin({ token: 'jwt-token', expiresIn: 120, user: student });
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/meus-cursos'));
   });
 

@@ -2,19 +2,16 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AuthenticatedLayout } from '@components/layout';
-import { useCheckoutAmount } from '@hooks/useCheckoutAmount';
+import { useCheckoutCourse } from '@hooks/useCheckoutCourse';
 import { useCheckoutLayout } from '@hooks/useCheckoutLayout';
 import { OrderServiceError, createOrder } from '@services/orderService';
 import type { OrderConfirmationState } from '@/types/order';
+import { OrderSummary } from '@components/ui/OrderSummary/OrderSummary';
 import { PaymentPanel } from './components/PaymentPanel';
 import type { PaymentSelection } from './components/PaymentPanel';
 import styles from './Checkout.module.css';
 
 export interface CheckoutProps {
-  /**
-   * Resumo do pedido (US-26, componente OrderSummary): fica na coluna da direita.
-   * Sem ele, o pagamento ocupa a largura toda.
-   */
   summary?: ReactNode;
 }
 
@@ -24,7 +21,9 @@ export const Checkout = ({ summary }: CheckoutProps) => {
   const navigate = useNavigate();
   const { courseId = '' } = useParams();
   const { role, menuItems, user, catalogPath } = useCheckoutLayout();
-  const { amount, courseTitle, status, errorMessage } = useCheckoutAmount(courseId);
+  const { course, status, errorMessage, retry } = useCheckoutCourse(courseId);
+  const amount = course?.price ?? null;
+  const courseTitle = course?.title ?? null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -75,14 +74,31 @@ export const Checkout = ({ summary }: CheckoutProps) => {
       </header>
 
       {status === 'loading' && (
-        <p className={styles.status} role="status">
-          Carregando os dados da compra...
-        </p>
+        <div className={`${styles.grid} ${styles.withSummary}`}>
+          <p className={styles.status} role="status">
+            Carregando os dados da compra...
+          </p>
+
+          <aside className={styles.summary} aria-label="Resumo do pedido">
+            {summary ?? <OrderSummary status="loading" />}
+          </aside>
+        </div>
       )}
 
-      {status === 'error' && (
+      {(status === 'error' || status === 'not-found') && (
         <section className={styles.error} role="alert">
-          <p>{errorMessage ?? 'Não foi possível carregar os dados da compra.'}</p>
+          <p>
+            {status === 'not-found'
+              ? 'Curso não encontrado.'
+              : (errorMessage ?? 'Não foi possível carregar os dados da compra.')}
+          </p>
+
+          {status === 'error' && (
+            <button type="button" onClick={retry}>
+              Tentar novamente
+            </button>
+          )}
+
           <Link to={catalogPath} className={styles.catalogLink}>
             Voltar ao catálogo
           </Link>
