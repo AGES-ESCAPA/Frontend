@@ -3,9 +3,10 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { IdCard, Landmark, Mail, Phone, User } from 'lucide-react';
 import { Footer, Navbar } from '@components/layout';
-import { Button, FormField, MaskedInput, PasswordInput, TextInput } from '@components/ui';
+import { Button, FormField, MaskedInput, PasswordInput, TextInput, Toast } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
-import { DuplicateRegistrationError, authService } from '@services/authService';
+import { useToast } from '@hooks/useToast';
+import { AuthServiceError, DuplicateRegistrationError, authService } from '@services/authService';
 import {
   COMPANY_REGISTRATION_INITIAL_VALUES,
   buildCompanyRegistrationPayload,
@@ -40,6 +41,7 @@ export const RegisterCompany = () => {
   const [errors, setErrors] = useState<CompanyRegistrationErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast, isOpen, showToast, dismissToast } = useToast();
 
   const changeField = (field: CompanyRegistrationField, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -64,8 +66,16 @@ export const RegisterCompany = () => {
     } catch (error: unknown) {
       if (error instanceof DuplicateRegistrationError && error.field !== null) {
         setErrors({ [error.field]: DUPLICATE_MESSAGES[error.field] });
-      } else {
+      } else if (error instanceof AuthServiceError && error.status === 400) {
+        setFormError(error.message);
+      } else if (error instanceof AuthServiceError) {
         setFormError('Não foi possível concluir o cadastro. Tente novamente.');
+      } else {
+        showToast(
+          'error',
+          'Falha de conexão',
+          'Não foi possível concluir o cadastro. Verifique sua internet e tente novamente.',
+        );
       }
     } finally {
       setIsSubmitting(false);
@@ -223,6 +233,16 @@ export const RegisterCompany = () => {
       </main>
 
       <Footer variant="compact" />
+
+      {toast ? (
+        <Toast
+          open={isOpen}
+          onOpenChange={dismissToast}
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+        />
+      ) : null}
     </div>
   );
 };

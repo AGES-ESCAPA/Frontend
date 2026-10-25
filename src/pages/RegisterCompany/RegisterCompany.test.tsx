@@ -192,4 +192,30 @@ describe('RegisterCompany', () => {
     );
     expect(localStorage.getItem('access_token')).toBeNull();
   });
+
+  it('shows the API message in the form when the registration is rejected with 400', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(authService, 'registerCompany').mockRejectedValue(
+      new AuthServiceError(400, 'cnpj is invalid'),
+    );
+    renderRegisterCompany();
+
+    await fillValidForm(user);
+    await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('cnpj is invalid');
+  });
+
+  it('shows a toast and keeps the typed data on a network failure', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(authService, 'registerCompany').mockRejectedValue(new TypeError('Failed to fetch'));
+    renderRegisterCompany();
+
+    await fillValidForm(user);
+    await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
+
+    expect(await screen.findByText('Falha de conexão')).toBeInTheDocument();
+    expect(screen.getByLabelText('CNPJ')).toHaveValue('11.222.333/0001-81');
+    expect(screen.getByLabelText('E-mail corporativo')).toHaveValue('contato@empresa.com.br');
+  });
 });
