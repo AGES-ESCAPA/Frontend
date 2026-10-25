@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Building2, CircleX, Eye, RotateCcw, UserRound } from 'lucide-react';
 
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
 import { formatCurrency, formatLongDate } from '@utils/formatters';
+import { mapAdminOrderDetailsToOrderRow, toOrderCode } from '@utils/mapAdminOrder';
 import {
   Badge,
+  Button,
   EMPTY_FILTERS,
+  Modal,
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
   OrderDetailModal,
@@ -21,20 +24,17 @@ import {
   Toast,
 } from '@components/ui';
 import type { OrderFiltersValue, OrderRow, TableColumn } from '@components/ui';
+import { useAdminCourses } from '@hooks/useAdminCourses';
+import { useAdminOrderDetails } from '@hooks/useAdminOrderDetails';
+import { useAdminOrders } from '@hooks/useAdminOrders';
 import { useToast } from '@hooks/useToast';
 import {
   createOrderCancellationMockService,
   OrderActionError,
 } from '@services/orderCancellationMockService';
-import type {
-  OrderManagementAction,
-  OrderManagementService,
-} from '@services/orderCancellationMockService';
+import type { OrderManagementAction } from '@services/orderCancellationMockService';
+import type { AdminOrderFilters, AdminOrderSummary } from '@/types/order';
 import styles from './OrderManagement.module.css';
-
-export interface OrdermanagementProps {
-  orderService?: OrderManagementService;
-}
 
 const ADMIN_USER: SidebarUser = {
   name: 'Admin',
@@ -42,185 +42,20 @@ const ADMIN_USER: SidebarUser = {
   email: 'admin@email.com',
 };
 
-const COURSES = [
-  { id: 'curso-excel', name: 'Turismo na era da AI' },
-  { id: 'curso-design', name: 'Analise de locais de turismo' },
-  { id: 'curso-gestao', name: 'Gestão de avaliações dos cursos de turismo' },
-  { id: 'curso-lideranca', name: 'Desbravando oportunidades para o turismo' },
-  { id: 'curso-marketing', name: 'Marketing para turismo' },
-];
+const toAdminOrderFilters = (filters: OrderFiltersValue): AdminOrderFilters => ({
+  ...(filters.type ? { type: filters.type } : {}),
+  ...(filters.courseId ? { courseId: filters.courseId } : {}),
+  ...(filters.startDate ? { from: filters.startDate } : {}),
+  ...(filters.endDate ? { to: filters.endDate } : {}),
+  ...(filters.status ? { status: filters.status } : {}),
+});
 
-// Dados de exemplo. Substituir pela chamada à API quando o backend estiver disponível.
-const ORDERS: OrderRow[] = [
-  {
-    id: '1',
-    code: 'PED-00142',
-    clientName: 'Ana Paula Ferreira',
-    clientEmail: 'ana.ferreira@email.com',
-    clientPhone: '(11) 98765-4321',
-    clientDocument: '123.456.789-00',
-    type: 'INDIVIDUAL',
-    courseId: 'curso-design',
-    courseName: 'Escape Room Design Avançado',
-    seats: 1,
-    paymentMethod: 'PIX',
-    total: 297,
-    createdAt: '2026-08-17T12:00:00.000Z',
-    status: 'APPROVED',
-    statusHistory: [
-      { status: 'APPROVED', date: '2026-08-17T12:00:00.000Z', description: 'Pagamento aprovado.' },
-    ],
-  },
-  {
-    id: '2',
-    code: 'PED-00141',
-    clientName: 'Marina Oliveira',
-    clientEmail: 'marina.oliveira@email.com',
-    clientPhone: '(11) 97654-3210',
-    clientDocument: '12.345.678/0001-90',
-    organizationName: 'Escape Corp Ltda.',
-    type: 'CORPORATE',
-    corporateKind: 'course',
-    courseId: 'curso-excel',
-    courseName: 'Excel para Negócios',
-    seats: 5,
-    paymentMethod: 'CARD',
-    installments: 3,
-    total: 1185,
-    createdAt: '2026-08-16T12:00:00.000Z',
-    status: 'APPROVED',
-    statusHistory: [
-      { status: 'APPROVED', date: '2026-08-16T12:00:00.000Z', description: 'Pagamento aprovado.' },
-    ],
-  },
-  {
-    id: '3',
-    code: 'PED-00139',
-    clientName: 'Roberto Alves',
-    clientEmail: 'roberto.alves@email.com',
-    clientPhone: '(21) 99876-5432',
-    clientDocument: '987.654.321-00',
-    type: 'INDIVIDUAL',
-    courseId: 'curso-gestao',
-    courseName: 'Gestão de Experiências',
-    seats: 1,
-    paymentMethod: 'PIX',
-    total: 197,
-    createdAt: '2026-08-14T12:00:00.000Z',
-    status: 'CANCELLED',
-    statusHistory: [
-      {
-        status: 'CANCELLED',
-        date: '2026-08-15T12:00:00.000Z',
-        description: 'Pedido cancelado pelo administrador.',
-      },
-    ],
-  },
-  {
-    id: '4',
-    code: 'PED-00137',
-    clientName: 'Tech Adventures S.A.',
-    clientEmail: 'compras@techadventures.com.br',
-    clientPhone: '(11) 3456-7890',
-    clientDocument: '98.765.432/0001-10',
-    organizationName: 'Tech Adventures S.A.',
-    type: 'CORPORATE',
-    corporateKind: 'course',
-    courseId: 'curso-lideranca',
-    courseName: 'Liderança e Gestão de Pessoas',
-    seats: 10,
-    paymentMethod: 'PIX',
-    total: 1970,
-    createdAt: '2026-08-13T12:00:00.000Z',
-    status: 'APPROVED',
-    statusHistory: [
-      { status: 'APPROVED', date: '2026-08-13T12:00:00.000Z', description: 'Pagamento aprovado.' },
-    ],
-  },
-  {
-    id: '5',
-    code: 'PED-00135',
-    clientName: 'Carla Mendes',
-    clientEmail: 'carla.mendes@email.com',
-    clientPhone: '(31) 98888-1234',
-    clientDocument: '456.789.123-00',
-    type: 'INDIVIDUAL',
-    courseId: 'curso-marketing',
-    courseName: 'Marketing para Escape Rooms',
-    seats: 1,
-    paymentMethod: 'CARD',
-    installments: 3,
-    total: 247,
-    createdAt: '2026-08-11T12:00:00.000Z',
-    status: 'REFUNDED',
-    statusHistory: [
-      { status: 'APPROVED', date: '2026-08-11T12:00:00.000Z', description: 'Pagamento aprovado.' },
-      {
-        status: 'REFUNDED',
-        date: '2026-08-12T12:00:00.000Z',
-        description: 'Reembolso solicitado pelo administrador.',
-      },
-    ],
-  },
-  {
-    id: '6',
-    code: 'PED-00133',
-    clientName: 'Lucas Pereira',
-    clientEmail: 'lucas.pereira@email.com',
-    clientPhone: '(41) 99123-4567',
-    clientDocument: '321.654.987-00',
-    type: 'INDIVIDUAL',
-    courseId: 'curso-design',
-    courseName: 'Escape Room Design Avançado',
-    seats: 1,
-    paymentMethod: 'PIX',
-    total: 297,
-    createdAt: '2026-08-09T12:00:00.000Z',
-    status: 'APPROVED',
-    statusHistory: [
-      { status: 'APPROVED', date: '2026-08-09T12:00:00.000Z', description: 'Pagamento aprovado.' },
-    ],
-  },
-  {
-    id: '7',
-    code: 'PED-00130',
-    clientName: 'Imersão Total Ltda.',
-    clientEmail: 'financeiro@imersao.com.br',
-    clientPhone: '(11) 3333-4444',
-    clientDocument: '11.222.333/0001-44',
-    type: 'CORPORATE',
-    corporateKind: 'seats',
-    courseId: 'curso-gestao',
-    courseName: 'Gestão de Experiências',
-    seats: 3,
-    paymentMethod: 'BOLETO',
-    total: 711,
-    createdAt: '2026-08-07T12:00:00.000Z',
-    status: 'APPROVED',
-    statusHistory: [
-      { status: 'APPROVED', date: '2026-08-07T12:00:00.000Z', description: 'Pagamento aprovado.' },
-    ],
-  },
-];
-
-const matchesSearch = (order: OrderRow, term: string): boolean => {
+const matchesSearch = (order: AdminOrderSummary, term: string): boolean => {
   const value = term.trim().toLocaleLowerCase('pt-BR');
   if (!value) return true;
 
-  return [order.code, order.clientName, order.clientEmail, order.courseName].some((field) =>
+  return [toOrderCode(order.id), order.requester, order.courseTitle ?? ''].some((field) =>
     field.toLocaleLowerCase('pt-BR').includes(value),
-  );
-};
-
-const matchesFilters = (order: OrderRow, filters: OrderFiltersValue): boolean => {
-  const orderDate = order.createdAt.slice(0, 10);
-
-  return (
-    (!filters.status || order.status === filters.status) &&
-    (!filters.type || order.type === filters.type) &&
-    (!filters.courseId || order.courseId === filters.courseId) &&
-    (!filters.startDate || orderDate >= filters.startDate) &&
-    (!filters.endDate || orderDate <= filters.endDate)
   );
 };
 
@@ -229,127 +64,74 @@ const menuItems = SIDEBAR_MENU_PRESETS.admin.map((item, index) => ({
   active: index === 0,
 }));
 
-const columns: TableColumn<OrderRow>[] = [
-  {
-    id: 'code',
-    header: 'ID pedido',
-    align: 'start',
-    render: (order) => <span className={styles.code}>{order.code}</span>,
-  },
-  {
-    id: 'clientName',
-    header: 'Solicitante',
-    align: 'start',
-    render: (order) => (
-      <div className={styles.clientCell}>
-        <span>{order.clientName}</span>
-        {order.organizationName ? (
-          <span className={styles.clientSecondary}>{order.organizationName}</span>
-        ) : null}
-      </div>
-    ),
-  },
-  {
-    id: 'type',
-    header: 'Tipo',
-    render: (order) => {
-      const isCorporate = order.type === 'CORPORATE';
-      const TypeIcon = isCorporate ? Building2 : UserRound;
-
-      return (
-        <span
-          className={`${styles.typeBadge} ${isCorporate ? styles.corporateBadge : styles.individualBadge}`}
-        >
-          <TypeIcon size={24} aria-hidden="true" />
-          {ORDER_TYPE_LABELS[order.type]}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'course',
-    header: 'Curso / Assentos',
-    align: 'center',
-    render: (order) =>
-      order.type === 'CORPORATE'
-        ? `${order.seats} ${order.seats === 1 ? 'assento' : 'assentos'}`
-        : order.courseName,
-  },
-  {
-    id: 'createdAt',
-    header: 'Data da compra',
-    render: (order) => formatLongDate(order.createdAt.slice(0, 10)),
-  },
-  {
-    id: 'paymentMethod',
-    header: 'Forma de pagamento',
-    render: (order) => {
-      const PaymentIcon = PAYMENT_ICONS[order.paymentMethod];
-
-      return (
-        <span className={styles.paymentMethod}>
-          <PaymentIcon size={24} aria-hidden="true" />
-          {PAYMENT_METHOD_LABELS[order.paymentMethod]}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'total',
-    header: 'Valor',
-    align: 'end',
-    render: (order) => formatCurrency(order.total),
-  },
-  {
-    id: 'status',
-    header: 'Status',
-    align: 'center',
-    render: (order) => (
-      <Badge
-        label={ORDER_STATUS_LABELS[order.status]}
-        variant={STATUS_VARIANTS[order.status]}
-        mini
-        className={styles.statusBadge}
-      />
-    ),
-  },
-];
-
-export const Ordermanagement = ({ orderService }: OrdermanagementProps = {}) => {
-  const [mockService] = useState(
-    () =>
-      orderService ??
-      createOrderCancellationMockService(ORDERS, {
-        enrollmentProgress: { '1': 42, '2': 68, '3': 15, '4': 0, '5': 100, '6': 73, '7': 0 },
-        occupiedCorporateSeats: { '7': 2 },
-      }),
-  );
-  const [orders, setOrders] = useState<OrderRow[]>(() => mockService.listOrders());
+export const Ordermanagement = () => {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<OrderFiltersValue>(EMPTY_FILTERS);
+  const [page, setPage] = useState(0);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [displayedOrder, setDisplayedOrder] = useState<OrderRow | null>(null);
+  const [pendingAction, setPendingAction] = useState(false);
   const { toast, isOpen, showToast, dismissToast } = useToast();
 
+  const adminFilters = useMemo(() => toAdminOrderFilters(filters), [filters]);
+
+  const { orders, status, errorMessage, totalPages, totalElements, reload } = useAdminOrders(
+    adminFilters,
+    page,
+  );
+
+  const { courses: adminCourses } = useAdminCourses();
+  const filterCourses = useMemo(
+    () => adminCourses.map((course) => ({ id: course.id, name: course.title })),
+    [adminCourses],
+  );
+
+  const {
+    order: orderDetails,
+    status: detailStatus,
+    errorMessage: detailErrorMessage,
+  } = useAdminOrderDetails(selectedOrderId);
+
+  const selectedOrderRow = useMemo(
+    () => (orderDetails ? mapAdminOrderDetailsToOrderRow(orderDetails) : null),
+    [orderDetails],
+  );
+
+  const orderActionService = useMemo(
+    () => (selectedOrderRow ? createOrderCancellationMockService([selectedOrderRow]) : null),
+    [selectedOrderRow],
+  );
+
+  useEffect(() => {
+    setDisplayedOrder(selectedOrderRow);
+  }, [selectedOrderRow]);
+
+  const handleFiltersChange = (next: OrderFiltersValue) => {
+    setFilters(next);
+    setPage(0);
+  };
+
   const filteredOrders = useMemo(
-    () => orders.filter((order) => matchesSearch(order, search) && matchesFilters(order, filters)),
-    [filters, orders, search],
+    () => orders.filter((order) => matchesSearch(order, search)),
+    [orders, search],
   );
 
   const approvedOrders = orders.filter((order) => order.status === 'APPROVED');
-  const approvedRevenue = approvedOrders.reduce((sum, order) => sum + order.total, 0);
+  const approvedRevenue = approvedOrders.reduce((sum, order) => sum + order.amount, 0);
   const canceledOrRefundedCount = orders.length - approvedOrders.length;
-  const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null;
   const closeDetails = () => setSelectedOrderId(null);
 
-  const handleOrderAction = async (
-    order: OrderRow,
-    action: OrderManagementAction,
-  ): Promise<void> => {
-    setPendingOrderId(order.id);
+  const handleOrderAction = async (action: OrderManagementAction): Promise<void> => {
+    if (!displayedOrder || !orderActionService) return;
+
+    setPendingAction(true);
     try {
-      const result = mockService.executeAction(order.id, action, order.status);
-      setOrders(mockService.listOrders());
+      const result = orderActionService.executeAction(
+        displayedOrder.id,
+        action,
+        displayedOrder.status,
+      );
+      setDisplayedOrder(result.order);
       if (action === 'cancel') {
         showToast(
           'success',
@@ -365,19 +147,93 @@ export const Ordermanagement = ({ orderService }: OrdermanagementProps = {}) => 
       }
     } catch (error) {
       if (!(error instanceof OrderActionError)) throw error;
-      setOrders(mockService.listOrders());
       showToast(
         'error',
         error.status === 409 ? 'Não foi possível concluir a ação' : 'Pedido não encontrado',
         error.message,
       );
     } finally {
-      setPendingOrderId(null);
+      setPendingAction(false);
     }
   };
 
-  const tableColumns: TableColumn<OrderRow>[] = [
-    ...columns,
+  const columns: TableColumn<AdminOrderSummary>[] = [
+    {
+      id: 'code',
+      header: 'ID pedido',
+      align: 'start',
+      render: (order) => <span className={styles.code}>{toOrderCode(order.id)}</span>,
+    },
+    {
+      id: 'requester',
+      header: 'Solicitante',
+      align: 'start',
+      render: (order) => <div className={styles.clientCell}>{order.requester}</div>,
+    },
+    {
+      id: 'type',
+      header: 'Tipo',
+      render: (order) => {
+        const isCorporate = order.type === 'CORPORATE';
+        const TypeIcon = isCorporate ? Building2 : UserRound;
+
+        return (
+          <span
+            className={`${styles.typeBadge} ${isCorporate ? styles.corporateBadge : styles.individualBadge}`}
+          >
+            <TypeIcon size={24} aria-hidden="true" />
+            {ORDER_TYPE_LABELS[order.type]}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'course',
+      header: 'Curso / Assentos',
+      align: 'center',
+      render: (order) =>
+        order.courseTitle === null
+          ? `${order.seatsQuantity ?? 0} ${order.seatsQuantity === 1 ? 'assento' : 'assentos'}`
+          : order.courseTitle,
+    },
+    {
+      id: 'purchaseDate',
+      header: 'Data da compra',
+      render: (order) => formatLongDate(order.purchaseDate.slice(0, 10)),
+    },
+    {
+      id: 'paymentMethod',
+      header: 'Forma de pagamento',
+      render: (order) => {
+        const PaymentIcon = PAYMENT_ICONS[order.paymentMethod];
+
+        return (
+          <span className={styles.paymentMethod}>
+            <PaymentIcon size={24} aria-hidden="true" />
+            {PAYMENT_METHOD_LABELS[order.paymentMethod]}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'amount',
+      header: 'Valor',
+      align: 'end',
+      render: (order) => formatCurrency(order.amount),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      align: 'center',
+      render: (order) => (
+        <Badge
+          label={ORDER_STATUS_LABELS[order.status]}
+          variant={STATUS_VARIANTS[order.status]}
+          mini
+          className={styles.statusBadge}
+        />
+      ),
+    },
     {
       id: 'actions',
       header: 'Ações',
@@ -386,7 +242,7 @@ export const Ordermanagement = ({ orderService }: OrdermanagementProps = {}) => 
           <button
             type="button"
             className={styles.iconButton}
-            aria-label={`Ver pedido ${order.code}`}
+            aria-label={`Ver pedido ${toOrderCode(order.id)}`}
             onClick={() => setSelectedOrderId(order.id)}
           >
             <Eye size={24} aria-hidden="true" />
@@ -394,7 +250,7 @@ export const Ordermanagement = ({ orderService }: OrdermanagementProps = {}) => 
           <button
             type="button"
             className={styles.iconButton}
-            aria-label={`Reembolsar pedido ${order.code}`}
+            aria-label={`Reembolsar pedido ${toOrderCode(order.id)}`}
             title="Disponível nos detalhes do pedido"
             disabled
           >
@@ -403,7 +259,7 @@ export const Ordermanagement = ({ orderService }: OrdermanagementProps = {}) => 
           <button
             type="button"
             className={styles.iconButton}
-            aria-label={`Cancelar pedido ${order.code}`}
+            aria-label={`Cancelar pedido ${toOrderCode(order.id)}`}
             title="Disponível nos detalhes do pedido"
             disabled
           >
@@ -429,29 +285,29 @@ export const Ordermanagement = ({ orderService }: OrdermanagementProps = {}) => 
             <SearchBar
               value={search}
               onChange={setSearch}
-              placeholder="Buscar pedido"
-              aria-label="Buscar pedido"
+              placeholder="Buscar pedido nesta página"
+              aria-label="Buscar pedido nesta página"
             />
           </div>
         </div>
       </section>
 
-      <section className={styles.stats} aria-label="Resumo dos pedidos">
+      <section className={styles.stats} aria-label="Resumo dos pedidos nesta página">
         <SumCard
           label="Receita aprovada"
-          value={formatCurrency(approvedRevenue)}
-          description={`${approvedOrders.length} pedidos ativos`}
+          value={status === 'loading' ? '—' : formatCurrency(approvedRevenue)}
+          description={`${approvedOrders.length} pedidos ativos nesta página`}
         />
 
         <SumCard
           label="Pedidos Aprovados"
-          value={approvedOrders.length}
+          value={status === 'loading' ? '—' : approvedOrders.length}
           description="Acesso liberado automaticamente"
         />
 
         <SumCard
           label="Cancelados e reembolsados"
-          value={canceledOrRefundedCount}
+          value={status === 'loading' ? '—' : canceledOrRefundedCount}
           description="Acesso revogado"
         />
       </section>
@@ -460,51 +316,109 @@ export const Ordermanagement = ({ orderService }: OrdermanagementProps = {}) => 
         <header className={styles.panelHeader}>
           <div className={styles.panelTitle}>
             <h2>Pedidos</h2>
-            <span aria-label={`${filteredOrders.length} pedidos`}>{filteredOrders.length}</span>
+            <span aria-label={`${totalElements} pedidos`}>{totalElements}</span>
           </div>
           <div className={styles.panelControls}>
             <OrderFilters
               value={filters}
-              onChange={setFilters}
-              courses={COURSES}
+              onChange={handleFiltersChange}
+              courses={filterCourses}
               className={styles.inlineFilters}
             />
           </div>
         </header>
 
-        <Table
-          columns={tableColumns}
-          data={filteredOrders}
-          getRowId={(order) => order.id}
-          caption="Pedidos da plataforma"
-          emptyMessage="Nenhum pedido encontrado para os filtros selecionados."
-          className={styles.ordersTable}
-          footer={
-            <div className={styles.tableFooter}>
-              <p>
-                Mostrando {filteredOrders.length} de {orders.length} pedidos
-              </p>
-              <p className={styles.panelNote}>Liberação de acesso automática via checkout</p>
+        {status === 'error' ? (
+          <div className={styles.errorState} role="alert">
+            <h3 className={styles.errorTitle}>Não foi possível carregar os pedidos</h3>
+            <p className={styles.errorDescription}>
+              {errorMessage ?? 'Verifique sua conexão e tente novamente em instantes.'}
+            </p>
+            <Button variant="primary" label="Tentar novamente" onClick={reload} />
+          </div>
+        ) : status === 'loading' ? (
+          <p className={styles.loading} role="status">
+            Carregando pedidos…
+          </p>
+        ) : (
+          <>
+            <Table
+              columns={columns}
+              data={filteredOrders}
+              getRowId={(order) => order.id}
+              caption="Pedidos da plataforma"
+              emptyMessage="Nenhum pedido encontrado para os filtros selecionados."
+              className={styles.ordersTable}
+              footer={
+                <div className={styles.tableFooter}>
+                  <p>
+                    Mostrando {filteredOrders.length} de {orders.length} pedidos nesta página
+                  </p>
+                  <p className={styles.panelNote}>Liberação de acesso automática via checkout</p>
+                </div>
+              }
+            />
+
+            <div className={styles.pagination}>
+              <Button
+                variant="outlined"
+                label="Anterior"
+                onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                disabled={page === 0}
+              />
+              <span className={styles.pageIndicator}>
+                Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
+              </span>
+              <Button
+                variant="outlined"
+                label="Próxima"
+                onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
+                disabled={page + 1 >= totalPages}
+              />
             </div>
-          }
-        />
+          </>
+        )}
       </section>
 
-      {selectedOrder ? (
-        <OrderDetailModal
-          order={selectedOrder}
-          open
-          actions={
-            <OrderCancellationAndRefund
-              order={selectedOrder}
-              isSubmitting={pendingOrderId === selectedOrder.id}
-              onAction={(action) => handleOrderAction(selectedOrder, action)}
-            />
-          }
-          onOpenChange={(open) => {
-            if (!open) closeDetails();
-          }}
-        />
+      {selectedOrderId ? (
+        detailStatus === 'loading' ? (
+          <Modal
+            open
+            onOpenChange={(open) => {
+              if (!open) closeDetails();
+            }}
+            title="Detalhe do pedido"
+            size="sm"
+          >
+            <p role="status">Carregando pedido…</p>
+          </Modal>
+        ) : detailStatus === 'error' ? (
+          <Modal
+            open
+            onOpenChange={(open) => {
+              if (!open) closeDetails();
+            }}
+            title="Detalhe do pedido"
+            size="sm"
+          >
+            <p role="alert">{detailErrorMessage ?? 'Pedido não encontrado.'}</p>
+          </Modal>
+        ) : displayedOrder ? (
+          <OrderDetailModal
+            order={displayedOrder}
+            open
+            actions={
+              <OrderCancellationAndRefund
+                order={displayedOrder}
+                isSubmitting={pendingAction}
+                onAction={handleOrderAction}
+              />
+            }
+            onOpenChange={(open) => {
+              if (!open) closeDetails();
+            }}
+          />
+        ) : null
       ) : null}
       {toast ? (
         <Toast
