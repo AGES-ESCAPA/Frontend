@@ -232,7 +232,7 @@ describe('Ordermanagement', () => {
       courseId: 'curso-design',
       courseName: 'Escape Room Design Avançado',
       seats: 1,
-      paymentMethod: 'Pix',
+      paymentMethod: 'PIX',
       total: 297,
       createdAt: '2026-08-17T12:00:00.000Z',
       status: 'APPROVED',

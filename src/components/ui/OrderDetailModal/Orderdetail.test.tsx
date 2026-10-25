@@ -18,7 +18,7 @@ const individualOrder: OrderRow = {
   courseId: 'curso-design',
   courseName: 'Escape Room Design Avançado',
   seats: 1,
-  paymentMethod: 'Pix',
+  paymentMethod: 'PIX',
   total: 297,
   createdAt: '2026-08-17T12:00:00.000Z',
   status: 'APPROVED',
@@ -41,7 +41,7 @@ const corporateCourseOrder: OrderRow = {
   type: 'CORPORATE',
   corporateKind: 'course',
   seats: 5,
-  paymentMethod: 'Cartão',
+  paymentMethod: 'CARD',
   installments: 3,
   total: 1185,
 };
@@ -52,7 +52,7 @@ const corporateSeatsOrder: OrderRow = {
   code: 'PED-00130',
   corporateKind: 'seats',
   seats: 3,
-  paymentMethod: 'Boleto',
+  paymentMethod: 'BOLETO',
   installments: undefined,
   total: 711,
 };
@@ -82,7 +82,7 @@ describe('OrderDetailModal', () => {
     expect(getDefinition('Tipo de conta')).toHaveTextContent('Individual');
     expect(screen.getByText('Escape Room Design Avançado')).toBeInTheDocument();
     expect(screen.getByText('1 acesso individual')).toBeInTheDocument();
-    expect(screen.getByText(/^Pix ·/)).toBeInTheDocument();
+    expect(screen.getByText(/^PIX ·/)).toBeInTheDocument();
     expect(screen.getAllByText(/297,00/)).toHaveLength(2);
     expect(screen.queryByText(/colaboradores? com acesso/)).not.toBeInTheDocument();
   });
@@ -99,9 +99,9 @@ describe('OrderDetailModal', () => {
   });
 
   /*Teste 2*/
-  it('mostra a data do pedido no formato brasileiro', () => {
+  it('mostra a data do pedido por extenso, em português', () => {
     renderModal(individualOrder);
-    expect(screen.getByText(/^Pix · 17\/08\/2026$/)).toBeInTheDocument();
+    expect(screen.getByText(/^PIX · 17 de agosto de 2026$/)).toBeInTheDocument();
   });
 
   /*Teste 3*/
@@ -128,7 +128,7 @@ describe('OrderDetailModal', () => {
   /*Teste 5*/
   it('mostra as parcelas quando o pagamento é parcelado', () => {
     renderModal(corporateCourseOrder);
-    expect(screen.getByText(/Cartão em 3x de .*395,00/)).toBeInTheDocument();
+    expect(screen.getByText(/Cartão de Crédito em 3x de .*395,00/)).toBeInTheDocument();
   });
 
   /*Teste 6*/

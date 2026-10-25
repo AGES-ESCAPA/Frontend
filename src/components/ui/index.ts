@@ -74,9 +74,9 @@ export type {
 export {
   OrderDetailModal,
   PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
   formatCurrency,
-  formatDate,
   formatDateTime,
 } from './OrderDetailModal';
 export type {
@@ -85,6 +85,7 @@ export type {
   OrderDetailModalProps,
   OrderHistoryEntry,
   OrderRow,
+  PaymentMethod,
 } from './OrderDetailModal';
 export { OrderCancellationAndRefund } from './OrderCancellationAndRefund';
 export type { OrderCancellationAndRefundProps } from './OrderCancellationAndRefund';

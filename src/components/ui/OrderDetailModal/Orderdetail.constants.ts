@@ -4,6 +4,7 @@ import { Barcode, CreditCard, QrCode } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type CorporateOrderKind = 'course' | 'seats';
+export type PaymentMethod = 'CARD' | 'PIX' | 'BOLETO';
 
 export type OrderHistoryEntry = {
   status: OrderStatus;
@@ -27,7 +28,7 @@ export type OrderRow = {
   courseId: string;
   courseName: string;
   seats: number;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
 
   /*  cartão */
   installments?: number;
@@ -48,13 +49,19 @@ export const STATUS_VARIANTS: Record<OrderStatus, BadgeVariant> = {
 export const formatCurrency = (value: number): string =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-export const formatDate = (value: string): string =>
+const formatDate = (value: string): string =>
   new Date(value).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
-export const PAYMENT_ICONS: Record<string, LucideIcon> = {
-  Pix: QrCode,
-  Boleto: Barcode,
-  Cartão: CreditCard,
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  CARD: 'Cartão de Crédito',
+  PIX: 'PIX',
+  BOLETO: 'Boleto',
+};
+
+export const PAYMENT_ICONS: Record<PaymentMethod, LucideIcon> = {
+  PIX: QrCode,
+  BOLETO: Barcode,
+  CARD: CreditCard,
 };
 
 const formatTime = (value: string): string =>

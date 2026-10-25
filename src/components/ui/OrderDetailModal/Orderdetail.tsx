@@ -3,10 +3,11 @@ import { Modal } from '../Modal';
 import { ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from '../OrderFilters';
 import type { OrderStatus } from '../OrderFilters';
 import { CreditCard } from 'lucide-react';
+import { formatLongDate } from '@utils/formatters';
 import {
   PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
   formatCurrency,
-  formatDate,
   formatDateTime,
   type OrderRow,
 } from './Orderdetail.constants';
@@ -38,11 +39,12 @@ const DetailItem = ({ label, children }: { label: string; children: ReactNode })
 );
 
 const paymentLabel = (order: OrderRow): string => {
+  const method = PAYMENT_METHOD_LABELS[order.paymentMethod];
   if (order.installments && order.installments > 1) {
     const installmentValue = order.total / order.installments;
-    return `${order.paymentMethod} em ${order.installments}x de ${formatCurrency(installmentValue)}`;
+    return `${method} em ${order.installments}x de ${formatCurrency(installmentValue)}`;
   }
-  return order.paymentMethod;
+  return method;
 };
 
 const accessLabel = (order: OrderRow): string => {
@@ -120,7 +122,7 @@ export const OrderDetailModal = ({ order, open, onOpenChange, actions }: OrderDe
             <div className={styles.itemsCardPayment}>
               <PaymentIcon size={16} aria-hidden="true" />
               <span>
-                {paymentLabel(order)} · {formatDate(order.createdAt)}
+                {paymentLabel(order)} · {formatLongDate(order.createdAt.slice(0, 10))}
               </span>
             </div>
           </div>
