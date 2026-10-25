@@ -1,11 +1,17 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ToastVariant } from '@components/ui';
 
+export interface ToastAction {
+  label: string;
+  onAction: () => void;
+}
+
 export interface ToastMessage {
   key: number;
   variant: ToastVariant;
   title: string;
   description?: string;
+  action?: ToastAction;
 }
 
 export const useToast = () => {
@@ -13,11 +19,14 @@ export const useToast = () => {
   const [isOpen, setIsOpen] = useState(false);
   const nextKeyRef = useRef(0);
 
-  const showToast = useCallback((variant: ToastVariant, title: string, description?: string) => {
-    nextKeyRef.current += 1;
-    setToast({ key: nextKeyRef.current, variant, title, description });
-    setIsOpen(true);
-  }, []);
+  const showToast = useCallback(
+    (variant: ToastVariant, title: string, description?: string, action?: ToastAction) => {
+      nextKeyRef.current += 1;
+      setToast({ key: nextKeyRef.current, variant, title, description, action });
+      setIsOpen(true);
+    },
+    [],
+  );
 
   const dismissToast = useCallback(() => {
     setIsOpen(false);
