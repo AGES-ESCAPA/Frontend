@@ -74,6 +74,27 @@ const renderPage = (verificationCode = VERIFICATION_CODE) =>
     </MemoryRouter>,
   );
 
+const sessionValue = (isAuthenticated: boolean): AuthContextValue => ({
+  user: isAuthenticated
+    ? { id: 'user-2', name: 'Maria Visitante', email: 'maria@email.com', role: 'STUDENT' }
+    : null,
+  isAuthenticated,
+  isRestoring: false,
+  login: vi.fn(),
+  logout: vi.fn(),
+  updateUser: vi.fn(),
+});
+
+const pageWithSession = (isAuthenticated: boolean) => (
+  <AuthContext.Provider value={sessionValue(isAuthenticated)}>
+    <MemoryRouter initialEntries={[`/certificados/${VERIFICATION_CODE}`]}>
+      <Routes>
+        <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
+      </Routes>
+    </MemoryRouter>
+  </AuthContext.Provider>
+);
+
 const renderOwnerPage = async () => {
   getCertificateByCodeMock.mockResolvedValue(buildCertificate(true));
   renderPage();
@@ -367,30 +388,25 @@ describe('DigitalCertificate', () => {
     expect(screen.queryByRole('button', { name: /^compartilhar$/i })).not.toBeInTheDocument();
   });
 
+  it('shows the authenticated layout without action buttons to a logged-in user who is not the owner', async () => {
+    getCertificateByCodeMock.mockResolvedValue(buildCertificate(false));
+    render(pageWithSession(true));
+
+    await screen.findByRole('heading', { name: 'Jorge Amado', level: 1 });
+
+    expect(screen.getByRole('link', { name: /meus cursos/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Maria Visitante').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /^baixar$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^compartilhar$/i })).not.toBeInTheDocument();
+  });
+
   it('falls back to the public view when the session ends while the page is open', async () => {
     getCertificateByCodeMock.mockResolvedValue(buildCertificate(true));
-    const authValue = (isAuthenticated: boolean): AuthContextValue => ({
-      user: null,
-      isAuthenticated,
-      isRestoring: false,
-      login: vi.fn(),
-      logout: vi.fn(),
-      updateUser: vi.fn(),
-    });
-    const page = (isAuthenticated: boolean) => (
-      <AuthContext.Provider value={authValue(isAuthenticated)}>
-        <MemoryRouter initialEntries={[`/certificados/${VERIFICATION_CODE}`]}>
-          <Routes>
-            <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
-          </Routes>
-        </MemoryRouter>
-      </AuthContext.Provider>
-    );
-    const { rerender } = render(page(true));
+    const { rerender } = render(pageWithSession(true));
 
     expect(await screen.findByRole('button', { name: /^baixar$/i })).toBeInTheDocument();
 
-    rerender(page(false));
+    rerender(pageWithSession(false));
 
     expect(screen.queryByRole('button', { name: /^baixar$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^compartilhar$/i })).not.toBeInTheDocument();

@@ -8,6 +8,7 @@ import {
   SIDEBAR_MENU_PRESETS,
   SIDEBAR_ROLE_LABELS,
 } from '@components/layout';
+import type { SidebarRole } from '@components/layout';
 import { AboutUser } from '@components/course/AboutUser/AboutUser';
 import { useOptionalAuth } from '@contexts/useAuth';
 import { useCertificate } from '@hooks/useCertificate';
@@ -20,6 +21,7 @@ import {
 import { formatCurrency, formatLongDate, formatWorkload } from '@utils/formatters';
 import { mapCourseCategory, mapCourseLevel } from '@utils/mapPublicCourse';
 import { getActiveTheme } from '@utils/theme';
+import type { UserRole } from '@/types/auth';
 import { CertificateCard } from './components/CertificateCard/CertificateCard';
 import styles from './DigitalCertificate.module.css';
 
@@ -42,11 +44,17 @@ const getDownloadErrorMessage = (error: unknown): string => {
   }
 };
 
+const getLayoutRole = (role: UserRole | undefined): SidebarRole => {
+  if (role === 'ADMIN') return 'admin';
+  if (role === 'COMPANY') return 'company';
+  return 'student';
+};
+
 /**
  * Tela de visualização do certificado digital do aluno (US-18 + integração
- * #100). A consulta vai com o token da sessão; só o dono autenticado
- * (`isOwner` da API) vê Sidebar/Navbar autenticada e os botões de Baixar e
- * Compartilhar. Visitantes veem apenas o certificado.
+ * #100). A consulta vai com o token da sessão. Qualquer usuário logado vê a
+ * Sidebar/Navbar autenticada; só o dono (`isOwner` da API) vê os botões de
+ * Baixar e Compartilhar. Visitantes veem apenas o certificado.
  */
 export const DigitalCertificate = () => {
   const { verificationCode } = useParams();
@@ -58,6 +66,8 @@ export const DigitalCertificate = () => {
   // aberta (logout, expiração ou 401), a resposta antiga não vale mais.
   const isSessionActive = auth === null || auth.isRestoring || auth.isAuthenticated;
   const isOwner = Boolean(certificate?.isOwner) && isSessionActive;
+  const showAuthenticatedLayout = isOwner || Boolean(auth?.isAuthenticated);
+  const layoutRole = getLayoutRole(auth?.user?.role);
   const { toast, isOpen, showToast, dismissToast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   // O `disabled` só vale após o re-render; o ref barra o segundo clique na hora.
@@ -229,16 +239,17 @@ export const DigitalCertificate = () => {
     />
   );
 
-  if (certificate && isOwner) {
+  if (certificate && showAuthenticatedLayout) {
     return (
+      // Sem sessão no contexto, o dono é o próprio aluno do certificado.
       <AuthenticatedLayout
-        role="student"
+        role={layoutRole}
         user={{
           name: certificate.student.name,
-          role: SIDEBAR_ROLE_LABELS.student,
+          role: SIDEBAR_ROLE_LABELS[layoutRole],
           avatarUrl: certificate.student.avatarUrl ?? undefined,
         }}
-        items={SIDEBAR_MENU_PRESETS.student.map((item) => ({ ...item, active: false }))}
+        items={SIDEBAR_MENU_PRESETS[layoutRole].map((item) => ({ ...item, active: false }))}
         notificationsCount={0}
       >
         {content}
