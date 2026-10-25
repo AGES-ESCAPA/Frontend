@@ -7,6 +7,7 @@ import { useProfile } from '@hooks/useProfile';
 import { useToast } from '@hooks/useToast';
 import { toSidebarRole } from '@routes/access';
 import type { UserProfile } from '@/types/profile';
+import { ChangePasswordCard } from './components/ChangePasswordCard';
 import { DangerZone } from './components/DangerZone';
 import { ProfileDataCard } from './components/ProfileDataCard';
 import styles from './Profile.module.css';
@@ -73,6 +74,7 @@ export const Profile = () => {
         <div className={styles.content}>
           <div className={styles.cards}>
             <ProfileDataCard profile={profile} onSaved={handleSaved} onNotify={showToast} />
+            <ChangePasswordCard onNotify={showToast} />
           </div>
           {profile.editable ? <DangerZone onDeactivated={handleDeactivated} /> : null}
         </div>

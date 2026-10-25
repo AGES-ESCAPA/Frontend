@@ -105,4 +105,19 @@ export const profileService = {
       );
     }
   },
+
+  /** A senha atual incorreta volta como 400 (não 401), então a sessão continua ativa. */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const response = await authenticatedFetch(`${ME_URL}/password`, {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    if (!response.ok) {
+      throw new ProfileServiceError(
+        response.status,
+        (await readApiErrorMessage(response)) ?? 'Não foi possível alterar a senha.',
+      );
+    }
+  },
 };
