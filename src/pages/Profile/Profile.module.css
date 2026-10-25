@@ -36,7 +36,7 @@
   gap: var(--space-8);
 }
 
-/* Um card ocupa a linha toda; o card de senha (US-25) entra ao lado em telas largas. */
+/* Em telas largas o card de senha fica ao lado dos dados cadastrais. */
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--container-md)), 1fr));

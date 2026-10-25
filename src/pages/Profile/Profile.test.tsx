@@ -18,6 +18,7 @@ vi.mock('@services/profileService', async (importOriginal) => {
       updateProfile: vi.fn(),
       uploadAvatar: vi.fn(),
       deactivateAccount: vi.fn(),
+      changePassword: vi.fn(),
     },
   };
 });
@@ -25,6 +26,7 @@ vi.mock('@services/profileService', async (importOriginal) => {
 const getProfileMock = vi.mocked(profileService.getProfile);
 const updateProfileMock = vi.mocked(profileService.updateProfile);
 const deactivateAccountMock = vi.mocked(profileService.deactivateAccount);
+const changePasswordMock = vi.mocked(profileService.changePassword);
 
 const studentUser: AuthUser = {
   id: 'b1',
@@ -96,6 +98,26 @@ describe('Profile', () => {
 
     expect(await screen.findByText('Pousada Vista Mar LTDA')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Zona de Perigo' })).not.toBeInTheDocument();
+  });
+
+  it('lets company employees change the password and stay logged in with a confirmation', async () => {
+    getProfileMock.mockResolvedValue({
+      ...studentProfile,
+      profile: 'EMPLOYEE',
+      editable: false,
+      companyName: 'Pousada Vista Mar LTDA',
+    });
+    changePasswordMock.mockResolvedValue();
+    const context = renderPage(studentUser);
+
+    await userEvent.type(await screen.findByLabelText(/^Senha atual/), 'escapa@2026');
+    await userEvent.type(screen.getByLabelText(/^Nova senha/), 'nova@senha2026');
+    await userEvent.type(screen.getByLabelText(/^Confirmar nova senha/), 'nova@senha2026');
+    await userEvent.click(screen.getByRole('button', { name: 'Alterar Senha' }));
+
+    expect(await screen.findByText('Senha alterada')).toBeInTheDocument();
+    expect(changePasswordMock).toHaveBeenCalledWith('escapa@2026', 'nova@senha2026');
+    expect(context.logout).not.toHaveBeenCalled();
   });
 
   it('uses the company title and marks the company profile in the menu', async () => {

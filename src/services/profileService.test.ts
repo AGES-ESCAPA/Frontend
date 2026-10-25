@@ -124,4 +124,59 @@ describe('profileService', () => {
       message: 'Current password is incorrect',
     });
   });
+
+  describe('changePassword', () => {
+    it('puts the current and the new password with the access token', async () => {
+      localStorage.setItem('access_token', 'jwt-token');
+      const fetchMock = vi.fn().mockResolvedValue(okResponse(null));
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(
+        profileService.changePassword('escapa@2026', 'nova@senha2026'),
+      ).resolves.toBeUndefined();
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toMatch(/\/me\/password$/);
+      expect(init.method).toBe('PUT');
+      expect(init.body).toBe(
+        JSON.stringify({ currentPassword: 'escapa@2026', newPassword: 'nova@senha2026' }),
+      );
+      expect(new Headers(init.headers).get('authorization')).toBe('Bearer jwt-token');
+    });
+
+    it('rejects with status 400 and the backend message when the current password is wrong', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(errorResponse(400, 'Current password is incorrect')),
+      );
+
+      const request = profileService.changePassword('errada', 'nova@senha2026');
+
+      await expect(request).rejects.toBeInstanceOf(ProfileServiceError);
+      await expect(request).rejects.toMatchObject({
+        status: 400,
+        message: 'Current password is incorrect',
+      });
+    });
+
+    it('rejects with status 400 and the backend message when the new password is weak', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(errorResponse(400, 'Password must be at least 8 characters')),
+      );
+
+      await expect(profileService.changePassword('escapa@2026', '123')).rejects.toMatchObject({
+        status: 400,
+        message: 'Password must be at least 8 characters',
+      });
+    });
+
+    it('propagates the network failure', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      await expect(
+        profileService.changePassword('escapa@2026', 'nova@senha2026'),
+      ).rejects.toBeInstanceOf(TypeError);
+    });
+  });
 });
