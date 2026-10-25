@@ -195,7 +195,7 @@
   color: var(--color-error-300);
 }
 
-@media (width >= 640rem) {
+@media (width >= 40rem) {
   .field,
   .field .selectControl,
   .root .clearButton {
@@ -203,7 +203,7 @@
   }
 }
 
-@media (width >= 1024rem) {
+@media (width >= 64rem) {
   .fields {
     grid-template-columns:
       minmax(0, 0.8fr)
