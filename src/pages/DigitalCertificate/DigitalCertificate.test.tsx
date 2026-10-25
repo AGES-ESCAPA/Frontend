@@ -156,7 +156,10 @@ describe('DigitalCertificate', () => {
       expect(url.pathname).toMatch(new RegExp(`/certificates/${VERIFICATION_CODE}/download$`));
       expect(url.searchParams.get('theme')).toBe('dark');
       expect(headers.get('authorization')).toBe('Bearer jwt-token');
-      expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+      // O Blob de `Response.blob()` vem do Node, não do jsdom: `instanceof Blob` falha.
+      const [savedBlob] = createObjectURL.mock.calls[0] as [Blob];
+      expect(savedBlob.type).toBe('application/pdf');
+      expect(savedBlob.size).toBeGreaterThan(0);
       expect(openSpy).not.toHaveBeenCalled();
       await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:certificado'), {
         timeout: 2000,
