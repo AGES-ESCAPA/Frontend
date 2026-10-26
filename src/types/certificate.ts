@@ -44,9 +44,8 @@ export interface CertificateData {
   student: CertificateStudent;
   course: CertificateCourseSummary;
   /**
-   * Se quem acessa o link é o dono do certificado. Fixo em `false` no backend
-   * nesta sprint (sem autenticação real ainda), então a tela sempre renderiza
-   * a versão pública em produção até a autenticação ser implementada.
+   * Se quem acessa o link é o dono do certificado. A API só devolve `true`
+   * quando a consulta vai com o token do próprio aluno.
    */
   isOwner: boolean;
 }

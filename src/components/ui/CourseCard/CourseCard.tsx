@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import type { KeyboardEvent } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { Badge } from '../Badge/Badge';
 import type { BadgeCategory } from '../Badge/Badge';
+import { Button } from '../Button/Button';
 import styles from './CourseCard.module.css';
 
 export type CourseLevel = 'basic' | 'intermediate' | 'advanced';
@@ -19,7 +20,11 @@ export interface CourseCardProps {
   lessonsCount: number;
   instructor: string;
   price: string;
+  /** Curso já comprado pelo aluno: capa em preto e branco, tag e acesso. */
+  acquired?: boolean;
   onClick: (id: string) => void;
+  /** Abre o curso adquirido. Se omitido, o botão Acessar reutiliza `onClick`. */
+  onAccess?: (id: string) => void;
 }
 
 export const CourseCard = ({
@@ -35,12 +40,27 @@ export const CourseCard = ({
   lessonsCount,
   instructor,
   price,
+  acquired = false,
   onClick,
+  onAccess,
 }: CourseCardProps) => {
   const [imageError, setImageError] = useState(false);
   const showPlaceholder = imageError || !imageUrl;
 
   const handleClick = () => onClick(id);
+
+  const handleAccessClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    if (onAccess) {
+      onAccess(id);
+      return;
+    }
+    onClick(id);
+  };
+
+  const handleAccessKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+  };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -65,7 +85,7 @@ export const CourseCard = ({
           <img
             src={imageUrl}
             alt={`Capa do curso ${title}`}
-            className={styles.image}
+            className={acquired ? `${styles.image} ${styles.imageAcquired}` : styles.image}
             onError={() => setImageError(true)}
           />
         )}
@@ -76,6 +96,7 @@ export const CourseCard = ({
         <div className={styles.badgeRight}>
           <Badge category={level} variant="neutral" />
         </div>
+        {acquired ? <span className={styles.acquiredTag}>Adquirido</span> : null}
       </div>
 
       <div className={styles.content}>
@@ -109,7 +130,19 @@ export const CourseCard = ({
 
         <div className={styles.footer}>
           <span className={styles.instructor}>{instructor}</span>
-          <span className={styles.price}>{price}</span>
+          {acquired ? (
+            <Button
+              type="button"
+              label="Acessar"
+              variant="ghost-dark"
+              className={styles.accessButton}
+              aria-label={`Acessar o curso ${title}`}
+              onClick={handleAccessClick}
+              onKeyDown={handleAccessKeyDown}
+            />
+          ) : (
+            <span className={styles.price}>{price}</span>
+          )}
         </div>
       </div>
     </div>

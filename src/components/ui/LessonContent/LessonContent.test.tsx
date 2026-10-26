@@ -20,9 +20,13 @@ describe('LessonContent', () => {
   it.each<string | null | undefined>([null, undefined, '', '   '])(
     'não renderiza descrição quando é %p',
     (description) => {
-      render(<LessonContent description={description} concepts={['React']} />);
+      const { container } = render(
+        <LessonContent description={description} concepts={['React']} />,
+      );
       expect(screen.getByText('React')).toBeInTheDocument();
-      expect(screen.queryByText('Primeiro parágrafo.')).not.toBeInTheDocument();
+      // Só o título "Sobre esta aula" é um <p>: nenhum parágrafo de descrição (nem vazio).
+      expect(container.querySelectorAll('p')).toHaveLength(1);
+      expect(screen.getByText('Sobre esta aula')).toBeInTheDocument();
     },
   );
 

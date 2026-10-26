@@ -19,15 +19,20 @@ describe('Button component', () => {
       <Button label="Gestão de Cursos" variant="outlined" icon={<Mail data-testid="icon" />} />,
     );
 
-    expect(screen.getByTestId('icon')).toBeInTheDocument();
-    expect(screen.getByText('Gestão de Cursos')).toBeInTheDocument();
+    const icon = screen.getByTestId('icon');
+    const label = screen.getByText('Gestão de Cursos');
+
+    expect(icon.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(screen.getByRole('button').className).toMatch(/hasIcon/);
   });
 
   it('should render without an icon when icon prop is omitted', () => {
     render(<Button label="Começar Agora" variant="primary" />);
 
-    expect(screen.queryByTestId('icon')).not.toBeInTheDocument();
-    expect(screen.getByText('Começar Agora')).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: 'Começar Agora' });
+
+    expect(button.querySelector('svg')).not.toBeInTheDocument();
+    expect(button.className).not.toMatch(/hasIcon/);
   });
 
   // ── Click Events ─────────────────────────────────────────────────
@@ -135,6 +140,6 @@ describe('Button component', () => {
   it('should set aria-label to the label prop', () => {
     render(<Button label="Acessar plataforma" variant="primary" />);
 
-    expect(screen.getByRole('button', { name: /acessar plataforma/i })).toBeInTheDocument();
+    expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'Acessar plataforma');
   });
 });

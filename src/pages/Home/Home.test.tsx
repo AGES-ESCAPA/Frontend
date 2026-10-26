@@ -7,10 +7,12 @@ import type { PublicCourseCard, PublicCoursesPage } from '@/types/course';
 import { Home } from './Home';
 
 const getCoursesMock = vi.mocked(courseService.getCourses);
+const getFiltersMock = vi.mocked(courseService.getCourseFilters);
 
 vi.mock('@services/courseService', () => ({
   courseService: {
     getCourses: vi.fn(),
+    getCourseFilters: vi.fn(),
   },
 }));
 
@@ -49,13 +51,24 @@ const renderHome = () =>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/cursos/:courseId" element={<LocationProbe />} />
+        <Route path="/cadastro" element={<LocationProbe />} />
       </Routes>
     </MemoryRouter>,
   );
 
 describe('Home', () => {
+  it('opens account type selection from Começar Agora', async () => {
+    const user = userEvent.setup();
+    renderHome();
+    await user.click(screen.getByRole('link', { name: 'Começar Agora' }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/cadastro');
+  });
   beforeEach(() => {
     getCoursesMock.mockReset();
+    getFiltersMock.mockReset().mockResolvedValue({
+      categories: ['Hospitalidade', 'Inteligência Artificial', 'Marketing'],
+      levels: ['INICIANTE', 'INTERMEDIARIO', 'AVANCADO'],
+    });
   });
 
   it('should render the public navbar and institutional footer', async () => {
@@ -72,6 +85,7 @@ describe('Home', () => {
 
   it('should show skeleton loading while the API request is pending', () => {
     getCoursesMock.mockReturnValue(new Promise(() => undefined));
+    getFiltersMock.mockReturnValue(new Promise(() => undefined));
     renderHome();
 
     expect(
@@ -131,7 +145,7 @@ describe('Home', () => {
     await waitFor(() => expect(screen.getByText(/0 cursos encontrados/i)).toBeInTheDocument());
     getCoursesMock.mockClear();
 
-    await user.click(screen.getByRole('tab', { name: 'Inteligência Artificial' }));
+    await user.click(await screen.findByRole('tab', { name: 'Inteligência Artificial' }));
     await user.click(screen.getByRole('tab', { name: 'Iniciante' }));
 
     await waitFor(() => {
@@ -165,6 +179,7 @@ describe('Home', () => {
   });
 
   it('should keep catalog filters independent from each other', async () => {
+    const user = userEvent.setup();
     getCoursesMock.mockResolvedValue(buildPage([]));
     renderHome();
 
@@ -173,13 +188,26 @@ describe('Home', () => {
     const categoryTabs = screen.getByRole('tablist', { name: 'Categoria' });
     const levelTabs = screen.getByRole('tablist', { name: 'Nível' });
 
-    expect(within(categoryTabs).getByRole('tab', { name: 'Todos' })).toHaveAttribute(
-      'data-state',
-      'active',
+    // Escolher a categoria não pode mexer no nível...
+    await user.click(
+      await within(categoryTabs).findByRole('tab', { name: 'Inteligência Artificial' }),
     );
+    expect(
+      within(categoryTabs).getByRole('tab', { name: 'Inteligência Artificial' }),
+    ).toHaveAttribute('data-state', 'active');
     expect(within(levelTabs).getByRole('tab', { name: 'Todos' })).toHaveAttribute(
       'data-state',
       'active',
     );
+
+    // ...e escolher o nível não pode desfazer a categoria.
+    await user.click(within(levelTabs).getByRole('tab', { name: 'Iniciante' }));
+    expect(within(levelTabs).getByRole('tab', { name: 'Iniciante' })).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+    expect(
+      within(categoryTabs).getByRole('tab', { name: 'Inteligência Artificial' }),
+    ).toHaveAttribute('data-state', 'active');
   });
 });

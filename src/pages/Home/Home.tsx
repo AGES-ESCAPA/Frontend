@@ -2,20 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
 import { Button, CourseCard, CourseCardSkeleton, FilterTabs, SearchBar } from '@components/ui';
+import { useCourseFilters } from '@hooks/useCourseFilters';
 import { usePublicCourses } from '@hooks/usePublicCourses';
-import { mapPublicCourseToCardProps } from '@utils/mapPublicCourse';
+import { mapPublicCourseToCardProps, toDisplayLevel } from '@utils/mapPublicCourse';
 import styles from './Home.module.css';
 
 const ALL_FILTER = 'Todos';
-const CATEGORY_OPTIONS = [
-  ALL_FILTER,
-  'Hospitalidade',
-  'Turismo',
-  'Inteligência Artificial',
-  'Marketing',
-  'Inovação',
-];
-const LEVEL_OPTIONS = [ALL_FILTER, 'Iniciante', 'Intermediário', 'Avançado'];
 const FEATURED_SKELETONS = 3;
 const CATALOG_SKELETONS = 6;
 
@@ -31,6 +23,9 @@ export const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState(ALL_FILTER);
   const [level, setLevel] = useState(ALL_FILTER);
+  const { categories, levels } = useCourseFilters();
+  const categoryOptions = [ALL_FILTER, ...categories];
+  const levelOptions = [ALL_FILTER, ...levels.map((value) => toDisplayLevel(value))];
 
   const {
     featured,
@@ -121,7 +116,7 @@ export const Home = () => {
                 </div>
                 <div className={styles.categoryTabs}>
                   <FilterTabs
-                    options={CATEGORY_OPTIONS}
+                    options={categoryOptions}
                     selected={category}
                     onChange={setCategory}
                     groupLabel="Categoria"
@@ -130,7 +125,7 @@ export const Home = () => {
                 <div className={styles.filterDivider} />
                 <div className={styles.levelTabs}>
                   <FilterTabs
-                    options={LEVEL_OPTIONS}
+                    options={levelOptions}
                     selected={level}
                     onChange={setLevel}
                     variant="ghost-dark"

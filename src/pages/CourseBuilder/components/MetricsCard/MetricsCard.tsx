@@ -45,7 +45,7 @@ const MetricsCardBase = ({
         />
       </FormField>
 
-      <FormField label="Prazo (Dias)" htmlFor={DEADLINE_ID} error={deadlineError}>
+      <FormField label="Prazo de Vencimento (Dias)" htmlFor={DEADLINE_ID} error={deadlineError}>
         <TextInput
           id={DEADLINE_ID}
           value={deadline}

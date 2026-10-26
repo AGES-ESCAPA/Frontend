@@ -44,6 +44,33 @@
   display: block;
 }
 
+.imageAcquired {
+  filter: grayscale(100%);
+}
+
+.acquiredTag {
+  position: absolute;
+  z-index: 1;
+  right: var(--badge-offset-level-right);
+  bottom: var(--badge-offset-level-top);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  height: var(--badge-level-height);
+  min-height: var(--badge-level-height);
+  padding: var(--badge-level-padding-y) var(--badge-level-padding-x);
+  border-radius: var(--radius-full);
+  background-color: var(--color-warning-300);
+  color: var(--color-primary-900);
+  font-size: var(--text-badge);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-badge--line-height);
+  letter-spacing: var(--tracking-badge);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .imagePlaceholder {
   position: absolute;
   inset: 0;
@@ -169,6 +196,17 @@
   font-weight: var(--font-weight-bold);
   color: var(--color-info-300);
   white-space: nowrap;
+}
+
+.footer .accessButton {
+  flex-shrink: 0;
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-4);
+  border-color: transparent;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-700);
+  color: var(--color-white);
+  font-size: var(--text-body-3);
 }
 
 .skeleton {

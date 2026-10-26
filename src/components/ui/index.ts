@@ -2,7 +2,9 @@
 // Adicione novos componentes conforme forem criados:
 
 export { Avatar } from './Avatar/Avatar';
-export type { AvatarProps, AvatarTheme } from './Avatar/Avatar';
+export type { AvatarProps, AvatarSize, AvatarTheme } from './Avatar/Avatar';
+export { AvatarUpload } from './AvatarUpload';
+export type { AvatarUploadProps } from './AvatarUpload';
 export { Badge } from './Badge';
 export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
 export { Button } from './Button';
@@ -20,13 +22,15 @@ export type { LessonModalProps } from './LessonModal';
 export { LessonNavItem } from './LessonNavItem';
 export type { LessonNavItemProps, LessonStatus } from './LessonNavItem';
 export { Modal } from './Modal';
-export type { ModalProps, ModalSize } from './Modal';
+export type { ModalAppearance, ModalProps, ModalSize } from './Modal';
 export { ModuleNavSection } from './ModuleNavSection';
 export type { ModuleNavLesson, ModuleNavSectionProps } from './ModuleNavSection';
 export { SearchBar } from './SearchBar';
 export type { SearchBarProps, SearchBarTheme } from './SearchBar';
 export { Switch } from './Switch';
 export type { SwitchProps } from './Switch';
+export { CreditCardForm } from './CreditCardForm';
+export type { CreditCardFormChange, CreditCardFormProps } from './CreditCardForm';
 export { FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 export { Panel } from './Panel';
@@ -46,8 +50,44 @@ export { TextArea } from './TextArea';
 export type { TextAreaProps } from './TextArea';
 export { TextInput } from './TextInput';
 export type { TextInputProps } from './TextInput';
+export { PasswordInput } from './PasswordInput';
+export type { PasswordInputProps } from './PasswordInput';
 export { Toast } from './Toast';
 export type { ToastProps, ToastVariant } from './Toast';
-
+export { AccountTypeCard } from './AccountTypeCard';
+export type { AccountTypeCardProps } from './AccountTypeCard';
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
+export {
+  EMPTY_FILTERS,
+  ORDER_STATUS_LABELS,
+  ORDER_TYPE_LABELS,
+  OrderFilters,
+} from './OrderFilters';
+export type {
+  OrderFilterCourse,
+  OrderFiltersProps,
+  OrderFiltersValue,
+  OrderStatus,
+  OrderType,
+} from './OrderFilters';
+export {
+  OrderDetailModal,
+  PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
+  STATUS_VARIANTS,
+  formatDateTime,
+} from './OrderDetailModal';
+export type {
+  CorporateOrderKind,
+  OrderAction,
+  OrderDetailModalProps,
+  OrderHistoryEntry,
+  OrderRow,
+} from './OrderDetailModal';
+export { OrderCancellationAndRefund } from './OrderCancellationAndRefund';
+export type { OrderCancellationAndRefundProps } from './OrderCancellationAndRefund';
+export { MaskedInput } from './MaskedInput';
+export type { MaskedInputProps, MaskType } from './MaskedInput';
+export { OrderSummary } from './OrderSummary';
+export type { OrderSummaryProps, OrderItem, OrderBuyer } from './OrderSummary';

@@ -1,5 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '@contexts/AuthContext';
+import { ProtectedRoute } from './ProtectedRoute';
+import { RegistrationFeedback } from '@routes/RegistrationFeedback';
 
 // ─── Lazy Loading ─────────────────────────────────────────────────────────────
 // Adicione novas páginas aqui seguindo este padrão.
@@ -18,6 +21,12 @@ const MyCourses = lazy(() =>
   })),
 );
 
+const Profile = lazy(() =>
+  import('@pages/Profile/Profile').then((m) => ({
+    default: m.Profile,
+  })),
+);
+
 const CourseDetails = lazy(() =>
   import('@pages/CourseDetails/CourseDetails').then((m) => ({
     default: m.CourseDetails,
@@ -33,6 +42,18 @@ const CoursePlayer = lazy(() =>
 const Login = lazy(() =>
   import('@pages/Login/Login').then((m) => ({
     default: m.Login,
+  })),
+);
+
+const OrderConfirmation = lazy(() =>
+  import('@pages/OrderConfirmation/OrderConfirmation').then((m) => ({
+    default: m.OrderConfirmation,
+  })),
+);
+
+const Checkout = lazy(() =>
+  import('@pages/Checkout/Checkout').then((m) => ({
+    default: m.Checkout,
   })),
 );
 
@@ -56,6 +77,35 @@ const AdminCourses = lazy(() =>
 const DigitalCertificate = lazy(() =>
   import('@pages/DigitalCertificate/DigitalCertificate').then((m) => ({
     default: m.DigitalCertificate,
+  })),
+);
+
+const RegisterAccountType = lazy(() =>
+  import('@pages/RegisterAccountType/RegisterAccountType').then((m) => ({
+    default: m.RegisterAccountType,
+  })),
+);
+
+const RegisterCompany = lazy(() =>
+  import('@pages/RegisterCompany/RegisterCompany').then((m) => ({
+    default: m.RegisterCompany,
+  })),
+);
+
+const OrderManagement = lazy(() =>
+  import('@/pages/OrderManagement/OrderManagement').then((m) => ({
+    default: m.Ordermanagement,
+  })),
+);
+
+const UnderConstruction = lazy(() =>
+  import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
+    default: m.UnderConstruction,
+  })),
+);
+const RegisterIndividual = lazy(() =>
+  import('@pages/RegisterIndividual/RegisterIndividual').then((m) => ({
+    default: m.RegisterIndividual,
   })),
 );
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
@@ -87,37 +137,188 @@ const PageLoader = () => (
  *  1. Crie a página em src/pages/NomeDaPagina/NomeDaPagina.tsx
  *  2. Adicione o lazy import acima
  *  3. Adicione um <Route> abaixo
- *  4. Para rotas protegidas, envolva com <ProtectedRoute> (a criar)
+ *  4. Para rotas protegidas, envolva com <ProtectedRoute> e informe os papéis permitidos.
  */
 export const AppRouter = () => {
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {/* Rotas Públicas */}
-          <Route path="/" element={<Home />} />
-          <Route path="/meus-cursos" element={<MyCourses />} />
-          <Route path="/cursos/:courseId" element={<CourseDetails />} />
-          <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/aluno/cursos" element={<Courses />} />
-          <Route path="/empresa/cursos" element={<Courses />} />
-          {/* Sidebar/Navbar autenticadas e os botões de Baixar/Compartilhar são
+      <AuthProvider>
+        <RegistrationFeedback />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/" element={<Home />} />
+            <Route path="/cadastro" element={<RegisterAccountType />} />
+            <Route path="/cadastro/empresa" element={<RegisterCompany />} />
+            <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
+            <Route
+              path="/meus-cursos"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <MyCourses />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/cursos/:courseId" element={<CourseDetails />} />
+            <Route
+              path="/aluno/cursos/:courseId/aulas/:lessonId"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <CoursePlayer />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/checkout/confirmacao"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'COMPANY']}>
+                  <OrderConfirmation />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/checkout/confirmacao"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <OrderConfirmation />
+                </ProtectedRoute>
+              }
+            />
+            {/* Pacote de assentos: só a empresa compra; a quantidade vem em ?quantidade=N. */}
+            <Route
+              path="/checkout/assentos"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Checkout kind="seats" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/checkout/assentos"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Checkout kind="seats" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout/:courseId"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'COMPANY']}>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/checkout/:courseId"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/courses" element={<Courses />} />
+            <Route
+              path="/aluno/cursos"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <Courses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/cursos"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Courses />
+                </ProtectedRoute>
+              }
+            />
+            {/* Sidebar/Navbar autenticadas e os botões de Baixar/Compartilhar são
               decididos pelo isOwner da API, não pela rota (ver DigitalCertificate). */}
-          <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
+            <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
 
-          {/* Painel Administrativo */}
-          <Route path="/admin/cursos" element={<AdminCourses />} />
-          <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
-          <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
+            {/* Painel Administrativo */}
+            <Route
+              path="/admin/cursos"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminCourses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cursos/novo"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <CourseBuilder />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cursos/:id/editar"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <CourseBuilder />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/pedidos"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <OrderManagement />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* TODO: Adicionar as demais páginas conforme o desenvolvimento avança:
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="*" element={<NotFound />} />
-          */}
-        </Routes>
-      </Suspense>
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/perfil"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/*"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/aluno/*"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <UnderConstruction />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/meu-perfil"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Qualquer rota ainda sem página cai aqui. */}
+            <Route path="*" element={<UnderConstruction />} />
+          </Routes>
+        </Suspense>
+      </AuthProvider>
     </BrowserRouter>
   );
 };

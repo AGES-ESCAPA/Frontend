@@ -2,7 +2,10 @@ import { Badge, Button } from '@components/ui';
 import { Book, Check, Clock3, GraduationCap, Users } from 'lucide-react';
 import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useOptionalAuth } from '@contexts/useAuth';
+import { useCourseOwnership } from '@hooks/useCourseOwnership';
 import type { CourseModule, CourseSummary } from '@/types/course';
+import { getCourseAccessPath } from '@utils/courseAccess';
 import { mapCourseCategory } from '@utils/mapPublicCourse';
 import styles from './CourseHeader.module.css';
 
@@ -18,26 +21,43 @@ const listLessons = (modules: CourseModule[]) =>
 
 export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons }) => {
   const navigate = useNavigate();
+  const auth = useOptionalAuth();
   const lessons = listLessons(course.modules);
   const freeLessonCount = lessons.filter((lesson) => lesson.isFree).length;
   const isFreeOnly = lessons.length > 0 && freeLessonCount === lessons.length;
 
-  const handlePurchase = () => {
-    const destination = `/cursos/${course.id}`;
-    const token = localStorage.getItem('access_token') ?? localStorage.getItem('token');
+  const isAuthenticated = auth?.isAuthenticated ?? Boolean(localStorage.getItem('access_token'));
+  const isLearner = auth?.user?.role === 'STUDENT' || auth?.user?.role === 'EMPLOYEE';
+  // Aluno que já tem o curso entra nele, em vez de ver a oferta de compra de novo.
+  const ownership = useCourseOwnership(course.id, isLearner && !isFreeOnly);
+  const isOwned = ownership.owned;
+  const isCheckingOwnership = ownership.status === 'loading';
 
-    if (!token) {
-      localStorage.setItem(PURCHASE_REDIRECT_KEY, destination);
-      navigate('/login', { state: { returnTo: destination } });
+  const handleAccess = async () => {
+    navigate(await getCourseAccessPath(course.id));
+  };
+
+  // Quem ainda não entrou volta direto para o checkout depois do login ou do cadastro.
+  const handlePurchase = () => {
+    const checkoutPath = `/checkout/${course.id}`;
+
+    if (!isAuthenticated) {
+      localStorage.setItem(PURCHASE_REDIRECT_KEY, checkoutPath);
+      navigate('/login', { state: { returnTo: checkoutPath } });
       return;
     }
 
-    navigate(`/checkout/${course.id}`);
+    navigate(checkoutPath);
   };
 
   const handleCta = () => {
     if (isFreeOnly) {
       onViewFreeLessons?.();
+      return;
+    }
+
+    if (isOwned) {
+      void handleAccess();
       return;
     }
 
@@ -100,7 +120,7 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
 
         <aside
           className={styles.purchase}
-          aria-label={isFreeOnly ? 'Aulas grátis' : 'Comprar curso'}
+          aria-label={isFreeOnly ? 'Aulas grátis' : isOwned ? 'Acessar curso' : 'Comprar curso'}
         >
           {course.thumbnailUrl ? (
             <div className={styles.cover}>
@@ -118,10 +138,17 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
             </div>
             <Button
               label={
-                isFreeOnly ? `Ver aulas grátis (${freeLessonCount})` : 'Cadastre-se para Comprar'
+                isFreeOnly
+                  ? `Ver aulas grátis (${freeLessonCount})`
+                  : isOwned
+                    ? 'Acessar curso'
+                    : isAuthenticated
+                      ? 'Comprar curso'
+                      : 'Cadastre-se para Comprar'
               }
               variant="primary"
               fullWidth
+              disabled={isCheckingOwnership}
               onClick={handleCta}
             />
             <ul className={styles.benefits}>

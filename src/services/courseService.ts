@@ -1,4 +1,4 @@
-import { adminHeaders } from '@services/api';
+import { authenticatedFetch } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 import { toApiLevel } from '@utils/mapPublicCourse';
@@ -7,6 +7,7 @@ import type {
   CourseDetail,
   CoursePayload,
   PublicCourseDetails,
+  PublicCourseFilters,
   PublicCoursesPage,
   PublicCoursesQuery,
 } from '@/types/course';
@@ -48,6 +49,16 @@ const extractErrorMessage = async (response: Response, fallback: string): Promis
   return fallback;
 };
 
+export class CourseRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = 'CourseRequestError';
+  }
+}
+
 const getPublicCourseById = async (
   id: string,
   signal?: AbortSignal,
@@ -59,8 +70,9 @@ const getPublicCourseById = async (
   }
 
   if (!response.ok) {
-    throw new Error(
+    throw new CourseRequestError(
       await extractErrorMessage(response, 'Não foi possível carregar os dados do curso.'),
+      response.status,
     );
   }
 
@@ -86,6 +98,33 @@ const getCourses = async (
   return (await response.json()) as PublicCoursesPage;
 };
 
+const LEVEL_RANK = ['INICIANTE', 'INTERMEDIARIO', 'AVANCADO'];
+
+const uniqueSorted = (values: Array<string | null | undefined>): string[] =>
+  [...new Set(values.filter((value): value is string => Boolean(value && value.trim())))].sort(
+    (left, right) => left.localeCompare(right, 'pt-BR'),
+  );
+
+const sortLevels = (levels: string[]): string[] =>
+  [...levels].sort((left, right) => {
+    const leftRank = LEVEL_RANK.indexOf(toApiLevel(left));
+    const rightRank = LEVEL_RANK.indexOf(toApiLevel(right));
+    const leftOrder = leftRank < 0 ? LEVEL_RANK.length : leftRank;
+    const rightOrder = rightRank < 0 ? LEVEL_RANK.length : rightRank;
+    return leftOrder - rightOrder || left.localeCompare(right, 'pt-BR');
+  });
+
+const filtersFromCatalog = async (signal?: AbortSignal): Promise<PublicCourseFilters> => {
+  const page = await getCourses({ page: 0, size: 100 }, signal);
+  return {
+    categories: uniqueSorted(page.content.map((course) => course.category)),
+    levels: sortLevels(uniqueSorted(page.content.map((course) => course.level))),
+  };
+};
+
+const getCourseFilters = async (signal?: AbortSignal): Promise<PublicCourseFilters> =>
+  filtersFromCatalog(signal);
+
 const readCourse = async (response: Response, fallback: string): Promise<CourseDetail> => {
   if (!response.ok) {
     throw new Error(await extractErrorMessage(response, fallback));
@@ -96,14 +135,13 @@ const readCourse = async (response: Response, fallback: string): Promise<CourseD
 };
 
 export const getCourseById = async (id: string): Promise<CourseDetail> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, { headers: adminHeaders() });
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}`);
   return readCourse(response, 'Não foi possível carregar os dados do curso.');
 };
 
 export const createCourse = async (payload: CoursePayload): Promise<CourseDetail> => {
-  const response = await fetch(ADMIN_COURSES_URL, {
+  const response = await authenticatedFetch(ADMIN_COURSES_URL, {
     method: 'POST',
-    headers: adminHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -111,26 +149,41 @@ export const createCourse = async (payload: CoursePayload): Promise<CourseDetail
 };
 
 export const updateCourse = async (id: string, payload: CoursePayload): Promise<CourseDetail> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}`, {
     method: 'PUT',
-    headers: adminHeaders(),
     body: JSON.stringify(payload),
   });
 
   return readCourse(response, 'Não foi possível salvar as alterações do curso.');
 };
 
+export const listCourseCategories = async (): Promise<string[]> => {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/categories`);
+
+  if (!isJsonResponse(response)) {
+    throw new Error('Não foi possível carregar as categorias.');
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      await extractErrorMessage(response, 'Não foi possível carregar as categorias.'),
+    );
+  }
+
+  const json: ApiResponse<string[]> = await response.json();
+  return json.data ?? [];
+};
+
 export const publishCourse = async (id: string): Promise<CourseDetail> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}/publish`, {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}/publish`, {
     method: 'POST',
-    headers: adminHeaders(),
   });
 
   return readCourse(response, 'Não foi possível publicar o curso.');
 };
 
 const listAdminCourses = async (signal?: AbortSignal): Promise<AdminCourseListItem[]> => {
-  const response = await fetch(ADMIN_COURSES_URL, { headers: adminHeaders(), signal });
+  const response = await authenticatedFetch(ADMIN_COURSES_URL, { signal });
 
   if (!isJsonResponse(response)) {
     throw new Error('Não foi possível carregar os cursos.');
@@ -145,9 +198,8 @@ const listAdminCourses = async (signal?: AbortSignal): Promise<AdminCourseListIt
 };
 
 const archiveCourse = async (id: string): Promise<void> => {
-  const response = await fetch(`${ADMIN_COURSES_URL}/${id}`, {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}`, {
     method: 'DELETE',
-    headers: adminHeaders(),
   });
 
   if (!response.ok) {
@@ -157,11 +209,13 @@ const archiveCourse = async (id: string): Promise<void> => {
 
 export const courseService = {
   getCourses,
+  getCourseFilters,
   getPublicCourseById,
   getCourseById,
   createCourse,
   updateCourse,
   publishCourse,
+  listCourseCategories,
   listAdminCourses,
   archiveCourse,
 };

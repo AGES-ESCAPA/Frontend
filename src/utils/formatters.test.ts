@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  formatDateTime,
   formatDuration,
   formatCurrency,
   durationSecondsToDigitBuffer,
@@ -139,9 +140,10 @@ describe('formatLongDate', () => {
 });
 
 describe('formatCurrency', () => {
-  it('should format a value as BRL', () => {
-    expect(formatCurrency(1500)).toContain('1.500');
-    expect(formatCurrency(1500)).toContain('R$');
+  it('should format a value as BRL with two decimal places', () => {
+    // O Intl separa "R$" do valor com espaço não separável (\u00a0).
+    expect(formatCurrency(1500)).toBe('R$\u00a01.500,00');
+    expect(formatCurrency(249.9)).toBe('R$\u00a0249,90');
   });
 });
 
@@ -249,5 +251,20 @@ describe('formatTime', () => {
     expect(formatTime(-10)).toBe('00:00');
     expect(formatTime(Number.NaN)).toBe('00:00');
     expect(formatTime(Number.POSITIVE_INFINITY)).toBe('00:00');
+  });
+});
+
+describe('formatDateTime', () => {
+  it('should format a local date time in Portuguese', () => {
+    expect(formatDateTime('2026-10-24T15:32:49')).toBe('24 de outubro de 2026 às 15:32');
+  });
+
+  it('should accept the nanosecond precision the backend serializes', () => {
+    expect(formatDateTime('2026-10-24T15:32:49.461540389')).toBe('24 de outubro de 2026 às 15:32');
+  });
+
+  it('should return an empty string for an invalid value', () => {
+    expect(formatDateTime('not a date')).toBe('');
+    expect(formatDateTime('')).toBe('');
   });
 });

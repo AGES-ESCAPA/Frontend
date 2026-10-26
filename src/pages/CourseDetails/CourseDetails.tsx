@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import { CourseDetailModal } from '@components/course/CourseDetailModal/CourseDetailModal';
 import { CourseHeader } from '@components/course/CourseHeader/CourseHeader';
@@ -13,6 +13,7 @@ import styles from './CourseDetails.module.css';
 export const CourseDetails = () => {
   const { courseId = '' } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { course, status, errorMessage } = usePublicCourseDetails(courseId);
   const curriculumRef = useRef<HTMLElement>(null);
   const backgroundRef = useRef<HTMLDivElement>(null);
@@ -27,8 +28,10 @@ export const CourseDetails = () => {
     };
   }, []);
 
+  // Aberto a partir do catálogo logado, fechar volta para ele; acesso direto volta à Home.
   const handleClose = () => {
-    navigate('/');
+    const from = (location.state as { from?: unknown } | null)?.from;
+    navigate(typeof from === 'string' && from.startsWith('/') ? from : '/');
   };
 
   const handleViewFreeLessons = () => {
@@ -68,9 +71,7 @@ export const CourseDetails = () => {
               </section>
             ) : null}
             {course.instructor.name ? <CourseInstructor instructor={course.instructor} /> : null}
-            {course.materials.length > 0 ? (
-              <CourseMaterials materials={course.materials} isDownloadable />
-            ) : null}
+            {course.materials.length > 0 ? <CourseMaterials materials={course.materials} /> : null}
           </>
         )}
       </CourseDetailModal>

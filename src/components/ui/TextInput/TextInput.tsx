@@ -7,15 +7,18 @@ export interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
   icon?: ReactNode;
   /** Selo destacado colado à esquerda do campo (ex.: "R$" no preço base). */
   addon?: ReactNode;
+  /** Ação ou elemento exibido no final do campo (ex.: botão de alternar senha). */
+  rightAction?: ReactNode;
   invalid?: boolean;
 }
 
 export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
-  ({ icon, addon, invalid = false, className = '', ...props }, ref) => {
+  ({ icon, addon, rightAction, invalid = false, className = '', ...props }, ref) => {
     const wrapperClassNames = [
       styles.wrapper,
       icon && styles.hasIcon,
       addon && styles.hasAddon,
+      rightAction && styles.hasRightAction,
       className,
     ]
       .filter(Boolean)
@@ -42,6 +45,8 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           aria-invalid={invalid || undefined}
           {...props}
         />
+
+        {rightAction ? <span className={styles.rightAction}>{rightAction}</span> : null}
       </div>
     );
   },

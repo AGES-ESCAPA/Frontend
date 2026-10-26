@@ -1,0 +1,81 @@
+.panel {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-8);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+}
+
+.title {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-primary);
+  font-size: var(--text-h6);
+  line-height: var(--text-h6--line-height);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Forma de pagamento única: só informa o cartão, não é um seletor. */
+.method {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-8);
+  color: var(--color-info-300);
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+  font-weight: var(--font-weight-medium);
+}
+
+.methodMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-4);
+  height: var(--space-4);
+  border: var(--border-width-thin) solid var(--color-info-300);
+  border-radius: var(--radius-full);
+}
+
+.methodMark::after {
+  content: '';
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-info-300);
+}
+
+/* Mesma largura dos campos do cartão, centralizado como eles. */
+.confirm {
+  width: 100%;
+  max-width: 30rem;
+  margin: var(--space-8) auto 0;
+}
+
+.error {
+  margin: 0 0 var(--space-3);
+  color: var(--color-error-300);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  font-weight: var(--font-weight-medium);
+}
+
+.errorAction {
+  margin-inline-start: var(--space-2);
+}
+
+.errorAction > * {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-info-300);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (width <= 768px) {
+  .panel {
+    padding: var(--space-4);
+  }
+}

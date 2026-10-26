@@ -13,16 +13,6 @@ export const COURSE_DIFFICULTIES: readonly CourseDifficultyOption[] = [
   { value: 'AVANCADO', label: 'Avançado' },
 ];
 
-export const COURSE_CATEGORIES: readonly string[] = [
-  'Design & UX',
-  'Hospitalidade',
-  'Turismo de Luxo',
-  'Marketing',
-  'Gestão & Liderança',
-  'Inovação',
-  'Inteligência Artificial',
-];
-
 /**
  * Valores da tela do Construtor de Curso. Todos os campos são strings porque
  * refletem exatamente o conteúdo dos inputs — a conversão para número acontece
@@ -179,6 +169,12 @@ export interface PublicCoursesPage {
   pageSize: number;
   totalElements: number;
   totalPages: number;
+}
+
+/** Categorias e níveis distintos dos cursos publicados. */
+export interface PublicCourseFilters {
+  categories: string[];
+  levels: string[];
 }
 
 /** Query params aceitos por GET /api/v1/public/courses. */

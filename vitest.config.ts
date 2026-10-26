@@ -8,6 +8,11 @@ export default defineConfig({
     // Simula um ambiente de navegador real
     environment: 'jsdom',
 
+    // URL fixa para os testes, independente dos arquivos .env locais.
+    env: {
+      VITE_API_BASE_URL: 'http://localhost:8080/api/v1',
+    },
+
     // Roda o setup global antes de cada arquivo de teste
     setupFiles: ['./src/test/setup.ts'],
 
@@ -17,8 +22,25 @@ export default defineConfig({
     // Configurações de cobertura de código
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', '**/index.ts'],
+      // text: tabela no terminal | html: relatório navegável linha a linha
+      // json-summary: resumo lido pelo GitHub Actions | cobertura: relatório do MR no GitLab
+      reporter: ['text', 'json', 'json-summary', 'html', 'cobertura'],
+      // Mede apenas o código-fonte da aplicação (fora dist/, configs, etc.)
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/test/',
+        '**/*.test.{ts,tsx}',
+        '**/*.d.ts',
+        '**/index.ts',
+        // Ponto de entrada (só monta o React no DOM)
+        'src/main.tsx',
+        // Apenas declarações de tipos/interfaces
+        'src/types/**',
+        // Dados mockados estáticos, sem lógica
+        'src/data/courses.ts',
+        'src/data/courseNavigation.ts',
+        'src/pages/MyCourses/mockCourses.ts',
+      ],
     },
   },
   resolve: {

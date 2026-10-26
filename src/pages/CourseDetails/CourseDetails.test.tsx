@@ -9,11 +9,13 @@ import { CourseDetails } from './CourseDetails';
 vi.mock('@services/courseService', () => ({
   courseService: {
     getCourses: vi.fn(),
+    getCourseFilters: vi.fn(),
     getPublicCourseById: vi.fn(),
   },
 }));
 
 const getCoursesMock = vi.mocked(courseService.getCourses);
+const getFiltersMock = vi.mocked(courseService.getCourseFilters);
 const getPublicCourseByIdMock = vi.mocked(courseService.getPublicCourseById);
 
 const emptyPage: PublicCoursesPage = {
@@ -70,6 +72,7 @@ const renderDetails = (courseId = details.id) =>
 describe('CourseDetails', () => {
   beforeEach(() => {
     getCoursesMock.mockReset().mockResolvedValue(emptyPage);
+    getFiltersMock.mockReset().mockResolvedValue({ categories: [], levels: [] });
     getPublicCourseByIdMock.mockReset();
   });
 
@@ -91,6 +94,30 @@ describe('CourseDetails', () => {
     expect(within(dialog).getByText('Guia de Prompts para Turismo (PDF)')).toBeInTheDocument();
     expect(within(dialog).getByText('Vídeo não disponível para esse curso')).toBeInTheDocument();
     expect(getPublicCourseByIdMock).toHaveBeenCalledWith(details.id, expect.any(AbortSignal));
+  });
+
+  it('should close the modal and return to the logged catalog it was opened from', async () => {
+    const user = userEvent.setup();
+    getPublicCourseByIdMock.mockResolvedValue(details);
+    render(
+      <MemoryRouter
+        initialEntries={[{ pathname: `/cursos/${details.id}`, state: { from: '/aluno/cursos' } }]}
+      >
+        <Routes>
+          <Route path="/" element={<p>Vitrine</p>} />
+          <Route path="/aluno/cursos" element={<p>Catálogo do aluno</p>} />
+          <Route path="/cursos/:courseId" element={<CourseDetails />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole('dialog');
+    await user.click(screen.getByRole('button', { name: /^fechar$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Catálogo do aluno')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Vitrine')).not.toBeInTheDocument();
   });
 
   it('should close the modal and return to the home page', async () => {
