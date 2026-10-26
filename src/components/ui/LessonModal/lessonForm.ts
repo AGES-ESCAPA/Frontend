@@ -102,7 +102,9 @@ export const validateLessonForm = (state: LessonFormState): LessonFormErrors => 
       errors.videoUrl = 'Informe uma URL válida, começando com https://.';
     }
 
-    if (state.duration.trim() && parseDurationDigitBuffer(state.duration) === null) {
+    if (!state.duration.trim()) {
+      errors.duration = 'Informe a duração do vídeo.';
+    } else if (parseDurationDigitBuffer(state.duration) === null) {
       errors.duration = 'Use o formato 000:00 (ex.: 012:40).';
     }
   }

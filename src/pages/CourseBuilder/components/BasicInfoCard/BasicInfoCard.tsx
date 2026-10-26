@@ -55,7 +55,12 @@ const BasicInfoCardBase = ({
       />
     </FormField>
 
-    <FormField label="Resumo Curto" htmlFor={SHORT_DESCRIPTION_ID} error={shortDescriptionError}>
+    <FormField
+      label="Resumo Curto"
+      htmlFor={SHORT_DESCRIPTION_ID}
+      required
+      error={shortDescriptionError}
+    >
       <TextArea
         id={SHORT_DESCRIPTION_ID}
         value={shortDescription}

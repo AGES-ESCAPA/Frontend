@@ -220,12 +220,13 @@ export const LessonModal = ({
             />
           </FormField>
 
-          <FormField id={durationId} label="Duração" error={errors.duration}>
+          <FormField id={durationId} label="Duração" required error={errors.duration}>
             <DurationInput
               id={durationId}
               className={inputClassName(errors.duration)}
               value={form.duration}
               onChange={(duration) => updateForm({ duration })}
+              aria-required="true"
               aria-invalid={Boolean(errors.duration)}
               aria-describedby={errors.duration ? `${durationId}-error` : undefined}
             />
