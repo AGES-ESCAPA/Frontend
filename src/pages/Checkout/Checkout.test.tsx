@@ -1,15 +1,18 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthContext } from '@contexts/authContextDefinition';
-import { OrderServiceError, createOrder } from '@services/orderService';
+import { OrderServiceError, createOrder, getSeatPrice } from '@services/orderService';
+import { profileService } from '@services/profileService';
+import { getCourseAccessPath } from '@utils/courseAccess';
+import type { UserProfile } from '@/types/profile';
 import type { AuthUser } from '@/types/auth';
 import { courseService, CourseRequestError } from '@services/courseService';
 import type * as CourseServiceModule from '@services/courseService';
 import type { PublicCourseDetails } from '@/types/course';
 import type { OrderConfirmationState, PlacedOrder } from '@/types/order';
-import { Checkout } from './Checkout';
+import { CHECKOUT_MAX_INSTALLMENTS, Checkout } from './Checkout';
 
 vi.mock('@services/courseService', async (importOriginal) => {
   const actual = await importOriginal<typeof CourseServiceModule>();
@@ -26,10 +29,51 @@ vi.mock('@services/courseService', async (importOriginal) => {
 vi.mock('@services/orderService', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   createOrder: vi.fn(),
+  getSeatPrice: vi.fn(),
 }));
+
+vi.mock('@services/profileService', () => ({
+  profileService: { getProfile: vi.fn() },
+}));
+
+vi.mock('@utils/courseAccess', () => ({ getCourseAccessPath: vi.fn() }));
 
 const getPublicCourseByIdMock = vi.mocked(courseService.getPublicCourseById);
 const createOrderMock = vi.mocked(createOrder);
+const getSeatPriceMock = vi.mocked(getSeatPrice);
+const getProfileMock = vi.mocked(profileService.getProfile);
+const getCourseAccessPathMock = vi.mocked(getCourseAccessPath);
+
+const studentProfile: UserProfile = {
+  profile: 'STUDENT',
+  editable: true,
+  name: 'João Pedro Alves',
+  email: 'joao.alves@email.com',
+  cpf: '52998224725',
+  phone: null,
+  companyName: null,
+  cnpj: null,
+  avatarUrl: null,
+};
+
+const companyProfile: UserProfile = {
+  profile: 'COMPANY',
+  editable: true,
+  name: 'Responsável',
+  email: 'contato@hostel.com.br',
+  cpf: null,
+  phone: null,
+  companyName: 'Hostel Centro Histórico ME',
+  cnpj: '44555666000124',
+  avatarUrl: null,
+};
+
+const companyUser: AuthUser = {
+  id: 'd0000000-0000-4000-d000-000000000004',
+  name: 'Hostel Centro Histórico',
+  email: 'contato@hostel.com.br',
+  role: 'COMPANY',
+};
 
 const placedOrder: PlacedOrder = {
   orderId: '67f8851a-c299-40cd-8de2-df0823075075',
@@ -103,7 +147,11 @@ const renderCheckout = (
         <Routes>
           <Route path="/checkout/confirmacao" element={<ConfirmationProbe />} />
           <Route path="/empresa/checkout/confirmacao" element={<ConfirmationProbe />} />
+          <Route path="/checkout/assentos" element={<Checkout kind="seats" {...props} />} />
+          <Route path="/empresa/checkout/assentos" element={<Checkout kind="seats" {...props} />} />
           <Route path="/checkout/:courseId" element={<Checkout {...props} />} />
+          <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<ConfirmationProbe />} />
+          <Route path="/empresa/cursos" element={<ConfirmationProbe />} />
           <Route path="/empresa/checkout/:courseId" element={<Checkout {...props} />} />
         </Routes>
       </MemoryRouter>
@@ -123,6 +171,11 @@ describe('Checkout', () => {
     getPublicCourseByIdMock.mockResolvedValue(details);
     createOrderMock.mockReset();
     createOrderMock.mockResolvedValue(placedOrder);
+    getSeatPriceMock.mockReset();
+    getSeatPriceMock.mockResolvedValue(79);
+    getProfileMock.mockReset();
+    getProfileMock.mockResolvedValue(studentProfile);
+    getCourseAccessPathMock.mockReset();
   });
 
   it('should show the page heading', async () => {
@@ -311,18 +364,153 @@ describe('Checkout', () => {
     expect(createOrderMock).toHaveBeenCalledTimes(2);
   });
 
-  it('should use a generic message when the failure is not a known service error', async () => {
+  it('should offer a retry toast that sends the same choice again when the purchase fails', async () => {
     const user = userEvent.setup();
     createOrderMock.mockRejectedValueOnce(new Error('boom'));
     renderCheckout();
     await screen.findByRole('button', { name: 'Pagar R$167,00' });
     await fillValidCard(user);
+    await user.selectOptions(screen.getByLabelText('Parcelas'), '3');
 
     await user.click(screen.getByRole('button', { name: 'Pagar R$167,00' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Não foi possível concluir a compra',
+    expect(await screen.findByText('Não foi possível concluir a compra')).toBeInTheDocument();
+    expect(screen.getByLabelText('Número do cartão')).toHaveValue('4539 1488 0343 6467');
+
+    await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    await screen.findByText(/confirmacao/);
+    expect(createOrderMock).toHaveBeenCalledTimes(2);
+    expect(createOrderMock.mock.calls[1][0]).toEqual(createOrderMock.mock.calls[0][0]);
+    expect(createOrderMock.mock.calls[1][0]).toMatchObject({ installments: 3 });
+  });
+
+  it('should link a student who already has the course to the course itself on a 409', async () => {
+    const user = userEvent.setup();
+    createOrderMock.mockRejectedValueOnce(
+      new OrderServiceError(409, 'Você já tem acesso ativo a este curso.'),
     );
+    getCourseAccessPathMock.mockResolvedValue(`/aluno/cursos/${COURSE_ID}/aulas/aula-1`);
+    renderCheckout();
+    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+    await fillValidCard(user);
+
+    await user.click(screen.getByRole('button', { name: 'Pagar R$167,00' }));
+    await user.click(await screen.findByRole('button', { name: 'Ir para o curso' }));
+
+    expect(
+      await screen.findByText(new RegExp(`/aluno/cursos/${COURSE_ID}/aulas/aula-1`)),
+    ).toBeInTheDocument();
+    expect(getCourseAccessPathMock).toHaveBeenCalledWith(COURSE_ID);
+  });
+
+  it('should show the buyer of the profile in the summary', async () => {
+    renderCheckout(`/checkout/${COURSE_ID}`, {}, sessionUser);
+
+    expect(await screen.findByText('Dados do comprador')).toBeInTheDocument();
+    const summary = within(screen.getByRole('complementary', { name: 'Resumo do pedido' }));
+    expect(summary.getByText('joao.alves@email.com')).toBeInTheDocument();
+    expect(summary.getByText('CPF: ***.***.247-25')).toBeInTheDocument();
+    expect(summary.getByText('Cartão de Crédito')).toBeInTheDocument();
+  });
+
+  it('should keep the summary without buyer when the profile cannot be loaded', async () => {
+    getProfileMock.mockRejectedValue(new Error('offline'));
+    renderCheckout();
+
+    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+    expect(screen.queryByText('Dados do comprador')).not.toBeInTheDocument();
+  });
+
+  it('should offer installments up to the checkout limit with the value of each one', async () => {
+    renderCheckout();
+    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+
+    const installments = screen.getByLabelText('Parcelas');
+    expect(within(installments).getAllByRole('option')).toHaveLength(CHECKOUT_MAX_INSTALLMENTS);
+    expect(
+      within(installments).getByRole('option', { name: /^2x de R\$\s83,50$/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('should take a logged company on the shared course route to the company confirmation', async () => {
+    const user = userEvent.setup();
+    getProfileMock.mockResolvedValue(companyProfile);
+    renderCheckout(`/checkout/${COURSE_ID}`, {}, companyUser);
+    await screen.findByRole('button', { name: 'Pagar R$167,00' });
+    await fillValidCard(user);
+
+    await user.click(screen.getByRole('button', { name: 'Pagar R$167,00' }));
+
+    expect(await screen.findByText(/^\/empresa\/checkout\/confirmacao/)).toBeInTheDocument();
+  });
+
+  describe('seats', () => {
+    it('should show the seats package with the total of the configured seat price and the company', async () => {
+      getProfileMock.mockResolvedValue(companyProfile);
+      renderCheckout('/empresa/checkout/assentos?quantidade=10', {}, companyUser);
+
+      expect(await screen.findByRole('button', { name: 'Pagar R$790,00' })).toBeInTheDocument();
+      expect(screen.getByText('Pacote de 10 Assentos Corporativos')).toBeInTheDocument();
+      expect(await screen.findByText('Hostel Centro Histórico ME')).toBeInTheDocument();
+      expect(screen.getByText('CNPJ: **.***.***/0001-24')).toBeInTheDocument();
+      expect(getPublicCourseByIdMock).not.toHaveBeenCalled();
+    });
+
+    it('should buy the seats with only the quantity, the payment method and the installments', async () => {
+      const user = userEvent.setup();
+      createOrderMock.mockResolvedValue({
+        ...placedOrder,
+        itemType: 'SEATS',
+        courseId: null,
+        seatsQuantity: 10,
+        amount: 790,
+      });
+      renderCheckout('/empresa/checkout/assentos?quantidade=10', {}, companyUser);
+      await screen.findByRole('button', { name: 'Pagar R$790,00' });
+      await fillValidCard(user);
+
+      await user.click(screen.getByRole('button', { name: 'Pagar R$790,00' }));
+
+      expect(createOrderMock).toHaveBeenCalledWith({
+        itemType: 'SEATS',
+        seatsQuantity: 10,
+        paymentMethod: 'CARD',
+        installments: 1,
+      });
+      expect(await screen.findByText(/^\/empresa\/checkout\/confirmacao/)).toBeInTheDocument();
+    });
+
+    it.each(['', '?quantidade=0', '?quantidade=-3', '?quantidade=2.5', '?quantidade=abc'])(
+      'should refuse an invalid quantity (%s) with a way back to the catalog',
+      async (search) => {
+        renderCheckout(`/empresa/checkout/assentos${search}`, {}, companyUser);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent(
+          'Informe uma quantidade de assentos válida.',
+        );
+        expect(screen.getByRole('link', { name: 'Voltar ao catálogo' })).toHaveAttribute(
+          'href',
+          '/empresa/cursos',
+        );
+        expect(getSeatPriceMock).not.toHaveBeenCalled();
+      },
+    );
+
+    it('should let the company retry when the seat price cannot be loaded', async () => {
+      const user = userEvent.setup();
+      getSeatPriceMock.mockRejectedValueOnce(
+        new OrderServiceError(0, 'Não foi possível carregar o valor dos assentos.'),
+      );
+      renderCheckout('/empresa/checkout/assentos?quantidade=5', {}, companyUser);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Não foi possível carregar o valor dos assentos.',
+      );
+      await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+      expect(await screen.findByRole('button', { name: 'Pagar R$395,00' })).toBeInTheDocument();
+    });
   });
 
   it('should show the logged user in the layout when there is a session', async () => {

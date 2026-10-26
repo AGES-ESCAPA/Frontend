@@ -265,6 +265,79 @@ describe('Courses', () => {
     });
   });
 
+  it('opens the classroom, not the sales page, when the student clicks a purchased card', async () => {
+    getCoursesMock.mockResolvedValue(pageWithCourse);
+    getEnrollmentsMock.mockResolvedValue({
+      ...emptyEnrollments,
+      content: [acquiredEnrollment],
+      totalElements: 1,
+      totalPages: 1,
+    });
+    getCurriculumMock.mockResolvedValue({
+      courseId: course.id,
+      completedLessons: 0,
+      totalLessons: 1,
+      modules: [
+        {
+          id: 'module-1',
+          title: 'Módulo 1',
+          locked: false,
+          completedLessons: 0,
+          totalLessons: 1,
+          lessons: [{ id: 'lesson-1', title: 'Aula 1', durationMinutes: 10, status: 'AVAILABLE' }],
+        },
+      ],
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/aluno/cursos']}>
+        <Routes>
+          <Route path="/aluno/cursos" element={<Courses />} />
+          <Route path="/cursos/:courseId" element={<p>Página de venda</p>} />
+          <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const [card] = await screen.findAllByRole('button', {
+      name: /ver detalhes do curso inovação/i,
+    });
+    await userEvent.click(card);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        `/aluno/cursos/${course.id}/aulas/lesson-1`,
+      );
+    });
+    expect(screen.queryByText('Página de venda')).not.toBeInTheDocument();
+  });
+
+  it('opens the sales page of a course not purchased yet, remembering the catalog', async () => {
+    getCoursesMock.mockResolvedValue(pageWithCourse);
+    const FromProbe = () => {
+      const location = useLocation();
+      return (
+        <output data-testid="from">{(location.state as { from?: string } | null)?.from}</output>
+      );
+    };
+
+    render(
+      <MemoryRouter initialEntries={['/aluno/cursos']}>
+        <Routes>
+          <Route path="/aluno/cursos" element={<Courses />} />
+          <Route path="/cursos/:courseId" element={<FromProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const [card] = await screen.findAllByRole('button', {
+      name: /ver detalhes do curso inovação/i,
+    });
+    await userEvent.click(card);
+
+    expect(await screen.findByTestId('from')).toHaveTextContent('/aluno/cursos');
+  });
+
   it('requests the catalog with the selected category and level', async () => {
     const user = userEvent.setup();
     renderCourses();

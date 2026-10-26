@@ -37,6 +37,12 @@ describe('getCheckoutRole', () => {
     expect(getCheckoutRole('/checkout/abc')).toBe('student');
     expect(getCheckoutRole('/checkout/confirmacao')).toBe('student');
   });
+
+  it('should prefer the session role, since the course page sends everyone to /checkout/:courseId', () => {
+    expect(getCheckoutRole('/checkout/abc', 'COMPANY')).toBe('company');
+    expect(getCheckoutRole('/checkout/confirmacao', 'COMPANY')).toBe('company');
+    expect(getCheckoutRole('/empresa/checkout/abc', 'STUDENT')).toBe('student');
+  });
 });
 
 describe('useCheckoutLayout', () => {
@@ -64,6 +70,16 @@ describe('useCheckoutLayout', () => {
     expect(result.current.role).toBe('company');
     expect(result.current.catalogPath).toBe('/empresa/cursos');
     expect(result.current.menuItems.map((item) => item.label)).toContain('Colaboradores');
+  });
+
+  it('should build the company layout for a logged company on the shared /checkout route', () => {
+    const { result } = renderHook(() => useCheckoutLayout(), {
+      wrapper: wrapperFor('/checkout/abc', { ...user, role: 'COMPANY' }),
+    });
+
+    expect(result.current.role).toBe('company');
+    expect(result.current.catalogPath).toBe('/empresa/cursos');
+    expect(result.current.user.role).toBe('Empresa');
   });
 
   it('should use the sample user when there is no session', () => {

@@ -185,6 +185,23 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+            {/* Pacote de assentos: só a empresa compra; a quantidade vem em ?quantidade=N. */}
+            <Route
+              path="/checkout/assentos"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Checkout kind="seats" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/checkout/assentos"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <Checkout kind="seats" />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/checkout/:courseId"
               element={
