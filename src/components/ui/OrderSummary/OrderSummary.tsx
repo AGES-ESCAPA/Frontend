@@ -1,5 +1,6 @@
 import { Clock3, UsersRound } from 'lucide-react';
-import { formatCurrency } from '../../../utils/formatters';
+import { formatCurrency } from '@utils/formatters';
+import { maskCnpj, normalizeCnpj, onlyDigits } from '@utils/masks';
 import { CourseCover } from './CourseCover';
 import styles from './OrderSummary.module.css';
 
@@ -17,17 +18,13 @@ export type OrderItem =
       total: number;
     };
 
-export type OrderBuyer =
-  | {
-      kind: 'individual';
-      name: string;
-      document: string;
-    }
-  | {
-      kind: 'company';
-      name: string;
-      document: string;
-    };
+export interface OrderBuyer {
+  kind: 'individual' | 'company';
+  name: string;
+  email?: string;
+  /** CPF do aluno ou CNPJ (numérico ou alfanumérico) da empresa, com ou sem pontuação. */
+  document: string;
+}
 
 export interface OrderSummaryProps {
   item?: OrderItem;
@@ -38,19 +35,31 @@ export interface OrderSummaryProps {
   errorMessage?: string;
 }
 
+/** Mostra só o fim do documento, no formato das máscaras de CPF e CNPJ (US-21). */
 const maskBuyerDocument = (document: string, kind: OrderBuyer['kind']): string => {
-  const digits = document.replace(/\D/g, '');
-
-  if (kind === 'individual' && digits.length === 11) {
-    return `***.***.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  if (kind === 'individual') {
+    const digits = onlyDigits(document);
+    return digits.length === 11
+      ? `***.***.${digits.slice(6, 9)}-${digits.slice(9)}`
+      : 'Documento indisponível';
   }
 
-  if (kind === 'company' && digits.length === 14) {
-    return `**.***.***/${digits.slice(8, 12)}-${digits.slice(12)}`;
-  }
-
-  return 'Documento indisponível';
+  return normalizeCnpj(document).length === 14
+    ? `**.***.***/${maskCnpj(document).slice(11)}`
+    : 'Documento indisponível';
 };
+
+const SummarySkeleton = () => (
+  <section className={styles.card} role="status" aria-label="Carregando resumo do pedido">
+    <div className={styles.skeletonBody} aria-hidden="true">
+      <span className={`${styles.bone} ${styles.coverBone}`} />
+      <span className={`${styles.bone} ${styles.titleBone}`} />
+      <span className={`${styles.bone} ${styles.lineBone}`} />
+      <span className={`${styles.bone} ${styles.lineBone}`} />
+      <span className={`${styles.bone} ${styles.lineBoneShort}`} />
+    </div>
+  </section>
+);
 
 export const OrderSummary = ({
   item,
@@ -61,11 +70,7 @@ export const OrderSummary = ({
   errorMessage,
 }: OrderSummaryProps) => {
   if (status === 'loading') {
-    return (
-      <section className={styles.card} role="status">
-        Carregando resumo do pedido...
-      </section>
-    );
+    return <SummarySkeleton />;
   }
 
   if (status === 'error') {
@@ -155,6 +160,7 @@ export const OrderSummary = ({
         <div className={styles.buyer}>
           <h3>Dados do comprador</h3>
           <p>{buyer.name}</p>
+          {buyer.email ? <p>{buyer.email}</p> : null}
           <p>
             {buyer.kind === 'individual' ? 'CPF' : 'CNPJ'}:{' '}
             {maskBuyerDocument(buyer.document, buyer.kind)}

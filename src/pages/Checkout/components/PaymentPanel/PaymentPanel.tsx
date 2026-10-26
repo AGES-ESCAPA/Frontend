@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Button, CreditCardForm } from '@components/ui';
 import type { CreditCardFormChange } from '@components/ui';
 import { formatCurrency } from '@utils/formatters';
@@ -15,6 +16,8 @@ export interface PaymentPanelProps {
   isSubmitting?: boolean;
   /** Erro da última tentativa de confirmar a compra, mostrado acima do botão. */
   errorMessage?: string | null;
+  /** Ação ao lado do erro (ex.: link para o curso que o usuário já tem). */
+  errorAction?: ReactNode;
   onConfirm: (selection: PaymentSelection) => void;
 }
 
@@ -25,6 +28,7 @@ export const PaymentPanel = ({
   maxInstallments,
   isSubmitting = false,
   errorMessage = null,
+  errorAction,
   onConfirm,
 }: PaymentPanelProps) => {
   const [form, setForm] = useState<CreditCardFormChange>({
@@ -58,6 +62,10 @@ export const PaymentPanel = ({
       <h2 id="payment-panel-title" className={styles.title}>
         Pagar com:
       </h2>
+      <p className={styles.method}>
+        <span className={styles.methodMark} aria-hidden="true" />
+        Cartão de Crédito
+      </p>
 
       <CreditCardForm amount={amount} maxInstallments={maxInstallments} onChange={setForm} />
 
@@ -65,6 +73,7 @@ export const PaymentPanel = ({
         {errorMessage ? (
           <p className={styles.error} role="alert">
             {errorMessage}
+            {errorAction ? <span className={styles.errorAction}>{errorAction}</span> : null}
           </p>
         ) : null}
         <Button

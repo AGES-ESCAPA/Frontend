@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { authenticatedFetch } from '@services/api';
 import type { PlacedOrder } from '@/types/order';
-import { OrderServiceError, createOrder } from './orderService';
+import { OrderServiceError, createOrder, getSeatPrice } from './orderService';
 
 vi.mock('@services/api', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -113,5 +113,44 @@ describe('createOrder', () => {
     expect(error).toBeInstanceOf(OrderServiceError);
     expect((error as OrderServiceError).status).toBe(0);
     expect((error as OrderServiceError).message).toContain('Verifique sua conexão');
+  });
+});
+
+describe('getSeatPrice', () => {
+  beforeEach(() => {
+    authenticatedFetchMock.mockReset();
+  });
+
+  it('should read the seat price from the orders endpoint', async () => {
+    authenticatedFetchMock.mockResolvedValue(
+      jsonResponse({ success: true, data: { seatPrice: 79 } }),
+    );
+
+    await expect(getSeatPrice()).resolves.toBe(79);
+    expect(authenticatedFetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/orders\/seat-price$/),
+      expect.objectContaining({ signal: undefined }),
+    );
+  });
+
+  it('should report an API failure in Portuguese with its status', async () => {
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ message: 'x' }, 500));
+
+    const error = await getSeatPrice().catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(OrderServiceError);
+    expect((error as OrderServiceError).status).toBe(500);
+    expect((error as OrderServiceError).message).toBe(
+      'Não foi possível carregar o valor dos assentos.',
+    );
+  });
+
+  it('should report a network failure with status 0', async () => {
+    authenticatedFetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const error = await getSeatPrice().catch((caught: unknown) => caught);
+
+    expect((error as OrderServiceError).status).toBe(0);
+    expect((error as OrderServiceError).message).toMatch(/Verifique sua conexão/);
   });
 });

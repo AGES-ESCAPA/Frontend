@@ -34,6 +34,31 @@ const messageForStatus = (status: number): string => {
 };
 
 /**
+ * Valor de um assento corporativo, para o checkout mostrar o total do pacote antes da compra.
+ * O pedido continua sendo calculado no servidor com esse mesmo valor.
+ */
+export const getSeatPrice = async (signal?: AbortSignal): Promise<number> => {
+  let response: Response;
+
+  try {
+    response = await authenticatedFetch(`${api.baseUrl}/orders/seat-price`, { signal });
+  } catch (error: unknown) {
+    if (signal?.aborted) throw error;
+    throw new OrderServiceError(
+      0,
+      'Não foi possível carregar o valor dos assentos. Verifique sua conexão e tente novamente.',
+    );
+  }
+
+  if (!response.ok) {
+    throw new OrderServiceError(response.status, 'Não foi possível carregar o valor dos assentos.');
+  }
+
+  const json: ApiResponse<{ seatPrice: number }> = await response.json();
+  return json.data.seatPrice;
+};
+
+/**
  * Registra a compra simulada. A API aprova o pedido na hora e libera o acesso na mesma transação
  * (matrícula do aluno, curso da empresa ou assentos), então não há segundo passo de confirmação.
  */

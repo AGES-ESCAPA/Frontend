@@ -2,20 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
-import {
-  Button,
-  CourseCard,
-  CourseCardSkeleton,
-  FilterTabs,
-  SearchBar,
-  type EnrollmentStatus,
-} from '@components/ui';
+import { Button, CourseCard, CourseCardSkeleton, FilterTabs, SearchBar } from '@components/ui';
 import { useCourseFilters } from '@hooks/useCourseFilters';
 import { usePublicCourses } from '@hooks/usePublicCourses';
-import { getStudentEnrollments } from '@services/enrollmentService';
 import type { PublicCourseCard } from '@/types/course';
 import { getCourseAccessPath } from '@utils/courseAccess';
 import { mapPublicCourseToCardProps, toDisplayLevel } from '@utils/mapPublicCourse';
+import { loadOwnedCourseIds } from '@utils/ownedCourses';
 import styles from './Courses.module.css';
 
 const ALL_FILTER = 'Todos';
@@ -40,15 +33,6 @@ const usersByRole: Record<SidebarRole, SidebarUser> = {
 };
 
 const CATALOG_SKELETONS = 6;
-const OWNED_PAGE_SIZE = 50;
-const MAX_OWNED_PAGES = 20;
-
-const ACQUIRED_ENROLLMENT_STATUSES = new Set<EnrollmentStatus>([
-  'IN_PROGRESS',
-  'COMPLETED',
-  'EXPIRED',
-]);
-
 const toOptionalFilter = (value: string): string | undefined =>
   value === ALL_FILTER ? undefined : value;
 
@@ -59,25 +43,6 @@ const getRoleFromPathname = (pathname: string): SidebarRole => {
   if (pathname.startsWith('/admin')) return 'admin';
   if (pathname.startsWith('/empresa')) return 'company';
   return 'student';
-};
-
-const loadOwnedCourseIds = async (): Promise<Set<string>> => {
-  const ids = new Set<string>();
-  let page = 0;
-  let totalPages = 1;
-
-  do {
-    const result = await getStudentEnrollments({ page, size: OWNED_PAGE_SIZE });
-    result.content.forEach((enrollment) => {
-      if (ACQUIRED_ENROLLMENT_STATUSES.has(enrollment.enrollmentStatus)) {
-        ids.add(enrollment.courseId);
-      }
-    });
-    totalPages = result.totalPages;
-    page += 1;
-  } while (page < totalPages && page < MAX_OWNED_PAGES);
-
-  return ids;
 };
 
 export const Courses = () => {
@@ -146,8 +111,9 @@ export const Courses = () => {
     window.location.assign('/');
   };
 
+  // A página do curso é pública: guarda de onde veio para o "fechar" voltar ao catálogo logado.
   const handleCourseClick = (courseId: string) => {
-    navigate(`/cursos/${courseId}`);
+    navigate(`/cursos/${courseId}`, { state: { from: pathname } });
   };
 
   const handleAccess = async (courseId: string) => {
@@ -163,7 +129,11 @@ export const Courses = () => {
     return (
       <CourseCard
         key={course.id}
-        {...mapPublicCourseToCardProps(course, handleCourseClick)}
+        {...mapPublicCourseToCardProps(
+          course,
+          // Curso já adquirido abre direto a aula, em vez da página de venda.
+          acquired ? (id) => void handleAccess(id) : handleCourseClick,
+        )}
         acquired={acquired}
         onAccess={acquired ? handleAccess : undefined}
       />

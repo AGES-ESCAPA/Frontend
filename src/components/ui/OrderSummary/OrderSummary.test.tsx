@@ -117,10 +117,40 @@ describe('OrderSummary', () => {
     expect(screen.getByText('CNPJ: **.***.***/0001-90')).toBeInTheDocument();
   });
 
+  it('masks an alphanumeric company document', () => {
+    render(
+      <OrderSummary
+        item={seats}
+        buyer={{ kind: 'company', name: 'Empresa', document: '12.ABC.345/01DE-35' }}
+      />,
+    );
+
+    expect(screen.getByText('CNPJ: **.***.***/01DE-35')).toBeInTheDocument();
+  });
+
+  it('shows the name and the e-mail of the buyer', () => {
+    render(
+      <OrderSummary
+        item={seats}
+        buyer={{
+          kind: 'individual',
+          name: 'Maria Souza',
+          email: 'maria@email.com',
+          document: '12345678901',
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Dados do comprador')).toBeInTheDocument();
+    expect(screen.getByText('Maria Souza')).toBeInTheDocument();
+    expect(screen.getByText('maria@email.com')).toBeInTheDocument();
+  });
+
   it('shows loading, error and empty states', () => {
     const { rerender } = render(<OrderSummary status="loading" />);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando');
+    expect(screen.getByRole('status', { name: 'Carregando resumo do pedido' })).toBeInTheDocument();
+    expect(screen.queryByText('Subtotal')).not.toBeInTheDocument();
 
     rerender(<OrderSummary status="error" />);
 
