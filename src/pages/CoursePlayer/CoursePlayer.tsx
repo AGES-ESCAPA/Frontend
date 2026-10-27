@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Check, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
-import { toVimeoEmbedUrl } from '@utils/vimeo';
 import { Button } from '@components/ui';
 import { LessonVideoPlayer } from '@components/course/LessonVideoPlayer/LessonVideoPlayer';
 import { NavigationButton } from '@components/course/NavigationButton/NavigationButton';
@@ -172,8 +171,7 @@ export const CoursePlayer = () => {
       .map((paragraph) => paragraph.trim())
       .filter(Boolean);
 
-    // O embed do Vimeo tem controles próprios, que não aceitam os botões da aula.
-    const usesNativePlayer = lesson.type === 'video' && !toVimeoEmbedUrl(lesson.videoUrl ?? '');
+    const usesNativePlayer = lesson.type === 'video';
 
     // Sempre disponível, inclusive com o vídeo indisponível. Concluir de novo é idempotente
     // no backend e só leva à próxima aula.

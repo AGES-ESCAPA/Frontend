@@ -1,6 +1,79 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LessonVideoPlayer } from './LessonVideoPlayer';
+
+type VimeoHandler = (data?: unknown) => void;
+
+interface FakeVimeoPlayer {
+  element: HTMLIFrameElement;
+  paused: boolean;
+  readyResult: Promise<void>;
+  play: ReturnType<typeof vi.fn>;
+  pause: ReturnType<typeof vi.fn>;
+  setCurrentTime: ReturnType<typeof vi.fn>;
+  emit: (event: string, data?: unknown) => void;
+}
+
+const vimeo = vi.hoisted(() => ({
+  instances: [] as FakeVimeoPlayer[],
+  nextReady: null as Promise<void> | null,
+}));
+
+vi.mock('@vimeo/player', () => ({
+  default: class {
+    element: HTMLIFrameElement;
+    paused = true;
+    readyResult: Promise<void>;
+    handlers = new Map<string, Set<VimeoHandler>>();
+    play = vi.fn(() => {
+      this.paused = false;
+      return Promise.resolve();
+    });
+    pause = vi.fn(() => {
+      this.paused = true;
+      return Promise.resolve();
+    });
+    setCurrentTime = vi.fn((seconds: number) => Promise.resolve(seconds));
+
+    constructor(element: HTMLIFrameElement) {
+      this.element = element;
+      this.readyResult = vimeo.nextReady ?? Promise.resolve();
+      vimeo.instances.push(this as unknown as FakeVimeoPlayer);
+    }
+
+    ready() {
+      return this.readyResult;
+    }
+
+    getDuration() {
+      return Promise.resolve(300);
+    }
+
+    getPaused() {
+      return Promise.resolve(this.paused);
+    }
+
+    on(event: string, handler: VimeoHandler) {
+      if (!this.handlers.has(event)) this.handlers.set(event, new Set());
+      this.handlers.get(event)!.add(handler);
+    }
+
+    off(event: string, handler: VimeoHandler) {
+      this.handlers.get(event)?.delete(handler);
+    }
+
+    emit(event: string, data?: unknown) {
+      this.handlers.get(event)?.forEach((handler) => handler(data));
+    }
+  },
+}));
+
+const lastVimeoPlayer = () => vimeo.instances[vimeo.instances.length - 1];
+
+beforeEach(() => {
+  vimeo.instances = [];
+  vimeo.nextReady = null;
+});
 
 const MP4_URL = 'https://example.com/video.mp4';
 const SECOND_MP4_URL = 'https://example.com/video-2.mp4';
@@ -144,26 +217,76 @@ describe('LessonVideoPlayer', () => {
       expect(iframe.getAttribute('src')).not.toContain('api=1');
     });
 
-    it('does not render custom PlayerControls for Vimeo', () => {
+    it('asks Vimeo to hide its own controls', () => {
       renderPlayer({ src: VIMEO_URL });
 
-      expect(
-        screen.queryByRole('slider', {
-          name: 'Linha do tempo do vídeo',
-        }),
-      ).not.toBeInTheDocument();
-
-      expect(
-        screen.queryByRole('button', {
-          name: 'Reproduzir',
-        }),
-      ).not.toBeInTheDocument();
+      expect(screen.getByTitle(TITLE).getAttribute('src')).toContain('controls=0');
     });
 
     it('does not show the native video loading state over Vimeo', () => {
       renderPlayer({ src: VIMEO_URL });
 
       expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+    });
+
+    it('renders the custom PlayerControls once the Vimeo player is ready', async () => {
+      renderPlayer({ src: VIMEO_URL });
+
+      expect(lastVimeoPlayer().element).toBe(screen.getByTitle(TITLE));
+
+      expect(
+        await screen.findByRole('slider', { name: 'Linha do tempo do vídeo' }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('00:00 / 05:00')).toBeInTheDocument();
+    });
+
+    it('controls the Vimeo video from the play button and the timeline', async () => {
+      const user = userEvent.setup();
+
+      renderPlayer({ src: VIMEO_URL });
+
+      await user.click(await screen.findByRole('button', { name: 'Reproduzir vídeo' }));
+
+      expect(lastVimeoPlayer().play).toHaveBeenCalledOnce();
+
+      act(() => {
+        lastVimeoPlayer().emit('play');
+        lastVimeoPlayer().emit('timeupdate', { seconds: 65, duration: 300, percent: 0.2 });
+      });
+
+      expect(screen.getByText('01:05 / 05:00')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Pausar' })).toBeInTheDocument();
+
+      fireEvent.change(screen.getByRole('slider', { name: 'Linha do tempo do vídeo' }), {
+        target: { value: '120' },
+      });
+
+      expect(lastVimeoPlayer().setCurrentTime).toHaveBeenCalledWith(120);
+    });
+
+    it('shows the completion message when the last Vimeo lesson ends', async () => {
+      const { onEnded } = renderPlayer({
+        src: VIMEO_URL,
+        isLastLesson: true,
+        courseTitle: 'Curso Vimeo',
+      });
+
+      await screen.findByRole('slider', { name: 'Linha do tempo do vídeo' });
+
+      act(() => {
+        lastVimeoPlayer().emit('ended');
+      });
+
+      expect(onEnded).toHaveBeenCalledOnce();
+      expect(screen.getByText('Curso Vimeo')).toBeInTheDocument();
+    });
+
+    it('shows "Vídeo indisponível" when the Vimeo player fails to load', async () => {
+      vimeo.nextReady = Promise.reject(new Error('private video'));
+
+      renderPlayer({ src: VIMEO_URL });
+
+      expect(await screen.findByText('Vídeo indisponível')).toBeInTheDocument();
     });
   });
 
@@ -361,21 +484,19 @@ describe('LessonVideoPlayer', () => {
       playMock.mockRestore();
     });
 
-    it('does not try to control Vimeo when Space is pressed', () => {
+    it('plays the Vimeo video when Space is pressed while the player is focused', async () => {
       renderPlayer({ src: VIMEO_URL });
+
+      await screen.findByRole('slider', { name: 'Linha do tempo do vídeo' });
 
       const player = screen.getByLabelText(`Player da aula ${TITLE}`);
 
       player.focus();
 
-      // fireEvent devolve false quando o handler chama preventDefault. No Vimeo o
-      // Espaço precisa seguir para o iframe, então o player não pode interceptá-lo.
-      const notPrevented = fireEvent.keyDown(player, {
-        code: 'Space',
-        key: ' ',
-      });
+      const notPrevented = fireEvent.keyDown(player, { code: 'Space', key: ' ' });
 
-      expect(notPrevented).toBe(true);
+      expect(notPrevented).toBe(false);
+      await vi.waitFor(() => expect(lastVimeoPlayer().play).toHaveBeenCalledOnce());
     });
 
     it('intercepts Space on the native video so the page does not scroll', () => {

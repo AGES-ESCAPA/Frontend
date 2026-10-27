@@ -42,6 +42,12 @@
   background: #10161d;
 }
 
+/* O iframe termina acima da barra de controles: se a conta do Vimeo não permitir
+   esconder a interface própria (controls=0), ela não fica coberta pela nossa barra. */
+.iframe {
+  height: calc(100% - var(--player-controls-height));
+}
+
 .overlay {
   position: absolute;
   inset: 0 0 var(--player-controls-height);
@@ -86,10 +92,12 @@
 
 .title {
   margin: 0;
-  color: var(--color-neutral-500);
+  color: var(--color-secondary-100);
   font-size: 12px;
   letter-spacing: 1px;
   text-align: center;
+  -webkit-text-stroke: 1px var(--color-primary-900);
+  paint-order: stroke fill;
 }
 
 .controls {

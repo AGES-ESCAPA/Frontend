@@ -1,3 +1,4 @@
+import VimeoPlayer from '@vimeo/player';
 import { Play } from 'lucide-react';
 import { useEffect, useRef, useState, type FC, type KeyboardEvent, type ReactNode } from 'react';
 
@@ -41,6 +42,8 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
   controlsAction,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const vimeoPlayerRef = useRef<VimeoPlayer | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,6 +54,9 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
 
   const vimeoEmbedUrl = toVimeoEmbedUrl(src);
   const isVimeo = Boolean(vimeoEmbedUrl);
+  // `controls=0` esconde a interface do Vimeo (contas Plus ou superiores) para usar a
+  // barra do PlayerControls; nas demais contas o Vimeo ignora o parâmetro.
+  const vimeoPlayerUrl = vimeoEmbedUrl ? `${vimeoEmbedUrl}&controls=0` : null;
 
   useEffect(() => {
     setIsPlaying(false);
@@ -64,6 +70,23 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
   }, [src]);
 
   const handleTogglePlay = async () => {
+    if (isVimeo) {
+      const vimeoPlayer = vimeoPlayerRef.current;
+
+      if (!vimeoPlayer) return;
+
+      try {
+        if (await vimeoPlayer.getPaused()) {
+          await vimeoPlayer.play();
+        } else {
+          await vimeoPlayer.pause();
+        }
+      } catch {
+        // O navegador pode recusar o play (ex.: autoplay bloqueado); o aluno usa o Vimeo.
+      }
+      return;
+    }
+
     const video = videoRef.current;
 
     if (!video) return;
@@ -108,6 +131,12 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
   };
 
   const handleSeek = (seconds: number) => {
+    if (isVimeo) {
+      vimeoPlayerRef.current?.setCurrentTime(seconds).catch(() => {});
+      setCurrentTime(seconds);
+      return;
+    }
+
     const video = videoRef.current;
 
     if (!video) return;
@@ -129,11 +158,65 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
     setIsLoading(false);
   };
 
+  // Os eventos do Vimeo são registrados uma vez por vídeo; o ref mantém o
+  // handleEnded atual (isLastLesson/onEnded) sem recriar o player.
+  const handleEndedRef = useRef(handleEnded);
+
+  useEffect(() => {
+    handleEndedRef.current = handleEnded;
+  });
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+
+    if (!vimeoPlayerUrl || !iframe) return undefined;
+
+    let isActive = true;
+    const vimeoPlayer = new VimeoPlayer(iframe);
+    vimeoPlayerRef.current = vimeoPlayer;
+
+    const onPlay = () => {
+      setIsPlaying(true);
+      setHasCompletedCourse(false);
+    };
+    const onPause = () => setIsPlaying(false);
+    const onTimeUpdate = ({ seconds }: { seconds: number }) => setCurrentTime(seconds);
+    const onVimeoEnded = () => handleEndedRef.current();
+
+    vimeoPlayer.on('play', onPlay);
+    vimeoPlayer.on('pause', onPause);
+    vimeoPlayer.on('timeupdate', onTimeUpdate);
+    vimeoPlayer.on('ended', onVimeoEnded);
+
+    vimeoPlayer
+      .ready()
+      .then(() => vimeoPlayer.getDuration())
+      .then((videoDuration) => {
+        if (!isActive) return;
+        setDuration(videoDuration);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!isActive) return;
+        setHasError(true);
+        setIsLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+      vimeoPlayer.off('play', onPlay);
+      vimeoPlayer.off('pause', onPause);
+      vimeoPlayer.off('timeupdate', onTimeUpdate);
+      vimeoPlayer.off('ended', onVimeoEnded);
+      vimeoPlayerRef.current = null;
+    };
+  }, [vimeoPlayerUrl]);
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     // event.target !== event.currentTarget: o Espaço só reproduz/pausa quando
     // o foco está no próprio player, não quando vem de um elemento focável lá
     // dentro (ex.: os botões da mensagem de parabenização).
-    if (event.code !== 'Space' || isVimeo || event.target !== event.currentTarget) return;
+    if (event.code !== 'Space' || event.target !== event.currentTarget) return;
 
     event.preventDefault();
     void handleTogglePlay();
@@ -142,7 +225,7 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
   // Sem `src` (aula de vídeo sem link cadastrado), o player aparece como indisponível
   // mas continua exibindo as ações da aula.
   const isUnavailable = hasError || !src;
-  const showControls = !isUnavailable && !isLoading && !isVimeo;
+  const showControls = !isUnavailable && !isLoading;
 
   return (
     <div
@@ -169,10 +252,13 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
         </p>
       ) : (
         <>
-          {isVimeo && vimeoEmbedUrl ? (
+          {vimeoPlayerUrl ? (
             <iframe
+              // Um iframe novo por vídeo: o SDK do Vimeo guarda um player por elemento.
+              key={vimeoPlayerUrl}
+              ref={iframeRef}
               className={styles.iframe}
-              src={vimeoEmbedUrl}
+              src={vimeoPlayerUrl}
               title={title}
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
@@ -194,11 +280,7 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
             />
           )}
 
-          {/* !isVimeo (pré-existente): o iframe do Vimeo não dispara onEnded nem os
-              demais eventos daqui, então uma última aula em Vimeo nunca mostra a
-              mensagem de parabenização (US-17). Precisaria da API do player do
-              Vimeo via postMessage; fora do escopo desta task. */}
-          {!isPlaying && !isLoading && !isVimeo && (
+          {!isPlaying && !isLoading && (
             <div className={styles.overlay}>
               {hasCompletedCourse ? (
                 <CourseCompletionMessage

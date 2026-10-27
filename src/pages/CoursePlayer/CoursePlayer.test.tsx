@@ -729,19 +729,29 @@ describe('CoursePlayer', () => {
       expect(completeStudentLessonMock).toHaveBeenCalledWith(COURSE_ID, LESSON_ID);
     });
 
-    it('should keep the buttons out of a Vimeo embed', async () => {
-      getStudentCurriculumMock.mockResolvedValue(pendingCurriculum);
+    it('should keep the buttons in the player for a Vimeo video', async () => {
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
       mockSuccessfulLesson({ ...lesson, videoUrl: 'https://vimeo.com/123456789' });
 
       renderCoursePlayer();
 
-      const bottomNavigation = screen.getByRole('navigation', { name: 'Navegação inferior' });
+      const playerActions = screen.getByTestId('player-actions');
 
       expect(
-        await within(bottomNavigation).findByRole('button', { name: 'Marcar como concluída' }),
+        await within(playerActions).findByRole('button', { name: 'Marcar como concluída' }),
       ).toBeInTheDocument();
 
-      expect(screen.getByTestId('player-actions')).toBeEmptyDOMElement();
+      expect(
+        within(playerActions).getByRole('button', {
+          name: 'Próxima aula: Mapeando a jornada do hóspede',
+        }),
+      ).toBeInTheDocument();
+
+      expect(
+        within(screen.getByRole('navigation', { name: 'Navegação inferior' })).queryByRole(
+          'button',
+        ),
+      ).not.toBeInTheDocument();
     });
   });
 });
