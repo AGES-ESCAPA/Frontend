@@ -62,7 +62,7 @@ export const LessonModal = ({
   const videoUrlId = `${baseId}-video-url`;
   const durationId = `${baseId}-duration`;
   const textContentId = `${baseId}-text-content`;
-  const fileUrlId = `${baseId}-file-url`;
+  const lessonFileId = `${baseId}-lesson-file`;
   const descriptionId = `${baseId}-description`;
   const freeSampleLabelId = `${baseId}-free-sample-label`;
   const freeSampleHintId = `${baseId}-free-sample-hint`;
@@ -257,29 +257,28 @@ export const LessonModal = ({
 
       {form.type === 'file' ? (
         <FormField
-          id={fileUrlId}
+          id={lessonFileId}
           label="Arquivo da aula"
           required
           error={errors.fileUrl}
-          hint="Envie um PDF ou planilha, ou informe a URL pública do material."
+          hint="Envie um PDF ou planilha"
         >
-          <div className={styles.fileRow}>
-            <FileInputButton
-              id={`${baseId}-lesson-file`}
-              file={form.file}
-              onSelect={(file) => updateForm({ file })}
-            />
-            <input
-              id={fileUrlId}
-              type="url"
-              className={inputClassName(errors.fileUrl)}
-              placeholder="https://.../material.pdf"
-              value={form.fileUrl}
-              onChange={(event) => updateForm({ fileUrl: event.target.value })}
-              aria-invalid={Boolean(errors.fileUrl)}
-              aria-describedby={errors.fileUrl ? `${fileUrlId}-error` : undefined}
-            />
-          </div>
+          <FileInputButton
+            id={lessonFileId}
+            file={form.file}
+            label={form.fileUrl ? 'Substituir arquivo' : undefined}
+            onSelect={(file) => updateForm({ file })}
+          />
+          {form.fileUrl && !form.file ? (
+            <a
+              className={styles.currentFileLink}
+              href={form.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ver arquivo atual
+            </a>
+          ) : null}
         </FormField>
       ) : null}
 

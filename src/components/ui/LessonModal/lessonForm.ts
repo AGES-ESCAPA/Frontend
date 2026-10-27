@@ -113,13 +113,10 @@ export const validateLessonForm = (state: LessonFormState): LessonFormErrors => 
     errors.textContent = 'Escreva o conteúdo da aula.';
   }
 
-  if (state.type === 'file') {
-    const fileUrl = state.fileUrl.trim();
-    if (!fileUrl && !state.file) {
-      errors.fileUrl = 'Envie um arquivo ou informe a URL do material.';
-    } else if (fileUrl && !isValidUrl(fileUrl)) {
-      errors.fileUrl = 'Informe uma URL válida, começando com https://.';
-    }
+  // A URL de arquivo só existe quando já foi enviada ao storage (edição); o
+  // administrador nunca a digita.
+  if (state.type === 'file' && !state.file && !state.fileUrl.trim()) {
+    errors.fileUrl = 'Envie o arquivo da aula.';
   }
 
   state.resources.forEach((resource) => {
@@ -130,10 +127,13 @@ export const validateLessonForm = (state: LessonFormState): LessonFormErrors => 
       resourceErrors.title = 'Informe o título do material.';
     }
 
-    if (!url && !resource.file) {
-      resourceErrors.url =
-        resource.type === 'link' ? 'Informe o link.' : 'Envie o arquivo ou informe a URL.';
-    } else if (url && !isValidUrl(url)) {
+    if (resource.type === 'file') {
+      if (!resource.file && !url) {
+        resourceErrors.url = 'Envie o arquivo.';
+      }
+    } else if (!url) {
+      resourceErrors.url = 'Informe o link.';
+    } else if (!isValidUrl(url)) {
       resourceErrors.url = 'Informe uma URL válida, começando com https://.';
     }
 

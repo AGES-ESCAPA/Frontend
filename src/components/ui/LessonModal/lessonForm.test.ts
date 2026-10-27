@@ -77,12 +77,28 @@ describe('validateLessonForm', () => {
     expect(errors.videoUrl).toBeUndefined();
   });
 
-  it('should require a file or URL for a file lesson', () => {
+  it('should require an uploaded file for a file lesson', () => {
     const state = { ...createLessonFormState(), type: 'file' as const, title: 'Checklist' };
 
-    expect(validateLessonForm(state).fileUrl).toBe(
-      'Envie um arquivo ou informe a URL do material.',
-    );
+    expect(validateLessonForm(state).fileUrl).toBe('Envie o arquivo da aula.');
+  });
+
+  it('should accept a file lesson being edited that already has a stored file', () => {
+    const state = {
+      ...createLessonFormState(),
+      type: 'file' as const,
+      title: 'Checklist',
+      fileUrl: 'http://localhost:9000/escapa-media/contents/abc.pdf',
+    };
+
+    expect(hasLessonFormErrors(validateLessonForm(state))).toBe(false);
+  });
+
+  it('should require the upload of a file resource', () => {
+    const draft = { ...createResourceDraft('file'), title: 'Planilha' };
+    const state = { ...createLessonFormState(videoLesson), resources: [draft] };
+
+    expect(validateLessonForm(state).resources[draft.id]).toEqual({ url: 'Envie o arquivo.' });
   });
 
   it('should accept a file lesson sent as upload, without URL', () => {

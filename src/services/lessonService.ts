@@ -213,12 +213,60 @@ export const getStudentLesson = async (
   return mapStudentLessonToLesson(json.data);
 };
 
+/** Envia o arquivo em `multipart/form-data` ao storage e devolve a URL pública. */
+export const uploadLessonFile = async (file: File): Promise<string> => {
+  const body = new FormData();
+  body.append('file', file);
+
+  const response = await authenticatedFetch(`${API_BASE_URL}/admin/contents/files`, {
+    method: 'POST',
+    body,
+  });
+
+  if (!response.ok) {
+    const errorData: unknown = await response.json().catch(() => null);
+
+    throw new Error(extractErrorMessage(errorData) ?? 'Não foi possível enviar o arquivo da aula.');
+  }
+
+  const json: ApiResponse<{ url: string }> = await response.json();
+
+  return json.data.url;
+};
+
+/**
+ * Sobe os arquivos escolhidos no navegador e troca `fileUrl`/`resource.url`
+ * pelas URLs definitivas do storage.
+ */
+const resolveUploads = async (payload: LessonPayload): Promise<LessonPayload> => {
+  if (payload.uploads.length === 0) return payload;
+
+  const uploadedUrls = await Promise.all(
+    payload.uploads.map(async (upload) => ({
+      resourceId: upload.resourceId,
+      url: await uploadLessonFile(upload.file),
+    })),
+  );
+  const urlOf = (resourceId?: string) =>
+    uploadedUrls.find((uploaded) => uploaded.resourceId === resourceId)?.url;
+
+  return {
+    ...payload,
+    fileUrl: payload.type === 'file' ? (urlOf(undefined) ?? payload.fileUrl) : payload.fileUrl,
+    resources: payload.resources.map((resource) => ({
+      ...resource,
+      url: urlOf(resource.id) ?? resource.url,
+    })),
+  };
+};
+
 export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
+  const resolved = await resolveUploads(payload);
   const response = await authenticatedFetch(
     `${API_BASE_URL}/admin/modules/${payload.moduleId}/contents`,
     {
       method: 'POST',
-      body: JSON.stringify(buildCreateContentRequest(payload)),
+      body: JSON.stringify(buildCreateContentRequest(resolved)),
     },
   );
 
@@ -226,9 +274,10 @@ export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
 };
 
 export const updateLesson = async (lessonId: string, payload: LessonPayload): Promise<Lesson> => {
+  const resolved = await resolveUploads(payload);
   const response = await authenticatedFetch(`${API_BASE_URL}/admin/contents/${lessonId}`, {
     method: 'PUT',
-    body: JSON.stringify(buildCreateContentRequest(payload)),
+    body: JSON.stringify(buildCreateContentRequest(resolved)),
   });
 
   return parseLessonResponse(response, 'Não foi possível salvar as alterações da aula.');
