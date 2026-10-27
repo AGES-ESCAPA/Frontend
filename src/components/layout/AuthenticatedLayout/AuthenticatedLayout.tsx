@@ -4,6 +4,7 @@ import { Navbar } from '../Navbar/Navbar';
 import { Sidebar } from '../Sidebar';
 import type { SidebarMenuItem, SidebarRole, SidebarUser } from '../Sidebar';
 import { useOptionalAuth } from '@contexts/useAuth';
+import { useNotifications } from '@hooks/useNotifications';
 import styles from './AuthenticatedLayout.module.css';
 
 const getRoleLabel = (role: string): string => {
@@ -47,6 +48,7 @@ export const AuthenticatedLayout = ({
   const auth = useOptionalAuth();
   const navigate = useNavigate();
   const sessionUser = auth?.user;
+  const notifications = useNotifications(Boolean(sessionUser));
   const resolvedUser: SidebarUser = sessionUser
     ? {
         name: sessionUser.name,
@@ -77,6 +79,19 @@ export const AuthenticatedLayout = ({
             avatarUrl: resolvedUser.avatarUrl,
           }}
           notificationsCount={notificationsCount}
+          notifications={
+            sessionUser
+              ? {
+                  items: notifications.notifications,
+                  unreadCount: notifications.unreadCount,
+                  isLoading: notifications.isLoading,
+                  error: notifications.error,
+                  onOpen: notifications.refetch,
+                  onSelect: (notification) => notifications.markAsRead(notification.id),
+                  onMarkAllAsRead: notifications.markAllAsRead,
+                }
+              : undefined
+          }
           collapsible={role !== 'student'}
           onLogout={resolvedLogout}
           profileHref={role === 'company' ? '/empresa/perfil' : '/meu-perfil'}

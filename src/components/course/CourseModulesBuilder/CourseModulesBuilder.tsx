@@ -11,7 +11,11 @@ import {
 } from 'lucide-react';
 import { ConfirmDialog, LessonModal } from '@components/ui';
 import { courseModulesApi } from '@services/courseModules';
-import { createLesson as persistLessonRequest } from '@services/lessonService';
+import {
+  createLesson as persistLessonRequest,
+  getAdminLesson,
+  updateLesson as updateLessonRequest,
+} from '@services/lessonService';
 import type { Lesson, LessonPayload } from '@/types/lesson';
 import type {
   AdminCourseModule,
@@ -26,6 +30,8 @@ export interface CourseModulesBuilderProps {
   initialModules: AdminCourseModule[];
   client?: CourseModuleClient;
   createLesson?: (payload: LessonPayload) => Promise<Lesson>;
+  getLesson?: (moduleId: string, lessonId: string) => Promise<Lesson>;
+  updateLesson?: (lessonId: string, payload: LessonPayload) => Promise<Lesson>;
 }
 
 type BuilderStatus = 'idle' | 'saving' | 'success' | 'error';
@@ -74,11 +80,29 @@ const appendLessonToModule = (module: AdminCourseModule, lesson: Lesson): AdminC
   };
 };
 
+const replaceLessonInModule = (module: AdminCourseModule, lesson: Lesson): AdminCourseModule => {
+  const previous = module.contents.find((content) => content.id === lesson.id);
+  const content = mapLessonToModuleContent(lesson, previous?.order ?? module.contents.length + 1);
+
+  return {
+    ...module,
+    contents: module.contents.map((current) => (current.id === lesson.id ? content : current)),
+    totalDurationMinutes: Math.max(
+      0,
+      module.totalDurationMinutes -
+        (previous?.durationMinutes ?? 0) +
+        (content.durationMinutes ?? 0),
+    ),
+  };
+};
+
 export const CourseModulesBuilder = ({
   courseId,
   initialModules,
   client = courseModulesApi,
   createLesson = persistLessonRequest,
+  getLesson = getAdminLesson,
+  updateLesson = updateLessonRequest,
 }: CourseModulesBuilderProps) => {
   const [modules, setModules] = useState(() => sortModulesByOrder(initialModules));
   const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(() => new Set());
@@ -88,6 +112,8 @@ export const CourseModulesBuilder = ({
     moduleId: string;
     moduleName: string;
     moduleOrder: number;
+    /** Presente apenas ao editar uma aula existente. */
+    lesson?: Lesson;
   } | null>(null);
   const [moduleToDelete, setModuleToDelete] = useState<AdminCourseModule | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -324,6 +350,56 @@ export const CourseModulesBuilder = ({
     }
   };
 
+  const handleOpenEditLesson = async (
+    module: AdminCourseModule,
+    moduleNumber: number,
+    lessonId: string,
+  ) => {
+    // A listagem do módulo traz só o resumo; o modal precisa da aula completa.
+    setFeedback('saving', 'Carregando aula...');
+
+    try {
+      const lesson = await getLesson(module.id, lessonId);
+
+      setLessonTarget({
+        moduleId: module.id,
+        moduleName: module.title,
+        moduleOrder: moduleNumber,
+        lesson,
+      });
+      setFeedback('idle', '');
+    } catch (error) {
+      setFeedback(
+        'error',
+        error instanceof Error ? error.message : 'Não foi possível carregar a aula.',
+      );
+    }
+  };
+
+  const handleUpdateLesson = async (lessonId: string, payload: LessonPayload) => {
+    setFeedback('saving', 'Salvando alterações da aula...');
+
+    try {
+      const updatedLesson = await updateLesson(lessonId, payload);
+
+      setModules((currentModules) =>
+        currentModules.map((module) =>
+          module.id === payload.moduleId ? replaceLessonInModule(module, updatedLesson) : module,
+        ),
+      );
+      setFeedback(
+        'success',
+        'Aula atualizada. Os alunos que já a concluíram serão notificados para refazê-la.',
+      );
+    } catch (error) {
+      setFeedback(
+        'error',
+        error instanceof Error ? error.message : 'Não foi possível salvar as alterações da aula.',
+      );
+      throw error;
+    }
+  };
+
   const deleteDescription = moduleToDelete
     ? `Esta ação excluirá o módulo “${moduleToDelete.title}” e ${formatContentsCount(
         moduleToDelete.totalContents,
@@ -465,6 +541,17 @@ export const CourseModulesBuilder = ({
                               <FileText size={18} aria-hidden="true" />
                             )}
                             <span>{lesson.title}</span>
+                            <button
+                              type="button"
+                              className={`${styles.iconButton} ${styles.lessonEditButton}`}
+                              disabled={status === 'saving'}
+                              aria-label={`Editar aula ${lesson.title}`}
+                              onClick={() =>
+                                void handleOpenEditLesson(module, moduleNumber, lesson.id)
+                              }
+                            >
+                              <Pencil size={18} aria-hidden="true" />
+                            </button>
                           </li>
                         ))}
                       </ul>
@@ -527,7 +614,14 @@ export const CourseModulesBuilder = ({
           moduleId={lessonTarget.moduleId}
           moduleName={lessonTarget.moduleName}
           moduleOrder={lessonTarget.moduleOrder}
-          onSubmit={handleCreateLesson}
+          lesson={lessonTarget.lesson}
+          onSubmit={(payload) => {
+            const editingLesson = lessonTarget.lesson;
+
+            return editingLesson
+              ? handleUpdateLesson(editingLesson.id, payload)
+              : handleCreateLesson(payload);
+          }}
         />
       ) : null}
     </section>

@@ -26,6 +26,7 @@ interface CreateContentRequest {
   durationMinutes: number | null;
   description: string | null;
   isFree: boolean;
+  resources: LessonResource[];
 }
 
 interface ContentResponse {
@@ -38,7 +39,7 @@ interface ContentResponse {
   description: string | null;
   isFree: boolean;
   order: number;
-  resources: string | LessonResource[] | null;
+  resources: LessonResource[] | null;
 }
 
 interface StudentLessonResponse {
@@ -51,7 +52,7 @@ interface StudentLessonResponse {
   durationMinutes: number | null;
   isFree: boolean;
   order: number;
-  resources: string | null;
+  resources: LessonResource[] | null;
   concepts: string[];
   references: LessonReference[];
   module: {
@@ -101,20 +102,11 @@ const buildCreateContentRequest = (payload: LessonPayload): CreateContentRequest
   durationMinutes: payload.type === 'video' ? secondsToMinutes(payload.durationInSeconds) : null,
   description: resolveContentDescription(payload),
   isFree: payload.isFreeSample,
+  resources: payload.resources.map(({ id, type, title, url }) => ({ id, type, title, url })),
 });
 
-const parseResources = (resources: ContentResponse['resources']): LessonResource[] => {
-  if (Array.isArray(resources)) return resources;
-  if (!resources) return [];
-
-  try {
-    const parsed: unknown = JSON.parse(resources);
-
-    return Array.isArray(parsed) ? (parsed as LessonResource[]) : [];
-  } catch {
-    return [];
-  }
-};
+const parseResources = (resources: ContentResponse['resources']): LessonResource[] =>
+  resources ?? [];
 
 const mapContentToLesson = (content: ContentResponse): Lesson => {
   const type = toLessonType(content.type);
@@ -211,6 +203,16 @@ export const getStudentLesson = async (
   const json: ApiResponse<StudentLessonResponse> = await response.json();
 
   return mapStudentLessonToLesson(json.data);
+};
+
+/** Aula completa no formato do admin, usada para preencher o modal de edição. */
+export const getAdminLesson = async (moduleId: string, lessonId: string): Promise<Lesson> => {
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/admin/modules/${moduleId}/contents/${lessonId}`,
+    { method: 'GET' },
+  );
+
+  return parseLessonResponse(response, 'Não foi possível carregar a aula.');
 };
 
 /** Envia o arquivo em `multipart/form-data` ao storage e devolve a URL pública. */

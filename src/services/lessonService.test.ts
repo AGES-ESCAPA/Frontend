@@ -68,6 +68,7 @@ describe('lessonService', () => {
             durationMinutes: 13,
             description: payload.description,
             isFree: true,
+            resources: [],
           }),
         }),
       );
@@ -182,7 +183,11 @@ describe('lessonService', () => {
       expect(String(fetchMock.mock.calls[0][0])).toContain('/admin/contents/files');
       const createRequest = fetchMock.mock.calls[1][1] as RequestInit;
       expect(JSON.parse(String(createRequest.body))).toEqual(
-        expect.objectContaining({ type: 'VIDEO', url: payload.videoUrl }),
+        expect.objectContaining({
+          type: 'VIDEO',
+          url: payload.videoUrl,
+          resources: [{ id: 'resource-1', type: 'file', title: 'Planilha', url: storedUrl }],
+        }),
       );
     });
 
