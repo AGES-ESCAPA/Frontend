@@ -46,17 +46,22 @@ describe('Login', () => {
   it('renders the login fields and recovery links', () => {
     renderLogin();
 
-    expect(screen.getByAltText('escapa! - Plataforma de Cursos')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Painel de login' })).toBeInTheDocument();
+    expect(screen.getByAltText('escapa!')).toBeInTheDocument();
+    expect(screen.getByText('cursos')).toBeInTheDocument();
     expect(screen.getByLabelText(/E-mail/)).toHaveAttribute('autocomplete', 'email');
+    expect(screen.getByLabelText(/E-mail/)).toHaveAttribute('placeholder', 'email@escapa.com.br');
     expect(screen.getByLabelText(/Senha/)).toHaveAttribute('type', 'password');
     expect(screen.getByRole('link', { name: 'Esqueci minha senha' })).toHaveAttribute(
       'href',
       '/esqueci-minha-senha',
     );
-    expect(screen.getByRole('link', { name: 'Criar uma conta' })).toHaveAttribute(
-      'href',
-      '/cadastro',
-    );
+    expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', '/cadastro');
+    expect(
+      screen.getByText(
+        `© ${new Date().getFullYear()} Escapa! Cursos. Todos os direitos reservados.`,
+      ),
+    ).toBeInTheDocument();
   });
 
   it.each(profileDestinations)(
