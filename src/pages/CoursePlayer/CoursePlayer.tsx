@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { toVimeoEmbedUrl } from '@utils/vimeo';
 import { Button } from '@components/ui';
 import { LessonVideoPlayer } from '@components/course/LessonVideoPlayer/LessonVideoPlayer';
@@ -163,6 +163,15 @@ export const CoursePlayer = () => {
       .filter(Boolean)
       .join(' · ');
 
+    // Aulas de texto e de arquivo não têm player: o conteúdo é o texto da aula.
+    const isReadingLesson = lesson.type !== 'video';
+    const readingText = lesson.type === 'text' ? lesson.textContent : lesson.description;
+    // Parágrafos separados por linha em branco; quebras simples são mantidas no CSS.
+    const textParagraphs = (readingText ?? '')
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean);
+
     // O embed do Vimeo tem controles próprios, que não aceitam os botões da aula.
     const usesNativePlayer = lesson.type === 'video' && !toVimeoEmbedUrl(lesson.videoUrl ?? '');
 
@@ -211,11 +220,7 @@ export const CoursePlayer = () => {
                   controlsAction={usesNativePlayer && completeButton}
                 />
               </div>
-            ) : (
-              <div className={styles.nonVideoContent} data-testid="non-video-lesson">
-                <p>O conteúdo desta aula será exibido aqui.</p>
-              </div>
-            )}
+            ) : null}
 
             <header className={styles.header}>
               {lessonMetadata && <span className={styles.breadcrumb}>{lessonMetadata}</span>}
@@ -223,8 +228,31 @@ export const CoursePlayer = () => {
               <h1>{lesson.title}</h1>
             </header>
 
-            {/* US-12: conteúdo textual da aula */}
-            <LessonContent description={lesson.description} concepts={lesson.concepts} />
+            {isReadingLesson && (textParagraphs.length > 0 || lesson.fileUrl) && (
+              <article className={styles.textLesson} aria-label="Conteúdo da aula">
+                {textParagraphs.map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+
+                {lesson.type === 'file' && lesson.fileUrl && (
+                  <a
+                    className={styles.fileLink}
+                    href={lesson.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <FileText size={16} aria-hidden="true" />
+                    Abrir arquivo da aula
+                  </a>
+                )}
+              </article>
+            )}
+
+            {/* US-12: conteúdo textual da aula; sem player, o texto já aparece acima */}
+            <LessonContent
+              description={isReadingLesson ? null : lesson.description}
+              concepts={lesson.concepts}
+            />
             <LessonReferences references={lesson.references} />
 
             {/* US-16: materiais complementares */}

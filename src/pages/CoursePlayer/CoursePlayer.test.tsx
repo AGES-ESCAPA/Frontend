@@ -385,12 +385,14 @@ describe('CoursePlayer', () => {
     expect(retryMock).toHaveBeenCalledTimes(1);
   });
 
-  it('should not render the video player for a non-video lesson', () => {
+  it('should render only the formatted text for a text lesson, without the player area', () => {
+    const article = 'Primeiro parágrafo.\nCom quebra de linha.\n\nSegundo parágrafo.';
     const textLesson: Lesson = {
       ...lesson,
       type: 'text',
       videoUrl: null,
-      textContent: 'Conteúdo textual da aula.',
+      description: article,
+      textContent: article,
     };
 
     mockSuccessfulLesson(textLesson);
@@ -398,8 +400,41 @@ describe('CoursePlayer', () => {
     renderCoursePlayer();
 
     expect(screen.queryByTestId('lesson-video-player')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('non-video-lesson')).not.toBeInTheDocument();
 
-    expect(screen.getByTestId('non-video-lesson')).toBeInTheDocument();
+    const content = screen.getByRole('article', { name: 'Conteúdo da aula' });
+    const paragraphs = within(content).getAllByText(/parágrafo/);
+
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0]).toHaveTextContent('Primeiro parágrafo. Com quebra de linha.');
+
+    // O artigo não se repete na seção "Sobre esta aula".
+    expect(screen.queryByText('Sobre esta aula')).not.toBeInTheDocument();
+  });
+
+  it('should render a file lesson like a text lesson, with a link to the file', () => {
+    mockSuccessfulLesson({
+      ...lesson,
+      type: 'file',
+      videoUrl: null,
+      description: 'Leia o material antes da próxima aula.',
+      fileUrl: 'https://example.com/material.pdf',
+    });
+
+    renderCoursePlayer();
+
+    expect(screen.queryByTestId('lesson-video-player')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('non-video-lesson')).not.toBeInTheDocument();
+
+    const content = screen.getByRole('article', { name: 'Conteúdo da aula' });
+
+    expect(within(content).getByText('Leia o material antes da próxima aula.')).toBeInTheDocument();
+    expect(within(content).getByRole('link', { name: 'Abrir arquivo da aula' })).toHaveAttribute(
+      'href',
+      'https://example.com/material.pdf',
+    );
+
+    expect(screen.queryByText('Sobre esta aula')).not.toBeInTheDocument();
   });
 
   describe('lesson menu (US-13)', () => {

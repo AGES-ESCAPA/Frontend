@@ -151,6 +151,37 @@ describe('lessonService', () => {
       });
     });
 
+    it('should expose the article of a text lesson as textContent', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: {
+                id: LESSON_ID,
+                title: 'Quiz',
+                description: 'Texto do artigo.',
+                type: 'TEXT',
+                url: null,
+                durationMinutes: 16,
+                isFree: false,
+                order: 8,
+                resources: null,
+                module: { id: MODULE_ID, title: 'Módulo 2', order: 2 },
+              },
+            }),
+        }),
+      );
+
+      const lesson = await getStudentLesson(COURSE_ID, LESSON_ID);
+
+      expect(lesson.type).toBe('text');
+      expect(lesson.textContent).toBe('Texto do artigo.');
+      expect(lesson.videoUrl).toBeNull();
+    });
+
     it('should throw StudentLessonError when access is denied', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: false,

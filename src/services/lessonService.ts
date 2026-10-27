@@ -152,7 +152,8 @@ const mapStudentLessonToLesson = (content: StudentLessonResponse): Lesson => {
     type,
     videoUrl: type === 'video' ? content.url : null,
     durationInSeconds: content.durationMinutes != null ? content.durationMinutes * 60 : null,
-    textContent: null,
+    // Aula de texto guarda o artigo em `description` (ver resolveContentDescription).
+    textContent: type === 'text' ? (content.description ?? '') : null,
     fileUrl: type === 'file' ? content.url : null,
     isFreeSample: Boolean(content.isFree),
     resources: parseResources(content.resources),
