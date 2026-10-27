@@ -91,7 +91,8 @@ export const Login = () => {
             >
               <PasswordInput
                 id="login-password"
-                className={styles.fieldInput}
+                className={`${styles.fieldInput} ${styles.passwordField}`}
+                placeholder="*******"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 disabled={isSubmitting}

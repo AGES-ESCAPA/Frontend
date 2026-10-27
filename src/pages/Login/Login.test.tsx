@@ -52,6 +52,7 @@ describe('Login', () => {
     expect(screen.getByLabelText(/E-mail/)).toHaveAttribute('autocomplete', 'email');
     expect(screen.getByLabelText(/E-mail/)).toHaveAttribute('placeholder', 'email@escapa.com.br');
     expect(screen.getByLabelText(/Senha/)).toHaveAttribute('type', 'password');
+    expect(screen.getByLabelText(/Senha/)).toHaveAttribute('placeholder', '*******');
     expect(screen.getByRole('link', { name: 'Esqueci minha senha' })).toHaveAttribute(
       'href',
       '/esqueci-minha-senha',

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ArrowLeft, CreditCard, Mail, Phone, User } from 'lucide-react';
+import { ArrowLeft, IdCard, Mail, Phone, User } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Navbar, Footer } from '@components/layout';
 import { Button, FormField, MaskedInput, PasswordInput, TextInput, Toast } from '@components/ui';
@@ -39,20 +39,25 @@ const FIELDS = [
     name: 'name',
     label: 'Nome completo',
     placeholder: 'João da Silva',
-    icon: <User size={20} />,
+    icon: <User size={18} aria-hidden="true" />,
     autoComplete: 'name',
   },
-  { name: 'cpf', label: 'CPF', icon: <CreditCard size={20} /> },
+  { name: 'cpf', label: 'CPF', icon: <IdCard size={18} aria-hidden="true" /> },
   {
     name: 'email',
     label: 'E-mail',
-    placeholder: 'voce@exemplo.com',
-    icon: <Mail size={20} />,
+    placeholder: 'user@escapa.com.br',
+    icon: <Mail size={18} aria-hidden="true" />,
     autoComplete: 'email',
   },
-  { name: 'phone', label: 'Telefone / WhatsApp (opcional)', icon: <Phone size={20} /> },
+  {
+    name: 'phone',
+    label: 'Telefone / WhatsApp',
+    placeholder: '(11) 99999-9999',
+    icon: <Phone size={18} aria-hidden="true" />,
+  },
   { name: 'password', label: 'Senha', placeholder: 'Mínimo 8 caracteres' },
-  { name: 'confirmPassword', label: 'Confirmação de senha', placeholder: 'Repita a senha' },
+  { name: 'confirmPassword', label: 'Confirmar senha', placeholder: 'Repita a senha' },
 ] as const;
 
 export const RegisterIndividual = () => {
@@ -176,13 +181,15 @@ export const RegisterIndividual = () => {
     <div className={styles.page}>
       <Navbar state="register" />
       <main className={styles.main}>
-        <div className={styles.content}>
-          <Link to={authPath('/cadastro', returnTo)} className={styles.back}>
-            <ArrowLeft size={20} aria-hidden="true" /> Voltar
-          </Link>
-          <h1 className={styles.title} id="register-individual-title">
-            Cadastro · Aluno individual
-          </h1>
+        <div className={styles.panel}>
+          <div className={styles.heading}>
+            <Link to={authPath('/cadastro', returnTo)} className={styles.back} aria-label="Voltar">
+              <ArrowLeft size={18} aria-hidden="true" />
+            </Link>
+            <h1 className={styles.title} id="register-individual-title">
+              Cadastro · Aluno individual
+            </h1>
+          </div>
           <form
             className={styles.form}
             onSubmit={handleSubmit}
@@ -201,6 +208,7 @@ export const RegisterIndividual = () => {
                 disabled: isSubmitting,
                 required: field.name !== 'phone',
                 invalid: Boolean(errors[field.name]),
+                className: styles.fieldInput,
                 'aria-describedby': errors[field.name] ? `${id}-error` : undefined,
                 onBlur: () => {
                   setTouched((previous) => ({ ...previous, [field.name]: true }));
@@ -222,6 +230,7 @@ export const RegisterIndividual = () => {
                       {...shared}
                       mask={field.name}
                       icon={field.icon}
+                      placeholder={'placeholder' in field ? field.placeholder : undefined}
                       onValueChange={(value) => changeValue(field.name, value)}
                     />
                   ) : field.name === 'password' || field.name === 'confirmPassword' ? (
@@ -258,10 +267,11 @@ export const RegisterIndividual = () => {
               disabled={accountCreated}
               className={styles.submit}
             />
-            <div className={styles.login}>
-              <span>Já tenho conta</span>
-              <Link to={authPath('/login', returnTo)}>Entrar</Link>
-            </div>
+            <p className={styles.login}>
+              <span>
+                já tenho conta - <Link to={authPath('/login', returnTo)}>Entrar</Link>
+              </span>
+            </p>
           </form>
         </div>
       </main>

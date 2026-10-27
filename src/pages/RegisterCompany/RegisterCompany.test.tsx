@@ -55,7 +55,8 @@ describe('RegisterCompany', () => {
   it('renders every registration field and the login link', () => {
     renderRegisterCompany();
 
-    expect(screen.getByRole('heading', { name: 'Cadastro · Empresa' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Cadastro - Empresa' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Voltar' })).toHaveAttribute('href', '/cadastro');
     [
       'Nome do responsável',
       'CNPJ',

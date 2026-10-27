@@ -56,6 +56,13 @@
   color: var(--color-secondary-100);
 }
 
+/* O asterisco do placeholder fica na parte de cima da caixa da linha.
+   Este deslocamento o coloca no centro visual do campo. */
+.passwordField input::placeholder {
+  position: relative;
+  top: 0.25em;
+}
+
 .forgot {
   flex-shrink: 0;
   color: var(--color-info-300);

@@ -59,7 +59,7 @@ const fillForm = async (
     ['CPF', next.cpf],
     ['E-mail', next.email],
     ['Senha', next.password],
-    ['Confirmação de senha', next.confirmPassword],
+    ['Confirmar senha', next.confirmPassword],
   ]) {
     await user.click(screen.getByLabelText(label, { exact: true }));
     await user.paste(value);
@@ -84,15 +84,15 @@ describe('RegisterIndividual', () => {
     expect(
       screen.getByRole('heading', { name: 'Cadastro · Aluno individual' }),
     ).toBeInTheDocument();
-    for (const label of ['Nome completo', 'CPF', 'E-mail', 'Senha', 'Confirmação de senha'])
+    for (const label of ['Nome completo', 'CPF', 'E-mail', 'Senha', 'Confirmar senha'])
       expect(screen.getByLabelText(label, { exact: true })).toBeRequired();
-    expect(screen.getByLabelText('Telefone / WhatsApp (opcional)')).not.toBeRequired();
+    expect(screen.getByLabelText('Telefone / WhatsApp')).not.toBeRequired();
     expect(screen.getAllByRole('button', { name: 'Mostrar senha' })).toHaveLength(2);
     expect(screen.getByLabelText('Senha', { exact: true })).toHaveAttribute(
       'autocomplete',
       'new-password',
     );
-    expect(screen.getByLabelText('Confirmação de senha')).toHaveAttribute(
+    expect(screen.getByLabelText('Confirmar senha')).toHaveAttribute(
       'autocomplete',
       'new-password',
     );
@@ -127,7 +127,7 @@ describe('RegisterIndividual', () => {
     expect(email).toHaveAccessibleDescription('Informe um e-mail válido.');
     await user.type(email, 'exemplo.com');
     expect(email).not.toHaveAttribute('aria-invalid');
-    const phone = screen.getByLabelText('Telefone / WhatsApp (opcional)');
+    const phone = screen.getByLabelText('Telefone / WhatsApp');
     await user.click(phone);
     await user.paste('(51) 99999-0000');
     expect(phone).toHaveValue('(51) 99999-0000');
@@ -137,7 +137,7 @@ describe('RegisterIndividual', () => {
     const user = userEvent.setup();
     renderPage();
     const password = screen.getByLabelText('Senha', { exact: true });
-    const confirm = screen.getByLabelText('Confirmação de senha');
+    const confirm = screen.getByLabelText('Confirmar senha');
     await user.click(password);
     await user.tab();
     expect(screen.getAllByRole('button', { name: 'Mostrar senha' })[0]).toHaveFocus();
@@ -156,12 +156,12 @@ describe('RegisterIndividual', () => {
     await fillForm(user, { confirmPassword: 'outra senha' });
     await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
     expect(authService.registerStudent).not.toHaveBeenCalled();
-    expect(screen.getByLabelText('Confirmação de senha')).toHaveAccessibleDescription(
+    expect(screen.getByLabelText('Confirmar senha')).toHaveAccessibleDescription(
       'As senhas devem ser iguais.',
     );
     await user.clear(screen.getByLabelText('Senha', { exact: true }));
     await user.paste('outra senha');
-    expect(screen.getByLabelText('Confirmação de senha')).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByLabelText('Confirmar senha')).not.toHaveAttribute('aria-invalid');
   });
 
   it('registers without phone, starts the session with the received lifetime and goes to the student catalog', async () => {
@@ -228,7 +228,7 @@ describe('RegisterIndividual', () => {
     );
     await user.click(screen.getByRole('link', { name: 'Pessoa Física' }));
     await user.click(screen.getByRole('link', { name: 'Entrar' }));
-    expect(screen.getByRole('link', { name: 'Criar uma conta' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute(
       'href',
       '/cadastro?returnTo=%2Fcursos%2Foriginal',
     );
@@ -275,7 +275,7 @@ describe('RegisterIndividual', () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText('CPF')).toHaveValue('529.982.247-25');
     expect(screen.getByLabelText('E-mail')).toHaveValue(values.email);
-    expect(screen.getByLabelText('Confirmação de senha')).toHaveValue(values.confirmPassword);
+    expect(screen.getByLabelText('Confirmar senha')).toHaveValue(values.confirmPassword);
     expect(authService.registerStudent).toHaveBeenCalledTimes(1);
     await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
     await waitFor(() =>
