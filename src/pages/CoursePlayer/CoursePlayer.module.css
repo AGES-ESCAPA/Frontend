@@ -35,7 +35,62 @@
 
 .bottomNavigation {
   grid-area: bottom;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
   width: 100%;
+}
+
+.bottomNavigation:has(.navigationGroup) {
+  padding-top: var(--space-6);
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+}
+
+.navigationGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Elemento + classe: vence a especificidade do Button, independente da ordem do CSS. */
+button.compactButton {
+  min-height: 36px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-width: 1px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+button.outlinedButton {
+  border-color: var(--color-white);
+  color: var(--color-white);
+}
+
+/* Figma: fundo sólido #5BE5FF, 36px de altura, padding 9px 18px, gap 5.43px, raio 5.43px. */
+button.completeButton {
+  height: 36px;
+  min-height: 36px;
+  gap: 5.43px;
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 5.43px;
+  background: var(--color-info-200);
+}
+
+button.completeButton:hover {
+  opacity: 0.9;
+}
+
+.completeError {
+  width: 100%;
+  margin: 0;
+  font-size: var(--text-body-4);
+  color: var(--color-error-300);
+  text-align: right;
 }
 
 .header {

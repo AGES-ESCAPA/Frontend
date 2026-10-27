@@ -391,4 +391,53 @@ describe('LessonVideoPlayer', () => {
       expect(notPrevented).toBe(false);
     });
   });
+
+  describe('lesson actions', () => {
+    const actions = {
+      previousAction: <button type="button">Anterior</button>,
+      nextAction: <button type="button">Próxima</button>,
+      controlsAction: <button type="button">Concluir</button>,
+    };
+
+    it('renders the side actions over the video', () => {
+      renderPlayer(actions);
+
+      expect(screen.getByRole('button', { name: 'Anterior' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Próxima' })).toBeInTheDocument();
+    });
+
+    it('renders the controls action inside the controls bar once the video loads', () => {
+      renderPlayer(actions);
+
+      expect(screen.getByRole('button', { name: 'Concluir' })).toBeInTheDocument();
+
+      loadMetadata(screen.getByLabelText(TITLE) as HTMLVideoElement);
+
+      const timeline = screen.getByRole('slider', { name: 'Linha do tempo do vídeo' });
+
+      expect(timeline.parentElement).toContainElement(
+        screen.getByRole('button', { name: 'Concluir' }),
+      );
+    });
+
+    it('shows the unavailable state with every action when the lesson has no video URL', () => {
+      renderPlayer({ ...actions, src: '' });
+
+      expect(screen.getByText('Vídeo indisponível')).toBeInTheDocument();
+      expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(TITLE)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Anterior' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Próxima' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Concluir' })).toBeInTheDocument();
+    });
+
+    it('keeps the controls action available when the video fails', () => {
+      renderPlayer(actions);
+
+      fireEvent.error(screen.getByLabelText(TITLE));
+
+      expect(screen.getByText('Vídeo indisponível')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Concluir' })).toBeInTheDocument();
+    });
+  });
 });

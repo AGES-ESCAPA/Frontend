@@ -1,5 +1,5 @@
 import { Play } from 'lucide-react';
-import { useEffect, useRef, useState, type FC, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type FC, type KeyboardEvent, type ReactNode } from 'react';
 
 import { toVimeoEmbedUrl } from '@utils/vimeo';
 import { CourseCompletionMessage } from '../CourseCompletionMessage/CourseCompletionMessage';
@@ -7,6 +7,7 @@ import { PlayerControls } from '../PlayerControls/PlayerControls';
 import styles from './LessonVideoPlayer.module.css';
 
 export interface LessonVideoPlayerProps {
+  /** URL do vídeo (MP4 ou Vimeo). Vazia, exibe "Vídeo indisponível". */
   src: string;
   title: string;
   /** Nome do curso, exibido na mensagem de parabenização (US-17). */
@@ -16,6 +17,15 @@ export interface LessonVideoPlayerProps {
   onEnded?: () => void;
   onViewOtherCourses?: () => void;
   onViewCertificate?: () => void;
+  /** Exibido sobre o vídeo, centralizado na borda esquerda (ex.: aula anterior). */
+  previousAction?: ReactNode;
+  /** Exibido sobre o vídeo, centralizado na borda direita (ex.: próxima aula). */
+  nextAction?: ReactNode;
+  /**
+   * Exibido à direita da barra de controles (ex.: concluir a aula). Enquanto a
+   * barra não aparece (carregando ou vídeo indisponível), fica no canto inferior direito.
+   */
+  controlsAction?: ReactNode;
 }
 
 export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
@@ -26,6 +36,9 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
   onEnded,
   onViewOtherCourses,
   onViewCertificate,
+  previousAction,
+  nextAction,
+  controlsAction,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -126,6 +139,11 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
     void handleTogglePlay();
   };
 
+  // Sem `src` (aula de vídeo sem link cadastrado), o player aparece como indisponível
+  // mas continua exibindo as ações da aula.
+  const isUnavailable = hasError || !src;
+  const showControls = !isUnavailable && !isLoading && !isVimeo;
+
   return (
     <div
       className={styles.player}
@@ -133,7 +151,19 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
       onKeyDown={handleKeyDown}
       aria-label={`Player da aula ${title}`}
     >
-      {hasError ? (
+      {previousAction && (
+        <div className={`${styles.sideAction} ${styles.sideActionStart}`}>{previousAction}</div>
+      )}
+
+      {nextAction && (
+        <div className={`${styles.sideAction} ${styles.sideActionEnd}`}>{nextAction}</div>
+      )}
+
+      {controlsAction && !showControls && (
+        <div className={styles.floatingAction}>{controlsAction}</div>
+      )}
+
+      {isUnavailable ? (
         <p className={styles.unavailable} role="status">
           Vídeo indisponível
         </p>
@@ -199,7 +229,7 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
             </p>
           )}
 
-          {!isLoading && !isVimeo && (
+          {showControls && (
             <div className={styles.controls}>
               <PlayerControls
                 isPlaying={isPlaying}
@@ -207,6 +237,7 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
                 duration={duration}
                 onTogglePlay={handleTogglePlay}
                 onSeek={handleSeek}
+                actions={controlsAction}
               />
             </div>
           )}

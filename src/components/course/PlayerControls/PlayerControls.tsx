@@ -1,5 +1,5 @@
 import { Pause, Play } from 'lucide-react';
-import type { ChangeEvent, CSSProperties, FC } from 'react';
+import type { ChangeEvent, CSSProperties, FC, ReactNode } from 'react';
 import { formatTime } from '@utils/formatters';
 import styles from './PlayerControls.module.css';
 
@@ -12,6 +12,8 @@ export interface PlayerControlsProps {
   onTogglePlay: () => void;
   /** Disparado ao clicar ou arrastar a linha do tempo, com o novo tempo em segundos. */
   onSeek: (seconds: number) => void;
+  /** Conteúdo alinhado à direita da barra (ex.: botão de concluir a aula). */
+  actions?: ReactNode;
 }
 
 const toSafeDuration = (duration: number): number =>
@@ -34,6 +36,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   duration,
   onTogglePlay,
   onSeek,
+  actions,
 }) => {
   const safeDuration = toSafeDuration(duration);
   const safeCurrentTime = clampTime(currentTime, safeDuration);
@@ -72,6 +75,7 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
         <span className={styles.time}>
           {elapsed} / {total}
         </span>
+        {actions && <div className={styles.actions}>{actions}</div>}
       </div>
     </div>
   );

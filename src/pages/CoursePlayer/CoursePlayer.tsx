@@ -1,6 +1,12 @@
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { toVimeoEmbedUrl } from '@utils/vimeo';
 import { Button } from '@components/ui';
 import { LessonVideoPlayer } from '@components/course/LessonVideoPlayer/LessonVideoPlayer';
+import { NavigationButton } from '@components/course/NavigationButton/NavigationButton';
+import { completeStudentLesson, StudentCurriculumError } from '@services/curriculumService';
+import { findLessonNeighbors } from '@/utils/lessonNavigation';
 import { AuthenticatedLayout } from '@components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '@components/layout/Sidebar/sidebarMenuPresets';
 import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
@@ -17,13 +23,49 @@ export const CoursePlayer = () => {
     lessonId: string;
   }>();
 
+  const navigate = useNavigate();
   const { lesson, status, errorStatus, errorMessage, retry } = useStudentLesson(courseId, lessonId);
   const curriculum = useStudentCurriculum(courseId);
+
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCompleteError(null);
+  }, [lessonId]);
 
   const courseDetailsPath = `/cursos/${courseId}`;
 
   const buildLessonHref = (targetLessonId: string) =>
     `/aluno/cursos/${courseId}/aulas/${targetLessonId}`;
+
+  const neighbors = findLessonNeighbors(curriculum.data, lessonId);
+  const previousLesson = neighbors.previous;
+  // Antes de concluir a aula atual, a próxima pode vir bloqueada pela progressão sequencial.
+  const navigableNext = neighbors.next?.status === 'LOCKED' ? null : neighbors.next;
+
+  const goToLesson = (targetLessonId: string) => navigate(buildLessonHref(targetLessonId));
+
+  const handleCompleteLesson = async () => {
+    setIsCompleting(true);
+    setCompleteError(null);
+
+    try {
+      await completeStudentLesson(courseId, lessonId);
+      curriculum.refetch();
+      if (neighbors.next) {
+        goToLesson(neighbors.next.id);
+      }
+    } catch (error: unknown) {
+      setCompleteError(
+        error instanceof StudentCurriculumError
+          ? error.message
+          : 'Não foi possível concluir a aula.',
+      );
+    } finally {
+      setIsCompleting(false);
+    }
+  };
 
   // US-13: fica na mesma posição do layout enquanto a aula carrega e depois de
   // carregada, para o menu não ser remontado (nem perder os módulos abertos) ao
@@ -121,20 +163,54 @@ export const CoursePlayer = () => {
       .filter(Boolean)
       .join(' · ');
 
+    // O embed do Vimeo tem controles próprios, que não aceitam os botões da aula.
+    const usesNativePlayer = lesson.type === 'video' && !toVimeoEmbedUrl(lesson.videoUrl ?? '');
+
+    // Sempre disponível, inclusive com o vídeo indisponível. Concluir de novo é idempotente
+    // no backend e só leva à próxima aula.
+    const completeButton = (
+      <Button
+        label="Marcar como concluída"
+        variant="primary"
+        className={`${styles.compactButton} ${styles.completeButton}`}
+        icon={<Check size={16} aria-hidden="true" />}
+        isLoading={isCompleting}
+        onClick={() => void handleCompleteLesson()}
+      />
+    );
+
     return (
       <section className={styles.lesson}>
         <div className={styles.layout}>
           <div className={styles.mainColumn}>
             {lesson.type === 'video' ? (
-              lesson.videoUrl ? (
-                <div className={styles.playerContainer}>
-                  <LessonVideoPlayer src={lesson.videoUrl} title={lesson.title} />
-                </div>
-              ) : (
-                <div className={styles.nonVideoContent}>
-                  <p>Vídeo indisponível para esta aula.</p>
-                </div>
-              )
+              <div className={styles.playerContainer}>
+                <LessonVideoPlayer
+                  src={lesson.videoUrl ?? ''}
+                  title={lesson.title}
+                  previousAction={
+                    usesNativePlayer && (
+                      <NavigationButton
+                        actualLesson={lesson}
+                        targetLesson={previousLesson}
+                        direction="previous"
+                        onNavigate={(target) => goToLesson(target.id)}
+                      />
+                    )
+                  }
+                  nextAction={
+                    usesNativePlayer && (
+                      <NavigationButton
+                        actualLesson={lesson}
+                        targetLesson={navigableNext}
+                        direction="next"
+                        onNavigate={(target) => goToLesson(target.id)}
+                      />
+                    )
+                  }
+                  controlsAction={usesNativePlayer && completeButton}
+                />
+              </div>
             ) : (
               <div className={styles.nonVideoContent} data-testid="non-video-lesson">
                 <p>O conteúdo desta aula será exibido aqui.</p>
@@ -157,12 +233,47 @@ export const CoursePlayer = () => {
 
           {lessonMenu}
 
-          {/* US-14/US-15: navegação entre aulas */}
+          {/* US-14/US-15: sem o player nativo, a navegação e a conclusão ficam aqui embaixo */}
           <nav
             className={styles.bottomNavigation}
             data-area="Navegação inferior"
             aria-label="Navegação inferior"
-          />
+          >
+            {!usesNativePlayer && (
+              <>
+                <div className={styles.navigationGroup}>
+                  {previousLesson && (
+                    <Button
+                      label="Aula anterior"
+                      variant="outlined"
+                      className={`${styles.compactButton} ${styles.outlinedButton}`}
+                      icon={<ChevronLeft size={16} aria-hidden="true" />}
+                      onClick={() => goToLesson(previousLesson.id)}
+                    />
+                  )}
+                </div>
+
+                <div className={styles.navigationGroup}>
+                  {completeButton}
+                  {navigableNext && (
+                    <Button
+                      label="Próxima aula"
+                      variant="outlined"
+                      className={`${styles.compactButton} ${styles.outlinedButton}`}
+                      icon={<ChevronRight size={16} aria-hidden="true" />}
+                      onClick={() => goToLesson(navigableNext.id)}
+                    />
+                  )}
+                </div>
+              </>
+            )}
+
+            {completeError && (
+              <p className={styles.completeError} role="alert">
+                {completeError}
+              </p>
+            )}
+          </nav>
         </div>
       </section>
     );

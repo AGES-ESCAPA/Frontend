@@ -99,6 +99,31 @@
   left: 0;
 }
 
+/* Acima do overlay central, centralizados na área do vídeo (sem a barra de controles). */
+.sideAction {
+  position: absolute;
+  top: calc((100% - var(--player-controls-height)) / 2);
+  z-index: 2;
+  display: flex;
+  transform: translateY(-50%);
+}
+
+.sideActionStart {
+  left: var(--space-3);
+}
+
+.sideActionEnd {
+  right: var(--space-3);
+}
+
+.floatingAction {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-3);
+  z-index: 2;
+  display: flex;
+}
+
 .loading {
   position: absolute;
   top: 50%;
