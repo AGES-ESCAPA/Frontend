@@ -21,7 +21,12 @@
   text-decoration: none;
   white-space: nowrap;
   user-select: none;
-  transition: all var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    background-position var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    opacity var(--transition-fast);
   box-sizing: border-box;
 }
 
@@ -33,24 +38,40 @@
 /* ── Variants ──────────────────────────────────────────────────────── */
 /* 1. primary — cyan gradient, dark text */
 .variant-primary {
-  background: linear-gradient(180deg, var(--color-info-200) 0%, var(--color-info-300) 100%);
+  background-color: var(--color-info-200);
+  background-image: linear-gradient(
+    180deg,
+    var(--color-info-200) 0%,
+    var(--color-info-200) 50%,
+    var(--color-info-300) 100%
+  );
+  background-size: 100% 200%;
+  background-position: 0% 100%;
   color: var(--color-primary-900);
   border-color: transparent;
 }
 
 .variant-primary:hover:not(.disabled, .loading) {
-  background: var(--color-info-200);
+  background-position: 0% 0%;
 }
 
 /* 2. secondary — navy gradient, white text */
 .variant-secondary {
-  background: linear-gradient(180deg, var(--color-primary-900) 0%, var(--color-primary-700) 100%);
+  background-color: var(--color-primary-700);
+  background-image: linear-gradient(
+    180deg,
+    var(--color-primary-900) 0%,
+    var(--color-primary-700) 50%,
+    var(--color-primary-700) 100%
+  );
+  background-size: 100% 200%;
+  background-position: 0% 0%;
   color: var(--color-white);
   border-color: transparent;
 }
 
 .variant-secondary:hover:not(.disabled, .loading) {
-  background: var(--color-primary-700);
+  background-position: 0% 100%;
 }
 
 /* 3. outlined — transparent bg, blue border + blue text */
