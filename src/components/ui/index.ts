@@ -7,6 +7,8 @@ export { AvatarUpload } from './AvatarUpload';
 export type { AvatarUploadProps } from './AvatarUpload';
 export { Badge } from './Badge';
 export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
+export { BarList } from './BarList';
+export type { BarListItem, BarListProps } from './BarList';
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant } from './Button';
 export { Checkbox } from './Checkbox';
