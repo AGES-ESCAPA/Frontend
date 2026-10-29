@@ -3,6 +3,8 @@ import type { RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { AuthContext } from '@contexts/authContextDefinition';
+import type { AuthContextValue } from '@contexts/authContextDefinition';
 import {
   createCourse,
   getCourseById,
@@ -58,14 +60,32 @@ const SAVED_COURSE: CourseDetail = {
   status: 'DRAFT',
 };
 
+const LOGGED_ADMIN_ID = 'a1b2c3d4-0000-4000-8000-000000000099';
+
+const AUTH_CONTEXT: AuthContextValue = {
+  user: {
+    id: LOGGED_ADMIN_ID,
+    name: 'Admin',
+    email: 'admin@escapa.com',
+    role: 'ADMIN',
+  },
+  isAuthenticated: true,
+  isRestoring: false,
+  login: vi.fn(),
+  logout: vi.fn(),
+  updateUser: vi.fn(),
+};
+
 const renderBuilder = (path = '/admin/cursos/novo'): RenderResult =>
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
-        <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
-      </Routes>
-    </MemoryRouter>,
+    <AuthContext.Provider value={AUTH_CONTEXT}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
+          <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
+        </Routes>
+      </MemoryRouter>
+    </AuthContext.Provider>,
   );
 
 describe('CourseBuilder', () => {
@@ -197,6 +217,19 @@ describe('CourseBuilder', () => {
     expect(await screen.findByText('Rascunho salvo!')).toBeInTheDocument();
   });
 
+  it('should send the logged user id as instructor when creating a draft', async () => {
+    renderBuilder();
+
+    await userEvent.type(screen.getByRole('textbox', { name: /título/i }), 'Curso de Recepção');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    await waitFor(() => {
+      expect(createCourse).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'DRAFT', instructorId: LOGGED_ADMIN_ID }),
+      );
+    });
+  });
+
   it('should save the course and then call the publish endpoint as a separate step', async () => {
     renderBuilder();
 
@@ -316,5 +349,29 @@ describe('CourseBuilder', () => {
 
     expect(await screen.findByDisplayValue('Fundamentos do Atendimento')).toBeInTheDocument();
     expect(courseModulesApi.listModules).toHaveBeenCalledTimes(2);
+  });
+
+  it('should keep a module created moments ago after switching tabs and coming back', async () => {
+    vi.mocked(courseModulesApi.createModule).mockResolvedValueOnce({
+      id: '01000000-0000-4000-9000-000000000002',
+      title: 'Novo módulo 2',
+      order: 2,
+      totalContents: 0,
+      totalDurationMinutes: 0,
+      contents: [],
+    });
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await userEvent.click(screen.getByRole('tab', { name: /estrutura de conteúdo/i }));
+    await screen.findByDisplayValue('Fundamentos do Atendimento');
+
+    await userEvent.click(screen.getByRole('button', { name: /adicionar módulo/i }));
+    expect(await screen.findByDisplayValue('Novo módulo 2')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /estrutura de conteúdo/i }));
+
+    expect(await screen.findByDisplayValue('Novo módulo 2')).toBeInTheDocument();
+    expect(courseModulesApi.listModules).toHaveBeenCalledTimes(1);
   });
 });

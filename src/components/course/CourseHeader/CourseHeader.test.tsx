@@ -33,7 +33,7 @@ const withAuth = (role: UserRole, children: ReactNode) => (
 
 const LocationProbe = () => {
   const location = useLocation();
-  return <output data-testid="location">{location.pathname}</output>;
+  return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
 };
 
 describe('CourseHeader', () => {
@@ -95,7 +95,7 @@ describe('CourseHeader', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('sends unauthenticated visitors to login and stores the checkout as the way back', async () => {
+  it('sends unauthenticated visitors to registration and stores the checkout as the way back', async () => {
     const user = userEvent.setup();
 
     render(
@@ -108,7 +108,9 @@ describe('CourseHeader', () => {
     await user.click(screen.getByRole('button', { name: 'Cadastre-se para Comprar' }));
 
     expect(localStorage.getItem('escapa:purchase-redirect')).toBe(`/checkout/${featuredCourse.id}`);
-    expect(screen.getByTestId('location')).toHaveTextContent('/login');
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      `/cadastro?returnTo=${encodeURIComponent(`/checkout/${featuredCourse.id}`)}`,
+    );
   });
 
   it('offers the purchase to a logged user and opens the checkout of the course', async () => {

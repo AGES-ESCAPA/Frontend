@@ -35,6 +35,17 @@ describe('FormField', () => {
     expect(screen.getByText('Informe um preço maior que zero.')).toBeInTheDocument();
   });
 
+  it('should place an action beside the label', () => {
+    render(
+      <FormField label="Senha" htmlFor="password" labelAction={<a href="/recuperar">Esqueci</a>}>
+        <input id="password" />
+      </FormField>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Esqueci' })).toHaveAttribute('href', '/recuperar');
+    expect(screen.getByLabelText('Senha')).toBeInTheDocument();
+  });
+
   it('should render the error with an alert role', () => {
     render(
       <FormField label="Preço Base" error="Informe um preço maior que zero.">
