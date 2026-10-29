@@ -1,4 +1,5 @@
 import type { EnrollmentStatus } from '@components/ui';
+import { getCompanyAcquiredCourseIds } from '@services/companyCourseService';
 import { getStudentEnrollments } from '@services/enrollmentService';
 
 const OWNED_PAGE_SIZE = 50;
@@ -30,3 +31,7 @@ export const loadOwnedCourseIds = async (): Promise<Set<string>> => {
 
   return ids;
 };
+
+/** Ids dos cursos que a empresa logada já comprou. */
+export const loadCompanyOwnedCourseIds = async (): Promise<Set<string>> =>
+  new Set(await getCompanyAcquiredCourseIds());

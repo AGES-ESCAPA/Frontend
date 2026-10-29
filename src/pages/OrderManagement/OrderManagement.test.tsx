@@ -105,6 +105,14 @@ describe('OrderManagement', () => {
     expect(screen.getByText('Escape Room Design Avançado')).toBeInTheDocument();
   });
 
+  it('marks Pedidos as the menu link for this page', () => {
+    renderPage();
+
+    const pedidos = screen.getByRole('link', { name: 'Pedidos' });
+    expect(pedidos).toHaveAttribute('href', '/admin/pedidos');
+    expect(pedidos).toHaveAttribute('aria-current', 'page');
+  });
+
   it('shows a loading indicator while fetching the orders', () => {
     useAdminOrdersMock.mockReturnValue({ ...defaultOrdersResult, status: 'loading', orders: [] });
 

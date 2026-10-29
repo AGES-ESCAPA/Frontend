@@ -92,3 +92,18 @@ export const getStudentCurriculum = async (
 
   return mapStudentCurriculum(json.data);
 };
+
+/** `POST /student/courses/{courseId}/lessons/{lessonId}/complete` (US-15). Idempotente. */
+export const completeStudentLesson = async (courseId: string, lessonId: string): Promise<void> => {
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/student/courses/${courseId}/lessons/${lessonId}/complete`,
+    { method: 'POST' },
+  );
+
+  if (!response.ok) {
+    throw new StudentCurriculumError(
+      response.status,
+      (await readApiErrorMessage(response)) ?? 'Não foi possível concluir a aula.',
+    );
+  }
+};

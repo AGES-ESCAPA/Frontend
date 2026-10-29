@@ -67,7 +67,7 @@ describe('Sidebar', () => {
     {
       role: 'admin',
       roleLabel: 'Admin',
-      expectedLabels: ['Gestão de Cursos', 'Empresas', 'Usuários', 'Métricas'],
+      expectedLabels: ['Gestão de Cursos', 'Pedidos', 'Usuários', 'Métricas'],
     },
   ];
 

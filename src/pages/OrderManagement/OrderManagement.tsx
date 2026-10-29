@@ -59,9 +59,9 @@ const matchesSearch = (order: AdminOrderSummary, term: string): boolean => {
   );
 };
 
-const menuItems = SIDEBAR_MENU_PRESETS.admin.map((item, index) => ({
+const menuItems = SIDEBAR_MENU_PRESETS.admin.map((item) => ({
   ...item,
-  active: index === 0,
+  active: item.route === '/admin/pedidos',
 }));
 
 export const Ordermanagement = () => {

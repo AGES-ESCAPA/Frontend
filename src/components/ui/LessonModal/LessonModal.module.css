@@ -183,13 +183,6 @@
 }
 
 /* ── Upload de arquivo ─────────────────────────────────────────────── */
-.fileRow {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-3);
-  align-items: center;
-}
-
 .filePicker {
   display: flex;
   align-items: center;
@@ -226,6 +219,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.currentFileLink {
+  align-self: flex-start;
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  color: var(--color-info-300);
+  text-decoration: underline;
 }
 
 .iconButton {
@@ -422,7 +423,6 @@
 /* ── Responsividade ────────────────────────────────────────────────── */
 @media (width <= 640px) {
   .row,
-  .fileRow,
   .resourceFields {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -101,33 +101,52 @@ export const LessonResources = ({
                 </div>
 
                 <div className={styles.resourceField}>
-                  <label className={styles.srOnly} htmlFor={urlId}>
-                    {isLink ? `Link do material ${position}` : `URL do arquivo ${position}`}
-                  </label>
-                  <input
-                    id={urlId}
-                    type="url"
-                    className={`${styles.input} ${resourceErrors?.url ? styles.inputInvalid : ''}`}
-                    placeholder={isLink ? 'https://artigo.com/...' : 'https://.../material.pdf'}
-                    value={resource.url}
-                    onChange={(event) => onChange(resource.id, { url: event.target.value })}
-                    aria-invalid={Boolean(resourceErrors?.url)}
-                    aria-describedby={resourceErrors?.url ? `${urlId}-error` : undefined}
-                  />
+                  {isLink ? (
+                    <>
+                      <label className={styles.srOnly} htmlFor={urlId}>
+                        {`Link do material ${position}`}
+                      </label>
+                      <input
+                        id={urlId}
+                        type="url"
+                        className={`${styles.input} ${resourceErrors?.url ? styles.inputInvalid : ''}`}
+                        placeholder="https://artigo.com/..."
+                        value={resource.url}
+                        onChange={(event) => onChange(resource.id, { url: event.target.value })}
+                        aria-invalid={Boolean(resourceErrors?.url)}
+                        aria-describedby={resourceErrors?.url ? `${urlId}-error` : undefined}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <FileInputButton
+                        id={fileId}
+                        file={resource.file}
+                        label={
+                          resource.url
+                            ? `Substituir arquivo ${position}`
+                            : `Selecionar arquivo ${position}`
+                        }
+                        onSelect={(file) => onChange(resource.id, { file })}
+                      />
+                      {resource.url && !resource.file ? (
+                        <a
+                          className={styles.currentFileLink}
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Ver arquivo atual
+                        </a>
+                      ) : null}
+                    </>
+                  )}
+
                   {resourceErrors?.url ? (
                     <p className={styles.error} id={`${urlId}-error`} role="alert">
                       {resourceErrors.url}
                     </p>
                   ) : null}
-
-                  {isLink ? null : (
-                    <FileInputButton
-                      id={fileId}
-                      file={resource.file}
-                      label={`Selecionar arquivo ${position}`}
-                      onSelect={(file) => onChange(resource.id, { file })}
-                    />
-                  )}
                 </div>
               </div>
 
