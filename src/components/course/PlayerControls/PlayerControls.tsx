@@ -1,4 +1,4 @@
-import { Pause, Play } from 'lucide-react';
+import { Maximize2, Minimize2, Pause, Play } from 'lucide-react';
 import type { ChangeEvent, CSSProperties, FC, ReactNode } from 'react';
 import { formatTime } from '@utils/formatters';
 import styles from './PlayerControls.module.css';
@@ -14,6 +14,8 @@ export interface PlayerControlsProps {
   onSeek: (seconds: number) => void;
   /** Conteúdo alinhado à direita da barra (ex.: botão de concluir a aula). */
   actions?: ReactNode;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 const toSafeDuration = (duration: number): number =>
@@ -37,6 +39,8 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
   onTogglePlay,
   onSeek,
   actions,
+  isFullscreen = false,
+  onToggleFullscreen,
 }) => {
   const safeDuration = toSafeDuration(duration);
   const safeCurrentTime = clampTime(currentTime, safeDuration);
@@ -75,7 +79,23 @@ export const PlayerControls: FC<PlayerControlsProps> = ({
         <span className={styles.time}>
           {elapsed} / {total}
         </span>
-        {actions && <div className={styles.actions}>{actions}</div>}
+        <div className={styles.trailing}>
+          {actions && <div className={styles.actions}>{actions}</div>}
+          {onToggleFullscreen && (
+            <button
+              type="button"
+              className={styles.fullscreenButton}
+              aria-label={isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+              onClick={onToggleFullscreen}
+            >
+              {isFullscreen ? (
+                <Minimize2 className={styles.icon} aria-hidden="true" />
+              ) : (
+                <Maximize2 className={styles.icon} aria-hidden="true" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

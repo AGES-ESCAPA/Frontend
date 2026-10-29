@@ -37,11 +37,42 @@
   outline-offset: 2px;
 }
 
-.actions {
+.trailing {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin-left: auto;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.fullscreenButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.fullscreenButton:hover {
+  background-color: var(--color-overlay-hover-on-dark);
+}
+
+.fullscreenButton:focus-visible {
+  outline: 2px solid var(--color-info-200);
+  outline-offset: 2px;
 }
 
 .icon {

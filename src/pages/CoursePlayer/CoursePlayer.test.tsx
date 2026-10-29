@@ -27,12 +27,14 @@ vi.mock('@components/course/LessonVideoPlayer/LessonVideoPlayer', () => ({
   LessonVideoPlayer: ({
     src,
     title,
+    isCompleted,
     previousAction,
     nextAction,
     controlsAction,
   }: {
     src: string;
     title: string;
+    isCompleted?: boolean;
     previousAction?: ReactNode;
     nextAction?: ReactNode;
     controlsAction?: ReactNode;
@@ -40,6 +42,7 @@ vi.mock('@components/course/LessonVideoPlayer/LessonVideoPlayer', () => ({
     <div>
       <div data-testid="lesson-video-player">
         {title} - {src}
+        {isCompleted ? 'Aula concluída' : ''}
       </div>
       <div data-testid="player-actions">
         {previousAction}
@@ -583,6 +586,8 @@ describe('CoursePlayer', () => {
 
       const completeButton = await screen.findByRole('button', { name: 'Marcar como concluída' });
 
+      expect(screen.getByTestId('lesson-video-player')).not.toHaveTextContent('Aula concluída');
+
       // Em aula de vídeo, os botões ficam no player e não na navegação inferior.
       expect(
         within(screen.getByTestId('player-actions')).getByRole('button', {
@@ -637,7 +642,11 @@ describe('CoursePlayer', () => {
 
       renderCoursePlayer();
 
-      expect(await screen.findByRole('button', { name: 'Marcar como concluída' })).toBeEnabled();
+      expect(await screen.findByTestId('lesson-video-player')).toHaveTextContent('Aula concluída');
+
+      expect(
+        screen.queryByRole('button', { name: 'Marcar como concluída' }),
+      ).not.toBeInTheDocument();
 
       await user.click(
         screen.getByRole('button', { name: 'Próxima aula: Mapeando a jornada do hóspede' }),
@@ -729,6 +738,41 @@ describe('CoursePlayer', () => {
       expect(completeStudentLessonMock).toHaveBeenCalledWith(COURSE_ID, LESSON_ID);
     });
 
+    it('should keep the lesson completed after finishing it and returning', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock
+        .mockResolvedValueOnce(pendingCurriculum)
+        .mockResolvedValue(curriculum);
+      completeStudentLessonMock.mockResolvedValue();
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      await user.click(await screen.findByRole('button', { name: 'Marcar como concluída' }));
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Mapeando a jornada do hóspede/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+
+      await user.click(screen.getByRole('link', { name: /Introdução ao curso/ }));
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Introdução ao curso/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+
+      expect(screen.getByTestId('lesson-video-player')).toHaveTextContent('Aula concluída');
+      expect(
+        screen.queryByRole('button', { name: 'Marcar como concluída' }),
+      ).not.toBeInTheDocument();
+    });
+
     it('should keep the buttons in the player for a Vimeo video', async () => {
       getStudentCurriculumMock.mockResolvedValue(curriculum);
       mockSuccessfulLesson({ ...lesson, videoUrl: 'https://vimeo.com/123456789' });
@@ -738,14 +782,14 @@ describe('CoursePlayer', () => {
       const playerActions = screen.getByTestId('player-actions');
 
       expect(
-        await within(playerActions).findByRole('button', { name: 'Marcar como concluída' }),
-      ).toBeInTheDocument();
-
-      expect(
-        within(playerActions).getByRole('button', {
+        await within(playerActions).findByRole('button', {
           name: 'Próxima aula: Mapeando a jornada do hóspede',
         }),
       ).toBeInTheDocument();
+
+      expect(
+        within(playerActions).queryByRole('button', { name: 'Marcar como concluída' }),
+      ).not.toBeInTheDocument();
 
       expect(
         within(screen.getByRole('navigation', { name: 'Navegação inferior' })).queryByRole(

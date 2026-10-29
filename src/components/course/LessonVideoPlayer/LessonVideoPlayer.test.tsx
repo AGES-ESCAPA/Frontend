@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { writeLessonPlayback } from '@utils/lessonPlayback';
 import { LessonVideoPlayer } from './LessonVideoPlayer';
 
 type VimeoHandler = (data?: unknown) => void;
@@ -17,6 +18,10 @@ interface FakeVimeoPlayer {
 const vimeo = vi.hoisted(() => ({
   instances: [] as FakeVimeoPlayer[],
   nextReady: null as Promise<void> | null,
+}));
+
+const fullscreen = vi.hoisted(() => ({
+  element: null as Element | null,
 }));
 
 vi.mock('@vimeo/player', () => ({
@@ -73,6 +78,25 @@ const lastVimeoPlayer = () => vimeo.instances[vimeo.instances.length - 1];
 beforeEach(() => {
   vimeo.instances = [];
   vimeo.nextReady = null;
+  localStorage.clear();
+  fullscreen.element = null;
+
+  HTMLElement.prototype.requestFullscreen = vi.fn(function (this: HTMLElement) {
+    fullscreen.element = this;
+    document.dispatchEvent(new Event('fullscreenchange'));
+    return Promise.resolve();
+  });
+
+  document.exitFullscreen = vi.fn(() => {
+    fullscreen.element = null;
+    document.dispatchEvent(new Event('fullscreenchange'));
+    return Promise.resolve();
+  });
+
+  Object.defineProperty(document, 'fullscreenElement', {
+    configurable: true,
+    get: () => fullscreen.element,
+  });
 });
 
 const MP4_URL = 'https://example.com/video.mp4';
@@ -511,6 +535,41 @@ describe('LessonVideoPlayer', () => {
 
       expect(notPrevented).toBe(false);
     });
+
+    it('toggles fullscreen when F is pressed while the player is focused', async () => {
+      renderPlayer();
+
+      loadMetadata(screen.getByLabelText(TITLE) as HTMLVideoElement);
+
+      const player = screen.getByLabelText(`Player da aula ${TITLE}`);
+
+      player.focus();
+      fireEvent.keyDown(player, { code: 'KeyF', key: 'f' });
+
+      await vi.waitFor(() => expect(player.requestFullscreen).toHaveBeenCalledOnce());
+    });
+  });
+
+  describe('fullscreen', () => {
+    it('enters and leaves fullscreen from the control bar', async () => {
+      const user = userEvent.setup();
+
+      renderPlayer();
+
+      loadMetadata(screen.getByLabelText(TITLE) as HTMLVideoElement);
+
+      await user.click(screen.getByRole('button', { name: 'Tela cheia' }));
+
+      const player = screen.getByLabelText(`Player da aula ${TITLE}`);
+
+      expect(player.requestFullscreen).toHaveBeenCalledOnce();
+      expect(screen.getByRole('button', { name: 'Sair da tela cheia' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Sair da tela cheia' }));
+
+      expect(document.exitFullscreen).toHaveBeenCalledOnce();
+      expect(screen.getByRole('button', { name: 'Tela cheia' })).toBeInTheDocument();
+    });
   });
 
   describe('lesson actions', () => {
@@ -559,6 +618,247 @@ describe('LessonVideoPlayer', () => {
 
       expect(screen.getByText('Vídeo indisponível')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Concluir' })).toBeInTheDocument();
+    });
+  });
+
+  describe('playback progress and completed overlay', () => {
+    const LESSON_ID = 'lesson-progress-1';
+
+    const makeCurrentTimeWritable = (video: HTMLVideoElement, value = 0) => {
+      Object.defineProperty(video, 'currentTime', {
+        configurable: true,
+        writable: true,
+        value,
+      });
+    };
+
+    it('restores the saved position when the native video loads', () => {
+      writeLessonPlayback(LESSON_ID, { position: 80, duration: 1450 });
+
+      renderPlayer({ lessonId: LESSON_ID });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      makeCurrentTimeWritable(video);
+      loadMetadata(video);
+
+      expect(video.currentTime).toBe(80);
+      expect(screen.getByText('01:20 / 24:10')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Reproduzir vídeo' })).toBeInTheDocument();
+    });
+
+    it('saves the position when the native video is paused', () => {
+      renderPlayer({ lessonId: LESSON_ID });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      makeCurrentTimeWritable(video, 551);
+      fireEvent.timeUpdate(video);
+      fireEvent.pause(video);
+
+      expect(
+        JSON.parse(localStorage.getItem(`escapa:lesson-playback:${LESSON_ID}`) ?? '{}'),
+      ).toEqual({ position: 551, duration: 1450 });
+    });
+
+    it('saves the position when leaving the lesson', () => {
+      const { unmount } = renderPlayer({ lessonId: LESSON_ID });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      loadMetadata(video);
+      makeCurrentTimeWritable(video, 120);
+      fireEvent.timeUpdate(video);
+      unmount();
+
+      expect(
+        JSON.parse(localStorage.getItem(`escapa:lesson-playback:${LESSON_ID}`) ?? '{}'),
+      ).toEqual({ position: 120, duration: 1450 });
+    });
+
+    it('shows "Aula concluída" before the video finishes loading', () => {
+      renderPlayer({ lessonId: LESSON_ID, isCompleted: true });
+
+      expect(screen.getByText('Aula concluída')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Assistir novamente' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Reproduzir vídeo' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+      expect(screen.getByLabelText(TITLE).className).toMatch(/mediaCovered/);
+    });
+
+    it('keeps "Aula concluída" when the video starts playing on its own', () => {
+      renderPlayer({ lessonId: LESSON_ID, isCompleted: true });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+      const pause = vi.spyOn(video, 'pause').mockImplementation(() => {});
+
+      loadMetadata(video);
+      fireEvent.play(video);
+
+      expect(screen.getByText('Aula concluída')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Reproduzir vídeo' })).not.toBeInTheDocument();
+      expect(pause).toHaveBeenCalled();
+
+      pause.mockRestore();
+    });
+
+    it('shows the play button again after the student pauses a rewatch', async () => {
+      const user = userEvent.setup();
+
+      renderPlayer({ lessonId: LESSON_ID, isCompleted: true });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      makeCurrentTimeWritable(video);
+      loadMetadata(video);
+
+      const playMock = vi.spyOn(video, 'play').mockResolvedValue(undefined);
+
+      await user.click(screen.getByRole('button', { name: 'Assistir novamente' }));
+      fireEvent.play(video);
+      fireEvent.pause(video);
+
+      expect(screen.getByRole('button', { name: 'Reproduzir vídeo' })).toBeInTheDocument();
+      expect(screen.queryByText('Aula concluída')).not.toBeInTheDocument();
+
+      playMock.mockRestore();
+    });
+
+    it('shows "Aula concluída" again after watching and returning to the lesson', async () => {
+      const user = userEvent.setup();
+
+      const { unmount } = renderPlayer({ lessonId: LESSON_ID, isCompleted: true });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      makeCurrentTimeWritable(video);
+      loadMetadata(video);
+
+      const playMock = vi.spyOn(video, 'play').mockResolvedValue(undefined);
+
+      await user.click(screen.getByRole('button', { name: 'Assistir novamente' }));
+      fireEvent.play(video);
+
+      unmount();
+      playMock.mockRestore();
+
+      renderPlayer({ lessonId: LESSON_ID, isCompleted: true });
+
+      const returnedVideo = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      makeCurrentTimeWritable(returnedVideo);
+      loadMetadata(returnedVideo);
+
+      expect(screen.getByText('Aula concluída')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Assistir novamente' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Reproduzir vídeo' })).not.toBeInTheDocument();
+    });
+
+    it('does not dismiss "Aula concluída" when the timeline or control play is used', async () => {
+      const user = userEvent.setup();
+
+      renderPlayer({ lessonId: LESSON_ID, isCompleted: true });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+      const playMock = vi.spyOn(video, 'play').mockResolvedValue(undefined);
+
+      makeCurrentTimeWritable(video);
+      loadMetadata(video);
+
+      fireEvent.change(screen.getByRole('slider', { name: 'Linha do tempo do vídeo' }), {
+        target: { value: '12' },
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Reproduzir' }));
+
+      expect(screen.getByText('Aula concluída')).toBeInTheDocument();
+      expect(playMock).not.toHaveBeenCalled();
+      expect(video.currentTime).toBe(0);
+
+      playMock.mockRestore();
+    });
+
+    it('shows "Aula concluída" and watch again instead of the play overlay', async () => {
+      const user = userEvent.setup();
+
+      renderPlayer({ lessonId: LESSON_ID, isCompleted: true });
+
+      const video = screen.getByLabelText(TITLE) as HTMLVideoElement;
+
+      makeCurrentTimeWritable(video);
+      loadMetadata(video);
+
+      expect(screen.getByText('Aula concluída')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Reproduzir vídeo' })).not.toBeInTheDocument();
+
+      const playMock = vi.spyOn(video, 'play').mockResolvedValue(undefined);
+
+      await user.click(screen.getByRole('button', { name: 'Assistir novamente' }));
+
+      expect(video.currentTime).toBe(0);
+      expect(playMock).toHaveBeenCalledOnce();
+
+      playMock.mockRestore();
+    });
+
+    it('restores the saved position on Vimeo and keeps the completed overlay', async () => {
+      writeLessonPlayback(LESSON_ID, { position: 65, duration: 300 });
+
+      renderPlayer({ src: VIMEO_URL, lessonId: LESSON_ID, isCompleted: true });
+
+      expect(await screen.findByText('01:05 / 05:00')).toBeInTheDocument();
+      expect(lastVimeoPlayer().setCurrentTime).toHaveBeenCalledWith(65);
+      expect(screen.getByText('Aula concluída')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Assistir novamente' })).toBeInTheDocument();
+    });
+
+    it('keeps "Aula concluída" when Vimeo reports play before a rewatch', async () => {
+      renderPlayer({ src: VIMEO_URL, lessonId: LESSON_ID, isCompleted: true });
+
+      expect(await screen.findByText('Aula concluída')).toBeInTheDocument();
+
+      act(() => {
+        lastVimeoPlayer().emit('play');
+      });
+
+      expect(screen.getByText('Aula concluída')).toBeInTheDocument();
+      expect(lastVimeoPlayer().pause).toHaveBeenCalled();
+    });
+
+    it('still shows "Aula concluída" when the saved position is the end of the video', async () => {
+      writeLessonPlayback(LESSON_ID, { position: 300, duration: 300 });
+
+      renderPlayer({ src: VIMEO_URL, lessonId: LESSON_ID, isCompleted: true });
+
+      expect(await screen.findByText('Aula concluída')).toBeInTheDocument();
+      expect(lastVimeoPlayer().setCurrentTime).toHaveBeenCalledWith(299.75);
+      expect(screen.queryByText('Vídeo indisponível')).not.toBeInTheDocument();
+    });
+
+    it('keeps "Aula concluída" when restoring the Vimeo position fails', async () => {
+      let resolveReady: () => void = () => {};
+
+      vimeo.nextReady = new Promise((resolve) => {
+        resolveReady = resolve;
+      });
+      writeLessonPlayback(LESSON_ID, { position: 65, duration: 300 });
+
+      renderPlayer({ src: VIMEO_URL, lessonId: LESSON_ID, isCompleted: true });
+
+      const player = lastVimeoPlayer();
+
+      player.setCurrentTime.mockRejectedValueOnce(new Error('range'));
+
+      await act(async () => {
+        resolveReady();
+      });
+
+      expect(screen.getByText('Aula concluída')).toBeInTheDocument();
+      expect(screen.queryByText('Vídeo indisponível')).not.toBeInTheDocument();
+      expect(
+        await screen.findByRole('slider', { name: 'Linha do tempo do vídeo' }),
+      ).toBeInTheDocument();
     });
   });
 });

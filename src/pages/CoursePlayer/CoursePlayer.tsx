@@ -28,6 +28,8 @@ export const CoursePlayer = () => {
 
   const [isCompleting, setIsCompleting] = useState(false);
   const [completeError, setCompleteError] = useState<string | null>(null);
+  // Conclusões desta sessão, para o overlay não esperar o refetch da grade ao voltar.
+  const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     setCompleteError(null);
@@ -51,6 +53,7 @@ export const CoursePlayer = () => {
 
     try {
       await completeStudentLesson(courseId, lessonId);
+      setCompletedLessonIds((current) => new Set(current).add(lessonId));
       curriculum.refetch();
       if (neighbors.next) {
         goToLesson(neighbors.next.id);
@@ -87,9 +90,11 @@ export const CoursePlayer = () => {
       return (
         <section className={styles.lesson}>
           <div className={styles.layout}>
-            <div className={styles.mainColumn} aria-busy="true" aria-label="Carregando aula">
+            <div className={styles.playerContainer}>
               <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
+            </div>
 
+            <div className={styles.mainColumn} aria-busy="true" aria-label="Carregando aula">
               <header className={styles.header}>
                 <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
                 <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
@@ -172,10 +177,16 @@ export const CoursePlayer = () => {
       .filter(Boolean);
 
     const usesNativePlayer = lesson.type === 'video';
+    // `lessonId` é o que a grade e o botão de concluir usam. `lesson.id` pode
+    // divergir e faria a aula concluída reabrir como se ainda estivesse pendente.
+    const isLessonCompleted =
+      neighbors.current?.status === 'COMPLETED' ||
+      completedLessonIds.has(lessonId) ||
+      completedLessonIds.has(lesson.id);
 
-    // Sempre disponível, inclusive com o vídeo indisponível. Concluir de novo é idempotente
-    // no backend e só leva à próxima aula.
-    const completeButton = (
+    // Some quando a aula já está concluída. A navegação para a próxima fica nos
+    // botões de aula anterior e próxima.
+    const completeButton = !isLessonCompleted && (
       <Button
         label="Marcar como concluída"
         variant="primary"
@@ -188,38 +199,41 @@ export const CoursePlayer = () => {
 
     return (
       <section className={styles.lesson}>
-        <div className={styles.layout}>
-          <div className={styles.mainColumn}>
-            {lesson.type === 'video' ? (
-              <div className={styles.playerContainer}>
-                <LessonVideoPlayer
-                  src={lesson.videoUrl ?? ''}
-                  title={lesson.title}
-                  previousAction={
-                    usesNativePlayer && (
-                      <NavigationButton
-                        actualLesson={lesson}
-                        targetLesson={previousLesson}
-                        direction="previous"
-                        onNavigate={(target) => goToLesson(target.id)}
-                      />
-                    )
-                  }
-                  nextAction={
-                    usesNativePlayer && (
-                      <NavigationButton
-                        actualLesson={lesson}
-                        targetLesson={navigableNext}
-                        direction="next"
-                        onNavigate={(target) => goToLesson(target.id)}
-                      />
-                    )
-                  }
-                  controlsAction={usesNativePlayer && completeButton}
-                />
-              </div>
-            ) : null}
+        <div className={`${styles.layout} ${isReadingLesson ? styles.layoutReading : ''}`}>
+          {lesson.type === 'video' ? (
+            <div className={styles.playerContainer}>
+              <LessonVideoPlayer
+                key={lessonId}
+                src={lesson.videoUrl ?? ''}
+                title={lesson.title}
+                lessonId={lesson.id}
+                isCompleted={isLessonCompleted}
+                previousAction={
+                  usesNativePlayer && (
+                    <NavigationButton
+                      actualLesson={lesson}
+                      targetLesson={previousLesson}
+                      direction="previous"
+                      onNavigate={(target) => goToLesson(target.id)}
+                    />
+                  )
+                }
+                nextAction={
+                  usesNativePlayer && (
+                    <NavigationButton
+                      actualLesson={lesson}
+                      targetLesson={navigableNext}
+                      direction="next"
+                      onNavigate={(target) => goToLesson(target.id)}
+                    />
+                  )
+                }
+                controlsAction={usesNativePlayer && completeButton}
+              />
+            </div>
+          ) : null}
 
+          <div className={styles.mainColumn}>
             <header className={styles.header}>
               {lessonMetadata && <span className={styles.breadcrumb}>{lessonMetadata}</span>}
 
@@ -255,58 +269,59 @@ export const CoursePlayer = () => {
 
             {/* US-16: materiais complementares */}
             <section className={styles.reservedArea} data-area="Materiais" aria-label="Materiais" />
+
+            {/* US-14/US-15: sem o player nativo, a navegação e a conclusão ficam
+                na coluna do conteúdo — assim o botão não sobrepõe o menu. */}
+            <nav
+              className={styles.bottomNavigation}
+              data-area="Navegação inferior"
+              aria-label="Navegação inferior"
+            >
+              {!usesNativePlayer && (
+                <>
+                  <div className={styles.navigationGroup}>
+                    {previousLesson && (
+                      <Button
+                        label="Aula anterior"
+                        variant="outlined"
+                        className={`${styles.compactButton} ${styles.outlinedButton}`}
+                        icon={<ChevronLeft size={16} aria-hidden="true" />}
+                        onClick={() => goToLesson(previousLesson.id)}
+                      />
+                    )}
+                  </div>
+
+                  <div className={styles.navigationGroup}>
+                    {completeButton}
+                    {navigableNext && (
+                      <Button
+                        label="Próxima aula"
+                        variant="outlined"
+                        className={`${styles.compactButton} ${styles.outlinedButton}`}
+                        icon={<ChevronRight size={16} aria-hidden="true" />}
+                        onClick={() => goToLesson(navigableNext.id)}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+
+              {completeError && (
+                <p className={styles.completeError} role="alert">
+                  {completeError}
+                </p>
+              )}
+            </nav>
           </div>
 
           {lessonMenu}
-
-          {/* US-14/US-15: sem o player nativo, a navegação e a conclusão ficam aqui embaixo */}
-          <nav
-            className={styles.bottomNavigation}
-            data-area="Navegação inferior"
-            aria-label="Navegação inferior"
-          >
-            {!usesNativePlayer && (
-              <>
-                <div className={styles.navigationGroup}>
-                  {previousLesson && (
-                    <Button
-                      label="Aula anterior"
-                      variant="outlined"
-                      className={`${styles.compactButton} ${styles.outlinedButton}`}
-                      icon={<ChevronLeft size={16} aria-hidden="true" />}
-                      onClick={() => goToLesson(previousLesson.id)}
-                    />
-                  )}
-                </div>
-
-                <div className={styles.navigationGroup}>
-                  {completeButton}
-                  {navigableNext && (
-                    <Button
-                      label="Próxima aula"
-                      variant="outlined"
-                      className={`${styles.compactButton} ${styles.outlinedButton}`}
-                      icon={<ChevronRight size={16} aria-hidden="true" />}
-                      onClick={() => goToLesson(navigableNext.id)}
-                    />
-                  )}
-                </div>
-              </>
-            )}
-
-            {completeError && (
-              <p className={styles.completeError} role="alert">
-                {completeError}
-              </p>
-            )}
-          </nav>
         </div>
       </section>
     );
   };
 
   return (
-    <AuthenticatedLayout role="student" user={mockUser} items={SIDEBAR_MENU_PRESETS.student}>
+    <AuthenticatedLayout role="student" user={mockUser} items={SIDEBAR_MENU_PRESETS.student} wide>
       <div className={styles.page}>{renderContent()}</div>
     </AuthenticatedLayout>
   );

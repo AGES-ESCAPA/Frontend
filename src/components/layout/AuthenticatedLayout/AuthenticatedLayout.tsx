@@ -28,6 +28,11 @@ export interface AuthenticatedLayoutProps {
   onLogout?: () => void;
   /** Conteúdo da tela, renderizado dentro do `<main>` da casca. */
   children: ReactNode;
+  /**
+   * Sem o teto de largura da casca, para telas que precisam ocupar a área útil
+   * (ex.: a sala de aula, com o player em destaque).
+   */
+  wide?: boolean;
 }
 
 /**
@@ -44,6 +49,7 @@ export const AuthenticatedLayout = ({
   notificationsCount,
   onLogout,
   children,
+  wide = false,
 }: AuthenticatedLayoutProps) => {
   const auth = useOptionalAuth();
   const navigate = useNavigate();
@@ -98,7 +104,7 @@ export const AuthenticatedLayout = ({
           showProfileLink={role !== 'admin'}
         />
 
-        <main className={styles.main}>{children}</main>
+        <main className={`${styles.main} ${wide ? styles.wide : ''}`}>{children}</main>
       </div>
     </div>
   );
