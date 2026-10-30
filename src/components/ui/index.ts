@@ -44,6 +44,8 @@ export { SelectInput } from './SelectInput';
 export type { SelectInputOption, SelectInputProps } from './SelectInput';
 export { SumCard } from './SumCard';
 export type { SumCardProps } from './SumCard';
+export { DonutChart } from './DonutChart';
+export type { DonutChartProps, DonutChartSegment } from './DonutChart';
 export { Table } from './Table';
 export type { TableAlign, TableColumn, TableProps } from './Table';
 export { TextArea } from './TextArea';
