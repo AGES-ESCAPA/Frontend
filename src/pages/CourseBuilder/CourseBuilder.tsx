@@ -127,9 +127,11 @@ export const CourseBuilder = () => {
   );
   const [notifyStudentsOnPublish, setNotifyStudentsOnPublish] = useState(false);
   const [activeTab, setActiveTab] = useState('basics');
+  const [isCoverUploading, setIsCoverUploading] = useState(false);
+  const coverUploadsRef = useRef(0);
 
   const isSaving = savingStatus !== null;
-  const isFormDisabled = isLoading || isSaving || loadError;
+  const isFormDisabled = isLoading || isSaving || loadError || isCoverUploading;
 
   /**
    * Guarda o id que acabamos de criar/salvar, pra o efeito de carregamento
@@ -232,6 +234,11 @@ export const CourseBuilder = () => {
 
   const handleRetryLoad = useCallback(() => {
     setReloadToken((token) => token + 1);
+  }, []);
+
+  const handleCoverUploadingChange = useCallback((uploading: boolean) => {
+    coverUploadsRef.current = Math.max(0, coverUploadsRef.current + (uploading ? 1 : -1));
+    setIsCoverUploading(coverUploadsRef.current > 0);
   }, []);
 
   /**
@@ -437,11 +444,13 @@ export const CourseBuilder = () => {
                 title={values.title}
                 teaserVideoUrl={values.teaserVideoUrl}
                 shortDescription={values.shortDescription}
+                thumbnailUrl={values.thumbnailUrl}
                 titleError={errors.title}
                 teaserVideoUrlError={errors.teaserVideoUrl}
                 shortDescriptionError={errors.shortDescription}
                 disabled={isFormDisabled}
                 onFieldChange={changeField}
+                onCoverUploadingChange={handleCoverUploadingChange}
               />
 
               <ClassificationCard

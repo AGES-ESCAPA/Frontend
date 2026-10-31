@@ -28,6 +28,8 @@ export interface CourseFormValues {
   durationTime: string;
   deadline: string;
   price: string;
+  /** URL pública da capa. Vazio enquanto nenhuma imagem foi enviada. */
+  thumbnailUrl: string;
 }
 
 export type CourseFormField = keyof CourseFormValues;
@@ -44,6 +46,8 @@ export interface CoursePayload {
   level: CourseDifficulty | null;
   description: string | null;
   shortDescription: string | null;
+  /** String vazia remove a capa na atualização. */
+  thumbnailUrl: string;
   teaserVideoUrl: string | null;
   durationTime: number | null;
   deadline: number | null;
@@ -60,6 +64,7 @@ export interface CourseDetail {
   level: string | null;
   description: string | null;
   shortDescription: string | null;
+  thumbnailUrl: string | null;
   teaserVideoUrl: string | null;
   durationTime: number | null;
   deadline: number | null;

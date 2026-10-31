@@ -220,6 +220,30 @@ describe('courseService', () => {
     ).rejects.toThrow('Cannot publish course due to missing requirements: instructorId');
   });
 
+  it('should upload the cover as multipart and return the public url', async () => {
+    const file = new File(['capa'], 'capa.png', { type: 'image/png' });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () =>
+        Promise.resolve({
+          success: true,
+          data: { url: 'https://cdn.escapa.com/courses/capa.png' },
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(courseService.uploadCourseThumbnail(file)).resolves.toBe(
+      'https://cdn.escapa.com/courses/capa.png',
+    );
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses/thumbnail');
+    expect(init.method).toBe('POST');
+    expect((init.body as FormData).get('file')).toBe(file);
+    expect(new Headers(init.headers).get('content-type')).toBeNull();
+  });
+
   it('should call DELETE /api/v1/admin/courses/:id to archive a course', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

@@ -11,6 +11,7 @@ import {
   listCourseCategories,
   publishCourse,
   updateCourse,
+  uploadCourseThumbnail,
 } from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
 import type { CourseDetail } from '@/types/course';
@@ -23,6 +24,7 @@ vi.mock('@services/courseService', () => ({
   updateCourse: vi.fn(),
   publishCourse: vi.fn(),
   listCourseCategories: vi.fn(),
+  uploadCourseThumbnail: vi.fn(),
 }));
 
 vi.mock('@services/courseModules', () => ({
@@ -54,6 +56,7 @@ const SAVED_COURSE: CourseDetail = {
   description: 'Descrição completa do curso.',
   shortDescription: 'Ementa resumida do curso.',
   teaserVideoUrl: 'https://youtube.com/watch?v=aaaaaaaaaaa',
+  thumbnailUrl: 'https://cdn.escapa.com/courses/capa.jpg',
   durationTime: 40,
   deadline: 365,
   price: 499,
@@ -99,6 +102,7 @@ describe('CourseBuilder', () => {
     vi.mocked(listCourseCategories)
       .mockReset()
       .mockResolvedValue(['Design & UX', 'Hospitalidade', 'Marketing']);
+    vi.mocked(uploadCourseThumbnail).mockReset();
     vi.mocked(courseModulesApi.listModules).mockReset().mockResolvedValue(SAVED_MODULES);
   });
 
@@ -134,6 +138,8 @@ describe('CourseBuilder', () => {
   it('should render every field of the course registration form', () => {
     renderBuilder();
 
+    expect(screen.getByLabelText(/imagem de capa/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /clique para enviar a capa/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /título/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /url vídeo teaser/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /resumo curto/i })).toBeInTheDocument();
@@ -298,6 +304,37 @@ describe('CourseBuilder', () => {
       'aria-pressed',
       'true',
     );
+    expect(screen.getByRole('img', { name: /pré-visualização da capa do curso/i })).toHaveAttribute(
+      'src',
+      SAVED_COURSE.thumbnailUrl,
+    );
+  });
+
+  it('should upload the cover and send its url when saving the draft', async () => {
+    const coverUrl = 'https://cdn.escapa.com/courses/nova-capa.jpg';
+    vi.mocked(uploadCourseThumbnail).mockResolvedValue(coverUrl);
+    URL.createObjectURL = vi.fn(() => 'blob:capa');
+    URL.revokeObjectURL = vi.fn();
+    renderBuilder();
+
+    const cover = new File(['capa'], 'capa.png', { type: 'image/png' });
+    await userEvent.upload(screen.getByLabelText(/imagem de capa/i), cover);
+
+    expect(
+      await screen.findByRole('img', { name: /pré-visualização da capa do curso/i }),
+    ).toHaveAttribute('src', coverUrl);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Salvar Rascunho' })).toBeEnabled();
+    });
+
+    await userEvent.type(screen.getByRole('textbox', { name: /título/i }), 'Curso de Recepção');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    await waitFor(() => {
+      expect(createCourse).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Curso de Recepção', thumbnailUrl: coverUrl }),
+      );
+    });
   });
 
   it('should keep the fields disabled while the stored course is loading', async () => {

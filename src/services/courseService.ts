@@ -174,6 +174,30 @@ export const listCourseCategories = async (): Promise<string[]> => {
   return json.data ?? [];
 };
 
+/** Envia a capa em `multipart/form-data` e devolve a URL pública da imagem. */
+export const uploadCourseThumbnail = async (file: File): Promise<string> => {
+  const body = new FormData();
+  body.append('file', file);
+
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/thumbnail`, {
+    method: 'POST',
+    body,
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await extractErrorMessage(response, 'Não foi possível enviar a imagem de capa.'),
+    );
+  }
+
+  const json: ApiResponse<{ url: string }> = await response.json();
+  if (!json.data?.url) {
+    throw new Error('Não foi possível enviar a imagem de capa.');
+  }
+
+  return json.data.url;
+};
+
 export const publishCourse = async (id: string): Promise<CourseDetail> => {
   const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}/publish`, {
     method: 'POST',
@@ -216,6 +240,7 @@ export const courseService = {
   updateCourse,
   publishCourse,
   listCourseCategories,
+  uploadCourseThumbnail,
   listAdminCourses,
   archiveCourse,
 };
