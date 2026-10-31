@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LessonPayload } from '@/types/lesson';
-import { createLesson, getStudentLesson, StudentLessonError } from './lessonService';
+import {
+  createLesson,
+  getStudentLesson,
+  reorderModuleLessons,
+  StudentLessonError,
+} from './lessonService';
 
 const COURSE_ID = 'e0000000-0000-4000-e000-000000000005';
 const LESSON_ID = '02000000-0000-4000-9000-000000000182';
@@ -210,6 +215,81 @@ describe('lessonService', () => {
         }),
       ).rejects.toThrow('Unsupported file type: virus.exe');
       expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('reorderModuleLessons', () => {
+    const FIRST_LESSON_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1';
+    const SECOND_LESSON_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
+
+    it('should PUT every content id and map the server order', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: [
+              {
+                id: SECOND_LESSON_ID,
+                moduleId: MODULE_ID,
+                title: 'Mapa da jornada do cliente',
+                type: 'TEXT',
+                url: null,
+                durationMinutes: null,
+                description: null,
+                isFree: false,
+                order: 1,
+                resources: null,
+              },
+              {
+                id: FIRST_LESSON_ID,
+                moduleId: MODULE_ID,
+                title: 'Boas-vindas e objetivos do curso',
+                type: 'VIDEO',
+                url: 'https://vimeo.com/1',
+                durationMinutes: 12,
+                description: null,
+                isFree: false,
+                order: 2,
+                resources: null,
+              },
+            ],
+          }),
+      });
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const lessons = await reorderModuleLessons(MODULE_ID, [SECOND_LESSON_ID, FIRST_LESSON_ID]);
+
+      expect(String(fetchMock.mock.calls[0][0])).toContain(
+        `/admin/modules/${MODULE_ID}/contents/reorder`,
+      );
+      expect(fetchMock.mock.calls[0][1]).toEqual(
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ contentIds: [SECOND_LESSON_ID, FIRST_LESSON_ID] }),
+        }),
+      );
+      expect(lessons.map((lesson) => lesson.id)).toEqual([SECOND_LESSON_ID, FIRST_LESSON_ID]);
+      expect(lessons.map((lesson) => lesson.order)).toEqual([1, 2]);
+      expect(lessons[1].durationMinutes).toBe(12);
+    });
+
+    it('should surface the API message when reorder is rejected', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          json: () =>
+            Promise.resolve({
+              message: 'contentIds must contain every content of the module exactly once',
+            }),
+        }),
+      );
+
+      await expect(reorderModuleLessons(MODULE_ID, [FIRST_LESSON_ID])).rejects.toThrow(
+        'contentIds must contain every content of the module exactly once',
+      );
     });
   });
 

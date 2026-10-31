@@ -6,6 +6,7 @@
  */
 import { authenticatedFetch } from '@services/api';
 import type { ApiResponse } from '@services/api';
+import type { AdminModuleContent } from '@/types/module';
 import type {
   Lesson,
   LessonPayload,
@@ -107,6 +108,14 @@ const buildCreateContentRequest = (payload: LessonPayload): CreateContentRequest
 
 const parseResources = (resources: ContentResponse['resources']): LessonResource[] =>
   resources ?? [];
+
+const mapContentToModuleContent = (content: ContentResponse): AdminModuleContent => ({
+  id: content.id,
+  title: content.title,
+  type: content.type,
+  order: content.order,
+  durationMinutes: content.durationMinutes ?? undefined,
+});
 
 const mapContentToLesson = (content: ContentResponse): Lesson => {
   const type = toLessonType(content.type);
@@ -273,6 +282,33 @@ export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
   );
 
   return parseLessonResponse(response, 'Não foi possível criar a aula.');
+};
+
+/**
+ * Reordena todas as aulas do módulo. `contentIds` precisa listar cada conteúdo
+ * exatamente uma vez, na ordem final; a API devolve a lista com `order` novo.
+ */
+export const reorderModuleLessons = async (
+  moduleId: string,
+  contentIds: string[],
+): Promise<AdminModuleContent[]> => {
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/admin/modules/${moduleId}/contents/reorder`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ contentIds }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorData: unknown = await response.json().catch(() => null);
+
+    throw new Error(extractErrorMessage(errorData) ?? 'Não foi possível salvar a ordem das aulas.');
+  }
+
+  const json: ApiResponse<ContentResponse[]> = await response.json();
+
+  return json.data.map(mapContentToModuleContent);
 };
 
 export const updateLesson = async (lessonId: string, payload: LessonPayload): Promise<Lesson> => {
