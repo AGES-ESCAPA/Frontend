@@ -473,6 +473,7 @@ export const CourseBuilder = () => {
 
       setSavingStatus(nextStatus);
 
+      const editingPublishedCourse = status === 'PUBLISHED';
       let savedId = courseId;
       let configurationPersisted = false;
 
@@ -506,7 +507,9 @@ export const CourseBuilder = () => {
         showToast(
           'success',
           nextStatus === 'PUBLISHED' ? 'Curso publicado com sucesso!' : 'Rascunho salvo!',
-          'Os dados do curso foram gravados.',
+          nextStatus === 'DRAFT' && editingPublishedCourse
+            ? 'A versão que os alunos veem permanece até você publicar o curso.'
+            : 'Os dados do curso foram gravados.',
         );
       } catch (error: unknown) {
         if (configurationPersisted && savedId !== undefined) {
@@ -535,6 +538,7 @@ export const CourseBuilder = () => {
       persistConfiguration,
       replaceErrors,
       showToast,
+      status,
       user,
       values,
     ],

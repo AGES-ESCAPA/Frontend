@@ -246,6 +246,32 @@ describe('CourseBuilder', () => {
     expect(await screen.findByText('Rascunho salvo!')).toBeInTheDocument();
   });
 
+  it('should keep the published version unchanged when saving a draft', async () => {
+    vi.mocked(getCourseById).mockResolvedValue({ ...SAVED_COURSE, status: 'PUBLISHED' });
+    vi.mocked(updateCourse).mockResolvedValue({
+      ...SAVED_COURSE,
+      status: 'PUBLISHED',
+      title: 'Titulo em rascunho',
+    });
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    const title = await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.clear(title);
+    await userEvent.type(title, 'Titulo em rascunho');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    await waitFor(() => {
+      expect(updateCourse).toHaveBeenCalledWith(
+        SAVED_COURSE.id,
+        expect.objectContaining({ title: 'Titulo em rascunho', status: 'DRAFT' }),
+      );
+    });
+    expect(publishCourse).not.toHaveBeenCalled();
+    expect(
+      await screen.findByText('A versão que os alunos veem permanece até você publicar o curso.'),
+    ).toBeInTheDocument();
+  });
+
   it('should send the logged user id as instructor when creating a draft', async () => {
     renderBuilder();
 
