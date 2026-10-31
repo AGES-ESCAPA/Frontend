@@ -244,6 +244,98 @@ describe('courseService', () => {
     expect(new Headers(init.headers).get('content-type')).toBeNull();
   });
 
+  it('should read course rules from the unwrapped payload', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () =>
+        Promise.resolve({
+          requireSequentialProgress: false,
+          enforceDeadlineBlock: true,
+          version: '1.4',
+          prerequisites: [{ courseId: 'pre-1', courseTitle: 'Segurança da Informação' }],
+          changeLog: [],
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const rules = await courseService.getCourseRules('e0000000-0000-4000-e000-000000000001');
+
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses/e0000000-0000-4000-e000-000000000001/rules');
+    expect(rules.version).toBe('1.4');
+    expect(rules.prerequisites[0].courseTitle).toBe('Segurança da Informação');
+    expect(rules.enforceDeadlineBlock).toBe(true);
+  });
+
+  it('should save progress rules with PUT /progress-rules', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () =>
+        Promise.resolve({
+          requireSequentialProgress: false,
+          enforceDeadlineBlock: false,
+          version: '0.1',
+          prerequisites: [],
+          changeLog: [],
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await courseService.updateProgressRules('e0000000-0000-4000-e000-000000000001', {
+      requireSequentialProgress: false,
+      enforceDeadlineBlock: false,
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses/e0000000-0000-4000-e000-000000000001/progress-rules');
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(String(init.body))).toEqual({
+      requireSequentialProgress: false,
+      enforceDeadlineBlock: false,
+    });
+  });
+
+  it('should search prerequisites and encode the query', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve([{ id: 'pre-2', title: 'Gestão de eventos' }]),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const results = await courseService.searchCoursePrerequisites(
+      'e0000000-0000-4000-e000-000000000001',
+      'gestão',
+    );
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toContain('/prerequisites/search?');
+    expect(url).toContain('query=gest%C3%A3o');
+    expect(results[0].title).toBe('Gestão de eventos');
+  });
+
+  it('should publish with the notify flag in the body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () =>
+        Promise.resolve({
+          success: true,
+          data: { id: 'e0000000-0000-4000-e000-000000000001', status: 'PUBLISHED' },
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await courseService.publishCourse('e0000000-0000-4000-e000-000000000001', {
+      notifyEnrolledStudents: true,
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({ notifyEnrolledStudents: true });
+  });
+
   it('should call DELETE /api/v1/admin/courses/:id to archive a course', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

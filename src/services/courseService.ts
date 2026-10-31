@@ -6,6 +6,8 @@ import type {
   AdminCourseListItem,
   CourseDetail,
   CoursePayload,
+  CoursePrerequisiteSearchHit,
+  CourseRules,
   PublicCourseDetails,
   PublicCourseFilters,
   PublicCoursesPage,
@@ -134,6 +136,33 @@ const readCourse = async (response: Response, fallback: string): Promise<CourseD
   return json.data;
 };
 
+/** Endpoints de regras devolvem o JSON direto, sem o envelope `{ data }`. */
+const readUnwrapped = async <T>(response: Response, fallback: string): Promise<T> => {
+  if (!isJsonResponse(response)) {
+    throw new Error(fallback);
+  }
+
+  if (!response.ok) {
+    throw new Error(await extractErrorMessage(response, fallback));
+  }
+
+  return (await response.json()) as T;
+};
+
+const ensureOk = async (response: Response, fallback: string): Promise<void> => {
+  if (!response.ok) {
+    throw new Error(await extractErrorMessage(response, fallback));
+  }
+};
+
+const normalizeCourseRules = (rules: Partial<CourseRules> | null | undefined): CourseRules => ({
+  requireSequentialProgress: rules?.requireSequentialProgress ?? true,
+  enforceDeadlineBlock: rules?.enforceDeadlineBlock ?? false,
+  version: rules?.version?.trim() || '0.0',
+  prerequisites: rules?.prerequisites ?? [],
+  changeLog: rules?.changeLog ?? [],
+});
+
 export const getCourseById = async (id: string): Promise<CourseDetail> => {
   const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}`);
   return readCourse(response, 'Não foi possível carregar os dados do curso.');
@@ -198,12 +227,82 @@ export const uploadCourseThumbnail = async (file: File): Promise<string> => {
   return json.data.url;
 };
 
-export const publishCourse = async (id: string): Promise<CourseDetail> => {
+export const publishCourse = async (
+  id: string,
+  options?: { notifyEnrolledStudents?: boolean },
+): Promise<CourseDetail> => {
   const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}/publish`, {
     method: 'POST',
+    body: JSON.stringify({
+      notifyEnrolledStudents: options?.notifyEnrolledStudents === true,
+    }),
   });
 
   return readCourse(response, 'Não foi possível publicar o curso.');
+};
+
+export const getCourseRules = async (courseId: string): Promise<CourseRules> => {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${courseId}/rules`);
+  const rules = await readUnwrapped<CourseRules>(
+    response,
+    'Não foi possível carregar as regras do curso.',
+  );
+  return normalizeCourseRules(rules);
+};
+
+export const updateProgressRules = async (
+  courseId: string,
+  rules: Pick<CourseRules, 'requireSequentialProgress' | 'enforceDeadlineBlock'>,
+): Promise<CourseRules> => {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${courseId}/progress-rules`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      requireSequentialProgress: rules.requireSequentialProgress,
+      enforceDeadlineBlock: rules.enforceDeadlineBlock,
+    }),
+  });
+  const saved = await readUnwrapped<CourseRules>(
+    response,
+    'Não foi possível salvar as regras de progresso.',
+  );
+  return normalizeCourseRules(saved);
+};
+
+export const searchCoursePrerequisites = async (
+  courseId: string,
+  query: string,
+): Promise<CoursePrerequisiteSearchHit[]> => {
+  const params = new URLSearchParams({ query });
+  const response = await authenticatedFetch(
+    `${ADMIN_COURSES_URL}/${courseId}/prerequisites/search?${params.toString()}`,
+  );
+  const results = await readUnwrapped<CoursePrerequisiteSearchHit[]>(
+    response,
+    'Não foi possível buscar cursos.',
+  );
+  return results ?? [];
+};
+
+export const addCoursePrerequisite = async (
+  courseId: string,
+  prerequisiteCourseId: string,
+): Promise<void> => {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${courseId}/prerequisites`, {
+    method: 'POST',
+    body: JSON.stringify({ prerequisiteCourseId }),
+  });
+  await ensureOk(response, 'Não foi possível adicionar o pré-requisito.');
+};
+
+export const removeCoursePrerequisite = async (
+  courseId: string,
+  prerequisiteCourseId: string,
+): Promise<void> => {
+  const response = await authenticatedFetch(
+    `${ADMIN_COURSES_URL}/${courseId}/prerequisites/${prerequisiteCourseId}`,
+    { method: 'DELETE' },
+  );
+  await ensureOk(response, 'Não foi possível remover o pré-requisito.');
 };
 
 const listAdminCourses = async (signal?: AbortSignal): Promise<AdminCourseListItem[]> => {
@@ -239,6 +338,11 @@ export const courseService = {
   createCourse,
   updateCourse,
   publishCourse,
+  getCourseRules,
+  updateProgressRules,
+  searchCoursePrerequisites,
+  addCoursePrerequisite,
+  removeCoursePrerequisite,
   listCourseCategories,
   uploadCourseThumbnail,
   listAdminCourses,

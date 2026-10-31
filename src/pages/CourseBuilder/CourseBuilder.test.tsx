@@ -6,15 +6,20 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthContext } from '@contexts/authContextDefinition';
 import type { AuthContextValue } from '@contexts/authContextDefinition';
 import {
+  addCoursePrerequisite,
   createCourse,
   getCourseById,
+  getCourseRules,
   listCourseCategories,
   publishCourse,
+  removeCoursePrerequisite,
+  searchCoursePrerequisites,
   updateCourse,
+  updateProgressRules,
   uploadCourseThumbnail,
 } from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
-import type { CourseDetail } from '@/types/course';
+import type { CourseDetail, CourseRules } from '@/types/course';
 import type { AdminCourseModule } from '@/types/module';
 import { CourseBuilder } from './CourseBuilder';
 
@@ -25,6 +30,11 @@ vi.mock('@services/courseService', () => ({
   publishCourse: vi.fn(),
   listCourseCategories: vi.fn(),
   uploadCourseThumbnail: vi.fn(),
+  getCourseRules: vi.fn(),
+  updateProgressRules: vi.fn(),
+  searchCoursePrerequisites: vi.fn(),
+  addCoursePrerequisite: vi.fn(),
+  removeCoursePrerequisite: vi.fn(),
 }));
 
 vi.mock('@services/courseModules', () => ({
@@ -65,6 +75,14 @@ const SAVED_COURSE: CourseDetail = {
 
 const LOGGED_ADMIN_ID = 'a1b2c3d4-0000-4000-8000-000000000099';
 
+const EMPTY_RULES: CourseRules = {
+  requireSequentialProgress: true,
+  enforceDeadlineBlock: false,
+  version: '0.0',
+  prerequisites: [],
+  changeLog: [],
+};
+
 const AUTH_CONTEXT: AuthContextValue = {
   user: {
     id: LOGGED_ADMIN_ID,
@@ -103,6 +121,11 @@ describe('CourseBuilder', () => {
       .mockReset()
       .mockResolvedValue(['Design & UX', 'Hospitalidade', 'Marketing']);
     vi.mocked(uploadCourseThumbnail).mockReset();
+    vi.mocked(getCourseRules).mockReset().mockResolvedValue(EMPTY_RULES);
+    vi.mocked(updateProgressRules).mockReset().mockResolvedValue(EMPTY_RULES);
+    vi.mocked(searchCoursePrerequisites).mockReset().mockResolvedValue([]);
+    vi.mocked(addCoursePrerequisite).mockReset().mockResolvedValue(undefined);
+    vi.mocked(removeCoursePrerequisite).mockReset().mockResolvedValue(undefined);
     vi.mocked(courseModulesApi.listModules).mockReset().mockResolvedValue(SAVED_MODULES);
   });
 
@@ -245,7 +268,9 @@ describe('CourseBuilder', () => {
     await waitFor(() => {
       expect(createCourse).toHaveBeenCalled();
     });
-    expect(publishCourse).toHaveBeenCalledWith(SAVED_COURSE.id);
+    expect(publishCourse).toHaveBeenCalledWith(SAVED_COURSE.id, {
+      notifyEnrolledStudents: false,
+    });
     expect(createCourse).toHaveBeenCalledWith(
       expect.objectContaining({ category: 'Hospitalidade' }),
     );
@@ -410,5 +435,176 @@ describe('CourseBuilder', () => {
 
     expect(await screen.findByDisplayValue('Novo módulo 2')).toBeInTheDocument();
     expect(courseModulesApi.listModules).toHaveBeenCalledTimes(1);
+  });
+
+  it('should ask to save the draft before configuring rules on a new course', async () => {
+    renderBuilder();
+
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+
+    expect(
+      await screen.findByText(/salve o rascunho do curso para configurar as regras/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Integração Corporativa N1')).not.toBeInTheDocument();
+    expect(getCourseRules).not.toHaveBeenCalled();
+  });
+
+  it('should load prerequisites and the version history stored for the course', async () => {
+    vi.mocked(getCourseRules).mockResolvedValue({
+      requireSequentialProgress: false,
+      enforceDeadlineBlock: true,
+      version: '1.4',
+      prerequisites: [{ courseId: 'pre-1', courseTitle: 'Segurança da Informação' }],
+      changeLog: [
+        {
+          id: 'log-1',
+          description: 'Versão 1.0 publicada.',
+          changedBy: 'Admin Gestor',
+          createdAt: '2023-10-05T16:40:00',
+        },
+      ],
+    });
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+
+    expect(await screen.findByText('Segurança da Informação')).toBeInTheDocument();
+    expect(screen.getByText('V 1.4')).toBeInTheDocument();
+    expect(screen.getByText('Versão 1.0 publicada.')).toBeInTheDocument();
+    expect(screen.getByText('Por: Admin Gestor')).toBeInTheDocument();
+    expect(screen.getByText(/5 de outubro de 2023/)).toBeInTheDocument();
+    expect(screen.queryByText('Integração Corporativa N1')).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /exigir conclusão/i })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /bloquear acesso/i })).toBeChecked();
+  });
+
+  it('should search courses and persist the chosen prerequisite', async () => {
+    vi.mocked(searchCoursePrerequisites).mockResolvedValue([
+      { id: 'pre-2', title: 'Gestão de Crises no Turismo' },
+    ]);
+    vi.mocked(getCourseRules)
+      .mockResolvedValueOnce(EMPTY_RULES)
+      .mockResolvedValueOnce({
+        ...EMPTY_RULES,
+        prerequisites: [{ courseId: 'pre-2', courseTitle: 'Gestão de Crises no Turismo' }],
+        changeLog: [
+          {
+            id: 'log-2',
+            description: 'Pré-requisito adicionado.',
+            changedBy: 'Sistema',
+            createdAt: '2026-10-31T19:00:00',
+          },
+        ],
+      });
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+    await screen.findByText('Nenhuma alteração registrada.');
+
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /buscar cursos para adicionar/i }),
+      'gestão',
+    );
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Gestão de Crises no Turismo' }),
+    );
+
+    expect(await screen.findByText('Gestão de Crises no Turismo')).toBeInTheDocument();
+    expect(addCoursePrerequisite).not.toHaveBeenCalled();
+    expect(screen.getByText('Nenhuma alteração registrada.')).toBeInTheDocument();
+    expect(searchCoursePrerequisites).toHaveBeenCalledWith(SAVED_COURSE.id, 'gestão');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    await waitFor(() => {
+      expect(addCoursePrerequisite).toHaveBeenCalledWith(SAVED_COURSE.id, 'pre-2');
+    });
+    expect(await screen.findByText('Pré-requisito adicionado.')).toBeInTheDocument();
+  });
+
+  it('should remove a prerequisite through the API', async () => {
+    vi.mocked(getCourseRules)
+      .mockResolvedValueOnce({
+        ...EMPTY_RULES,
+        prerequisites: [{ courseId: 'pre-1', courseTitle: 'Segurança da Informação' }],
+      })
+      .mockResolvedValueOnce(EMPTY_RULES);
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+    await screen.findByText('Segurança da Informação');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /remover segurança da informação dos pré-requisitos/i }),
+    );
+
+    expect(screen.queryByText('Segurança da Informação')).not.toBeInTheDocument();
+    expect(removeCoursePrerequisite).not.toHaveBeenCalled();
+    expect(screen.getByText('V 0.0')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma alteração registrada.')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    await waitFor(() => {
+      expect(removeCoursePrerequisite).toHaveBeenCalledWith(SAVED_COURSE.id, 'pre-1');
+    });
+  });
+
+  it('should persist a progress rule change only when the draft is saved', async () => {
+    vi.mocked(getCourseRules)
+      .mockResolvedValueOnce(EMPTY_RULES)
+      .mockResolvedValueOnce({
+        ...EMPTY_RULES,
+        requireSequentialProgress: false,
+        version: '0.1',
+        changeLog: [
+          {
+            id: 'log-3',
+            description: 'Alteração nas regras de progressão.',
+            changedBy: 'Admin',
+            createdAt: '2026-10-31T19:10:00',
+          },
+        ],
+      });
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+
+    await userEvent.click(await screen.findByRole('checkbox', { name: /exigir conclusão/i }));
+
+    expect(updateProgressRules).not.toHaveBeenCalled();
+    expect(screen.getByText('V 0.0')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma alteração registrada.')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    await waitFor(() => {
+      expect(updateProgressRules).toHaveBeenCalledWith(SAVED_COURSE.id, {
+        requireSequentialProgress: false,
+        enforceDeadlineBlock: false,
+      });
+    });
+    expect(await screen.findByText('V 0.1')).toBeInTheDocument();
+    expect(screen.getByText('Alteração nas regras de progressão.')).toBeInTheDocument();
+  });
+
+  it('should send the notify flag when publishing with the checkbox enabled', async () => {
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+    await userEvent.click(
+      await screen.findByRole('checkbox', { name: /notificar todos os alunos/i }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publicar Curso' }));
+
+    await waitFor(() => {
+      expect(publishCourse).toHaveBeenCalledWith(SAVED_COURSE.id, {
+        notifyEnrolledStudents: true,
+      });
+    });
   });
 });

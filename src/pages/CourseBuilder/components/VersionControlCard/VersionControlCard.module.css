@@ -1,6 +1,19 @@
 /* Selo discreto — não é uma categoria/nível de curso, então não usa o
    componente Badge (pill uppercase e tintado); aqui é só um retângulo sóbrio
    com o próprio sistema de tokens. */
+/* O card inteiro ocupa a altura de Regras de Progresso mais Cursos
+   Pré-requisitos. Só a lista rola. */
+.panel {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel > :first-child {
+  flex-shrink: 0;
+}
+
 .versionTag {
   padding: var(--space-1) var(--space-3);
   color: var(--color-text-primary);
@@ -12,16 +25,29 @@
   font-weight: var(--font-weight-medium);
 }
 
-/* Cresce pra ocupar o espaço que sobrar no card (que é esticado pra
-   acompanhar a altura dos dois cards da esquerda) e espalha as entradas
-   nesse espaço — o rodapé (checkbox + divisor) fica de fora, fixo. */
+.empty {
+  flex: 1;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.history {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden auto;
+}
+
 .timeline {
   position: relative;
   display: flex;
-  flex: 1;
   flex-direction: column;
   justify-content: space-between;
   gap: var(--space-5);
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Linha vertical única atravessando todas as entradas — mais simples e
@@ -90,4 +116,10 @@
   flex: none;
   padding-top: var(--space-5);
   border-top: 1px solid var(--color-border-subtle);
+}
+
+.notifyRow > label > span:last-child > span {
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  font-weight: var(--font-weight-regular);
 }
