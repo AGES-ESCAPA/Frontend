@@ -26,6 +26,7 @@ import type { AdminCourseModule } from '@/types/module';
 import type {
   CoursePrerequisiteOption,
   CourseProgressRules,
+  CourseRules,
   CourseStatus,
   CourseVersionLogEntry,
 } from '@/types/course';
