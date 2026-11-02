@@ -12,6 +12,18 @@
   font-weight: var(--font-weight-medium);
 }
 
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.labelRow .label {
+  min-width: 0;
+}
+
 .required {
   margin-left: var(--space-1);
   color: var(--color-text-muted);

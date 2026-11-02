@@ -4,7 +4,11 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Link } from 'react-router-dom';
 import { Avatar, Button } from '@components/ui';
 import logo from '@assets/escapa_logo.png';
+import { NotificationsMenu } from './NotificationsMenu';
+import type { NavbarNotifications } from './NotificationsMenu';
 import styles from './Navbar.module.css';
+
+export type { NavbarNotifications } from './NotificationsMenu';
 
 export type NavbarState = 'noAuth' | 'register' | 'user' | 'company';
 
@@ -31,6 +35,11 @@ export type NavbarProps = (
    * notificações e perfil visíveis, como no tablet e no desktop.
    */
   collapsible?: boolean;
+  /**
+   * Notificações reais do usuário. Quando presente, o sino abre a lista e
+   * substitui o contador estático de `notificationsCount`.
+   */
+  notifications?: NavbarNotifications;
   onLogout?: () => void;
   profileHref?: string;
   showProfileLink?: boolean;
@@ -41,12 +50,16 @@ export const Navbar = ({
   user,
   notificationsCount = 0,
   collapsible = true,
+  notifications,
   onLogout,
   profileHref = state === 'company' ? '/empresa/perfil' : '/meu-perfil',
   showProfileLink = true,
 }: NavbarProps) => {
   const isProfile = state === 'user' || state === 'company';
   const hasMenu = state === 'noAuth' || isProfile;
+  // O menu de notificações já é um suspenso próprio: fica fora do agrupamento
+  // recolhível, que então não tem mais nada para esconder.
+  const hasCollapsibleCluster = state === 'noAuth' || (isProfile && !notifications);
   const badgeLabel = notificationsCount > 99 ? '99+' : String(notificationsCount);
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -99,7 +112,9 @@ export const Navbar = ({
 
       {hasMenu && (
         <div className={styles.actions}>
-          {(state === 'user' || state === 'company') && (
+          {isProfile && notifications && <NotificationsMenu {...notifications} />}
+
+          {isProfile && !notifications && (
             <div
               id={menuId}
               className={styles.cluster}
@@ -168,7 +183,7 @@ export const Navbar = ({
             </div>
           )}
 
-          {collapsible && (
+          {collapsible && hasCollapsibleCluster && (
             <button
               ref={toggleRef}
               type="button"

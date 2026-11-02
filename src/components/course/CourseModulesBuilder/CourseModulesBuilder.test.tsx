@@ -293,4 +293,119 @@ describe('CourseModulesBuilder', () => {
     expect(screen.queryByRole('dialog', { name: /adicionar aula/i })).not.toBeInTheDocument();
     expect(screen.getByText('Aula 1.3 Protocolos de recepção')).toBeInTheDocument();
   });
+
+  describe('lesson editing', () => {
+    const TEXT_LESSON_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
+
+    const savedTextLesson: Lesson = {
+      id: TEXT_LESSON_ID,
+      moduleId: FIRST_MODULE_ID,
+      title: 'Mapa da jornada do cliente',
+      description: 'Artigo sobre a jornada',
+      type: 'text',
+      videoUrl: null,
+      durationInSeconds: null,
+      textContent: 'Artigo sobre a jornada',
+      fileUrl: null,
+      isFreeSample: false,
+      resources: [],
+      order: 2,
+    };
+
+    const renderEditableBuilder = () => {
+      const getLesson = vi.fn().mockResolvedValue(savedTextLesson);
+      const updateLesson = vi.fn(
+        async (lessonId: string, payload: LessonPayload): Promise<Lesson> => ({
+          ...savedTextLesson,
+          id: lessonId,
+          title: payload.title,
+          textContent: payload.textContent,
+        }),
+      );
+
+      render(
+        <CourseModulesBuilder
+          courseId={COURSE_ID}
+          initialModules={createModules()}
+          client={createClient()}
+          createLesson={createLessonMock()}
+          getLesson={getLesson}
+          updateLesson={updateLesson}
+        />,
+      );
+
+      return { getLesson, updateLesson };
+    };
+
+    it('should open the modal filled with the saved lesson', async () => {
+      const user = userEvent.setup();
+      const { getLesson } = renderEditableBuilder();
+
+      await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+      await user.click(
+        screen.getByRole('button', { name: 'Editar aula Mapa da jornada do cliente' }),
+      );
+
+      const dialog = await screen.findByRole('dialog', { name: /editar aula/i });
+      expect(getLesson).toHaveBeenCalledWith(FIRST_MODULE_ID, TEXT_LESSON_ID);
+      expect(within(dialog).getByLabelText(/título da aula/i)).toHaveValue(
+        'Mapa da jornada do cliente',
+      );
+      expect(within(dialog).getByLabelText(/conteúdo da aula/i)).toHaveValue(
+        'Artigo sobre a jornada',
+      );
+    });
+
+    it('should save the changes and warn that students will be notified', async () => {
+      const user = userEvent.setup();
+      const { updateLesson } = renderEditableBuilder();
+
+      await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+      await user.click(
+        screen.getByRole('button', { name: 'Editar aula Mapa da jornada do cliente' }),
+      );
+      const titleField = within(
+        await screen.findByRole('dialog', { name: /editar aula/i }),
+      ).getByLabelText(/título da aula/i);
+      await user.clear(titleField);
+      await user.type(titleField, 'Mapa da jornada revisado');
+      await user.click(screen.getByRole('button', { name: /salvar alterações/i }));
+
+      await waitFor(() => {
+        expect(updateLesson).toHaveBeenCalledWith(
+          TEXT_LESSON_ID,
+          expect.objectContaining({
+            moduleId: FIRST_MODULE_ID,
+            title: 'Mapa da jornada revisado',
+            type: 'text',
+          }),
+        );
+      });
+      expect(screen.queryByRole('dialog', { name: /editar aula/i })).not.toBeInTheDocument();
+      expect(screen.getByText('Mapa da jornada revisado')).toBeInTheDocument();
+      expect(screen.queryByText('Mapa da jornada do cliente')).not.toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent(/serão notificados/i);
+    });
+
+    it('should show the error when the lesson cannot be loaded', async () => {
+      const user = userEvent.setup();
+      const getLesson = vi.fn().mockRejectedValue(new Error('Content not found'));
+      render(
+        <CourseModulesBuilder
+          courseId={COURSE_ID}
+          initialModules={createModules()}
+          client={createClient()}
+          getLesson={getLesson}
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+      await user.click(
+        screen.getByRole('button', { name: 'Editar aula Mapa da jornada do cliente' }),
+      );
+
+      expect(await screen.findByRole('status')).toHaveTextContent('Content not found');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
 });

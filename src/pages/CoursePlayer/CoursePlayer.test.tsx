@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -5,7 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StudentCurriculum } from '@/types/curriculum';
 import type { Lesson } from '@/types/lesson';
 import { useStudentLesson } from '@/hooks/useStudentLesson';
-import { getStudentCurriculum, StudentCurriculumError } from '@services/curriculumService';
+import {
+  completeStudentLesson,
+  getStudentCurriculum,
+  StudentCurriculumError,
+} from '@services/curriculumService';
 import { CoursePlayer } from './CoursePlayer';
 
 vi.mock('@/hooks/useStudentLesson', () => ({
@@ -15,12 +20,35 @@ vi.mock('@/hooks/useStudentLesson', () => ({
 vi.mock('@services/curriculumService', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   getStudentCurriculum: vi.fn(),
+  completeStudentLesson: vi.fn(),
 }));
 
 vi.mock('@components/course/LessonVideoPlayer/LessonVideoPlayer', () => ({
-  LessonVideoPlayer: ({ src, title }: { src: string; title: string }) => (
-    <div data-testid="lesson-video-player">
-      {title} - {src}
+  LessonVideoPlayer: ({
+    src,
+    title,
+    isCompleted,
+    previousAction,
+    nextAction,
+    controlsAction,
+  }: {
+    src: string;
+    title: string;
+    isCompleted?: boolean;
+    previousAction?: ReactNode;
+    nextAction?: ReactNode;
+    controlsAction?: ReactNode;
+  }) => (
+    <div>
+      <div data-testid="lesson-video-player">
+        {title} - {src}
+        {isCompleted ? 'Aula concluída' : ''}
+      </div>
+      <div data-testid="player-actions">
+        {previousAction}
+        {nextAction}
+        {controlsAction}
+      </div>
     </div>
   ),
 }));
@@ -28,6 +56,8 @@ vi.mock('@components/course/LessonVideoPlayer/LessonVideoPlayer', () => ({
 const useStudentLessonMock = vi.mocked(useStudentLesson);
 
 const getStudentCurriculumMock = vi.mocked(getStudentCurriculum);
+
+const completeStudentLessonMock = vi.mocked(completeStudentLesson);
 
 const COURSE_ID = 'e0000000-0000-4000-e000-000000000005';
 
@@ -123,6 +153,7 @@ describe('CoursePlayer', () => {
     useStudentLessonMock.mockReset();
     retryMock.mockReset();
     getStudentCurriculumMock.mockReset();
+    completeStudentLessonMock.mockReset();
     // Por padrão o menu fica carregando; os testes do menu definem a resposta.
     getStudentCurriculumMock.mockReturnValue(new Promise<StudentCurriculum>(() => {}));
   });
@@ -210,17 +241,16 @@ describe('CoursePlayer', () => {
 
     renderCoursePlayer();
 
-    const areaNames = ['Materiais', 'Navegação inferior'];
+    const materials = document.querySelector('[data-area="Materiais"]');
 
-    for (const areaName of areaNames) {
-      const area = document.querySelector(`[data-area="${areaName}"]`);
+    expect(materials).toHaveAttribute('aria-label', 'Materiais');
 
-      expect(area).not.toBeNull();
+    expect(materials).toBeEmptyDOMElement();
 
-      expect(area).toHaveAttribute('aria-label', areaName);
-
-      expect(area).toBeEmptyDOMElement();
-    }
+    expect(document.querySelector('[data-area="Navegação inferior"]')).toHaveAttribute(
+      'aria-label',
+      'Navegação inferior',
+    );
 
     expect(document.querySelector('[data-area="Menu lateral"]')).toHaveAttribute(
       'aria-label',
@@ -358,12 +388,14 @@ describe('CoursePlayer', () => {
     expect(retryMock).toHaveBeenCalledTimes(1);
   });
 
-  it('should not render the video player for a non-video lesson', () => {
+  it('should render only the formatted text for a text lesson, without the player area', () => {
+    const article = 'Primeiro parágrafo.\nCom quebra de linha.\n\nSegundo parágrafo.';
     const textLesson: Lesson = {
       ...lesson,
       type: 'text',
       videoUrl: null,
-      textContent: 'Conteúdo textual da aula.',
+      description: article,
+      textContent: article,
     };
 
     mockSuccessfulLesson(textLesson);
@@ -371,8 +403,41 @@ describe('CoursePlayer', () => {
     renderCoursePlayer();
 
     expect(screen.queryByTestId('lesson-video-player')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('non-video-lesson')).not.toBeInTheDocument();
 
-    expect(screen.getByTestId('non-video-lesson')).toBeInTheDocument();
+    const content = screen.getByRole('article', { name: 'Conteúdo da aula' });
+    const paragraphs = within(content).getAllByText(/parágrafo/);
+
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0]).toHaveTextContent('Primeiro parágrafo. Com quebra de linha.');
+
+    // O artigo não se repete na seção "Sobre esta aula".
+    expect(screen.queryByText('Sobre esta aula')).not.toBeInTheDocument();
+  });
+
+  it('should render a file lesson like a text lesson, with a link to the file', () => {
+    mockSuccessfulLesson({
+      ...lesson,
+      type: 'file',
+      videoUrl: null,
+      description: 'Leia o material antes da próxima aula.',
+      fileUrl: 'https://example.com/material.pdf',
+    });
+
+    renderCoursePlayer();
+
+    expect(screen.queryByTestId('lesson-video-player')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('non-video-lesson')).not.toBeInTheDocument();
+
+    const content = screen.getByRole('article', { name: 'Conteúdo da aula' });
+
+    expect(within(content).getByText('Leia o material antes da próxima aula.')).toBeInTheDocument();
+    expect(within(content).getByRole('link', { name: 'Abrir arquivo da aula' })).toHaveAttribute(
+      'href',
+      'https://example.com/material.pdf',
+    );
+
+    expect(screen.queryByText('Sobre esta aula')).not.toBeInTheDocument();
   });
 
   describe('lesson menu (US-13)', () => {
@@ -477,6 +542,260 @@ describe('CoursePlayer', () => {
       await waitFor(() => expect(getLessonMenu()).toBeEmptyDOMElement());
 
       expect(screen.getByTestId('lesson-video-player')).toBeInTheDocument();
+    });
+  });
+
+  describe('lesson completion and navigation (US-14/US-15)', () => {
+    const LOCKED_LESSON_ID = '02000000-0000-4000-9000-000000000184';
+
+    const pendingCurriculum: StudentCurriculum = {
+      ...curriculum,
+      completedLessons: 0,
+      modules: [
+        {
+          ...curriculum.modules[0],
+          completedLessons: 0,
+          lessons: [
+            { ...curriculum.modules[0].lessons[0], status: 'AVAILABLE' },
+            { ...curriculum.modules[0].lessons[1], status: 'LOCKED' },
+          ],
+        },
+        curriculum.modules[1],
+      ],
+    };
+
+    const renderAt = (lessonId: string) =>
+      render(
+        <MemoryRouter initialEntries={[`/aluno/cursos/${COURSE_ID}/aulas/${lessonId}`]}>
+          <Routes>
+            <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+    it('should complete the lesson, refresh the menu and go to the next lesson', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock
+        .mockResolvedValueOnce(pendingCurriculum)
+        .mockResolvedValueOnce(curriculum);
+      completeStudentLessonMock.mockResolvedValue();
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      const completeButton = await screen.findByRole('button', { name: 'Marcar como concluída' });
+
+      expect(screen.getByTestId('lesson-video-player')).not.toHaveTextContent('Aula concluída');
+
+      // Em aula de vídeo, os botões ficam no player e não na navegação inferior.
+      expect(
+        within(screen.getByTestId('player-actions')).getByRole('button', {
+          name: 'Marcar como concluída',
+        }),
+      ).toBe(completeButton);
+
+      expect(screen.queryByRole('button', { name: 'Aula anterior' })).not.toBeInTheDocument();
+
+      // A próxima aula ainda está bloqueada: só o botão de concluir leva até ela.
+      expect(screen.queryByRole('button', { name: /Próxima aula/ })).not.toBeInTheDocument();
+
+      await user.click(completeButton);
+
+      expect(completeStudentLessonMock).toHaveBeenCalledWith(COURSE_ID, LESSON_ID);
+
+      await waitFor(() => expect(getStudentCurriculumMock).toHaveBeenCalledTimes(2));
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Mapeando a jornada do hóspede/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+    });
+
+    it('should show the error and stay on the lesson when completion fails', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock.mockResolvedValue(pendingCurriculum);
+      completeStudentLessonMock.mockRejectedValue(
+        new StudentCurriculumError(403, 'Você não possui acesso a esta aula.'),
+      );
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      await user.click(await screen.findByRole('button', { name: 'Marcar como concluída' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Você não possui acesso a esta aula.',
+      );
+
+      expect(getStudentCurriculumMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should mark an already completed lesson and allow moving to the next one', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      expect(await screen.findByTestId('lesson-video-player')).toHaveTextContent('Aula concluída');
+
+      expect(
+        screen.queryByRole('button', { name: 'Marcar como concluída' }),
+      ).not.toBeInTheDocument();
+
+      await user.click(
+        screen.getByRole('button', { name: 'Próxima aula: Mapeando a jornada do hóspede' }),
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Mapeando a jornada do hóspede/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+
+      expect(completeStudentLessonMock).not.toHaveBeenCalled();
+    });
+
+    it('should offer the previous lesson and only complete on the last lesson of the course', async () => {
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson({ ...lesson, id: LOCKED_LESSON_ID, title: 'Parcerias locais' });
+
+      renderAt(LOCKED_LESSON_ID);
+
+      expect(
+        await screen.findByRole('button', { name: 'Marcar como concluída' }),
+      ).toBeInTheDocument();
+
+      expect(
+        screen.getByRole('button', { name: 'Aula anterior: Mapeando a jornada do hóspede' }),
+      ).toBeInTheDocument();
+
+      expect(screen.queryByRole('button', { name: /Próxima aula/ })).not.toBeInTheDocument();
+    });
+
+    it('should show the buttons in the bottom navigation for a non-video lesson', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      completeStudentLessonMock.mockResolvedValue();
+      mockSuccessfulLesson({
+        ...lesson,
+        id: LOCKED_LESSON_ID,
+        title: 'Parcerias locais',
+        type: 'text',
+        videoUrl: null,
+      });
+
+      renderAt(LOCKED_LESSON_ID);
+
+      const bottomNavigation = screen.getByRole('navigation', { name: 'Navegação inferior' });
+
+      expect(
+        await within(bottomNavigation).findByRole('button', { name: 'Marcar como concluída' }),
+      ).toBeInTheDocument();
+
+      expect(screen.queryByTestId('player-actions')).not.toBeInTheDocument();
+
+      await user.click(within(bottomNavigation).getByRole('button', { name: 'Aula anterior' }));
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Mapeando a jornada do hóspede/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+    });
+
+    it('should keep the buttons in the player and allow completing when the video lesson has no URL', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock.mockResolvedValue(pendingCurriculum);
+      completeStudentLessonMock.mockResolvedValue();
+      mockSuccessfulLesson({ ...lesson, videoUrl: null });
+
+      renderCoursePlayer();
+
+      const playerActions = screen.getByTestId('player-actions');
+
+      const completeButton = await within(playerActions).findByRole('button', {
+        name: 'Marcar como concluída',
+      });
+
+      expect(
+        within(screen.getByRole('navigation', { name: 'Navegação inferior' })).queryByRole(
+          'button',
+        ),
+      ).not.toBeInTheDocument();
+
+      await user.click(completeButton);
+
+      expect(completeStudentLessonMock).toHaveBeenCalledWith(COURSE_ID, LESSON_ID);
+    });
+
+    it('should keep the lesson completed after finishing it and returning', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock
+        .mockResolvedValueOnce(pendingCurriculum)
+        .mockResolvedValue(curriculum);
+      completeStudentLessonMock.mockResolvedValue();
+      mockSuccessfulLesson();
+
+      renderCoursePlayer();
+
+      await user.click(await screen.findByRole('button', { name: 'Marcar como concluída' }));
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Mapeando a jornada do hóspede/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+
+      await user.click(screen.getByRole('link', { name: /Introdução ao curso/ }));
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Introdução ao curso/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+
+      expect(screen.getByTestId('lesson-video-player')).toHaveTextContent('Aula concluída');
+      expect(
+        screen.queryByRole('button', { name: 'Marcar como concluída' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('should keep the buttons in the player for a Vimeo video', async () => {
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson({ ...lesson, videoUrl: 'https://vimeo.com/123456789' });
+
+      renderCoursePlayer();
+
+      const playerActions = screen.getByTestId('player-actions');
+
+      expect(
+        await within(playerActions).findByRole('button', {
+          name: 'Próxima aula: Mapeando a jornada do hóspede',
+        }),
+      ).toBeInTheDocument();
+
+      expect(
+        within(playerActions).queryByRole('button', { name: 'Marcar como concluída' }),
+      ).not.toBeInTheDocument();
+
+      expect(
+        within(screen.getByRole('navigation', { name: 'Navegação inferior' })).queryByRole(
+          'button',
+        ),
+      ).not.toBeInTheDocument();
     });
   });
 });

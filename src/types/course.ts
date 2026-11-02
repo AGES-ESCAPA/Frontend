@@ -49,6 +49,7 @@ export interface CoursePayload {
   deadline: number | null;
   price: number | null;
   status: CourseStatus;
+  instructorId?: string;
 }
 
 /** Curso retornado pelo backend ao abrir a rota de edição. */

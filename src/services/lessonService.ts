@@ -26,6 +26,7 @@ interface CreateContentRequest {
   durationMinutes: number | null;
   description: string | null;
   isFree: boolean;
+  resources: LessonResource[];
 }
 
 interface ContentResponse {
@@ -38,7 +39,7 @@ interface ContentResponse {
   description: string | null;
   isFree: boolean;
   order: number;
-  resources: string | LessonResource[] | null;
+  resources: LessonResource[] | null;
 }
 
 interface StudentLessonResponse {
@@ -51,7 +52,7 @@ interface StudentLessonResponse {
   durationMinutes: number | null;
   isFree: boolean;
   order: number;
-  resources: string | null;
+  resources: LessonResource[] | null;
   concepts: string[];
   references: LessonReference[];
   module: {
@@ -101,20 +102,11 @@ const buildCreateContentRequest = (payload: LessonPayload): CreateContentRequest
   durationMinutes: payload.type === 'video' ? secondsToMinutes(payload.durationInSeconds) : null,
   description: resolveContentDescription(payload),
   isFree: payload.isFreeSample,
+  resources: payload.resources.map(({ id, type, title, url }) => ({ id, type, title, url })),
 });
 
-const parseResources = (resources: ContentResponse['resources']): LessonResource[] => {
-  if (Array.isArray(resources)) return resources;
-  if (!resources) return [];
-
-  try {
-    const parsed: unknown = JSON.parse(resources);
-
-    return Array.isArray(parsed) ? (parsed as LessonResource[]) : [];
-  } catch {
-    return [];
-  }
-};
+const parseResources = (resources: ContentResponse['resources']): LessonResource[] =>
+  resources ?? [];
 
 const mapContentToLesson = (content: ContentResponse): Lesson => {
   const type = toLessonType(content.type);
@@ -152,7 +144,8 @@ const mapStudentLessonToLesson = (content: StudentLessonResponse): Lesson => {
     type,
     videoUrl: type === 'video' ? content.url : null,
     durationInSeconds: content.durationMinutes != null ? content.durationMinutes * 60 : null,
-    textContent: null,
+    // Aula de texto guarda o artigo em `description` (ver resolveContentDescription).
+    textContent: type === 'text' ? (content.description ?? '') : null,
     fileUrl: type === 'file' ? content.url : null,
     isFreeSample: Boolean(content.isFree),
     resources: parseResources(content.resources),
@@ -212,12 +205,70 @@ export const getStudentLesson = async (
   return mapStudentLessonToLesson(json.data);
 };
 
+/** Aula completa no formato do admin, usada para preencher o modal de edição. */
+export const getAdminLesson = async (moduleId: string, lessonId: string): Promise<Lesson> => {
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/admin/modules/${moduleId}/contents/${lessonId}`,
+    { method: 'GET' },
+  );
+
+  return parseLessonResponse(response, 'Não foi possível carregar a aula.');
+};
+
+/** Envia o arquivo em `multipart/form-data` ao storage e devolve a URL pública. */
+export const uploadLessonFile = async (file: File): Promise<string> => {
+  const body = new FormData();
+  body.append('file', file);
+
+  const response = await authenticatedFetch(`${API_BASE_URL}/admin/contents/files`, {
+    method: 'POST',
+    body,
+  });
+
+  if (!response.ok) {
+    const errorData: unknown = await response.json().catch(() => null);
+
+    throw new Error(extractErrorMessage(errorData) ?? 'Não foi possível enviar o arquivo da aula.');
+  }
+
+  const json: ApiResponse<{ url: string }> = await response.json();
+
+  return json.data.url;
+};
+
+/**
+ * Sobe os arquivos escolhidos no navegador e troca `fileUrl`/`resource.url`
+ * pelas URLs definitivas do storage.
+ */
+const resolveUploads = async (payload: LessonPayload): Promise<LessonPayload> => {
+  if (payload.uploads.length === 0) return payload;
+
+  const uploadedUrls = await Promise.all(
+    payload.uploads.map(async (upload) => ({
+      resourceId: upload.resourceId,
+      url: await uploadLessonFile(upload.file),
+    })),
+  );
+  const urlOf = (resourceId?: string) =>
+    uploadedUrls.find((uploaded) => uploaded.resourceId === resourceId)?.url;
+
+  return {
+    ...payload,
+    fileUrl: payload.type === 'file' ? (urlOf(undefined) ?? payload.fileUrl) : payload.fileUrl,
+    resources: payload.resources.map((resource) => ({
+      ...resource,
+      url: urlOf(resource.id) ?? resource.url,
+    })),
+  };
+};
+
 export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
+  const resolved = await resolveUploads(payload);
   const response = await authenticatedFetch(
     `${API_BASE_URL}/admin/modules/${payload.moduleId}/contents`,
     {
       method: 'POST',
-      body: JSON.stringify(buildCreateContentRequest(payload)),
+      body: JSON.stringify(buildCreateContentRequest(resolved)),
     },
   );
 
@@ -225,9 +276,10 @@ export const createLesson = async (payload: LessonPayload): Promise<Lesson> => {
 };
 
 export const updateLesson = async (lessonId: string, payload: LessonPayload): Promise<Lesson> => {
+  const resolved = await resolveUploads(payload);
   const response = await authenticatedFetch(`${API_BASE_URL}/admin/contents/${lessonId}`, {
     method: 'PUT',
-    body: JSON.stringify(buildCreateContentRequest(payload)),
+    body: JSON.stringify(buildCreateContentRequest(resolved)),
   });
 
   return parseLessonResponse(response, 'Não foi possível salvar as alterações da aula.');

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useOptionalAuth } from '@contexts/useAuth';
 import { useCourseOwnership } from '@hooks/useCourseOwnership';
 import type { CourseModule, CourseSummary } from '@/types/course';
+import { authPath } from '@utils/authReturnTo';
 import { getCourseAccessPath } from '@utils/courseAccess';
 import { mapCourseCategory } from '@utils/mapPublicCourse';
 import styles from './CourseHeader.module.css';
@@ -37,13 +38,13 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
     navigate(await getCourseAccessPath(course.id));
   };
 
-  // Quem ainda não entrou volta direto para o checkout depois do login ou do cadastro.
+  // Quem ainda não tem conta vai para o cadastro e volta direto ao checkout.
   const handlePurchase = () => {
     const checkoutPath = `/checkout/${course.id}`;
 
     if (!isAuthenticated) {
       localStorage.setItem(PURCHASE_REDIRECT_KEY, checkoutPath);
-      navigate('/login', { state: { returnTo: checkoutPath } });
+      navigate(authPath('/cadastro', checkoutPath), { state: { returnTo: checkoutPath } });
       return;
     }
 

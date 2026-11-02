@@ -212,6 +212,15 @@
   white-space: nowrap;
 }
 
+.lessonEditButton {
+  flex: none;
+  margin-left: auto;
+}
+
+.lessonItem .lessonEditButton svg {
+  color: inherit;
+}
+
 .emptyLessons {
   padding: var(--space-4) var(--space-6);
   color: var(--color-text-muted);

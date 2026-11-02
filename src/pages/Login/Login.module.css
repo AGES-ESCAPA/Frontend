@@ -1,40 +1,78 @@
 .page {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   min-height: 100dvh;
   background-color: var(--color-surface);
 }
 
 .main {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  width: 100%;
+  padding: var(--space-8) var(--space-4);
+}
+
+.panel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-8);
-  text-align: center;
+  gap: var(--space-5);
   width: 100%;
-  max-width: var(--container-xs);
+  max-width: var(--container-sm);
 }
 
-.logo {
-  width: var(--container-sm);
-  max-width: 100%;
-  height: auto;
-}
-
-.subtitle {
-  margin: var(--space-4) 0 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-2);
-  line-height: var(--text-body-2--line-height);
-}
-
-.form {
+.card {
   display: flex;
   flex-direction: column;
-  width: 100%;
   gap: var(--space-4);
-  margin-top: var(--space-8);
+  width: 100%;
+  padding: var(--space-6) var(--space-6) var(--space-5);
+  background-color: var(--color-surface-raised);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-2xl);
+}
+
+.title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-h5);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-h5--line-height);
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.card label {
+  color: var(--color-secondary-100);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.fieldInput svg {
+  color: var(--color-secondary-100);
+}
+
+/* O asterisco do placeholder fica na parte de cima da caixa da linha.
+   Este deslocamento o coloca no centro visual do campo. */
+.passwordField input::placeholder {
+  position: relative;
+  top: 0.25em;
+}
+
+.forgot {
+  flex-shrink: 0;
+  color: var(--color-info-300);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--text-body-4--line-height);
+}
+
+.forgot:hover {
+  color: var(--color-info-200);
 }
 
 .formError {
@@ -44,21 +82,49 @@
   line-height: var(--text-body-3--line-height);
 }
 
-.links {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-6);
+.submit {
+  min-height: var(--space-12);
+  margin-top: var(--space-1);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-2);
 }
 
-.links a {
-  color: var(--color-info-300);
-  font-size: var(--text-body-3);
+.signup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+}
+
+.signup::before,
+.signup::after {
+  content: '';
+  flex: 1;
+  height: var(--border-width-thin);
+  background-color: var(--color-border-subtle);
+}
+
+.signup a {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.forgot:focus-visible,
+.signup a:focus-visible {
+  outline: var(--border-width-thin) solid var(--color-info-300);
+  outline-offset: var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.signup a:hover {
+  color: var(--color-info-200);
 }
 
 @media (width <= 40rem) {
   .main {
-    max-width: none;
+    padding: var(--space-6) var(--space-4);
   }
 }

@@ -4,9 +4,12 @@
   --player-controls-height: calc(
     var(--space-3) * 2 + var(--space-1) + var(--space-2) + var(--space-8)
   );
+  /* Cabe na área útil abaixo da navbar, sem passar de ~3/4 da tela. */
+  --player-max-height: min(75dvh, calc(100dvh - var(--header-height) - var(--space-8)));
 
   position: relative;
   width: 100%;
+  max-height: var(--player-max-height);
   aspect-ratio: 16 / 9;
 
   /* Deixa o conteúdo do overlay (ex.: CourseCompletionMessage) se adaptar à
@@ -17,6 +20,39 @@
   background: #10161d;
   outline: none;
 }
+
+.video,
+.iframe {
+  position: relative;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: calc(100% - var(--player-controls-height));
+  border: 0;
+  object-fit: cover;
+  object-position: center;
+  background: #10161d;
+}
+
+/* stylelint-disable selector-no-vendor-prefix */
+.player:fullscreen,
+.player:-webkit-full-screen {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+  border-radius: 0;
+  margin: 0;
+}
+
+.player:fullscreen .video,
+.player:fullscreen .iframe,
+.player:-webkit-full-screen .video,
+.player:-webkit-full-screen .iframe {
+  height: calc(100% - var(--player-controls-height));
+}
+/* stylelint-enable selector-no-vendor-prefix */
 
 /* Mesmo breakpoint do PlayerControls, onde o botão de play cresce para a área de toque. */
 @media (width <= 640px) {
@@ -32,26 +68,27 @@
   outline-offset: 2px;
 }
 
-.video,
-.iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  object-fit: contain;
-  background: #10161d;
+/* Iframe/vídeo em hardware overlay cobre o HTML. Esconde a mídia enquanto o recado está na frente. */
+.mediaCovered {
+  visibility: hidden;
 }
 
 .overlay {
   position: absolute;
   inset: 0 0 var(--player-controls-height);
-  z-index: 1;
+  z-index: 6;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
   pointer-events: none;
+}
+
+/* Cobre o vídeo como um estado desabilitado, para o recado de conclusão destacar. */
+.overlayDisabled {
+  pointer-events: auto;
+  background-color: color-mix(in srgb, var(--color-primary-900) 80%, transparent);
 }
 
 .playButton {
@@ -86,10 +123,51 @@
 
 .title {
   margin: 0;
-  color: var(--color-neutral-500);
+  color: var(--color-secondary-100);
   font-size: 12px;
   letter-spacing: 1px;
   text-align: center;
+  -webkit-text-stroke: 1px var(--color-primary-900);
+  paint-order: stroke fill;
+}
+
+.completedMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  pointer-events: auto;
+}
+
+.completedLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-success-400);
+  font-size: var(--text-body-2);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* Mesmo selo do LessonNavItem nas aulas concluídas do módulo. */
+.completedCheck {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-full);
+  color: var(--color-white);
+  background-color: var(--color-success-400);
+}
+
+button.watchAgainButton {
+  min-height: 36px;
+  padding: 9px 18px;
+  font-size: var(--text-body-3);
 }
 
 .controls {
@@ -97,6 +175,32 @@
   right: 0;
   bottom: 0;
   left: 0;
+  z-index: 8;
+}
+
+/* Acima do overlay central, centralizados na área do vídeo (sem a barra de controles). */
+.sideAction {
+  position: absolute;
+  top: calc((100% - var(--player-controls-height)) / 2);
+  z-index: 7;
+  display: flex;
+  transform: translateY(-50%);
+}
+
+.sideActionStart {
+  left: var(--space-3);
+}
+
+.sideActionEnd {
+  right: var(--space-3);
+}
+
+.floatingAction {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-3);
+  z-index: 8;
+  display: flex;
 }
 
 .loading {

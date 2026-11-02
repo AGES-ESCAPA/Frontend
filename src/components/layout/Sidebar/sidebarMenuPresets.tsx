@@ -1,4 +1,4 @@
-import { BarChart3, Building2, LayoutDashboard, Play, UserRoundPen, Users } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Play, ShoppingCart, UserRoundPen, Users } from 'lucide-react';
 import type { SidebarMenuItem, SidebarRole } from './Sidebar';
 
 /** Tamanho padrão dos ícones Lucide dentro da Sidebar (grid 24x24, traço 2px). */
@@ -62,9 +62,9 @@ export const SIDEBAR_MENU_PRESETS: Record<SidebarRole, SidebarMenuItem[]> = {
       route: '/admin/cursos',
     },
     {
-      icon: <Building2 size={SIDEBAR_ICON_SIZE} />,
-      label: 'Empresas',
-      route: '/admin/empresas',
+      icon: <ShoppingCart size={SIDEBAR_ICON_SIZE} />,
+      label: 'Pedidos',
+      route: '/admin/pedidos',
     },
     { icon: <Users size={SIDEBAR_ICON_SIZE} />, label: 'Usuários', route: '/admin/usuarios' },
     {

@@ -8,7 +8,7 @@ import { usePublicCourses } from '@hooks/usePublicCourses';
 import type { PublicCourseCard } from '@/types/course';
 import { getCourseAccessPath } from '@utils/courseAccess';
 import { mapPublicCourseToCardProps, toDisplayLevel } from '@utils/mapPublicCourse';
-import { loadOwnedCourseIds } from '@utils/ownedCourses';
+import { loadCompanyOwnedCourseIds, loadOwnedCourseIds } from '@utils/ownedCourses';
 import styles from './Courses.module.css';
 
 const ALL_FILTER = 'Todos';
@@ -50,6 +50,8 @@ export const Courses = () => {
   const navigate = useNavigate();
   const role = getRoleFromPathname(pathname);
   const isStudent = role === 'student';
+  const isCompany = role === 'company';
+  const tracksOwnership = isStudent || isCompany;
   const currentUser = usersByRole[role];
   const courseItems = SIDEBAR_MENU_PRESETS[role].map((item, index) => ({
     ...item,
@@ -77,10 +79,10 @@ export const Courses = () => {
     level: toOptionalFilter(level),
   });
   const [ownedCourseIds, setOwnedCourseIds] = useState<ReadonlySet<string>>(() => new Set());
-  const [enrollmentsReady, setEnrollmentsReady] = useState(!isStudent);
+  const [enrollmentsReady, setEnrollmentsReady] = useState(!tracksOwnership);
 
   useEffect(() => {
-    if (!isStudent) {
+    if (!tracksOwnership) {
       setOwnedCourseIds(new Set());
       setEnrollmentsReady(true);
       return undefined;
@@ -91,7 +93,7 @@ export const Courses = () => {
 
     const loadEnrollments = async () => {
       try {
-        const ids = await loadOwnedCourseIds();
+        const ids = await (isCompany ? loadCompanyOwnedCourseIds() : loadOwnedCourseIds());
         if (!cancelled) setOwnedCourseIds(ids);
       } catch {
         if (!cancelled) setOwnedCourseIds(new Set());
@@ -105,7 +107,7 @@ export const Courses = () => {
     return () => {
       cancelled = true;
     };
-  }, [isStudent]);
+  }, [tracksOwnership, isCompany]);
 
   const handleLogout = () => {
     window.location.assign('/');
@@ -116,15 +118,20 @@ export const Courses = () => {
     navigate(`/cursos/${courseId}`, { state: { from: pathname } });
   };
 
+  // A empresa não tem sala de aula: o curso adquirido abre a página do curso.
   const handleAccess = async (courseId: string) => {
+    if (isCompany) {
+      handleCourseClick(courseId);
+      return;
+    }
     navigate(await getCourseAccessPath(courseId));
   };
 
-  const ownedStateReady = !isStudent || enrollmentsReady;
+  const ownedStateReady = !tracksOwnership || enrollmentsReady;
   const showPageError = featuredStatus === 'error' && catalogStatus === 'error';
 
   const renderCourseCard = (course: PublicCourseCard) => {
-    const acquired = isStudent && ownedCourseIds.has(course.id);
+    const acquired = tracksOwnership && ownedCourseIds.has(course.id);
 
     return (
       <CourseCard

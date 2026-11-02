@@ -6,6 +6,7 @@ import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
 import { CourseModulesBuilder } from '@components/course';
 import { Badge, Button, Toast } from '@components/ui';
+import { useAuth } from '@contexts/useAuth';
 import { useCourseForm } from '@hooks/useCourseForm';
 import { useToast } from '@hooks/useToast';
 import {
@@ -103,6 +104,7 @@ const MOCK_VERSION_LOG: CourseVersionLogEntry[] = [
 export const CourseBuilder = () => {
   const { id: courseId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { values, errors, changeField, replaceValues, replaceErrors } = useCourseForm();
   const { toast, isOpen: isToastOpen, showToast, dismissToast } = useToast();
 
@@ -124,6 +126,7 @@ export const CourseBuilder = () => {
     MOCK_SELECTED_PREREQUISITES,
   );
   const [notifyStudentsOnPublish, setNotifyStudentsOnPublish] = useState(false);
+  const [activeTab, setActiveTab] = useState('basics');
 
   const isSaving = savingStatus !== null;
   const isFormDisabled = isLoading || isSaving || loadError;
@@ -308,7 +311,7 @@ export const CourseBuilder = () => {
         const payload = buildCoursePayload(values, nextStatus);
         const saved =
           courseId === undefined
-            ? await createCourse(payload)
+            ? await createCourse({ ...payload, instructorId: user?.id })
             : await updateCourse(courseId, payload);
 
         if (courseId === undefined) {
@@ -339,7 +342,7 @@ export const CourseBuilder = () => {
         setSavingStatus(null);
       }
     },
-    [courseId, navigate, replaceErrors, showToast, values],
+    [courseId, navigate, replaceErrors, showToast, user, values],
   );
 
   const handleLogout = useCallback(() => {
@@ -382,7 +385,7 @@ export const CourseBuilder = () => {
           </div>
         </header>
 
-        <Tabs.Root defaultValue="basics">
+        <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
           <Tabs.List className={styles.tabList} aria-label="Seções do construtor de curso">
             {builderTabs.map((tab) => (
               <Tabs.Trigger
@@ -472,7 +475,9 @@ export const CourseBuilder = () => {
             </form>
           </Tabs.Content>
 
-          <Tabs.Content value="content">
+          {/* Montado mesmo inativo: o CourseModulesBuilder guarda localmente o que
+              foi criado/editado, e remontar a partir de `modules` perderia isso. */}
+          <Tabs.Content value="content" forceMount hidden={activeTab !== 'content'}>
             {courseId === undefined ? (
               <p className={styles.contentNotice} role="status">
                 Salve o rascunho do curso para começar a organizar os módulos.

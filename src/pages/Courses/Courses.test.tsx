@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { courseService } from '@services/courseService';
+import { getCompanyAcquiredCourseIds } from '@services/companyCourseService';
 import { getStudentCurriculum } from '@services/curriculumService';
 import { getStudentEnrollments, type StudentCourseCardResponse } from '@services/enrollmentService';
 import type { PublicCourseCard, PublicCoursesPage } from '@/types/course';
@@ -25,6 +26,10 @@ vi.mock('@services/curriculumService', () => ({
   getStudentCurriculum: vi.fn(),
 }));
 
+vi.mock('@services/companyCourseService', () => ({
+  getCompanyAcquiredCourseIds: vi.fn(),
+}));
+
 const getCoursesMock = vi.mocked(courseService.getCourses);
 const getFiltersMock = vi.mocked(courseService.getCourseFilters);
 
@@ -34,6 +39,7 @@ const courseFilters = {
 };
 const getEnrollmentsMock = vi.mocked(getStudentEnrollments);
 const getCurriculumMock = vi.mocked(getStudentCurriculum);
+const getCompanyCoursesMock = vi.mocked(getCompanyAcquiredCourseIds);
 
 const course: PublicCourseCard = {
   id: 'e0000000-0000-4000-e000-000000000005',
@@ -110,6 +116,7 @@ describe('Courses', () => {
     getFiltersMock.mockReset().mockResolvedValue(courseFilters);
     getEnrollmentsMock.mockReset().mockResolvedValue(emptyEnrollments);
     getCurriculumMock.mockReset();
+    getCompanyCoursesMock.mockReset().mockResolvedValue([]);
   });
 
   it('should integrate the student Sidebar and authenticated Navbar', async () => {
@@ -366,5 +373,29 @@ describe('Courses', () => {
     expect((await screen.findAllByText(/R\$\s*127,00/)).length).toBeGreaterThan(0);
     expect(screen.queryByText('Adquirido')).not.toBeInTheDocument();
     expect(getEnrollmentsMock).not.toHaveBeenCalled();
+  });
+
+  it('marks the courses the company purchased as acquired and opens the course page', async () => {
+    getCoursesMock.mockResolvedValue(pageWithCourse);
+    getCompanyCoursesMock.mockResolvedValue([course.id]);
+
+    render(
+      <MemoryRouter initialEntries={['/empresa/cursos']}>
+        <Routes>
+          <Route path="/empresa/cursos" element={<Courses />} />
+          <Route path="/cursos/:courseId" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findAllByText('Adquirido')).not.toHaveLength(0);
+    expect(screen.queryByText(/R\$\s*127,00/)).not.toBeInTheDocument();
+    expect(getEnrollmentsMock).not.toHaveBeenCalled();
+
+    const [accessButton] = screen.getAllByRole('button', { name: /acessar o curso/i });
+    await userEvent.click(accessButton);
+
+    expect(await screen.findByTestId('location')).toHaveTextContent(`/cursos/${course.id}`);
+    expect(getCurriculumMock).not.toHaveBeenCalled();
   });
 });

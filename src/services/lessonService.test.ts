@@ -68,6 +68,7 @@ describe('lessonService', () => {
             durationMinutes: 13,
             description: payload.description,
             isFree: true,
+            resources: [],
           }),
         }),
       );
@@ -85,6 +86,130 @@ describe('lessonService', () => {
           isFreeSample: true,
         }),
       );
+    });
+
+    it('should upload the selected file first and save the lesson with the returned URL', async () => {
+      const storedUrl = 'http://localhost:9000/escapa-media/contents/abc.pdf';
+      const file = new File(['conteudo'], 'apostila.pdf', { type: 'application/pdf' });
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ success: true, data: { url: storedUrl } }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: {
+                id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4',
+                moduleId: payload.moduleId,
+                title: 'Apostila',
+                type: 'FILE',
+                url: storedUrl,
+                durationMinutes: null,
+                description: null,
+                isFree: false,
+                order: 4,
+                resources: null,
+              },
+            }),
+        });
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      const lesson = await createLesson({
+        ...payload,
+        title: 'Apostila',
+        type: 'file',
+        videoUrl: null,
+        durationInSeconds: null,
+        fileUrl: null,
+        uploads: [{ file }],
+      });
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(String(fetchMock.mock.calls[0][0])).toContain('/admin/contents/files');
+      const uploadRequest = fetchMock.mock.calls[0][1] as RequestInit;
+      expect(uploadRequest.method).toBe('POST');
+      expect((uploadRequest.body as FormData).get('file')).toBe(file);
+
+      const createRequest = fetchMock.mock.calls[1][1] as RequestInit;
+      expect(JSON.parse(String(createRequest.body))).toEqual(
+        expect.objectContaining({ type: 'FILE', url: storedUrl }),
+      );
+      expect(lesson.fileUrl).toBe(storedUrl);
+    });
+
+    it('should upload complementary files and send their stored URLs', async () => {
+      const storedUrl = 'http://localhost:9000/escapa-media/contents/planilha.xlsx';
+      const file = new File(['x'], 'planilha.xlsx');
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ success: true, data: { url: storedUrl } }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: {
+                id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5',
+                moduleId: payload.moduleId,
+                title: payload.title,
+                type: 'VIDEO',
+                url: payload.videoUrl,
+                durationMinutes: 13,
+                description: null,
+                isFree: true,
+                order: 5,
+                resources: null,
+              },
+            }),
+        });
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      await createLesson({
+        ...payload,
+        resources: [{ id: 'resource-1', type: 'file', title: 'Planilha', url: '' }],
+        uploads: [{ resourceId: 'resource-1', file }],
+      });
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(String(fetchMock.mock.calls[0][0])).toContain('/admin/contents/files');
+      const createRequest = fetchMock.mock.calls[1][1] as RequestInit;
+      expect(JSON.parse(String(createRequest.body))).toEqual(
+        expect.objectContaining({
+          type: 'VIDEO',
+          url: payload.videoUrl,
+          resources: [{ id: 'resource-1', type: 'file', title: 'Planilha', url: storedUrl }],
+        }),
+      );
+    });
+
+    it('should not create the lesson when the file upload fails', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ message: 'Unsupported file type: virus.exe' }),
+      });
+
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(
+        createLesson({
+          ...payload,
+          type: 'file',
+          videoUrl: null,
+          durationInSeconds: null,
+          uploads: [{ file: new File(['x'], 'virus.exe') }],
+        }),
+      ).rejects.toThrow('Unsupported file type: virus.exe');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -149,6 +274,37 @@ describe('lessonService', () => {
         resources: [],
         order: 2,
       });
+    });
+
+    it('should expose the article of a text lesson as textContent', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: {
+                id: LESSON_ID,
+                title: 'Quiz',
+                description: 'Texto do artigo.',
+                type: 'TEXT',
+                url: null,
+                durationMinutes: 16,
+                isFree: false,
+                order: 8,
+                resources: null,
+                module: { id: MODULE_ID, title: 'Módulo 2', order: 2 },
+              },
+            }),
+        }),
+      );
+
+      const lesson = await getStudentLesson(COURSE_ID, LESSON_ID);
+
+      expect(lesson.type).toBe('text');
+      expect(lesson.textContent).toBe('Texto do artigo.');
+      expect(lesson.videoUrl).toBeNull();
     });
 
     it('should throw StudentLessonError when access is denied', async () => {

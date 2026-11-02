@@ -37,6 +37,7 @@
 
 [data-tone='error'] {
   --tone-fg: var(--color-error-300);
+  --tone-bg: var(--color-error-500);
 }
 
 /* Badge */
@@ -46,8 +47,9 @@
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-full);
-  border: var(--order-line) solid color-mix(in srgb, var(--tone-fg) 25%, transparent);
-  background-color: color-mix(in srgb, var(--tone-fg) 15%, transparent);
+  border: var(--order-line) solid
+    var(--tone-bg, color-mix(in srgb, var(--tone-fg) 25%, transparent));
+  background-color: var(--tone-bg, color-mix(in srgb, var(--tone-fg) 15%, transparent));
   color: var(--tone-fg);
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-semibold);
@@ -225,7 +227,7 @@
   align-items: center;
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-full);
-  background-color: color-mix(in srgb, var(--tone-fg) 25%, transparent);
+  background-color: var(--tone-bg, color-mix(in srgb, var(--tone-fg) 25%, transparent));
   color: var(--tone-fg);
   font-size: var(--text-body-4);
   font-weight: var(--font-weight-semibold);

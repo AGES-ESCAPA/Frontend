@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { IdCard, Landmark, Mail, Phone, User } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, IdCard, Landmark, Mail, Phone, User } from 'lucide-react';
 import { Footer, Navbar } from '@components/layout';
 import { Button, FormField, MaskedInput, PasswordInput, TextInput, Toast } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useToast } from '@hooks/useToast';
 import { AuthServiceError, DuplicateRegistrationError, authService } from '@services/authService';
+import { authPath, getAuthReturnTo } from '@utils/authReturnTo';
 import {
   COMPANY_REGISTRATION_INITIAL_VALUES,
   buildCompanyRegistrationPayload,
@@ -22,7 +23,7 @@ import styles from './RegisterCompany.module.css';
 
 const COMPANY_PANEL_ROUTE = '/empresa/colaboradores';
 
-const FIELD_ICON_SIZE = 20;
+const FIELD_ICON_SIZE = 18;
 
 const DUPLICATE_MESSAGES = {
   cnpj: 'Este CNPJ já está cadastrado.',
@@ -34,6 +35,8 @@ const DUPLICATE_MESSAGES = {
  */
 export const RegisterCompany = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = getAuthReturnTo(location.state, location.search);
   const { login } = useAuth();
   const [values, setValues] = useState<CompanyRegistrationValues>(
     COMPANY_REGISTRATION_INITIAL_VALUES,
@@ -93,143 +96,157 @@ export const RegisterCompany = () => {
       <Navbar state="register" />
 
       <main className={styles.main}>
-        <h1 className={styles.title}>Cadastro · Empresa</h1>
-
-        <form className={styles.card} onSubmit={handleSubmit} noValidate>
-          <fieldset className={styles.section}>
-            <legend className={styles.sectionTitle}>Dados do responsável</legend>
-
-            <FormField
-              label="Nome do responsável"
-              htmlFor="company-responsible-name"
-              error={errors.responsibleName}
-            >
-              <TextInput
-                id="company-responsible-name"
-                icon={<User size={FIELD_ICON_SIZE} />}
-                placeholder="Maria Oliveira"
-                autoComplete="name"
-                value={values.responsibleName}
-                onChange={(event) => changeField('responsibleName', event.target.value)}
-                invalid={errors.responsibleName !== undefined}
-                required
-              />
-            </FormField>
-          </fieldset>
-
-          <fieldset className={styles.section}>
-            <legend className={styles.sectionTitle}>Dados da empresa</legend>
-
-            <FormField label="CNPJ" htmlFor="company-cnpj" error={errors.cnpj}>
-              <MaskedInput
-                id="company-cnpj"
-                mask="cnpj"
-                icon={<IdCard size={FIELD_ICON_SIZE} />}
-                placeholder="00.000.000/0001-00"
-                value={values.cnpj}
-                onValueChange={(value) => changeField('cnpj', value)}
-                invalid={errors.cnpj !== undefined}
-                required
-              />
-            </FormField>
-
-            <FormField
-              label="Razão social / Nome fantasia"
-              htmlFor="company-name"
-              error={errors.companyName}
-            >
-              <TextInput
-                id="company-name"
-                icon={<Landmark size={FIELD_ICON_SIZE} />}
-                placeholder="Empresa Ltda."
-                autoComplete="organization"
-                value={values.companyName}
-                onChange={(event) => changeField('companyName', event.target.value)}
-                invalid={errors.companyName !== undefined}
-                required
-              />
-            </FormField>
-
-            <FormField label="E-mail corporativo" htmlFor="company-email" error={errors.email}>
-              <TextInput
-                id="company-email"
-                type="email"
-                icon={<Mail size={FIELD_ICON_SIZE} />}
-                placeholder="contato@empresa.com.br"
-                autoComplete="email"
-                value={values.email}
-                onChange={(event) => changeField('email', event.target.value)}
-                invalid={errors.email !== undefined}
-                required
-              />
-            </FormField>
-
-            <FormField label="Telefone corporativo" htmlFor="company-phone" error={errors.phone}>
-              <MaskedInput
-                id="company-phone"
-                mask="phone"
-                icon={<Phone size={FIELD_ICON_SIZE} />}
-                placeholder="(11) 3000-0000"
-                value={values.phone}
-                onValueChange={(value) => changeField('phone', value)}
-                invalid={errors.phone !== undefined}
-              />
-            </FormField>
-          </fieldset>
-
-          <fieldset className={styles.section}>
-            <legend className={styles.sectionTitle}>Segurança</legend>
-
-            <FormField label="Senha" htmlFor="company-password" error={errors.password}>
-              <PasswordInput
-                id="company-password"
-                placeholder="Mínimo 8 caracteres"
-                autoComplete="new-password"
-                value={values.password}
-                onChange={(event) => changeField('password', event.target.value)}
-                invalid={errors.password !== undefined}
-                required
-              />
-            </FormField>
-
-            <FormField
-              label="Confirmar senha"
-              htmlFor="company-password-confirmation"
-              error={errors.passwordConfirmation}
-            >
-              <PasswordInput
-                id="company-password-confirmation"
-                placeholder="Repita a senha"
-                autoComplete="new-password"
-                value={values.passwordConfirmation}
-                onChange={(event) => changeField('passwordConfirmation', event.target.value)}
-                invalid={errors.passwordConfirmation !== undefined}
-                required
-              />
-            </FormField>
-          </fieldset>
-
-          {formError ? (
-            <p className={styles.formError} role="alert">
-              {formError}
-            </p>
-          ) : null}
-
-          <Button
-            type="submit"
-            variant="primary"
-            label="Cadastrar"
-            fullWidth
-            isLoading={isSubmitting}
-          />
-
-          <p className={styles.loginPrompt}>
-            <span>já tenho conta -</span>
-            <Link to="/login" className={styles.loginLink}>
-              Entrar
+        <div className={styles.panel}>
+          <div className={styles.heading}>
+            <Link to={authPath('/cadastro', returnTo)} className={styles.back} aria-label="Voltar">
+              <ArrowLeft size={FIELD_ICON_SIZE} aria-hidden="true" />
             </Link>
-          </p>
-        </form>
+            <h1 className={styles.title}>Cadastro - Empresa</h1>
+          </div>
+
+          <form className={styles.card} onSubmit={handleSubmit} noValidate>
+            <fieldset className={styles.section}>
+              <legend className={styles.sectionTitle}>Dados do responsável</legend>
+
+              <FormField
+                label="Nome do responsável"
+                htmlFor="company-responsible-name"
+                error={errors.responsibleName}
+              >
+                <TextInput
+                  id="company-responsible-name"
+                  className={styles.fieldInput}
+                  icon={<User size={FIELD_ICON_SIZE} aria-hidden="true" />}
+                  placeholder="Maria Oliveira"
+                  autoComplete="name"
+                  value={values.responsibleName}
+                  onChange={(event) => changeField('responsibleName', event.target.value)}
+                  invalid={errors.responsibleName !== undefined}
+                  required
+                />
+              </FormField>
+            </fieldset>
+
+            <fieldset className={styles.section}>
+              <legend className={styles.sectionTitle}>Dados da empresa</legend>
+
+              <FormField label="CNPJ" htmlFor="company-cnpj" error={errors.cnpj}>
+                <MaskedInput
+                  id="company-cnpj"
+                  className={styles.fieldInput}
+                  mask="cnpj"
+                  icon={<IdCard size={FIELD_ICON_SIZE} aria-hidden="true" />}
+                  placeholder="00.000.000/0001-00"
+                  value={values.cnpj}
+                  onValueChange={(value) => changeField('cnpj', value)}
+                  invalid={errors.cnpj !== undefined}
+                  required
+                />
+              </FormField>
+
+              <FormField
+                label="Razão social / Nome fantasia"
+                htmlFor="company-name"
+                error={errors.companyName}
+              >
+                <TextInput
+                  id="company-name"
+                  className={styles.fieldInput}
+                  icon={<Landmark size={FIELD_ICON_SIZE} aria-hidden="true" />}
+                  placeholder="Empresa Ltda."
+                  autoComplete="organization"
+                  value={values.companyName}
+                  onChange={(event) => changeField('companyName', event.target.value)}
+                  invalid={errors.companyName !== undefined}
+                  required
+                />
+              </FormField>
+
+              <FormField label="E-mail corporativo" htmlFor="company-email" error={errors.email}>
+                <TextInput
+                  id="company-email"
+                  className={styles.fieldInput}
+                  type="email"
+                  icon={<Mail size={FIELD_ICON_SIZE} aria-hidden="true" />}
+                  placeholder="contato@empresa.com.br"
+                  autoComplete="email"
+                  value={values.email}
+                  onChange={(event) => changeField('email', event.target.value)}
+                  invalid={errors.email !== undefined}
+                  required
+                />
+              </FormField>
+
+              <FormField label="Telefone corporativo" htmlFor="company-phone" error={errors.phone}>
+                <MaskedInput
+                  id="company-phone"
+                  className={styles.fieldInput}
+                  mask="phone"
+                  icon={<Phone size={FIELD_ICON_SIZE} aria-hidden="true" />}
+                  placeholder="(11) 3000-0000"
+                  value={values.phone}
+                  onValueChange={(value) => changeField('phone', value)}
+                  invalid={errors.phone !== undefined}
+                />
+              </FormField>
+            </fieldset>
+
+            <fieldset className={styles.section}>
+              <legend className={styles.sectionTitle}>Segurança</legend>
+
+              <FormField label="Senha" htmlFor="company-password" error={errors.password}>
+                <PasswordInput
+                  id="company-password"
+                  className={styles.fieldInput}
+                  placeholder="Mínimo 8 caracteres"
+                  autoComplete="new-password"
+                  value={values.password}
+                  onChange={(event) => changeField('password', event.target.value)}
+                  invalid={errors.password !== undefined}
+                  required
+                />
+              </FormField>
+
+              <FormField
+                label="Confirmar senha"
+                htmlFor="company-password-confirmation"
+                error={errors.passwordConfirmation}
+              >
+                <PasswordInput
+                  id="company-password-confirmation"
+                  className={styles.fieldInput}
+                  placeholder="Repita a senha"
+                  autoComplete="new-password"
+                  value={values.passwordConfirmation}
+                  onChange={(event) => changeField('passwordConfirmation', event.target.value)}
+                  invalid={errors.passwordConfirmation !== undefined}
+                  required
+                />
+              </FormField>
+            </fieldset>
+
+            {formError ? (
+              <p className={styles.formError} role="alert">
+                {formError}
+              </p>
+            ) : null}
+
+            <Button
+              type="submit"
+              variant="primary"
+              label="Cadastrar"
+              fullWidth
+              isLoading={isSubmitting}
+              className={styles.submit}
+            />
+
+            <p className={styles.loginPrompt}>
+              <span>
+                já tenho conta - <Link to={authPath('/login', returnTo)}>Entrar</Link>
+              </span>
+            </p>
+          </form>
+        </div>
       </main>
 
       <Footer variant="compact" />

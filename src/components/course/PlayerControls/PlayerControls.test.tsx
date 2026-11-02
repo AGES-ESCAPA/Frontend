@@ -148,4 +148,33 @@ describe('PlayerControls', () => {
       expect(screen.getByText('00:00 / 00:00')).toBeInTheDocument();
     });
   });
+
+  describe('fullscreen', () => {
+    it('does not offer fullscreen without a handler', () => {
+      renderControls();
+
+      expect(screen.queryByRole('button', { name: 'Tela cheia' })).not.toBeInTheDocument();
+    });
+
+    it('offers "Tela cheia" and calls the handler when clicked', async () => {
+      const onToggleFullscreen = vi.fn();
+
+      renderControls({ onToggleFullscreen });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Tela cheia' }));
+
+      expect(onToggleFullscreen).toHaveBeenCalledOnce();
+    });
+
+    it('offers "Sair da tela cheia" while fullscreen is active', async () => {
+      const onToggleFullscreen = vi.fn();
+
+      renderControls({ isFullscreen: true, onToggleFullscreen });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Sair da tela cheia' }));
+
+      expect(onToggleFullscreen).toHaveBeenCalledOnce();
+      expect(screen.queryByRole('button', { name: 'Tela cheia' })).not.toBeInTheDocument();
+    });
+  });
 });

@@ -74,7 +74,18 @@ describe('LessonModal', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Arquivo' }));
 
     expect(screen.queryByLabelText(/conteúdo da aula/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/arquivo da aula/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/arquivo da aula/i)).toHaveAttribute('type', 'file');
+    expect(screen.getByText('Envie um PDF ou planilha')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('https://.../material.pdf')).not.toBeInTheDocument();
+  });
+
+  it('should only offer the upload for a complementary file, without a URL field', async () => {
+    renderModal();
+
+    await userEvent.click(screen.getByRole('button', { name: /adicionar arquivo/i }));
+
+    expect(screen.getByLabelText(/selecionar arquivo 1/i)).toHaveAttribute('type', 'file');
+    expect(screen.queryByLabelText(/url do arquivo/i)).not.toBeInTheDocument();
   });
 
   // ── Validação ────────────────────────────────────────────────────
