@@ -57,10 +57,26 @@
 
 .value {
   flex-shrink: 0;
-  color: var(--color-text-secondary);
+  color: var(--color-secondary-100);
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-semibold);
   line-height: var(--text-body-3--line-height);
+}
+
+/* No toque não há hover para o `title`: o rótulo quebra em até duas linhas antes de cortar. */
+@media (width <= 40rem) {
+  .header {
+    align-items: flex-start;
+  }
+
+  .label {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
 }
 
 .empty {

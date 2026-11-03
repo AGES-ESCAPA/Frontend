@@ -69,6 +69,141 @@ describe('BarList', () => {
     expect(screen.queryByText('1')).not.toBeInTheDocument();
   });
 
+  it('should render an unordered list when not ranked and an ordered list when ranked', () => {
+    const { container, rerender } = render(<BarList items={items} />);
+
+    expect(container.querySelector('ul')).toBeInTheDocument();
+    expect(container.querySelector('ol')).not.toBeInTheDocument();
+
+    rerender(<BarList items={items} ranked />);
+
+    expect(container.querySelector('ol')).toBeInTheDocument();
+    expect(container.querySelector('ul')).not.toBeInTheDocument();
+  });
+
+  it('should not add an "undefined" class to the list when ranked', () => {
+    render(<BarList items={items} ranked className="extra" />);
+
+    expect(screen.getByRole('list').className).not.toMatch(/undefined/);
+    expect(screen.getByRole('list').className).toMatch(/extra/);
+  });
+
+  it('should announce the displayed value instead of the share of the ceiling', () => {
+    render(<BarList items={items} />);
+
+    expect(screen.getByRole('progressbar', { name: 'Vendas' })).toHaveAttribute(
+      'aria-valuetext',
+      '92%',
+    );
+    expect(screen.getByRole('progressbar', { name: 'Cozinha' })).toHaveAttribute(
+      'aria-valuetext',
+      '23',
+    );
+  });
+
+  it('should format the fallback value in pt-BR with up to two decimals', () => {
+    render(
+      <BarList
+        items={[
+          { id: 'a', label: 'Governança', value: 1234.5678 },
+          { id: 'b', label: 'Recepção', value: 2 / 3 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText('1.234,57')).toBeInTheDocument();
+    expect(screen.getByText('0,67')).toBeInTheDocument();
+  });
+
+  it('should keep valid bars sized when one value is NaN', () => {
+    render(
+      <BarList
+        items={[
+          { id: 'vendas', label: 'Vendas', value: 10 },
+          { id: 'recepcao', label: 'Recepção', value: NaN },
+          { id: 'cozinha', label: 'Cozinha', value: 5 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole('progressbar', { name: 'Vendas' })).toHaveAttribute(
+      'aria-valuenow',
+      '100',
+    );
+    expect(screen.getByRole('progressbar', { name: 'Cozinha' })).toHaveAttribute(
+      'aria-valuenow',
+      '50',
+    );
+    expect(screen.getByRole('progressbar', { name: 'Recepção' })).toHaveAttribute(
+      'aria-valuenow',
+      '0',
+    );
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.queryByText('NaN')).not.toBeInTheDocument();
+  });
+
+  it('should render empty bars when every value is zero', () => {
+    render(
+      <BarList
+        items={[
+          { id: 'a', label: 'Vendas', value: 0 },
+          { id: 'b', label: 'Cozinha', value: 0 },
+        ]}
+      />,
+    );
+
+    for (const bar of screen.getAllByRole('progressbar')) {
+      expect(bar).toHaveAttribute('aria-valuenow', '0');
+    }
+  });
+
+  it('should render empty bars when max is zero', () => {
+    render(<BarList items={items} max={0} />);
+
+    for (const bar of screen.getAllByRole('progressbar')) {
+      expect(bar).toHaveAttribute('aria-valuenow', '0');
+    }
+  });
+
+  it('should treat negative values as an empty bar', () => {
+    render(
+      <BarList
+        items={[
+          { id: 'a', label: 'Vendas', value: 10 },
+          { id: 'b', label: 'Cozinha', value: -4 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole('progressbar', { name: 'Cozinha' })).toHaveAttribute(
+      'aria-valuenow',
+      '0',
+    );
+  });
+
+  it('should fill the bar when a value is above max', () => {
+    render(<BarList items={items} max={50} />);
+
+    const bar = screen.getByRole('progressbar', { name: 'Vendas' });
+    expect(bar).toHaveAttribute('aria-valuenow', '100');
+    expect(bar.firstElementChild).toHaveStyle({ width: '100%' });
+  });
+
+  it('should size the bar width to the value share of max', () => {
+    render(<BarList items={items} max={100} />);
+
+    expect(screen.getByRole('progressbar', { name: 'Recepção' }).firstElementChild).toHaveStyle({
+      width: '46%',
+    });
+  });
+
+  it('should expose the full label as a title for truncated names', () => {
+    const label = 'Rede Hoteleira Costa Verde Resorts & Convenções Ltda.';
+    render(<BarList items={[{ id: 'costa', label, value: 259 }]} ranked />);
+
+    expect(screen.getByText(label)).toHaveAttribute('title', label);
+  });
+
   it('should show a message when there are no items', () => {
     render(<BarList items={[]} />);
 

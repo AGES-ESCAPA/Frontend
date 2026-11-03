@@ -1,4 +1,4 @@
-import { ProgressBar } from '../ProgressBar';
+import { ProgressBar } from '@components/ui/ProgressBar';
 import styles from './BarList.module.css';
 
 export interface BarListItem {
@@ -10,6 +10,7 @@ export interface BarListItem {
 
 export interface BarListProps {
   items: BarListItem[];
+  /** Teto das barras. Padrão: maior valor da lista. Para porcentagens, passe `100`. */
   max?: number;
   ranked?: boolean;
   emptyMessage?: string;
@@ -18,6 +19,9 @@ export interface BarListProps {
 }
 
 const DEFAULT_EMPTY_MESSAGE = 'Nenhum dado disponível.';
+
+const formatValue = (value: number): string =>
+  Number.isFinite(value) ? value.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : '—';
 
 export const BarList = ({
   items,
@@ -31,29 +35,40 @@ export const BarList = ({
     return <p className={`${styles.empty} ${className}`.trim()}>{emptyMessage}</p>;
   }
 
-  const ceiling = max ?? Math.max(...items.map((item) => item.value));
+  const finiteValues = items.map((item) => item.value).filter(Number.isFinite);
+  const ceiling = max ?? Math.max(0, ...finiteValues);
+  const List = ranked ? 'ol' : 'ul';
 
   return (
-    <ol
-      className={`${styles.list} ${ranked ? styles.ranked : ''} ${className}`.trim()}
-      aria-label={ariaLabel}
-    >
-      {items.map((item, index) => (
-        <li key={item.id} className={styles.item}>
-          {ranked ? (
-            <span className={styles.rank} aria-hidden="true">
-              {index + 1}
-            </span>
-          ) : null}
-          <div className={styles.content}>
-            <div className={styles.header}>
-              <span className={styles.label}>{item.label}</span>
-              <span className={styles.value}>{item.displayValue ?? item.value}</span>
+    <List role="list" className={`${styles.list} ${className}`.trim()} aria-label={ariaLabel}>
+      {items.map((item, index) => {
+        const text = item.displayValue ?? formatValue(item.value);
+
+        return (
+          <li key={item.id} className={styles.item}>
+            {ranked ? (
+              <span className={styles.rank} aria-hidden="true">
+                {index + 1}
+              </span>
+            ) : null}
+            <div className={styles.content}>
+              <div className={styles.header}>
+                <span className={styles.label} title={item.label}>
+                  {item.label}
+                </span>
+                <span className={styles.value}>{text}</span>
+              </div>
+              <ProgressBar
+                variant="chart"
+                value={Number.isFinite(item.value) ? item.value : 0}
+                max={ceiling}
+                aria-label={item.label}
+                valueLabel={text}
+              />
             </div>
-            <ProgressBar value={item.value} max={ceiling} aria-label={item.label} />
-          </div>
-        </li>
-      ))}
-    </ol>
+          </li>
+        );
+      })}
+    </List>
   );
 };
