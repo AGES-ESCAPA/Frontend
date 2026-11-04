@@ -93,3 +93,5 @@ export { MaskedInput } from './MaskedInput';
 export type { MaskedInputProps, MaskType } from './MaskedInput';
 export { OrderSummary } from './OrderSummary';
 export type { OrderSummaryProps, OrderItem, OrderBuyer } from './OrderSummary';
+export { EmployeeTable } from './EmployeeTable';
+export type { Employee, EmployeeStatus, EmployeeTableProps } from './EmployeeTable';
