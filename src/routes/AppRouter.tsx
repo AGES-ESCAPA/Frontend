@@ -98,6 +98,12 @@ const OrderManagement = lazy(() =>
   })),
 );
 
+const EmployeeManagement = lazy(() =>
+  import('@pages/EmployeeManagement/EmployeeManagement').then((m) => ({
+    default: m.EmployeeManagement,
+  })),
+);
+
 const UnderConstruction = lazy(() =>
   import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
     default: m.UnderConstruction,
@@ -286,6 +292,14 @@ export const AppRouter = () => {
               element={
                 <ProtectedRoute allowedRoles={['COMPANY']}>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/colaboradores"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <EmployeeManagement />
                 </ProtectedRoute>
               }
             />
