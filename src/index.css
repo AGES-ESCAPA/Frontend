@@ -65,6 +65,10 @@
   --text-body-5: 0.625rem; /* 10px (XSmall) */
   --text-body-5--line-height: 1.4;
 
+  /* Typography in the center of a responsive donut chart */
+  --donut-center-value-fluid: 12cqi;
+  --donut-center-label-fluid: 7cqi;
+
   /* ── Escala Genérica Equivalente ─────────────────────────────────*/
   --text-xs: var(--text-body-4); /* 0.75rem  / 12px */
   --text-sm: var(--text-body-3); /* 0.875rem / 14px */
