@@ -177,15 +177,6 @@
   --color-backdrop: rgba(12, 12, 26, 0.84);
   --color-surface-search-dark: var(--color-primary-800);
 
-  /* ── 10. STATUS DOS COLABORADORES ──────────────────────────────────*/
-
-  --color-status-active-text: #b7f1d1;
-  --color-status-active-background: #174b3b;
-  --color-status-pending-text: #f8dc8e;
-  --color-status-pending-background: #59481f;
-  --color-status-inactive-text: #d1d5df;
-  --color-status-inactive-background: #383b4a;
-
   /* Opaco de proposito: com transparencia o fundo do campo claro se mistura
      com a pagina atras e o contraste do placeholder deixa de ser previsivel
      (3.91:1 sobre fundo escuro). Opaco, Neutros-600 garante 4.63:1 (AA). */

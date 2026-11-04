@@ -3,47 +3,6 @@
   min-width: 0;
 }
 
-/* Fundo e borda da tabela */
-.tableWrapper > div:first-child {
-  background-color: var(--color-primary-800);
-  border-color: var(--color-border-subtle);
-}
-
-/* Estrutura da tabela */
-.tableWrapper table {
-  width: 100%;
-}
-
-/* Cabeçalhos e células */
-.tableWrapper th,
-.tableWrapper td {
-  padding: var(--space-3) var(--space-4);
-  vertical-align: middle;
-}
-
-/* Cabeçalhos */
-.tableWrapper th {
-  color: var(--color-text-muted);
-  font-size: var(--text-body-5);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-/* Centralização das últimas três colunas */
-.tableWrapper th:nth-child(3),
-.tableWrapper th:nth-child(4),
-.tableWrapper th:nth-child(5) {
-  text-align: center;
-}
-
-/* Divisórias entre linhas */
-.tableWrapper tbody tr {
-  border-top: 1px solid var(--color-border-subtle);
-}
-
-/* Colaborador: avatar e nome */
 .employee {
   display: flex;
   align-items: center;
@@ -51,7 +10,6 @@
   min-width: 0;
 }
 
-/* Avatar */
 .avatar {
   display: inline-flex;
   flex-shrink: 0;
@@ -59,13 +17,6 @@
   justify-content: center;
 }
 
-/* Fundo ciano e iniciais em azul-escuro */
-.avatar > span > span {
-  background-color: var(--color-info);
-  color: var(--color-primary-900);
-}
-
-/* Nome */
 .name {
   color: var(--color-text-primary);
   font-size: var(--text-body-3);
@@ -73,14 +24,7 @@
   white-space: nowrap;
 }
 
-/* E-mail */
-.email {
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-3);
-  white-space: nowrap;
-}
-
-/* Cursos atribuídos */
+.email,
 .courses {
   color: var(--color-text-secondary);
   font-size: var(--text-body-3);
@@ -92,50 +36,6 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* Badge de status */
-.statusBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  padding: 7px 9px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-body-5);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.25;
-  white-space: nowrap;
-}
-
-/* Indicador circular do status */
-.statusDot {
-  width: 6px;
-  height: 6px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background-color: currentColor;
-}
-
-/* Status: Ativo */
-
-/* Status: Ativo */
-.active {
-  color: var(--color-status-active-text);
-  background-color: var(--color-status-active-background);
-}
-
-/* Status: Pendente */
-.pending {
-  color: var(--color-status-pending-text);
-  background-color: var(--color-status-pending-background);
-}
-
-/* Status: Inativo */
-.inactive {
-  color: var(--color-status-inactive-text);
-  background-color: var(--color-status-inactive-background);
-}
-
-/* Ações */
 .actions {
   display: flex;
   align-items: center;
@@ -143,7 +43,6 @@
   gap: var(--space-1);
 }
 
-/* Botões de ação */
 .actionButton {
   display: inline-flex;
   align-items: center;
@@ -156,33 +55,19 @@
   background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition:
-    color 150ms ease,
-    background-color 150ms ease;
 }
 
-/* Foco por teclado */
 .actionButton:focus-visible {
   outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
-/* Botões desabilitados */
 .actionButton:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* Hover */
 .actionButton:hover:not(:disabled) {
   color: var(--color-info);
   background-color: var(--color-overlay-hover-on-dark);
-}
-
-/* Responsividade */
-@media (width <= 40rem) {
-  .tableWrapper th,
-  .tableWrapper td {
-    padding: var(--space-2) var(--space-3);
-  }
 }

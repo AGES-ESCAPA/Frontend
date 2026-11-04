@@ -3,7 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { EmployeeTable } from './EmployeeTable';
 import type { Employee } from './EmployeeTable.types';
-import styles from './EmployeeTable.module.css';
+
+vi.mock('../Badge/Badge', () => ({
+  Badge: ({ label, variant }: { label: string; variant: 'success' | 'warning' | 'neutral' }) => (
+    <span data-testid="employee-status-badge" data-variant={variant}>
+      {label}
+    </span>
+  ),
+}));
 
 const employees: Employee[] = [
   {
@@ -129,18 +136,17 @@ describe('EmployeeTable', () => {
     });
 
     it.each([
-      ['Ana Paula Ferreira', 'Ativo', 'active'],
-      ['Carlos Eduardo Lima', 'Pendente', 'pending'],
-      ['Juliana Rocha', 'Inativo', 'inactive'],
-    ] as const)('aplica o estilo correto ao status de %s', (name, status, className) => {
+      ['Ana Paula Ferreira', 'Ativo', 'success'],
+      ['Carlos Eduardo Lima', 'Pendente', 'warning'],
+      ['Juliana Rocha', 'Inativo', 'neutral'],
+    ] as const)('utiliza o Badge com a variante correta para %s', (name, status, variant) => {
       setup();
 
       const row = getEmployeeRow(name);
+      const badge = within(row).getByTestId('employee-status-badge');
 
-      const badge = within(row).getByLabelText(`Status do acesso: ${status}`);
-
-      expect(badge).toHaveClass(styles.statusBadge);
-      expect(badge).toHaveClass(styles[className]);
+      expect(badge).toHaveTextContent(status);
+      expect(badge).toHaveAttribute('data-variant', variant);
     });
 
     it('renderiza o estado vazio', () => {

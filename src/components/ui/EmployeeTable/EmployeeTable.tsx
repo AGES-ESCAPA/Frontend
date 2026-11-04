@@ -1,14 +1,24 @@
-import { ChevronDown, Pencil, Send, UserMinus } from 'lucide-react';
-import { Avatar } from '../Avatar/Avatar';
-import { Table } from '../Table/Table';
-import type { TableColumn } from '../Table/Table';
+import { Pencil, Send, UserMinus } from 'lucide-react';
+import { Avatar } from '@components/ui/Avatar/Avatar';
+import { Badge } from '@components/ui/Badge/Badge';
+import { Table } from '@components/ui/Table/Table';
+import type { TableColumn } from '@components/ui/Table/Table';
 import type { Employee, EmployeeStatus, EmployeeTableProps } from './EmployeeTable.types';
 import styles from './EmployeeTable.module.css';
 
-const STATUS_CONFIG: Record<EmployeeStatus, { label: string }> = {
-  active: { label: 'Ativo' },
-  pending: { label: 'Pendente' },
-  inactive: { label: 'Inativo' },
+type NormalizedEmployeeStatus = 'active' | 'pending' | 'inactive';
+
+const STATUS_CONFIG = {
+  active: { label: 'Ativo', variant: 'success' },
+  pending: { label: 'Pendente', variant: 'warning' },
+  inactive: { label: 'Inativo', variant: 'neutral' },
+} as const satisfies Record<
+  NormalizedEmployeeStatus,
+  { label: string; variant: 'success' | 'warning' | 'neutral' }
+>;
+
+const normalizeStatus = (status: EmployeeStatus): NormalizedEmployeeStatus => {
+  return status.toLowerCase() as NormalizedEmployeeStatus;
 };
 
 export const EmployeeTable = ({
@@ -25,7 +35,12 @@ export const EmployeeTable = ({
       render: (employee) => (
         <div className={styles.employee}>
           <span className={styles.avatar}>
-            <Avatar name={employee.name} imageUrl={employee.avatarUrl} theme="dark" size="sm" />
+            <Avatar
+              name={employee.name}
+              imageUrl={employee.avatarUrl ?? undefined}
+              theme="dark"
+              size="sm"
+            />
           </span>
           <span className={styles.name}>{employee.name}</span>
         </div>
@@ -53,18 +68,10 @@ export const EmployeeTable = ({
       header: 'Status do acesso',
       align: 'center',
       render: (employee) => {
-        const config = STATUS_CONFIG[employee.status];
+        const status = normalizeStatus(employee.status);
+        const config = STATUS_CONFIG[status];
 
-        return (
-          <span
-            className={`${styles.statusBadge} ${styles[employee.status]}`}
-            aria-label={`Status do acesso: ${config.label}`}
-          >
-            <span className={styles.statusDot} aria-hidden="true" />
-            <span>{config.label}</span>
-            <ChevronDown size={12} aria-hidden="true" />
-          </span>
-        );
+        return <Badge label={config.label} variant={config.variant} />;
       },
     },
     {
@@ -88,7 +95,7 @@ export const EmployeeTable = ({
             className={styles.actionButton}
             aria-label="Reenviar convite"
             title="Reenviar convite"
-            disabled={employee.status !== 'pending'}
+            disabled={normalizeStatus(employee.status) !== 'pending'}
             onClick={() => onResendInvite(employee)}
           >
             <Send aria-hidden="true" size={16} />
