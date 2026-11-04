@@ -1,0 +1,12 @@
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.submitError {
+  margin-top: var(--space-4);
+  color: var(--color-error-300);
+  font-size: var(--text-body-3);
+}

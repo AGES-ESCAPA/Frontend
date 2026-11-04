@@ -91,3 +91,10 @@ export { MaskedInput } from './MaskedInput';
 export type { MaskedInputProps, MaskType } from './MaskedInput';
 export { OrderSummary } from './OrderSummary';
 export type { OrderSummaryProps, OrderItem, OrderBuyer } from './OrderSummary';
+export { EmployeeFormModal } from './EmployeeFormModal';
+export type {
+  EmployeeAccessStatus,
+  EmployeeFormField,
+  EmployeeFormModalProps,
+  EmployeeFormValues,
+} from './EmployeeFormModal';
