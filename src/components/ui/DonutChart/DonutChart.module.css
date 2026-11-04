@@ -7,6 +7,7 @@
 
 .chart {
   position: relative;
+  container-type: inline-size;
   width: 100%;
   max-width: var(--container-sm);
   aspect-ratio: 1;
@@ -14,6 +15,8 @@
 }
 
 .distribution {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--container-xs), 100%), 1fr));
   align-items: center;
 }
 
@@ -29,16 +32,21 @@
   text-align: center;
 }
 
+.center > * {
+  max-width: 62%;
+  overflow-wrap: anywhere;
+}
+
 .centerValue {
   color: var(--color-text-primary);
-  font-size: var(--text-h3);
+  font-size: clamp(var(--text-body-4), var(--donut-center-value-fluid), var(--text-h3));
   font-weight: var(--font-weight-bold);
   line-height: var(--text-h3--line-height);
 }
 
 .centerLabel {
   color: var(--color-text-muted);
-  font-size: var(--text-body-4);
+  font-size: clamp(var(--text-body-5), var(--donut-center-label-fluid), var(--text-body-4));
   line-height: var(--text-body-4--line-height);
 }
 
@@ -74,23 +82,15 @@
   line-height: var(--text-body-4--line-height);
 }
 
+.legendItem span {
+  overflow-wrap: anywhere;
+}
+
 .legendSwatch {
   flex: 0 0 var(--space-3);
+  width: var(--space-3);
   height: var(--space-3);
   margin-block-start: calc((var(--text-body-4--line-height) - var(--space-3)) / 2);
   border-radius: var(--radius-full);
-}
-
-@media (width > 40rem) {
-  .distribution {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (width <= 40rem) {
-  .centerValue {
-    font-size: var(--text-h4);
-    line-height: var(--text-h4--line-height);
-  }
+  overflow: hidden;
 }
