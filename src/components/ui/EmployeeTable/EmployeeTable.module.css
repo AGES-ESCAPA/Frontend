@@ -1,0 +1,73 @@
+.tableWrapper {
+  width: 100%;
+  min-width: 0;
+}
+
+.employee {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.name {
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+.email,
+.courses {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+  white-space: nowrap;
+}
+
+.courses strong {
+  color: var(--color-info);
+  font-weight: var(--font-weight-semibold);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.actionButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.actionButton:hover:not(:disabled) {
+  color: var(--color-info);
+  background-color: var(--color-overlay-hover-on-dark);
+}
