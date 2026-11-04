@@ -5,7 +5,7 @@ export interface Employee {
   name: string;
   email: string;
   avatarUrl?: string | null;
-  assignedCoursesCount: number;
+  assignedCourses: number;
   status: EmployeeStatus;
 }
 

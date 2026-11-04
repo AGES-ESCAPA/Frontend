@@ -58,8 +58,8 @@ export const EmployeeTable = ({
       align: 'center',
       render: (employee) => (
         <span className={styles.courses}>
-          <strong>{employee.assignedCoursesCount}</strong>{' '}
-          {employee.assignedCoursesCount === 1 ? 'curso' : 'cursos'}
+          <strong>{employee.assignedCourses}</strong>{' '}
+          {employee.assignedCourses === 1 ? 'curso' : 'cursos'}
         </span>
       ),
     },
