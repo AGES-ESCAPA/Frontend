@@ -1,34 +1,58 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-4);
   min-width: 0;
 }
 
 .kpiGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-5);
+  gap: var(--space-4);
   min-width: 0;
 }
 
 .leaderCard {
   justify-content: space-between;
   min-width: 0;
+  padding: var(--space-5);
+  background-color: var(--color-primary-800);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   overflow-wrap: anywhere;
+}
+
+.leaderCard p:nth-child(2) {
+  max-width: 12ch;
+  font-size: var(--text-h4);
+  line-height: var(--leading-tight);
+}
+
+.leaderCard p:nth-child(3) {
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
 }
 
 .chartsGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   align-items: stretch;
-  gap: var(--space-5);
+  gap: var(--space-4);
   min-width: 0;
 }
 
+.chartsGridThreeCols {
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
 .panel {
+  gap: var(--space-4);
   min-width: 0;
   height: 100%;
+  padding: var(--space-5);
+  background-color: var(--color-primary-800);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
 }
 
 .panel h2 {
@@ -40,12 +64,77 @@
   text-transform: uppercase;
 }
 
+/* Estilização dos itens do ranking igual ao protótipo */
+.rankingList {
+  gap: var(--space-2);
+}
+
+.rankingList > li {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.rankingList > li > span {
+  background-color: var(--color-neutral-800);
+  border-radius: var(--radius-sm);
+}
+
+.rankingList div[role='progressbar'] {
+  height: var(--space-2);
+  background-color: var(--color-primary-700);
+}
+
+/* DonutChart e legenda lado a lado no painel de distribuição, fiel ao protótipo */
+.distributionChart {
+  display: grid;
+  grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.distributionChart > div {
+  max-width: 11rem;
+}
+
+.distributionChart > ul {
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.distributionChart > ul > li {
+  align-items: center;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+}
+
+.distributionChart > ul > li > svg {
+  margin-block-start: 0;
+  border-radius: var(--radius-sm);
+}
+
+.rankingList > li:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+@media (width < 80rem) {
+  .chartsGridThreeCols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chartsGridThreeCols > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (width < 64rem) {
   .kpiGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .chartsGrid {
+  .chartsGrid,
+  .chartsGridThreeCols {
     grid-template-columns: 1fr;
   }
 }
@@ -60,7 +149,13 @@
     gap: var(--space-4);
   }
 
-  .chartsGrid {
+  .chartsGrid,
+  .chartsGridThreeCols {
+    gap: var(--space-4);
+  }
+
+  .distributionChart {
+    grid-template-columns: 1fr;
     gap: var(--space-4);
   }
 }

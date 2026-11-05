@@ -1,3 +1,4 @@
+import type { BarListItem } from '@components/ui';
 import type { PopularCoursesMetricsData } from '@/types/adminMetrics';
 
 export const MOCK_COURSE_METRICS: PopularCoursesMetricsData = {
@@ -5,7 +6,7 @@ export const MOCK_COURSE_METRICS: PopularCoursesMetricsData = {
     courseId: 'c0000000-0000-4000-a000-000000000001',
     title: 'Turismo de Aventura',
     enrollments: 4820,
-    enrollmentsLabel: 'Mais de 4,8 mil matrículas',
+    enrollmentsLabel: 'Mais de 4.8k matrículas',
   },
   topCourses: [
     {
@@ -42,3 +43,26 @@ export const MOCK_COURSE_METRICS: PopularCoursesMetricsData = {
     { category: 'Marketing', percentage: 12 },
   ],
 };
+
+export const MOCK_ENGAGED_COMPANIES: BarListItem[] = [
+  { id: 'company-1', label: 'Euro Trip', value: 259 },
+  { id: 'company-2', label: 'Ibis', value: 206 },
+  { id: 'company-3', label: 'CVC', value: 201 },
+  { id: 'company-4', label: 'Eco Trip', value: 193 },
+  { id: 'company-5', label: 'Voyage', value: 187 },
+];
+
+export interface ActiveStudentsPoint {
+  month: string;
+  x: number;
+  y: number;
+}
+
+export const MOCK_ACTIVE_STUDENTS_EVOLUTION: ActiveStudentsPoint[] = [
+  { month: 'Mar 26', x: 24, y: 148 },
+  { month: 'Abr 26', x: 208, y: 108 },
+  { month: 'Mai 26', x: 392, y: 68 },
+  { month: 'Jun 26', x: 576, y: 48 },
+  { month: 'Jul 26', x: 760, y: 28 },
+  { month: 'Ago 26', x: 944, y: 6 },
+];

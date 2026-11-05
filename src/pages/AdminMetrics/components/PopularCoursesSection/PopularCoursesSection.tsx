@@ -28,6 +28,10 @@ export const PopularCoursesSection = ({
   topCourses,
   categoriesCount,
   enrollmentsByCategory,
+  kpiLeadingCards,
+  kpiTrailingCards,
+  middlePanel,
+  bottomPanel,
   className = '',
 }: PopularCoursesSectionProps) => {
   const safeCategoriesCount =
@@ -44,21 +48,27 @@ export const PopularCoursesSection = ({
     value: item.percentage,
   }));
 
+  const hasMiddlePanel = Boolean(middlePanel);
+
   return (
     <section
       className={`${styles.section} ${className}`.trim()}
       aria-label="Indicadores de cursos mais populares"
     >
       <div className={styles.kpiGrid}>
+        {kpiLeadingCards}
         <SumCard
           label="Curso Mais Acessado"
           value={mostAccessedCourse ? mostAccessedCourse.title : '—'}
           description={formatEnrollmentsDescription(mostAccessedCourse)}
           className={styles.leaderCard}
         />
+        {kpiTrailingCards}
       </div>
 
-      <div className={styles.chartsGrid}>
+      <div
+        className={`${styles.chartsGrid} ${hasMiddlePanel ? styles.chartsGridThreeCols : ''}`.trim()}
+      >
         <Panel title="Distribuição por Tipo de Curso" className={styles.panel}>
           <DonutChart
             variant="distribution"
@@ -67,8 +77,11 @@ export const PopularCoursesSection = ({
             centerLabel={safeCategoriesCount === 1 ? 'Categoria' : 'Categorias'}
             showLegend
             ariaLabel="Distribuição por tipo de curso"
+            className={styles.distributionChart}
           />
         </Panel>
+
+        {middlePanel}
 
         <Panel title="Top 5 Cursos por Acesso" className={styles.panel}>
           <BarList
@@ -76,9 +89,12 @@ export const PopularCoursesSection = ({
             items={rankingItems}
             emptyMessage="Nenhum curso com matrículas registradas."
             aria-label="Top 5 cursos por matrículas"
+            className={styles.rankingList}
           />
         </Panel>
       </div>
+
+      {bottomPanel}
     </section>
   );
 };

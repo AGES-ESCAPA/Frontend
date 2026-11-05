@@ -46,21 +46,29 @@ describe('AdminMetrics', () => {
     expect(metricsLink).toHaveAttribute('aria-current', 'page');
   });
 
-  it('renders the page heading and the default popular courses metrics blocks', () => {
+  it('renders the dashboard KPIs and the popular courses metrics blocks', () => {
     render(
       <MemoryRouter initialEntries={['/admin/metricas']}>
         <AdminMetrics />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Métricas da Plataforma' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Alunos Ativos' })).toHaveTextContent('12.847');
+    expect(screen.getByRole('article', { name: 'Empresas Parceiras' })).toHaveTextContent('342');
     expect(screen.getByRole('article', { name: 'Curso Mais Acessado' })).toHaveTextContent(
       'Turismo de Aventura',
+    );
+    expect(screen.getByRole('article', { name: 'Taxa Média de Conclusão' })).toHaveTextContent(
+      '68%',
     );
     expect(
       screen.getByRole('heading', { name: 'Distribuição por Tipo de Curso' }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Top 5 Empresas Mais Engajadas' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Top 5 Cursos por Acesso' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Evolução de Alunos Ativos' })).toBeInTheDocument();
   });
 
   it('passes custom courseMetrics props down to the popular courses section', () => {

@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export interface PopularCourseLeaderView {
   courseId?: string;
   title: string;
@@ -34,5 +36,13 @@ export interface PopularCoursesMetricsData {
 }
 
 export interface PopularCoursesSectionProps extends PopularCoursesMetricsData {
+  /** Cards exibidos antes do card "Curso Mais Acessado" na grade superior de KPIs. */
+  kpiLeadingCards?: ReactNode;
+  /** Cards exibidos após o card "Curso Mais Acessado" na grade superior de KPIs. */
+  kpiTrailingCards?: ReactNode;
+  /** Painel intermediário exibido entre a distribuição de categorias e o ranking de cursos. */
+  middlePanel?: ReactNode;
+  /** Painel inferior exibido abaixo da linha de distribuição e rankings. */
+  bottomPanel?: ReactNode;
   className?: string;
 }
