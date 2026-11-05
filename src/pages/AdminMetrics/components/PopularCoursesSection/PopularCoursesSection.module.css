@@ -1,0 +1,66 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.leaderCard {
+  justify-content: space-between;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.panel {
+  min-width: 0;
+  height: 100%;
+}
+
+.panel h2 {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-4--line-height);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+@media (width < 64rem) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width <= 40rem) {
+  .section {
+    gap: var(--space-4);
+  }
+
+  .kpiGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .chartsGrid {
+    gap: var(--space-4);
+  }
+}
