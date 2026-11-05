@@ -13,6 +13,8 @@ interface CommonDonutChartProps {
   centerLabel: string;
   showLegend?: boolean;
   ariaLabel: string;
+  /** `compact` limita o gráfico a um anel pequeno, sem folga em volta, para caber em um card. */
+  size?: 'default' | 'compact';
   className?: string;
 }
 
@@ -121,6 +123,7 @@ export const DonutChart = (props: DonutChartProps) => {
     centerLabel,
     showLegend = false,
     ariaLabel,
+    size = 'default',
     className = '',
   } = props;
   const id = useId().replace(/:/g, '');
@@ -153,7 +156,7 @@ export const DonutChart = (props: DonutChartProps) => {
 
   return (
     <section
-      className={`${styles.root} ${variant === 'distribution' && showLegend ? styles.distribution : ''} ${className}`.trim()}
+      className={`${styles.root} ${size === 'compact' ? styles.compact : ''} ${variant === 'distribution' && showLegend ? styles.distribution : ''} ${className}`.trim()}
     >
       <div className={styles.chart} role="img" aria-label={accessibleName}>
         {hasData ? (

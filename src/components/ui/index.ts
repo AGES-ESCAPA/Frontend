@@ -45,7 +45,7 @@ export { CourseCardSkeleton } from './CourseCard/CourseCardSkeleton';
 export { SelectInput } from './SelectInput';
 export type { SelectInputOption, SelectInputProps } from './SelectInput';
 export { SumCard } from './SumCard';
-export type { SumCardProps } from './SumCard';
+export type { SumCardProps, SumCardTrend } from './SumCard';
 export { DonutChart } from './DonutChart';
 export type { DonutChartProps, DonutChartSegment } from './DonutChart';
 export { Table } from './Table';
