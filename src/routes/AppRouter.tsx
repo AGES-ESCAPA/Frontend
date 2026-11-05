@@ -74,6 +74,12 @@ const AdminCourses = lazy(() =>
     default: m.AdminCourses,
   })),
 );
+
+const AdminMetrics = lazy(() =>
+  import('@pages/AdminMetrics/AdminMetrics').then((m) => ({
+    default: m.AdminMetrics,
+  })),
+);
 const DigitalCertificate = lazy(() =>
   import('@pages/DigitalCertificate/DigitalCertificate').then((m) => ({
     default: m.DigitalCertificate,
@@ -269,6 +275,14 @@ export const AppRouter = () => {
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
                   <OrderManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/metricas"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminMetrics />
                 </ProtectedRoute>
               }
             />
