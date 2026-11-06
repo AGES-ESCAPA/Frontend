@@ -80,6 +80,10 @@ const DigitalCertificate = lazy(() =>
   })),
 );
 
+const AdminMetrics = lazy(() =>
+  import('@pages/AdminMetrics/AdminMetrics').then((m) => ({ default: m.AdminMetrics })),
+);
+
 const RegisterAccountType = lazy(() =>
   import('@pages/RegisterAccountType/RegisterAccountType').then((m) => ({
     default: m.RegisterAccountType,
@@ -273,6 +277,14 @@ export const AppRouter = () => {
               }
             />
 
+            <Route
+              path="/admin/metricas"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminMetrics />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin/*"
               element={
