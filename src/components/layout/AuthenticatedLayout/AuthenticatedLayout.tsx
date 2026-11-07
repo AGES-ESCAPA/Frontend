@@ -33,6 +33,11 @@ export interface AuthenticatedLayoutProps {
    * (ex.: a sala de aula, com o player em destaque).
    */
   wide?: boolean;
+  /**
+   * Só a tela de certificado: o miolo pode passar do teto padrão, para o
+   * certificado ocupar mais da largura sem alterar as outras páginas.
+   */
+  expanded?: boolean;
 }
 
 /**
@@ -50,6 +55,7 @@ export const AuthenticatedLayout = ({
   onLogout,
   children,
   wide = false,
+  expanded = false,
 }: AuthenticatedLayoutProps) => {
   const auth = useOptionalAuth();
   const navigate = useNavigate();
@@ -104,7 +110,11 @@ export const AuthenticatedLayout = ({
           showProfileLink={role !== 'admin'}
         />
 
-        <main className={`${styles.main} ${wide ? styles.wide : ''}`}>{children}</main>
+        <main
+          className={`${styles.main} ${wide ? styles.wide : ''} ${expanded ? styles.expanded : ''}`}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

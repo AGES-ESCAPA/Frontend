@@ -43,7 +43,7 @@
   pointer-events: none;
 }
 
-/* Igual ao role="status" do TeaserPlayer, mas sem ocupar espaço visual —
+/* Igual ao role="status" do VideoPlayer, mas sem ocupar espaço visual —
    decisão do time para esta US: o botão não muda de aparência no erro. */
 .srOnly {
   position: absolute;

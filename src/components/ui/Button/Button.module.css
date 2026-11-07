@@ -10,11 +10,12 @@
   justify-content: center;
   gap: var(--space-3);
   font-family: var(--font-family-base);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--text-body-1);
-  line-height: var(--text-body-1--line-height);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--text-body-3);
+  line-height: 15px;
   padding: var(--space-3) var(--space-6);
-  min-height: 44px;
+  height: 41px;
+  min-height: 41px;
   border: 2px solid transparent;
   border-radius: var(--radius-xl);
   cursor: pointer;
@@ -121,11 +122,6 @@
 
 /* 7. danger — fundo rosa translúcido, borda e 8px de raio (Figma, 41px) */
 .variant-danger {
-  height: 41px;
-  min-height: 41px;
-  padding: var(--space-3) var(--space-6);
-  font-size: var(--text-body-3);
-  line-height: 15px;
   background-color: var(--color-danger-surface);
   color: var(--color-danger);
   border-width: 1px;
@@ -148,6 +144,11 @@
 .loading {
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* Com ícone o rótulo fica semibold; sem ícone permanece bold, como "Desativar Minha Conta". */
+.hasIcon {
+  font-weight: var(--font-weight-semibold);
 }
 
 /* ── Icon ──────────────────────────────────────────────────────────── */

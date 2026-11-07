@@ -81,10 +81,11 @@ describe('ProfileDataCard', () => {
     renderCard(student);
 
     expect(screen.getByLabelText(/Nome Completo/)).toHaveValue('Mariana Costa');
-    expect(screen.getByLabelText('E-mail')).toHaveValue('mariana@email.com');
-    expect(screen.getByLabelText('E-mail')).toHaveAttribute('readonly');
-    expect(screen.getByLabelText('CPF')).toHaveValue('390.111.222-33');
-    expect(screen.getByLabelText('CPF')).toHaveAttribute('readonly');
+    expect(screen.getByText('E-mail')).toBeInTheDocument();
+    expect(screen.getByText('mariana@email.com')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'E-mail' })).not.toBeInTheDocument();
+    expect(screen.getByText('390.111.222 - 33')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'CPF' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('Telefone')).toHaveValue('(51) 99120-3344');
     expect(screen.queryByLabelText(/Razão Social/)).not.toBeInTheDocument();
   });
@@ -195,7 +196,8 @@ describe('ProfileDataCard', () => {
     renderCard(company);
 
     expect(screen.getByLabelText(/Nome do Responsável/)).toHaveValue('Ana Responsável');
-    expect(screen.getByLabelText('CNPJ')).toHaveValue('12.345.678/0001-91');
+    expect(screen.getByText('12.345.678/0001-91')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'CNPJ' })).not.toBeInTheDocument();
     const legalName = screen.getByLabelText(/Razão Social/);
     await userEvent.clear(legalName);
     await userEvent.type(legalName, 'Vista Mar S.A.');
@@ -215,7 +217,7 @@ describe('ProfileDataCard', () => {
 
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByText('Luciana Prado')).toBeInTheDocument();
-    expect(screen.getByText('390.111.222-33')).toBeInTheDocument();
+    expect(screen.getByText('390.111.222 - 33')).toBeInTheDocument();
     expect(screen.getByText('(54) 99999-8888')).toBeInTheDocument();
     expect(screen.getByText('Pousada Vista Mar LTDA')).toBeInTheDocument();
   });

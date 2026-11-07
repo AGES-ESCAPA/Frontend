@@ -21,6 +21,10 @@ export const AvatarUpload = ({
   name,
   onFileSelected,
   maxSizeBytes = MAX_FILE_SIZE_BYTES,
+  size = 'lg',
+  avatarClassName,
+  compact = false,
+  children,
 }: AvatarUploadProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -64,29 +68,59 @@ export const AvatarUpload = ({
     onFileSelected(file);
   };
 
+  const avatar = (
+    <Avatar
+      imageUrl={previewUrl ?? imageUrl ?? undefined}
+      name={name}
+      theme="dark"
+      size={size}
+      className={avatarClassName}
+    />
+  );
+
+  const error = errorMessage ? (
+    <p role="alert" className={compact ? styles.errorInline : styles.error}>
+      {errorMessage}
+    </p>
+  ) : null;
+
+  const changePhotoButton = (
+    <Button
+      type="button"
+      variant={compact ? 'ghost' : 'secondary'}
+      className={compact ? styles.changePhoto : undefined}
+      label="Alterar foto"
+      icon={<Camera size={compact ? 16 : 18} />}
+      onClick={handleButtonClick}
+    />
+  );
+
+  const fileInput = (
+    <input
+      ref={fileInputRef}
+      data-testid="avatar-file-input"
+      type="file"
+      accept={ALLOWED_FILE_TYPES.join(',')}
+      className={styles.input}
+      onChange={handleFileChange}
+    />
+  );
+
+  if (children) {
+    return (
+      <>
+        {children({ avatar, changePhotoButton, error })}
+        {fileInput}
+      </>
+    );
+  }
+
   return (
     <div className={styles.root}>
-      <Avatar imageUrl={previewUrl ?? imageUrl ?? undefined} name={name} theme="dark" size="lg" />
-      {errorMessage && (
-        <p role="alert" className={styles.error}>
-          {errorMessage}
-        </p>
-      )}
-      <input
-        ref={fileInputRef}
-        data-testid="avatar-file-input"
-        type="file"
-        accept={ALLOWED_FILE_TYPES.join(',')}
-        className={styles.input}
-        onChange={handleFileChange}
-      />
-      <Button
-        type="button"
-        variant="secondary"
-        label="Alterar foto"
-        icon={<Camera size={18} />}
-        onClick={handleButtonClick}
-      />
+      {avatar}
+      {error}
+      {fileInput}
+      {changePhotoButton}
     </div>
   );
 };

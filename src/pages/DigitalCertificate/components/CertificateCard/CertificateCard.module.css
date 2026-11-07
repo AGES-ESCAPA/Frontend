@@ -95,7 +95,7 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  padding: 7cqi 7.7cqi;
+  padding: 4.2cqi 6.2cqi 3.6cqi;
 }
 
 .header {
@@ -124,7 +124,7 @@
 
 .eyebrow {
   max-width: 62cqi;
-  margin: 6.8cqi 0 0;
+  margin: 3.2cqi 0 0;
   color: var(--color-info);
   font-size: clamp(var(--text-body-5), 1.19cqi, var(--text-body-4));
   font-weight: var(--font-weight-bold);
@@ -136,7 +136,7 @@
   display: flex;
   max-width: 62cqi;
   flex-direction: column;
-  margin-top: 2.4cqi;
+  margin-top: 1.4cqi;
 }
 
 .introLine {
@@ -147,23 +147,23 @@
 }
 
 .studentName {
-  margin: 1.2cqi 0 2.3cqi;
+  margin: 0.5cqi 0 1.1cqi;
   color: var(--color-text-primary);
-  font-size: clamp(var(--text-h5), 4.27cqi, var(--text-h2));
+  font-size: clamp(var(--text-h6), 3.4cqi, var(--text-h3));
   font-weight: var(--font-weight-bold);
   line-height: var(--leading-tight);
 }
 
 .courseName {
-  margin: 1.6cqi 0 0;
+  margin: 0.7cqi 0 0;
   color: var(--color-info);
-  font-size: clamp(var(--text-h6), 2.9cqi, var(--text-h3));
+  font-size: clamp(var(--text-body-2), 2.2cqi, var(--text-h4));
   font-weight: var(--font-weight-bold);
   line-height: var(--leading-tight);
 }
 
 .offeredBy {
-  margin: 2cqi 0 0;
+  margin: 1cqi 0 0;
   color: var(--color-neutral-300);
   font-size: clamp(var(--text-body-4), 1.4cqi, var(--text-body-3));
   line-height: var(--leading-normal);
@@ -173,8 +173,8 @@
 .details {
   display: flex;
   flex-direction: column;
-  gap: 2.4cqi;
-  margin: 5cqi 0 0;
+  gap: 1.3cqi;
+  margin: 2.4cqi 0 0;
 }
 
 .detailItem {
@@ -185,8 +185,8 @@
 
 .detailIcon {
   flex-shrink: 0;
-  width: clamp(var(--space-5), 2.9cqi, var(--space-10));
-  height: clamp(var(--space-5), 2.9cqi, var(--space-10));
+  width: clamp(var(--space-4), 2.2cqi, var(--space-8));
+  height: clamp(var(--space-4), 2.2cqi, var(--space-8));
   color: var(--color-info);
 }
 
@@ -207,7 +207,7 @@
 /* Na imagem, a assinatura sobe ao lado do código de verificação, alinhada pela
    base com o link: ela fica posicionada no canto e não empurra o texto. */
 .footer {
-  margin-top: 2.8cqi;
+  margin-top: 1.6cqi;
   padding-right: 32cqi;
 }
 
@@ -234,7 +234,7 @@
 .signature {
   position: absolute;
   right: 9.7cqi;
-  bottom: 7cqi;
+  bottom: 3.6cqi;
   display: flex;
   width: 27.3cqi;
   flex-direction: column;

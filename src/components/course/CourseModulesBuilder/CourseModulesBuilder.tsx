@@ -14,6 +14,7 @@ import { courseModulesApi } from '@services/courseModules';
 import {
   createLesson as persistLessonRequest,
   getAdminLesson,
+  reorderModuleLessons,
   updateLesson as updateLessonRequest,
 } from '@services/lessonService';
 import type { Lesson, LessonPayload } from '@/types/lesson';
@@ -32,6 +33,8 @@ export interface CourseModulesBuilderProps {
   createLesson?: (payload: LessonPayload) => Promise<Lesson>;
   getLesson?: (moduleId: string, lessonId: string) => Promise<Lesson>;
   updateLesson?: (lessonId: string, payload: LessonPayload) => Promise<Lesson>;
+  /** Devolve as aulas do módulo já na nova ordem. */
+  reorderLessons?: (moduleId: string, contentIds: string[]) => Promise<AdminModuleContent[]>;
 }
 
 type BuilderStatus = 'idle' | 'saving' | 'success' | 'error';
@@ -49,6 +52,29 @@ const reindexModules = (modules: AdminCourseModule[]) =>
     ...module,
     order: index + 1,
   }));
+
+const reindexLessons = (lessons: AdminModuleContent[]) =>
+  lessons.map((lesson, index) => ({
+    ...lesson,
+    order: index + 1,
+  }));
+
+const MODULE_CARD_SELECTOR = '[data-module-card]';
+
+/**
+ * O card do módulo também é arrastável. Sem desligá-lo no pointerdown, o
+ * navegador inicia o drag no ancestral e a aula nunca chega a ser a origem.
+ */
+const setModuleCardDraggable = (element: Element, enabled: boolean) => {
+  const card = element.closest(MODULE_CARD_SELECTOR);
+
+  if (card instanceof HTMLElement) {
+    card.draggable = enabled;
+  }
+};
+
+const isInteractiveDragTarget = (target: EventTarget | null) =>
+  target instanceof Element && Boolean(target.closest('button, input, textarea, select, a'));
 
 const formatModuleDuration = (totalMinutes: number) => {
   const hours = Math.floor(totalMinutes / 60);
@@ -103,11 +129,16 @@ export const CourseModulesBuilder = ({
   createLesson = persistLessonRequest,
   getLesson = getAdminLesson,
   updateLesson = updateLessonRequest,
+  reorderLessons = reorderModuleLessons,
 }: CourseModulesBuilderProps) => {
   const [modules, setModules] = useState(() => sortModulesByOrder(initialModules));
   const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(() => new Set());
   const [draggingModuleId, setDraggingModuleId] = useState<string | null>(null);
   const [dragOverModuleId, setDragOverModuleId] = useState<string | null>(null);
+  const [draggingLessonId, setDraggingLessonId] = useState<string | null>(null);
+  const [dragOverLessonId, setDragOverLessonId] = useState<string | null>(null);
+  const [moduleDragLocked, setModuleDragLocked] = useState(false);
+  const draggingLessonRef = useRef<{ moduleId: string; lessonId: string } | null>(null);
   const [lessonTarget, setLessonTarget] = useState<{
     moduleId: string;
     moduleName: string;
@@ -250,10 +281,23 @@ export const CourseModulesBuilder = ({
   };
 
   const handleDragStart = (moduleId: string) => {
+    draggingLessonRef.current = null;
+    setDraggingLessonId(null);
     setDraggingModuleId(moduleId);
   };
 
+  const clearLessonDrag = () => {
+    draggingLessonRef.current = null;
+    setDraggingLessonId(null);
+    setDragOverLessonId(null);
+    setModuleDragLocked(false);
+  };
+
   const handleDrop = async (targetModuleId: string) => {
+    if (draggingLessonRef.current) {
+      return;
+    }
+
     if (draggingModuleId === null || draggingModuleId === targetModuleId) {
       setDraggingModuleId(null);
       setDragOverModuleId(null);
@@ -277,6 +321,69 @@ export const CourseModulesBuilder = ({
     setDraggingModuleId(null);
     setDragOverModuleId(null);
     await persistModuleOrder(nextModules, previousModules);
+  };
+
+  const persistLessonOrder = async (
+    moduleId: string,
+    nextLessons: AdminModuleContent[],
+    previousModules: AdminCourseModule[],
+  ) => {
+    // Mesma regra do módulo: a lista precisa conter cada aula exatamente uma vez.
+    const contentIds = nextLessons.map((lesson) => lesson.id);
+
+    setModules((currentModules) =>
+      currentModules.map((module) =>
+        module.id === moduleId ? { ...module, contents: reindexLessons(nextLessons) } : module,
+      ),
+    );
+    setFeedback('saving', 'Salvando nova ordem das aulas...');
+
+    try {
+      const reorderedLessons = await reorderLessons(moduleId, contentIds);
+
+      setModules((currentModules) =>
+        currentModules.map((module) =>
+          module.id === moduleId ? { ...module, contents: reorderedLessons } : module,
+        ),
+      );
+      setFeedback('success', 'Ordem das aulas salva.');
+    } catch (error) {
+      setModules(previousModules);
+      setFeedback(
+        'error',
+        error instanceof Error ? error.message : 'Não foi possível salvar a ordem das aulas.',
+      );
+    }
+  };
+
+  const handleLessonDrop = async (moduleId: string, targetLessonId: string) => {
+    const draggingLesson = draggingLessonRef.current;
+
+    if (
+      !draggingLesson ||
+      draggingLesson.moduleId !== moduleId ||
+      draggingLesson.lessonId === targetLessonId
+    ) {
+      return;
+    }
+
+    const previousModules = orderedModules;
+    const module = previousModules.find((current) => current.id === moduleId);
+    const lessons = module
+      ? [...module.contents].sort((current, next) => current.order - next.order)
+      : [];
+    const draggedLesson = lessons.find((lesson) => lesson.id === draggingLesson.lessonId);
+
+    if (!module || !draggedLesson) {
+      return;
+    }
+
+    const lessonsWithoutDragged = lessons.filter((lesson) => lesson.id !== draggedLesson.id);
+    const targetIndex = lessonsWithoutDragged.findIndex((lesson) => lesson.id === targetLessonId);
+    const nextLessons = [...lessonsWithoutDragged];
+
+    nextLessons.splice(targetIndex, 0, draggedLesson);
+    await persistLessonOrder(moduleId, nextLessons, previousModules);
   };
 
   const requestDeleteModule = (moduleId: string) => {
@@ -433,18 +540,37 @@ export const CourseModulesBuilder = ({
                 dragOverModuleId === module.id ? styles.dragOver : ''
               } ${draggingModuleId === module.id ? styles.dragging : ''}`}
               key={module.id}
-              draggable={status !== 'saving'}
-              onDragStart={() => handleDragStart(module.id)}
+              data-module-card
+              draggable={status !== 'saving' && !moduleDragLocked}
+              onDragStart={(event) => {
+                if (
+                  draggingLessonRef.current ||
+                  (event.target instanceof Element && event.target.closest('[data-lesson-item]'))
+                ) {
+                  event.stopPropagation();
+                  return;
+                }
+
+                handleDragStart(module.id);
+              }}
               onDragEnd={() => {
                 setDraggingModuleId(null);
                 setDragOverModuleId(null);
               }}
               onDragOver={(event) => {
+                if (draggingLessonRef.current) {
+                  return;
+                }
+
                 event.preventDefault();
                 setDragOverModuleId(module.id);
               }}
               onDragLeave={() => setDragOverModuleId(null)}
               onDrop={(event) => {
+                if (draggingLessonRef.current) {
+                  return;
+                }
+
                 event.preventDefault();
                 void handleDrop(module.id);
               }}
@@ -531,10 +657,99 @@ export const CourseModulesBuilder = ({
                 {isExpanded ? (
                   <div className={styles.lessonPanel} id={`module-${module.id}-lessons`}>
                     {lessons.length > 0 ? (
-                      <ul className={styles.lessonList}>
+                      <ul
+                        className={styles.lessonList}
+                        aria-label={`Aulas do Módulo ${moduleNumber}`}
+                      >
                         {lessons.map((lesson) => (
-                          <li key={lesson.id} className={styles.lessonItem}>
-                            <GripVertical size={18} aria-hidden="true" />
+                          <li
+                            key={lesson.id}
+                            data-lesson-item
+                            className={`${styles.lessonItem} ${
+                              dragOverLessonId === lesson.id ? styles.lessonDragOver : ''
+                            } ${draggingLessonId === lesson.id ? styles.lessonDragging : ''}`}
+                            draggable={status !== 'saving'}
+                            onPointerDown={(event) => {
+                              if (isInteractiveDragTarget(event.target)) {
+                                return;
+                              }
+
+                              event.stopPropagation();
+                              setModuleCardDraggable(event.currentTarget, false);
+                            }}
+                            onPointerUp={(event) => {
+                              if (draggingLessonRef.current?.lessonId === lesson.id) {
+                                return;
+                              }
+
+                              setModuleCardDraggable(event.currentTarget, status !== 'saving');
+                            }}
+                            onPointerCancel={(event) => {
+                              if (draggingLessonRef.current?.lessonId === lesson.id) {
+                                return;
+                              }
+
+                              setModuleCardDraggable(event.currentTarget, status !== 'saving');
+                            }}
+                            onDragStart={(event) => {
+                              event.stopPropagation();
+                              if (event.dataTransfer) {
+                                event.dataTransfer.effectAllowed = 'move';
+                                event.dataTransfer.setData('text/plain', lesson.id);
+                              }
+                              draggingLessonRef.current = {
+                                moduleId: module.id,
+                                lessonId: lesson.id,
+                              };
+                              setDraggingLessonId(lesson.id);
+                              setDraggingModuleId(null);
+                              setDragOverModuleId(null);
+                              setModuleDragLocked(true);
+                            }}
+                            onDragEnd={(event) => {
+                              event.stopPropagation();
+                              clearLessonDrag();
+                              setModuleCardDraggable(event.currentTarget, status !== 'saving');
+                            }}
+                            onDragOver={(event) => {
+                              const draggingLesson = draggingLessonRef.current;
+
+                              if (!draggingLesson || draggingLesson.moduleId !== module.id) {
+                                return;
+                              }
+
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setDragOverLessonId((currentId) =>
+                                currentId === lesson.id ? currentId : lesson.id,
+                              );
+                            }}
+                            onDragLeave={(event) => {
+                              const nextTarget = event.relatedTarget;
+
+                              if (
+                                nextTarget instanceof Node &&
+                                event.currentTarget.contains(nextTarget)
+                              ) {
+                                return;
+                              }
+
+                              setDragOverLessonId((currentId) =>
+                                currentId === lesson.id ? null : currentId,
+                              );
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              void handleLessonDrop(module.id, lesson.id);
+                            }}
+                          >
+                            <span
+                              className={styles.lessonDragHandle}
+                              aria-label={`Arrastar aula ${lesson.title}`}
+                            >
+                              <GripVertical size={18} aria-hidden="true" />
+                            </span>
                             {lesson.type === 'VIDEO' ? (
                               <CirclePlay size={18} aria-hidden="true" />
                             ) : (

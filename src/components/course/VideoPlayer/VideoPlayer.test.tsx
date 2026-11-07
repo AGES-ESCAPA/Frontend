@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { writeLessonPlayback } from '@utils/lessonPlayback';
-import { LessonVideoPlayer } from './LessonVideoPlayer';
+import { VideoPlayer } from './VideoPlayer';
 
 type VimeoHandler = (data?: unknown) => void;
 
@@ -104,12 +104,10 @@ const SECOND_MP4_URL = 'https://example.com/video-2.mp4';
 const VIMEO_URL = 'https://vimeo.com/123456789';
 const TITLE = 'Experiências Imersivas na Prática';
 
-const renderPlayer = (props: Partial<React.ComponentProps<typeof LessonVideoPlayer>> = {}) => {
+const renderPlayer = (props: Partial<React.ComponentProps<typeof VideoPlayer>> = {}) => {
   const onEnded = vi.fn();
 
-  const result = render(
-    <LessonVideoPlayer src={MP4_URL} title={TITLE} onEnded={onEnded} {...props} />,
-  );
+  const result = render(<VideoPlayer src={MP4_URL} title={TITLE} onEnded={onEnded} {...props} />);
 
   return {
     ...result,
@@ -126,7 +124,7 @@ const loadMetadata = (video: HTMLVideoElement, duration = 1450) => {
   fireEvent.loadedMetadata(video);
 };
 
-describe('LessonVideoPlayer', () => {
+describe('VideoPlayer', () => {
   describe('MP4 video', () => {
     it('renders the native video', () => {
       renderPlayer();
@@ -334,7 +332,7 @@ describe('LessonVideoPlayer', () => {
 
       expect(screen.getByText('Vídeo indisponível')).toBeInTheDocument();
 
-      rerender(<LessonVideoPlayer src={SECOND_MP4_URL} title={TITLE} />);
+      rerender(<VideoPlayer src={SECOND_MP4_URL} title={TITLE} />);
 
       expect(screen.queryByText('Vídeo indisponível')).not.toBeInTheDocument();
 
@@ -343,6 +341,25 @@ describe('LessonVideoPlayer', () => {
       expect(secondVideo).toHaveAttribute('src', SECOND_MP4_URL);
 
       expect(screen.getByText('Carregando...')).toBeInTheDocument();
+    });
+  });
+
+  describe('teaser', () => {
+    it('shows the course message and hides lesson actions', () => {
+      renderPlayer({
+        src: '',
+        ariaLabel: `Teaser do curso ${TITLE}`,
+        unavailableMessage: 'Vídeo não disponível para esse curso',
+      });
+
+      expect(screen.getByLabelText(`Teaser do curso ${TITLE}`)).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent('Vídeo não disponível para esse curso');
+      expect(screen.queryByText('Aula concluída')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /próxima aula/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /aula anterior/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /marcar como concluída/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -469,7 +486,7 @@ describe('LessonVideoPlayer', () => {
       expect(screen.getByText(/parabéns/i)).toBeInTheDocument();
 
       rerender(
-        <LessonVideoPlayer
+        <VideoPlayer
           src={SECOND_MP4_URL}
           title={TITLE}
           courseTitle={COURSE_TITLE}

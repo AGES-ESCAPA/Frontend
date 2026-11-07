@@ -10,17 +10,23 @@ import { useAuth } from '@contexts/useAuth';
 import { useCourseForm } from '@hooks/useCourseForm';
 import { useToast } from '@hooks/useToast';
 import {
+  addCoursePrerequisite,
   createCourse,
   getCourseById,
+  getCourseRules,
   listCourseCategories,
   publishCourse,
+  removeCoursePrerequisite,
+  searchCoursePrerequisites,
   updateCourse,
+  updateProgressRules,
 } from '@services/courseService';
 import { courseModulesApi } from '@services/courseModules';
 import type { AdminCourseModule } from '@/types/module';
 import type {
   CoursePrerequisiteOption,
   CourseProgressRules,
+  CourseRules,
   CourseStatus,
   CourseVersionLogEntry,
 } from '@/types/course';
@@ -31,6 +37,7 @@ import {
   validateCourseForm,
 } from '@utils/courseForm';
 import { BasicInfoCard } from './components/BasicInfoCard/BasicInfoCard';
+import { formatDateTime } from '@utils/formatters';
 import { ClassificationCard } from './components/ClassificationCard/ClassificationCard';
 import { DescriptionCard } from './components/DescriptionCard/DescriptionCard';
 import { MetricsCard } from './components/MetricsCard/MetricsCard';
@@ -55,52 +62,25 @@ const STATUS_LABELS: Record<CourseStatus, string> = {
 
 const TAB_ICON_SIZE = 14;
 
-/**
- * A aba "Regras & Pré Requisitos" também não tem endpoint ainda (nem de
- * regras de progresso, nem de pré-requisitos ou histórico de versão — ver
- * TSK-05-BACK). Os dados abaixo só existem pra dar vida à interface; nada
- * aqui é persistido de verdade até o contrato com o backend ser definido.
- */
-const MOCK_PROGRESS_RULES: CourseProgressRules = {
+const PREREQUISITE_SEARCH_DEBOUNCE_MS = 300;
+
+const DEFAULT_PROGRESS_RULES: CourseProgressRules = {
   requireSequentialProgress: true,
   blockAccessAfterDeadline: false,
 };
 
-const MOCK_PREREQUISITE_CATALOG: CoursePrerequisiteOption[] = [
-  { id: 'integracao-corporativa-n1', title: 'Integração Corporativa N1' },
-  { id: 'seguranca-informacao-basica', title: 'Segurança da Informação Básica' },
-  { id: 'atendimento-hospitalidade-premium', title: 'Atendimento em Hospitalidade Premium' },
-  { id: 'gestao-de-crises-turismo', title: 'Gestão de Crises no Turismo' },
-];
+const toVersionLabel = (version: string): string => {
+  const normalized = version.trim();
+  return normalized ? `V ${normalized}` : 'V 0.0';
+};
 
-const MOCK_SELECTED_PREREQUISITES: CoursePrerequisiteOption[] = [
-  MOCK_PREREQUISITE_CATALOG[0],
-  MOCK_PREREQUISITE_CATALOG[1],
-];
-
-const MOCK_VERSION_LABEL = 'V 1.4';
-
-const MOCK_VERSION_LOG: CourseVersionLogEntry[] = [
-  {
-    id: '1',
-    timestampLabel: 'Hoje, 14:30',
-    description: 'Alteração nas regras de progressão (Módulo 2).',
-    author: 'Admin Gestor',
-  },
-  {
-    id: '2',
-    timestampLabel: '12 Out 2023, 09:15',
-    description: 'Adicionado curso "Segurança da Informação" como pré-requisito.',
-    author: 'Admin Gestor',
-  },
-  {
-    id: '3',
-    timestampLabel: '05 Out 2023, 16:40',
-    description: 'Versão 1.0 publicada.',
-    author: 'Sistema',
-  },
-];
-
+const toVersionLog = (rules: CourseRules): CourseVersionLogEntry[] =>
+  rules.changeLog.map((entry) => ({
+    id: entry.id,
+    timestampLabel: entry.createdAt ? formatDateTime(entry.createdAt) : '',
+    description: entry.description,
+    author: entry.changedBy?.trim() || 'Sistema',
+  }));
 export const CourseBuilder = () => {
   const { id: courseId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -121,15 +101,37 @@ export const CourseBuilder = () => {
   const [modulesError, setModulesError] = useState<string | null>(null);
   const [modulesReloadToken, setModulesReloadToken] = useState(0);
 
-  const [progressRules, setProgressRules] = useState<CourseProgressRules>(MOCK_PROGRESS_RULES);
+  const [progressRules, setProgressRules] = useState<CourseProgressRules>(DEFAULT_PROGRESS_RULES);
+  const progressRulesRef = useRef(progressRules);
   const [selectedPrerequisites, setSelectedPrerequisites] = useState<CoursePrerequisiteOption[]>(
-    MOCK_SELECTED_PREREQUISITES,
+    [],
   );
+  const selectedPrerequisitesRef = useRef(selectedPrerequisites);
+  const savedConfigurationRef = useRef({
+    requireSequentialProgress: DEFAULT_PROGRESS_RULES.requireSequentialProgress,
+    blockAccessAfterDeadline: DEFAULT_PROGRESS_RULES.blockAccessAfterDeadline,
+    prerequisiteIds: [] as string[],
+  });
+  progressRulesRef.current = progressRules;
+  selectedPrerequisitesRef.current = selectedPrerequisites;
+  const [prerequisiteQuery, setPrerequisiteQuery] = useState('');
+  const [prerequisiteSuggestions, setPrerequisiteSuggestions] = useState<
+    CoursePrerequisiteOption[]
+  >([]);
+  const [isSearchingPrerequisites, setIsSearchingPrerequisites] = useState(false);
+  const [prerequisiteSearchError, setPrerequisiteSearchError] = useState<string | null>(null);
+  const [versionLabel, setVersionLabel] = useState('V 0.0');
+  const [versionLog, setVersionLog] = useState<CourseVersionLogEntry[]>([]);
+  const [isRulesLoading, setIsRulesLoading] = useState(false);
+  const [rulesError, setRulesError] = useState<string | null>(null);
+  const [rulesReloadToken, setRulesReloadToken] = useState(0);
   const [notifyStudentsOnPublish, setNotifyStudentsOnPublish] = useState(false);
   const [activeTab, setActiveTab] = useState('basics');
+  const [isCoverUploading, setIsCoverUploading] = useState(false);
+  const coverUploadsRef = useRef(0);
 
   const isSaving = savingStatus !== null;
-  const isFormDisabled = isLoading || isSaving || loadError;
+  const isFormDisabled = isLoading || isSaving || loadError || isCoverUploading;
 
   /**
    * Guarda o id que acabamos de criar/salvar, pra o efeito de carregamento
@@ -138,6 +140,7 @@ export const CourseBuilder = () => {
    * rota de edição trocou o `courseId` com o componente ainda montado.
    */
   const skipNextLoadIdRef = useRef<string | null>(null);
+  const skipNextRulesLoadIdRef = useRef<string | null>(null);
 
   const menuItems = useMemo(
     () => SIDEBAR_MENU_PRESETS.admin.map((item, index) => ({ ...item, active: index === 0 })),
@@ -234,6 +237,11 @@ export const CourseBuilder = () => {
     setReloadToken((token) => token + 1);
   }, []);
 
+  const handleCoverUploadingChange = useCallback((uploading: boolean) => {
+    coverUploadsRef.current = Math.max(0, coverUploadsRef.current + (uploading ? 1 : -1));
+    setIsCoverUploading(coverUploadsRef.current > 0);
+  }, []);
+
   /**
    * A estrutura de conteúdo só existe para um curso já salvo: sem `courseId`
    * não há para onde criar módulos. Nesse caso a aba mostra um aviso e não
@@ -275,6 +283,128 @@ export const CourseBuilder = () => {
     setModulesReloadToken((token) => token + 1);
   }, []);
 
+  const applyRules = useCallback((rules: CourseRules) => {
+    const nextRules: CourseProgressRules = {
+      requireSequentialProgress: rules.requireSequentialProgress,
+      blockAccessAfterDeadline: rules.enforceDeadlineBlock,
+    };
+    const nextPrerequisites = rules.prerequisites.map((item) => ({
+      id: item.courseId,
+      title: item.courseTitle,
+    }));
+    progressRulesRef.current = nextRules;
+    selectedPrerequisitesRef.current = nextPrerequisites;
+    savedConfigurationRef.current = {
+      requireSequentialProgress: nextRules.requireSequentialProgress,
+      blockAccessAfterDeadline: nextRules.blockAccessAfterDeadline,
+      prerequisiteIds: nextPrerequisites.map((item) => item.id),
+    };
+    setProgressRules(nextRules);
+    setSelectedPrerequisites(nextPrerequisites);
+    setVersionLabel(toVersionLabel(rules.version));
+    setVersionLog(toVersionLog(rules));
+  }, []);
+
+  const loadedCourseIdRef = useRef<string | undefined>(courseId);
+
+  useEffect(() => {
+    if (courseId === undefined) {
+      if (loadedCourseIdRef.current !== undefined) {
+        progressRulesRef.current = DEFAULT_PROGRESS_RULES;
+        selectedPrerequisitesRef.current = [];
+        savedConfigurationRef.current = {
+          requireSequentialProgress: DEFAULT_PROGRESS_RULES.requireSequentialProgress,
+          blockAccessAfterDeadline: DEFAULT_PROGRESS_RULES.blockAccessAfterDeadline,
+          prerequisiteIds: [],
+        };
+        setProgressRules(DEFAULT_PROGRESS_RULES);
+        setSelectedPrerequisites([]);
+        setPrerequisiteQuery('');
+        setPrerequisiteSuggestions([]);
+        setVersionLabel('V 0.0');
+        setVersionLog([]);
+        setRulesError(null);
+        setIsRulesLoading(false);
+      }
+      loadedCourseIdRef.current = undefined;
+      return undefined;
+    }
+
+    if (skipNextRulesLoadIdRef.current === courseId) {
+      skipNextRulesLoadIdRef.current = null;
+      loadedCourseIdRef.current = courseId;
+      return undefined;
+    }
+
+    loadedCourseIdRef.current = courseId;
+
+    let isCurrent = true;
+    setIsRulesLoading(true);
+    setRulesError(null);
+
+    getCourseRules(courseId)
+      .then((rules) => {
+        if (isCurrent) applyRules(rules);
+      })
+      .catch((error: unknown) => {
+        if (!isCurrent) return;
+        setRulesError(
+          error instanceof Error ? error.message : 'Não foi possível carregar as regras do curso.',
+        );
+      })
+      .finally(() => {
+        if (isCurrent) setIsRulesLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [applyRules, courseId, rulesReloadToken]);
+
+  useEffect(() => {
+    const query = prerequisiteQuery.trim();
+    if (courseId === undefined || query === '') {
+      setPrerequisiteSuggestions((current) => (current.length === 0 ? current : []));
+      setIsSearchingPrerequisites((current) => (current ? false : current));
+      setPrerequisiteSearchError((current) => (current === null ? current : null));
+      return undefined;
+    }
+
+    let isCurrent = true;
+    setPrerequisiteSuggestions([]);
+    setIsSearchingPrerequisites(true);
+    setPrerequisiteSearchError(null);
+
+    const timeoutId = window.setTimeout(() => {
+      searchCoursePrerequisites(courseId, query)
+        .then((results) => {
+          if (!isCurrent) return;
+          setPrerequisiteSuggestions(
+            results.map((course) => ({ id: course.id, title: course.title })),
+          );
+        })
+        .catch((error: unknown) => {
+          if (!isCurrent) return;
+          setPrerequisiteSuggestions([]);
+          setPrerequisiteSearchError(
+            error instanceof Error ? error.message : 'Não foi possível buscar cursos.',
+          );
+        })
+        .finally(() => {
+          if (isCurrent) setIsSearchingPrerequisites(false);
+        });
+    }, PREREQUISITE_SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      isCurrent = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [courseId, prerequisiteQuery]);
+
+  const handleRetryRulesLoad = useCallback(() => {
+    setRulesReloadToken((token) => token + 1);
+  }, []);
+
   const handleProgressRuleChange = useCallback(
     (field: keyof CourseProgressRules, value: boolean) => {
       setProgressRules((current) => ({ ...current, [field]: value }));
@@ -286,10 +416,47 @@ export const CourseBuilder = () => {
     setSelectedPrerequisites((current) =>
       current.some((item) => item.id === course.id) ? current : [...current, course],
     );
+    setPrerequisiteQuery('');
   }, []);
 
   const handleRemovePrerequisite = useCallback((prerequisiteId: string) => {
     setSelectedPrerequisites((current) => current.filter((item) => item.id !== prerequisiteId));
+  }, []);
+
+  /**
+   * Regras e pré-requisitos só são gravados aqui, junto com o rascunho ou a
+   * publicação. Até esse clique a versão e o histórico permanecem como foram
+   * carregados.
+   */
+  const persistConfiguration = useCallback(async (id: string) => {
+    const rules = progressRulesRef.current;
+    const saved = savedConfigurationRef.current;
+    const rulesChanged =
+      rules.requireSequentialProgress !== saved.requireSequentialProgress ||
+      rules.blockAccessAfterDeadline !== saved.blockAccessAfterDeadline;
+
+    if (rulesChanged) {
+      await updateProgressRules(id, {
+        requireSequentialProgress: rules.requireSequentialProgress,
+        enforceDeadlineBlock: rules.blockAccessAfterDeadline,
+      });
+    }
+
+    const currentIds = selectedPrerequisitesRef.current.map((item) => item.id);
+    const savedIds = new Set(saved.prerequisiteIds);
+    const currentIdSet = new Set(currentIds);
+
+    for (const prerequisiteId of currentIds) {
+      if (!savedIds.has(prerequisiteId)) {
+        await addCoursePrerequisite(id, prerequisiteId);
+      }
+    }
+
+    for (const prerequisiteId of saved.prerequisiteIds) {
+      if (!currentIdSet.has(prerequisiteId)) {
+        await removeCoursePrerequisite(id, prerequisiteId);
+      }
+    }
   }, []);
 
   const handleSave = useCallback(
@@ -307,6 +474,10 @@ export const CourseBuilder = () => {
 
       setSavingStatus(nextStatus);
 
+      const editingPublishedCourse = status === 'PUBLISHED';
+      let savedId = courseId;
+      let configurationPersisted = false;
+
       try {
         const payload = buildCoursePayload(values, nextStatus);
         const saved =
@@ -314,23 +485,41 @@ export const CourseBuilder = () => {
             ? await createCourse({ ...payload, instructorId: user?.id })
             : await updateCourse(courseId, payload);
 
+        savedId = saved.id;
+        configurationPersisted = true;
+        await persistConfiguration(saved.id);
+
         if (courseId === undefined) {
           skipNextLoadIdRef.current = saved.id;
+          skipNextRulesLoadIdRef.current = saved.id;
           navigate(`${COURSES_ROUTE}/${saved.id}/editar`, { replace: true });
         }
 
         // Publicar é uma ação separada do salvamento: o PUT só grava os campos
         // do formulário, quem muda o status pra PUBLISHED é o endpoint de
         // publish (que também valida os obrigatórios pra publicação).
-        const finalCourse = nextStatus === 'PUBLISHED' ? await publishCourse(saved.id) : saved;
+        const finalCourse =
+          nextStatus === 'PUBLISHED'
+            ? await publishCourse(saved.id, { notifyEnrolledStudents: notifyStudentsOnPublish })
+            : saved;
 
         setStatus(finalCourse.status);
+        applyRules(await getCourseRules(finalCourse.id));
         showToast(
           'success',
           nextStatus === 'PUBLISHED' ? 'Curso publicado com sucesso!' : 'Rascunho salvo!',
-          'Os dados do curso foram gravados.',
+          nextStatus === 'DRAFT' && editingPublishedCourse
+            ? 'A versão que os alunos veem permanece até você publicar o curso.'
+            : 'Os dados do curso foram gravados.',
         );
       } catch (error: unknown) {
+        if (configurationPersisted && savedId !== undefined) {
+          try {
+            applyRules(await getCourseRules(savedId));
+          } catch {
+            // O histórico fica como estava; a mensagem abaixo cobre a falha do salvamento.
+          }
+        }
         showToast(
           'error',
           nextStatus === 'PUBLISHED'
@@ -342,12 +531,39 @@ export const CourseBuilder = () => {
         setSavingStatus(null);
       }
     },
-    [courseId, navigate, replaceErrors, showToast, user, values],
+    [
+      applyRules,
+      courseId,
+      navigate,
+      notifyStudentsOnPublish,
+      persistConfiguration,
+      replaceErrors,
+      showToast,
+      status,
+      user,
+      values,
+    ],
   );
 
   const handleLogout = useCallback(() => {
     window.location.assign('/');
   }, []);
+
+  const availablePrerequisiteSuggestions = prerequisiteSuggestions.filter(
+    (course) => !selectedPrerequisites.some((item) => item.id === course.id),
+  );
+
+  const prerequisiteSearchStatus =
+    prerequisiteQuery.trim() === ''
+      ? null
+      : (prerequisiteSearchError ??
+        (isSearchingPrerequisites
+          ? 'Buscando cursos…'
+          : availablePrerequisiteSuggestions.length === 0
+            ? 'Nenhum curso encontrado.'
+            : null));
+
+  const isRulesDisabled = isFormDisabled;
 
   return (
     <>
@@ -437,11 +653,13 @@ export const CourseBuilder = () => {
                 title={values.title}
                 teaserVideoUrl={values.teaserVideoUrl}
                 shortDescription={values.shortDescription}
+                thumbnailUrl={values.thumbnailUrl}
                 titleError={errors.title}
                 teaserVideoUrlError={errors.teaserVideoUrl}
                 shortDescriptionError={errors.shortDescription}
                 disabled={isFormDisabled}
                 onFieldChange={changeField}
+                onCoverUploadingChange={handleCoverUploadingChange}
               />
 
               <ClassificationCard
@@ -508,31 +726,63 @@ export const CourseBuilder = () => {
           </Tabs.Content>
 
           <Tabs.Content value="rules">
-            <div className={styles.grid}>
-              <ProgressRulesCard
-                rules={progressRules}
-                disabled={isFormDisabled}
-                onChange={handleProgressRuleChange}
-              />
+            {courseId === undefined ? (
+              <p className={styles.contentNotice} role="status">
+                Salve o rascunho do curso para configurar as regras, os pré-requisitos e o histórico
+                de versões.
+              </p>
+            ) : null}
 
-              <div className={styles.versionColumn}>
-                <VersionControlCard
-                  versionLabel={MOCK_VERSION_LABEL}
-                  entries={MOCK_VERSION_LOG}
-                  notifyStudentsOnPublish={notifyStudentsOnPublish}
-                  disabled={isFormDisabled}
-                  onNotifyStudentsOnPublishChange={setNotifyStudentsOnPublish}
+            {courseId !== undefined && isRulesLoading ? (
+              <p className={styles.loading} role="status">
+                Carregando regras e histórico de versões…
+              </p>
+            ) : null}
+
+            {courseId !== undefined && !isRulesLoading && rulesError !== null ? (
+              <div className={styles.loadError} role="alert">
+                <p>{rulesError}</p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  label="Tentar novamente"
+                  onClick={handleRetryRulesLoad}
                 />
               </div>
+            ) : null}
 
-              <PrerequisiteCoursesCard
-                selected={selectedPrerequisites}
-                options={MOCK_PREREQUISITE_CATALOG}
-                disabled={isFormDisabled}
-                onAdd={handleAddPrerequisite}
-                onRemove={handleRemovePrerequisite}
-              />
-            </div>
+            {courseId !== undefined && !isRulesLoading && rulesError === null ? (
+              <div className={styles.grid}>
+                <div className={styles.progressColumn}>
+                  <ProgressRulesCard
+                    rules={progressRules}
+                    disabled={isRulesDisabled}
+                    onChange={handleProgressRuleChange}
+                  />
+                </div>
+
+                <div className={styles.versionColumn}>
+                  <VersionControlCard
+                    versionLabel={versionLabel}
+                    entries={versionLog}
+                    notifyStudentsOnPublish={notifyStudentsOnPublish}
+                    disabled={isRulesDisabled}
+                    onNotifyStudentsOnPublishChange={setNotifyStudentsOnPublish}
+                  />
+                </div>
+
+                <PrerequisiteCoursesCard
+                  selected={selectedPrerequisites}
+                  suggestions={availablePrerequisiteSuggestions}
+                  query={prerequisiteQuery}
+                  searchStatus={prerequisiteSearchStatus}
+                  disabled={isRulesDisabled}
+                  onQueryChange={setPrerequisiteQuery}
+                  onAdd={handleAddPrerequisite}
+                  onRemove={handleRemovePrerequisite}
+                />
+              </div>
+            ) : null}
           </Tabs.Content>
         </Tabs.Root>
       </AuthenticatedLayout>

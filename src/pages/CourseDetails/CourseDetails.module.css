@@ -9,12 +9,13 @@
   user-select: none;
 }
 
-.curriculum {
+.teaser {
   display: grid;
   gap: var(--space-3);
-  margin-top: var(--space-10);
+  margin-top: var(--space-8);
 }
 
+.teaser h2,
 .curriculum h2 {
   margin: 0;
   color: var(--color-text-primary);
@@ -23,4 +24,10 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
+}
+
+.curriculum {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-10);
 }

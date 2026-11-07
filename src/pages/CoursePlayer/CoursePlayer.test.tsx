@@ -23,8 +23,8 @@ vi.mock('@services/curriculumService', async (importOriginal) => ({
   completeStudentLesson: vi.fn(),
 }));
 
-vi.mock('@components/course/LessonVideoPlayer/LessonVideoPlayer', () => ({
-  LessonVideoPlayer: ({
+vi.mock('@components/course/VideoPlayer/VideoPlayer', () => ({
+  VideoPlayer: ({
     src,
     title,
     isCompleted,
