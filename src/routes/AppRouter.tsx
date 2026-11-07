@@ -4,7 +4,7 @@ import { AuthProvider } from '@contexts/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RegistrationFeedback } from '@routes/RegistrationFeedback';
 
-// ─── Lazy Loading ─────────────────────────────────────────────────────────────
+// ─── Lazy Loading ─────────────────────────────────────────────
 // Adicione novas páginas aqui seguindo este padrão.
 // O .then((m) => ({ default: m.NomeDaPagina })) é necessário porque
 // usamos named exports (não default exports).
@@ -74,6 +74,7 @@ const AdminCourses = lazy(() =>
     default: m.AdminCourses,
   })),
 );
+
 const DigitalCertificate = lazy(() =>
   import('@pages/DigitalCertificate/DigitalCertificate').then((m) => ({
     default: m.DigitalCertificate,
@@ -98,17 +99,26 @@ const OrderManagement = lazy(() =>
   })),
 );
 
+// Nova página: Gestão de Colaboradores
+const CompanyEmployees = lazy(() =>
+  import('@pages/CompanyEmployees/CompanyEmployees').then((m) => ({
+    default: m.CompanyEmployees,
+  })),
+);
+
 const UnderConstruction = lazy(() =>
   import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
     default: m.UnderConstruction,
   })),
 );
+
 const RegisterIndividual = lazy(() =>
   import('@pages/RegisterIndividual/RegisterIndividual').then((m) => ({
     default: m.RegisterIndividual,
   })),
 );
-// ─── Fallback de Carregamento ─────────────────────────────────────────────────
+
+// ─── Fallback de Carregamento ─────────────────────────────────
 
 const PageLoader = () => (
   <div
@@ -128,7 +138,7 @@ const PageLoader = () => (
   </div>
 );
 
-// ─── Rotas ────────────────────────────────────────────────────────────────────
+// ─── Rotas ────────────────────────────────────────────────────
 
 /**
  * AppRouter — configuração central de rotas.
@@ -144,13 +154,19 @@ export const AppRouter = () => {
     <BrowserRouter>
       <AuthProvider>
         <RegistrationFeedback />
+
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Rotas Públicas */}
+
             <Route path="/" element={<Home />} />
+
             <Route path="/cadastro" element={<RegisterAccountType />} />
+
             <Route path="/cadastro/empresa" element={<RegisterCompany />} />
+
             <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
+
             <Route
               path="/meus-cursos"
               element={
@@ -159,7 +175,9 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route path="/cursos/:courseId" element={<CourseDetails />} />
+
             <Route
               path="/aluno/cursos/:courseId/aulas/:lessonId"
               element={
@@ -168,7 +186,9 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route path="/login" element={<Login />} />
+
             <Route
               path="/checkout/confirmacao"
               element={
@@ -177,6 +197,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/empresa/checkout/confirmacao"
               element={
@@ -185,7 +206,9 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             {/* Pacote de assentos: só a empresa compra; a quantidade vem em ?quantidade=N. */}
+
             <Route
               path="/checkout/assentos"
               element={
@@ -194,6 +217,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/empresa/checkout/assentos"
               element={
@@ -202,6 +226,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/checkout/:courseId"
               element={
@@ -210,6 +235,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/empresa/checkout/:courseId"
               element={
@@ -218,7 +244,9 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route path="/courses" element={<Courses />} />
+
             <Route
               path="/aluno/cursos"
               element={
@@ -227,6 +255,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/empresa/cursos"
               element={
@@ -235,11 +264,14 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             {/* Sidebar/Navbar autenticadas e os botões de Baixar/Compartilhar são
               decididos pelo isOwner da API, não pela rota (ver DigitalCertificate). */}
+
             <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
 
             {/* Painel Administrativo */}
+
             <Route
               path="/admin/cursos"
               element={
@@ -248,6 +280,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/admin/cursos/novo"
               element={
@@ -256,6 +289,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/admin/cursos/:id/editar"
               element={
@@ -264,6 +298,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/admin/pedidos"
               element={
@@ -281,11 +316,35 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
+            {/* Rotas da Empresa */}
+
             <Route
               path="/empresa/perfil"
               element={
                 <ProtectedRoute allowedRoles={['COMPANY']}>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Nova rota: Gestão de Colaboradores */}
+
+            <Route
+              path="/empresa/colaboradores"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <CompanyEmployees />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Gestão de Colaboradores - rota real com autenticação */}
+            <Route
+              path="/empresa/colaboradores"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <CompanyEmployees />
                 </ProtectedRoute>
               }
             />
@@ -297,6 +356,9 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
+            {/* Rotas do Aluno */}
+
             <Route
               path="/aluno/*"
               element={
@@ -305,6 +367,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+
             <Route
               path="/meu-perfil"
               element={
@@ -315,6 +378,7 @@ export const AppRouter = () => {
             />
 
             {/* Qualquer rota ainda sem página cai aqui. */}
+
             <Route path="*" element={<UnderConstruction />} />
           </Routes>
         </Suspense>
