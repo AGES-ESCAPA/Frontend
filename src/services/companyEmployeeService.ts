@@ -1,4 +1,4 @@
-import { authenticatedFetch, readApiErrorMessage } from '@services/api';
+import { authenticatedFetch } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 import type { CompanyEmployeePage, CompanySeats } from '@/types/companyEmployee';
@@ -8,6 +8,32 @@ export const COMPANY_EMPLOYEES_PAGE_SIZE = 10;
 
 const NETWORK_ERROR =
   'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+
+function getErrorMessage(status: number): string {
+  switch (status) {
+    case 400:
+      return 'Não foi possível processar a solicitação.';
+
+    case 401:
+      return 'Sua sessão não está válida. Entre novamente para continuar.';
+
+    case 403:
+      return 'Você não tem permissão para acessar os dados desta empresa.';
+
+    case 404:
+      return 'Não foi possível encontrar os dados da empresa.';
+
+    case 429:
+      return 'Muitas solicitações realizadas. Aguarde um momento e tente novamente.';
+
+    default:
+      if (status >= 500) {
+        return 'O servidor está indisponível no momento. Tente novamente mais tarde.';
+      }
+
+      return 'Não foi possível carregar os dados da empresa.';
+  }
+}
 
 export class CompanyEmployeeServiceError extends Error {
   constructor(
@@ -31,15 +57,7 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
   }
 
   if (!response.ok) {
-    const fallback =
-      response.status === 403
-        ? 'Seu perfil não tem permissão para consultar colaboradores.'
-        : 'Não foi possível carregar os dados da empresa.';
-
-    throw new CompanyEmployeeServiceError(
-      response.status,
-      (await readApiErrorMessage(response)) ?? fallback,
-    );
+    throw new CompanyEmployeeServiceError(response.status, getErrorMessage(response.status));
   }
 
   let body: ApiResponse<T>;

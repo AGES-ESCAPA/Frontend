@@ -7,5 +7,5 @@ export const mapCompanyEmployeeToRow = (employee: CompanyEmployee): Employee => 
   email: employee.email,
   assignedCourses: employee.assignedCourses,
   avatarUrl: employee.avatarUrl,
-  status: employee.status.toLowerCase() as 'active' | 'pending' | 'inactive',
+  status: employee.status,
 });

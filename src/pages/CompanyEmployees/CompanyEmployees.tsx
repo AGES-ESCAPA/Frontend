@@ -59,6 +59,13 @@ export const CompanyEmployees = () => {
 
   const rows = useMemo(() => employees.map(mapCompanyEmployeeToRow), [employees]);
 
+  const isLoadingEmployees = employeesStatus === 'loading';
+
+  const showEmployeesTable = employeesStatus !== 'error' && rows.length > 0;
+
+  const showEmployeesFooter =
+    employeesStatus === 'success' || (isLoadingEmployees && rows.length > 0);
+
   const reloadAll = useCallback(() => {
     reloadSeats();
     reloadEmployees();
@@ -75,9 +82,8 @@ export const CompanyEmployees = () => {
     }
   }, [employeesStatus, page, totalPages]);
 
-  // As operações de escrita pertencem às US-31, US-32 e US-33.
   const announcePendingAction = (action: string, employee: Employee) => {
-    setActionNotice(`${action} de ${employee.name} estará disponível na respectiva US.`);
+    setActionNotice(`${action} de ${employee.name} estará disponível em breve.`);
   };
 
   return (
@@ -107,7 +113,8 @@ export const CompanyEmployees = () => {
 
               <Button
                 type="button"
-                label="Tentar novamente vagas"
+                label="Tentar novamente"
+                aria-label="Tentar carregar as vagas novamente"
                 variant="outlined"
                 onClick={reloadSeats}
               />
@@ -167,7 +174,7 @@ export const CompanyEmployees = () => {
                 variant="primary"
                 label="Cadastrar Colaborador"
                 icon={<UserPlus size={18} aria-hidden="true" />}
-                title="Cadastro disponível na US-31"
+                title="Cadastro de colaboradores em breve"
                 disabled
               />
             </div>
@@ -196,7 +203,7 @@ export const CompanyEmployees = () => {
             </div>
           ) : null}
 
-          {employeesStatus === 'loading' ? <SkeletonTable /> : null}
+          {isLoadingEmployees && rows.length === 0 ? <SkeletonTable /> : null}
 
           {employeesStatus === 'error' ? (
             <div className={styles.state} role="alert">
@@ -205,7 +212,8 @@ export const CompanyEmployees = () => {
               <Button
                 type="button"
                 variant="outlined"
-                label="Tentar novamente colaboradores"
+                label="Tentar novamente"
+                aria-label="Tentar carregar os colaboradores novamente"
                 onClick={reloadEmployees}
               />
             </div>
@@ -222,8 +230,13 @@ export const CompanyEmployees = () => {
             />
           ) : null}
 
-          {employeesStatus === 'success' && rows.length > 0 ? (
+          {showEmployeesTable ? (
             <div className={styles.tableWrapper}>
+              {isLoadingEmployees && (
+                <span role="status" className={styles.loadingIndicator}>
+                  Atualizando colaboradores...
+                </span>
+              )}
               <EmployeeTable
                 employees={rows}
                 onEdit={(employee) => announcePendingAction('Edição', employee)}
@@ -239,7 +252,7 @@ export const CompanyEmployees = () => {
             </p>
           ) : null}
 
-          {employeesStatus === 'success' ? (
+          {showEmployeesFooter ? (
             <footer className={styles.footer}>
               <span>
                 Exibindo {rows.length} de {totalElements} colaboradores
@@ -253,7 +266,7 @@ export const CompanyEmployees = () => {
                     type="button"
                     variant="outlined"
                     label="Anterior"
-                    disabled={page === 0}
+                    disabled={page === 0 || isLoadingEmployees}
                     onClick={() => setPage((current) => Math.max(0, current - 1))}
                   />
 
@@ -265,7 +278,7 @@ export const CompanyEmployees = () => {
                     type="button"
                     variant="outlined"
                     label="Próxima"
-                    disabled={page + 1 >= totalPages}
+                    disabled={page + 1 >= totalPages || isLoadingEmployees}
                     onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
                   />
                 </nav>

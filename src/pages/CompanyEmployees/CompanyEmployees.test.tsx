@@ -77,6 +77,29 @@ describe('CompanyEmployees', () => {
     employeesMock.mockReturnValue(employeesResult);
   });
 
+  it('mantém a tabela e a paginação visíveis durante uma nova consulta', () => {
+    employeesMock.mockReturnValue({
+      ...employeesResult,
+      status: 'loading',
+    });
+
+    renderPage();
+
+    expect(screen.getByText('Ana Paula Ferreira')).toBeInTheDocument();
+
+    expect(screen.getByText('Atualizando colaboradores...')).toBeInTheDocument();
+
+    expect(screen.getByText('Página 1 de 2')).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
+
+    expect(
+      screen.queryByRole('status', {
+        name: 'Carregando colaboradores',
+      }),
+    ).not.toBeInTheDocument();
+  });
+
   it('mostra números e colaboradores reais retornados pelos hooks', () => {
     renderPage();
 
@@ -209,7 +232,7 @@ describe('CompanyEmployees', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: 'Tentar novamente colaboradores',
+        name: 'Tentar carregar os colaboradores novamente',
       }),
     );
 

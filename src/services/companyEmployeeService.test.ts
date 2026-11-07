@@ -130,11 +130,11 @@ describe('companyEmployeeService', () => {
     expect(headers.get('Authorization')).toBe('Bearer token-de-teste');
   });
 
-  it('mantém status e mensagem dos erros da API', async () => {
+  it('retorna mensagens padronizadas em português para erros HTTP', async () => {
     fetchMock.mockResolvedValueOnce(
       response(
         {
-          message: 'Acesso negado',
+          message: 'Access denied',
         },
         403,
       ),
@@ -143,7 +143,24 @@ describe('companyEmployeeService', () => {
     await expect(companyEmployeeService.getSeats()).rejects.toMatchObject({
       name: 'CompanyEmployeeServiceError',
       status: 403,
-      message: 'Acesso negado',
+      message: 'Você não tem permissão para acessar os dados desta empresa.',
+    });
+  });
+
+  it('não exibe mensagens em inglês retornadas pelo backend', async () => {
+    fetchMock.mockResolvedValueOnce(
+      response(
+        {
+          message: 'Company not found',
+        },
+        404,
+      ),
+    );
+
+    await expect(companyEmployeeService.getSeats()).rejects.toMatchObject({
+      name: 'CompanyEmployeeServiceError',
+      status: 404,
+      message: 'Não foi possível encontrar os dados da empresa.',
     });
   });
 
