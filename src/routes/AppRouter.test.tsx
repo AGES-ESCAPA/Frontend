@@ -19,6 +19,9 @@ vi.mock('@pages/Login/Login', async () => {
   };
 });
 vi.mock('@pages/MyCourses/MyCourses', () => ({ MyCourses: () => <h1>Meus cursos</h1> }));
+vi.mock('@pages/CompanyEmployees/CompanyEmployees', () => ({
+  CompanyEmployees: () => <h1>Gestão de Funcionários</h1>,
+}));
 vi.mock('@pages/UnderConstruction/UnderConstruction', () => ({
   UnderConstruction: () => <h1>Página em construção</h1>,
 }));
@@ -80,7 +83,7 @@ describe('AppRouter — /admin/metricas', () => {
     await waitFor(() => expect(window.location.pathname).toBe(destination));
     expect(
       await screen.findByRole('heading', {
-        name: role === 'COMPANY' ? 'Página em construção' : 'Meus cursos',
+        name: role === 'COMPANY' ? 'Gestão de Funcionários' : 'Meus cursos',
       }),
     ).toBeInTheDocument();
     expect(
