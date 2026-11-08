@@ -19,6 +19,14 @@
   background-color: var(--color-success-400);
 }
 
+.chart {
+  background-color: var(--color-secondary-100);
+}
+
+.chart .indicator {
+  background-image: linear-gradient(to right, var(--color-info-200), var(--color-info-300));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .indicator {
     transition: none;

@@ -7,6 +7,8 @@ export { AvatarUpload } from './AvatarUpload';
 export type { AvatarUploadProps } from './AvatarUpload';
 export { Badge } from './Badge';
 export type { BadgeProps, BadgeVariant, BadgeCategory } from './Badge';
+export { BarList } from './BarList';
+export type { BarListItem, BarListProps } from './BarList';
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant } from './Button';
 export { Checkbox } from './Checkbox';
@@ -43,7 +45,16 @@ export { CourseCardSkeleton } from './CourseCard/CourseCardSkeleton';
 export { SelectInput } from './SelectInput';
 export type { SelectInputOption, SelectInputProps } from './SelectInput';
 export { SumCard } from './SumCard';
-export type { SumCardProps } from './SumCard';
+export type { SumCardProps, SumCardTrend } from './SumCard';
+export { DonutChart } from './DonutChart';
+export type { DonutChartProps, DonutChartSegment } from './DonutChart';
+export { LineChart } from './LineChart';
+export type {
+  LineChartPoint,
+  LineChartProps,
+  LineChartValueFormatter,
+  LineChartVariant,
+} from './LineChart';
 export { Table } from './Table';
 export type { TableAlign, TableColumn, TableProps } from './Table';
 export { TextArea } from './TextArea';
@@ -91,10 +102,5 @@ export { MaskedInput } from './MaskedInput';
 export type { MaskedInputProps, MaskType } from './MaskedInput';
 export { OrderSummary } from './OrderSummary';
 export type { OrderSummaryProps, OrderItem, OrderBuyer } from './OrderSummary';
-export { EmployeeFormModal } from './EmployeeFormModal';
-export type {
-  EmployeeAccessStatus,
-  EmployeeFormField,
-  EmployeeFormModalProps,
-  EmployeeFormValues,
-} from './EmployeeFormModal';
+export { EmployeeTable } from './EmployeeTable';
+export type { Employee, EmployeeStatus, EmployeeTableProps } from './EmployeeTable';

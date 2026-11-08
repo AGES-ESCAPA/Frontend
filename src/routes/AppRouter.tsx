@@ -98,9 +98,9 @@ const OrderManagement = lazy(() =>
   })),
 );
 
-const EmployeeManagement = lazy(() =>
-  import('@pages/EmployeeManagement/EmployeeManagement').then((m) => ({
-    default: m.EmployeeManagement,
+const CompanyEmployees = lazy(() =>
+  import('@pages/CompanyEmployees/CompanyEmployees').then((m) => ({
+    default: m.CompanyEmployees,
   })),
 );
 
@@ -299,7 +299,7 @@ export const AppRouter = () => {
               path="/empresa/colaboradores"
               element={
                 <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <EmployeeManagement />
+                  <CompanyEmployees />
                 </ProtectedRoute>
               }
             />

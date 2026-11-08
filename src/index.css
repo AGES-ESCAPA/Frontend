@@ -65,6 +65,11 @@
   --text-body-5: 0.625rem; /* 10px (XSmall) */
   --text-body-5--line-height: 1.4;
 
+  /* Typography in the center of a responsive donut chart */
+  --donut-center-value-fluid: 12cqi;
+  --donut-center-label-fluid: 7cqi;
+  --donut-size-compact: 6.75rem; /* 108px: desenha um anel de cerca de 84px */
+
   /* ── Escala Genérica Equivalente ─────────────────────────────────*/
   --text-xs: var(--text-body-4); /* 0.75rem  / 12px */
   --text-sm: var(--text-body-3); /* 0.875rem / 14px */
@@ -176,6 +181,7 @@
   --color-surface-overlay: rgba(43, 111, 231, 0.08);
   --color-backdrop: rgba(12, 12, 26, 0.84);
   --color-surface-search-dark: var(--color-primary-800);
+
   /* Opaco de proposito: com transparencia o fundo do campo claro se mistura
      com a pagina atras e o contraste do placeholder deixa de ser previsivel
      (3.91:1 sobre fundo escuro). Opaco, Neutros-600 garante 4.63:1 (AA). */
