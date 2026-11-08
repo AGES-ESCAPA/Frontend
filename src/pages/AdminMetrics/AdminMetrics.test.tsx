@@ -36,6 +36,14 @@ describe('AdminMetrics — estrutura da US-36', () => {
     ).toBeInTheDocument();
     expect(within(main).getAllByRole('article')).toHaveLength(2);
     expect(within(main).getAllByRole('region')).toHaveLength(2);
+    for (const title of ['Taxa Média de Conclusão', 'Evolução de Alunos Ativos']) {
+      const panel = within(main).getByRole('region', { name: title });
+      expect(within(panel).getByRole('heading', { level: 2, name: title })).toBeInTheDocument();
+    }
+    expect(within(main).getByRole('region', { name: 'Evolução de Alunos Ativos' })).toHaveAttribute(
+      'id',
+      'evolucao',
+    );
   });
 
   it('keeps the existing administrative navigation with metrics selected', () => {

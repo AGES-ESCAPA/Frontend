@@ -1,5 +1,5 @@
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
-import { DonutChart, SumCard } from '@components/ui';
+import { DonutChart, Panel, SumCard } from '@components/ui';
 import styles from './AdminMetrics.module.css';
 
 const ADMIN_USER = { name: 'Admin', role: 'Administrador' };
@@ -31,40 +31,37 @@ export const AdminMetrics = () => (
           value="—"
           description={NO_DATA_MESSAGE}
         />
-        <section
-          className={`${styles.panel} ${styles.completionPanel}`}
-          aria-labelledby="completion-title"
-        >
-          <h2 className={styles.panelTitle} id="completion-title">
-            Taxa Média de Conclusão
-          </h2>
-          {/* O trilho é apenas decorativo até a integração: não anuncia uma taxa de 0%. */}
-          <div aria-hidden="true">
-            <DonutChart
-              variant="progress"
-              segments={[]}
-              max={100}
-              centerValue="—"
-              centerLabel=""
-              ariaLabel="Taxa média de conclusão"
-              size="compact"
-            />
-          </div>
-          <p className={styles.description}>{NO_DATA_MESSAGE}</p>
+        <section className={styles.completionRegion} aria-label="Taxa Média de Conclusão">
+          <Panel
+            className={`${styles.chartPanel} ${styles.completionPanel}`}
+            title="Taxa Média de Conclusão"
+          >
+            {/* O trilho é apenas decorativo até a integração: não anuncia uma taxa de 0%. */}
+            <div aria-hidden="true">
+              <DonutChart
+                className={styles.completionDonut}
+                variant="progress"
+                segments={[]}
+                max={100}
+                centerValue="—"
+                centerLabel=""
+                ariaLabel="Taxa média de conclusão"
+                size="compact"
+              />
+            </div>
+            <p className={styles.description}>{NO_DATA_MESSAGE}</p>
+          </Panel>
         </section>
       </div>
 
-      <section className={styles.panel} aria-labelledby="evolution-title" id="evolucao">
-        <div className={styles.evolution}>
-          <h2 className={styles.panelTitle} id="evolution-title">
-            Evolução de Alunos Ativos
-          </h2>
+      <section aria-label="Evolução de Alunos Ativos" id="evolucao">
+        <Panel className={styles.chartPanel} title="Evolução de Alunos Ativos">
           <p className={styles.description}>Últimos seis meses</p>
-        </div>
-        {/* Área reservada para o LineChart na task de integração. */}
-        <div className={styles.chartPlaceholder}>
-          <p className={styles.emptyMessage}>{NO_DATA_MESSAGE}</p>
-        </div>
+          {/* Área reservada para o LineChart na task de integração. */}
+          <div className={styles.chartPlaceholder}>
+            <p className={styles.emptyMessage}>{NO_DATA_MESSAGE}</p>
+          </div>
+        </Panel>
       </section>
     </div>
   </AuthenticatedLayout>

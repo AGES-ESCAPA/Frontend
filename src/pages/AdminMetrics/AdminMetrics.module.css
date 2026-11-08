@@ -6,8 +6,7 @@
   font-family: var(--font-family-base);
 }
 
-.header,
-.evolution {
+.header {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -38,25 +37,22 @@
   justify-content: center;
 }
 
-.panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+.chartPanel {
   min-width: 0;
-  padding: var(--space-6);
-  background-color: var(--color-surface);
-  border: var(--border-width-thin) solid var(--color-border);
-  border-radius: var(--radius-xl);
 }
 
-.panelTitle {
-  color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-body-4);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--text-body-4--line-height);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+.completionRegion {
+  display: grid;
+  min-width: 0;
+}
+
+.summaryGrid .completionPanel {
+  background-color: var(--color-primary-700);
+}
+
+/* Altera o token do trilho somente nesta rosca, preservando o componente compartilhado. */
+.completionDonut {
+  --color-primary-700: var(--color-primary-800);
 }
 
 .emptyMessage {
@@ -80,7 +76,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .completionPanel {
+  .completionRegion {
     grid-column: 1 / -1;
   }
 }
@@ -95,8 +91,8 @@
     gap: var(--space-4);
   }
 
-  .panel {
-    padding: var(--space-5);
+  .chartPanel {
+    --panel-padding: var(--space-5);
   }
 
   .chartPlaceholder {
