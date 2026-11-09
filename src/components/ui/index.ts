@@ -45,9 +45,16 @@ export { CourseCardSkeleton } from './CourseCard/CourseCardSkeleton';
 export { SelectInput } from './SelectInput';
 export type { SelectInputOption, SelectInputProps } from './SelectInput';
 export { SumCard } from './SumCard';
-export type { SumCardProps } from './SumCard';
+export type { SumCardProps, SumCardTrend } from './SumCard';
 export { DonutChart } from './DonutChart';
 export type { DonutChartProps, DonutChartSegment } from './DonutChart';
+export { LineChart } from './LineChart';
+export type {
+  LineChartPoint,
+  LineChartProps,
+  LineChartValueFormatter,
+  LineChartVariant,
+} from './LineChart';
 export { Table } from './Table';
 export type { TableAlign, TableColumn, TableProps } from './Table';
 export { TextArea } from './TextArea';

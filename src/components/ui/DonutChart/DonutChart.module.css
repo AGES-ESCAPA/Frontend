@@ -5,6 +5,12 @@
   width: 100%;
 }
 
+/* A margem negativa desconta a folga interna do gráfico: a caixa fica do tamanho do anel. */
+.compact {
+  width: var(--donut-size-compact);
+  margin: calc(var(--space-3) * -1);
+}
+
 .chart {
   position: relative;
   container-type: inline-size;
@@ -42,6 +48,10 @@
   font-size: clamp(var(--text-body-4), var(--donut-center-value-fluid), var(--text-h3));
   font-weight: var(--font-weight-bold);
   line-height: var(--text-h3--line-height);
+}
+
+.compact .centerValue {
+  font-size: var(--text-h6);
 }
 
 .centerLabel {

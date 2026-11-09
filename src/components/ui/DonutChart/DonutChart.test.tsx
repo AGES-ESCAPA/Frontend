@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { DonutChart } from './DonutChart';
+import styles from './DonutChart.module.css';
 
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => (
@@ -55,6 +56,26 @@ describe('DonutChart', () => {
       'data-accessibility-layer',
       'false',
     );
+  });
+
+  it('applies the compact size only when it is requested', () => {
+    const chart = (size?: 'compact') => (
+      <DonutChart
+        variant="progress"
+        segments={[{ label: 'Conclusões', value: 68 }]}
+        max={100}
+        centerValue="68%"
+        centerLabel=""
+        ariaLabel="Taxa média de conclusão"
+        size={size}
+      />
+    );
+
+    const { container, rerender } = render(chart());
+    expect(container.querySelector('section')).not.toHaveClass(styles.compact);
+
+    rerender(chart('compact'));
+    expect(container.querySelector('section')).toHaveClass(styles.compact);
   });
 
   it('limits the progress value to its maximum', () => {

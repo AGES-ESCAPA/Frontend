@@ -1,93 +1,69 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
   min-width: 0;
+  font-family: var(--font-family-base);
 }
 
-.kpiCard {
+.header {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: var(--space-2);
-  min-width: 0;
-  padding: var(--space-5);
-  background-color: var(--color-primary-800);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
 }
 
-.kpiLabel {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-4);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--text-body-4--line-height);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-.kpiValue {
-  margin: 0;
+.title {
   color: var(--color-text-primary);
-  font-size: var(--text-h3);
+  font-size: var(--text-h4);
   font-weight: var(--font-weight-bold);
-  line-height: var(--text-h3--line-height);
+  line-height: var(--text-h4--line-height);
+  overflow-wrap: anywhere;
 }
 
-.kpiTrend {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
+.description,
+.emptyMessage {
   color: var(--color-text-muted);
-  font-size: var(--text-body-4);
-  line-height: var(--text-body-4--line-height);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
 }
 
-.trendPositive {
-  color: var(--color-success-300);
-  font-weight: var(--font-weight-semibold);
-}
-
-.completionWrap {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.completionDonut {
-  width: var(--space-20);
-}
-
-.completionDonut > div {
-  max-width: var(--space-20);
-  margin-inline: 0;
-}
-
-.completionDonut strong {
-  color: var(--color-info-300);
-  font-size: var(--text-body-2);
-  line-height: var(--text-body-2--line-height);
-}
-
-.panel {
-  gap: var(--space-4);
+.summaryCard {
+  justify-content: center;
   min-width: 0;
-  height: 100%;
-  padding: var(--space-5);
-  background-color: var(--color-primary-800);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
 }
 
-.panel h2 {
-  color: var(--color-text-muted);
-  font-size: var(--text-body-4);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--text-body-4--line-height);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+.chartPanel {
+  min-width: 0;
+}
+
+.completionRegion {
+  display: grid;
+  min-width: 0;
+}
+
+.completionPanel {
+  background-color: var(--color-primary-700);
+}
+
+/* Altera o token do trilho somente nesta rosca, preservando o componente compartilhado. */
+.completionDonut {
+  --color-primary-700: var(--color-primary-800);
+}
+
+.emptyMessage {
+  display: grid;
+  place-items: center;
+  min-height: var(--space-20);
+  text-align: center;
+}
+
+.chartPlaceholder {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: var(--container-xs);
+  padding: var(--space-6);
+  border-block: var(--border-width-thin) dashed var(--color-border);
 }
 
 .rankingList {
@@ -114,54 +90,23 @@
   background-color: var(--color-primary-700);
 }
 
-.evolutionChartWrap {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  width: 100%;
+@media (width < 64rem) {
+  .completionRegion {
+    grid-column: 1 / -1;
+  }
 }
 
-.evolutionSvg {
-  display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-}
-
-.gridLine {
-  stroke: var(--color-border-subtle);
-  stroke-width: 1;
-}
-
-.evolutionLine {
-  stroke: var(--color-info-300);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.evolutionDot {
-  fill: var(--color-primary-800);
-  stroke: var(--color-info-300);
-  stroke-width: 2;
-}
-
-.evolutionAxis {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  padding-inline: var(--space-4);
-  color: var(--color-text-muted);
-  font-size: var(--text-body-4);
-  line-height: var(--text-body-4--line-height);
-}
-
-@media (width <= 40rem) {
+@media (width < 40rem) {
   .page {
     gap: var(--space-4);
   }
 
-  .evolutionAxis {
-    padding-inline: 0;
-    font-size: var(--text-body-5);
+  .chartPanel {
+    --panel-padding: var(--space-5);
+  }
+
+  .chartPlaceholder {
+    min-height: calc(var(--space-20) * 3);
+    padding: var(--space-4);
   }
 }

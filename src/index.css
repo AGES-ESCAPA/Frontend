@@ -68,6 +68,7 @@
   /* Typography in the center of a responsive donut chart */
   --donut-center-value-fluid: 12cqi;
   --donut-center-label-fluid: 7cqi;
+  --donut-size-compact: 6.75rem; /* 108px: desenha um anel de cerca de 84px */
 
   /* ── Escala Genérica Equivalente ─────────────────────────────────*/
   --text-xs: var(--text-body-4); /* 0.75rem  / 12px */
