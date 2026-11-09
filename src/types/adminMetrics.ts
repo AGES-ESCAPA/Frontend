@@ -1,16 +1,10 @@
 import type { ReactNode } from 'react';
 
 export interface PopularCourseLeaderView {
-  courseId?: string;
+  courseId: string;
   title: string;
   /** Quantidade total de matrículas do curso líder. */
-  enrollments?: number;
-  /**
-   * Linha de apoio já formatada exibida abaixo do título do curso
-   * (ex.: "Mais de 4,8 mil matrículas" ou "4.820 matrículas").
-   * Quando omitida, o componente formata `enrollments` automaticamente.
-   */
-  enrollmentsLabel?: string;
+  enrollments: number;
 }
 
 export interface PopularCourseRankItemView {

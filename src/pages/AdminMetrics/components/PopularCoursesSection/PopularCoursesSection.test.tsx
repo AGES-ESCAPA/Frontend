@@ -100,8 +100,8 @@ describe('PopularCoursesSection', () => {
     expect(within(leaderCard).getByText('4.820 matrículas')).toBeInTheDocument();
   });
 
-  it('supports singular enrollment formatting and custom enrollmentsLabel on the leader card', () => {
-    const { rerender } = render(
+  it('supports singular enrollment formatting on the leader card', () => {
+    render(
       <PopularCoursesSection
         {...BASE_PROPS}
         mostAccessedCourse={{
@@ -115,23 +115,9 @@ describe('PopularCoursesSection', () => {
     const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
     expect(within(leaderCard).getByText('Hospitalidade Executiva')).toBeInTheDocument();
     expect(within(leaderCard).getByText('1 matrícula')).toBeInTheDocument();
-
-    rerender(
-      <PopularCoursesSection
-        {...BASE_PROPS}
-        mostAccessedCourse={{
-          courseId: 'course-1',
-          title: 'Turismo de Aventura',
-          enrollments: 4820,
-          enrollmentsLabel: 'Mais de 4,8 mil matrículas',
-        }}
-      />,
-    );
-
-    expect(within(leaderCard).getByText('Mais de 4,8 mil matrículas')).toBeInTheDocument();
   });
 
-  it('shows a safe fallback when mostAccessedCourse is null or enrollments is omitted', () => {
+  it('shows a safe fallback when mostAccessedCourse is null or enrollments is non-positive', () => {
     const { rerender } = render(
       <PopularCoursesSection {...BASE_PROPS} mostAccessedCourse={null} />,
     );
@@ -141,7 +127,14 @@ describe('PopularCoursesSection', () => {
     expect(within(leaderCard).getByText('Nenhuma matrícula registrada')).toBeInTheDocument();
 
     rerender(
-      <PopularCoursesSection {...BASE_PROPS} mostAccessedCourse={{ title: 'Curso Inicial' }} />,
+      <PopularCoursesSection
+        {...BASE_PROPS}
+        mostAccessedCourse={{
+          courseId: 'course-1',
+          title: 'Curso Inicial',
+          enrollments: Number.NaN,
+        }}
+      />,
     );
 
     expect(within(leaderCard).getByText('Curso Inicial')).toBeInTheDocument();
@@ -250,18 +243,33 @@ describe('PopularCoursesSection', () => {
     ).toBeInTheDocument();
   });
 
-  it('applies the responsive grid containers for KPI and chart panels and preserves custom className', () => {
-    render(<PopularCoursesSection {...BASE_PROPS} className="custom-metrics-section" />);
+  it('renders optional layout slots alongside the popular courses cards and panels', () => {
+    render(
+      <PopularCoursesSection
+        {...BASE_PROPS}
+        className="custom-metrics-section"
+        kpiLeadingCards={<article aria-label="KPI Inicial">120</article>}
+        kpiTrailingCards={<article aria-label="KPI Final">68%</article>}
+        middlePanel={<section aria-label="Painel Central">Ranking Empresas</section>}
+        bottomPanel={<section aria-label="Painel Inferior">Evolução</section>}
+      />,
+    );
 
     const region = screen.getByRole('region', {
       name: 'Indicadores de cursos mais populares',
     });
 
-    expect(region.className).toMatch(/section/);
-    expect(region.className).toMatch(/custom-metrics-section/);
-    expect(region.className).not.toMatch(/undefined/);
-    expect(region.children).toHaveLength(2);
-    expect(region.children[0].className).toMatch(/kpiGrid/);
-    expect(region.children[1].className).toMatch(/chartsGrid/);
+    expect(region).toHaveClass('custom-metrics-section');
+    expect(within(region).getByRole('article', { name: 'KPI Inicial' })).toHaveTextContent('120');
+    expect(
+      within(region).getByRole('article', { name: 'Curso Mais Acessado' }),
+    ).toBeInTheDocument();
+    expect(within(region).getByRole('article', { name: 'KPI Final' })).toHaveTextContent('68%');
+    expect(within(region).getByRole('region', { name: 'Painel Central' })).toHaveTextContent(
+      'Ranking Empresas',
+    );
+    expect(within(region).getByRole('region', { name: 'Painel Inferior' })).toHaveTextContent(
+      'Evolução',
+    );
   });
 });

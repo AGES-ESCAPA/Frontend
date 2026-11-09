@@ -10,14 +10,9 @@ const formatEnrollmentsDescription = (leader: PopularCourseLeaderView | null): s
     return 'Nenhuma matrícula registrada';
   }
 
-  if (leader.enrollmentsLabel && leader.enrollmentsLabel.trim() !== '') {
-    return leader.enrollmentsLabel;
-  }
-
-  const count =
-    typeof leader.enrollments === 'number' && Number.isFinite(leader.enrollments)
-      ? Math.max(0, Math.trunc(leader.enrollments))
-      : 0;
+  const count = Number.isFinite(leader.enrollments)
+    ? Math.max(0, Math.trunc(leader.enrollments))
+    : 0;
   const formattedCount = count.toLocaleString('pt-BR');
 
   return count === 1 ? `${formattedCount} matrícula` : `${formattedCount} matrículas`;
