@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
@@ -114,6 +114,7 @@ describe('DigitalCertificate', () => {
   let openSpy: MockInstance<typeof window.open>;
 
   beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     getCertificateByCodeMock.mockReset();
     localStorage.setItem('access_token', 'jwt-token');
 
@@ -123,7 +124,13 @@ describe('DigitalCertificate', () => {
     // O jsdom não implementa URLs de blob.
     createObjectURL = vi.fn(() => 'blob:certificado');
     revokeObjectURL = vi.fn();
-    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    vi.stubGlobal(
+      'URL',
+      class extends URL {
+        static createObjectURL = createObjectURL;
+        static revokeObjectURL = revokeObjectURL;
+      },
+    );
 
     downloadedFilenames = [];
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
@@ -134,14 +141,18 @@ describe('DigitalCertificate', () => {
     openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    cleanup();
+    // Conclui a limpeza das URLs de blob antes de restaurar as APIs do navegador.
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     localStorage.clear();
     setUnauthorizedHandler(null);
     delete document.documentElement.dataset.theme;
-    Reflect.deleteProperty(URL, 'createObjectURL');
-    Reflect.deleteProperty(URL, 'revokeObjectURL');
     // O teste de compartilhar substitui o clipboard; remove para não vazar entre testes.
     Reflect.deleteProperty(navigator, 'clipboard');
   });
@@ -161,9 +172,12 @@ describe('DigitalCertificate', () => {
       expect(savedBlob.type).toBe('application/pdf');
       expect(savedBlob.size).toBeGreaterThan(0);
       expect(openSpy).not.toHaveBeenCalled();
-      await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:certificado'), {
-        timeout: 2000,
+      expect(revokeObjectURL).not.toHaveBeenCalled();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
       });
+      expect(revokeObjectURL).toHaveBeenCalledOnce();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:certificado');
     });
 
     it('sends theme=light when the screen uses the light theme', async () => {
