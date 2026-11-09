@@ -112,6 +112,11 @@ describe('DigitalCertificate', () => {
   let createObjectURL: ReturnType<typeof vi.fn>;
   let revokeObjectURL: ReturnType<typeof vi.fn>;
   let openSpy: MockInstance<typeof window.open>;
+  // saveBlob agenda o revoke para 1s depois. O id precisa ser cancelado no
+  // afterEach: se disparar depois que o mock sai do URL, o Vitest vê
+  // "revokeObjectURL is not a function" mesmo com os testes passando.
+  const nativeSetTimeout = globalThis.setTimeout.bind(globalThis);
+  const pendingRevokeTimers: number[] = [];
 
   beforeEach(() => {
     getCertificateByCodeMock.mockReset();
@@ -125,6 +130,16 @@ describe('DigitalCertificate', () => {
     revokeObjectURL = vi.fn();
     Object.assign(URL, { createObjectURL, revokeObjectURL });
 
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation(((
+      handler: TimerHandler,
+      timeout?: number,
+      ...args: unknown[]
+    ) => {
+      const id = nativeSetTimeout(handler, timeout, ...(args as [])) as unknown as number;
+      if (timeout === 1000) pendingRevokeTimers.push(id);
+      return id;
+    }) as typeof globalThis.setTimeout);
+
     downloadedFilenames = [];
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
       this: HTMLAnchorElement,
@@ -135,6 +150,7 @@ describe('DigitalCertificate', () => {
   });
 
   afterEach(() => {
+    pendingRevokeTimers.splice(0).forEach((id) => clearTimeout(id));
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     localStorage.clear();
