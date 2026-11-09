@@ -93,6 +93,101 @@ describe('companyEmployeeService', () => {
     expect(parsed.searchParams.get('size')).toBe('15');
   });
 
+  it('cadastra um colaborador usando a rota autenticada', async () => {
+    fetchMock.mockResolvedValueOnce(
+      response({
+        success: true,
+        data: page.content[0],
+      }),
+    );
+
+    await expect(
+      companyEmployeeService.createEmployee({
+        name: 'Ana Paula Ferreira',
+        email: 'ana@empresa.com.br',
+        jobTitle: 'Recepção',
+      }),
+    ).resolves.toEqual(page.content[0]);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/company/employees',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Ana Paula Ferreira',
+          email: 'ana@empresa.com.br',
+          jobTitle: 'Recepção',
+        }),
+        headers: expect.any(Headers),
+      }),
+    );
+  });
+
+  it('atualiza status e dados na rota do colaborador', async () => {
+    fetchMock.mockResolvedValueOnce(
+      response({
+        success: true,
+        data: page.content[0],
+      }),
+    );
+
+    await companyEmployeeService.updateEmployee('employee/1', {
+      name: 'Ana Paula Ferreira',
+      email: 'ana@empresa.com.br',
+      jobTitle: 'Recepção',
+      status: 'INACTIVE',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/company/employees/employee%2F1',
+      expect.objectContaining({
+        method: 'PUT',
+        body: expect.stringContaining('"status":"INACTIVE"'),
+      }),
+    );
+  });
+
+  it('reenviar convite usa o endpoint do colaborador', async () => {
+    fetchMock.mockResolvedValueOnce(
+      response({
+        success: true,
+        data: page.content[0],
+      }),
+    );
+
+    await companyEmployeeService.resendInvitation('employee-1');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/company/employees/employee-1/invitation',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('conclui o convite pela rota pública', async () => {
+    fetchMock.mockResolvedValueOnce(
+      response({
+        success: true,
+        data: null,
+        message: 'Invitation completed',
+      }),
+    );
+
+    await expect(
+      companyEmployeeService.completeInvitation({
+        token: 'invitation-token',
+        password: 'secure-password',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:8080/api/v1/company-invitations/complete',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ token: 'invitation-token', password: 'secure-password' }),
+      }),
+    );
+  });
+
   it('omite o filtro vazio e utiliza a primeira página por padrão', async () => {
     fetchMock.mockResolvedValueOnce(
       response({

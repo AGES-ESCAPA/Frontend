@@ -1,10 +1,15 @@
 import type { ReactNode } from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCompanySeats } from '@hooks/useCompanySeats';
 import { useCompanyEmployees } from '@hooks/useCompanyEmployees';
+import {
+  CompanyEmployeeServiceError,
+  companyEmployeeService,
+} from '@services/companyEmployeeService';
+import type * as CompanyEmployeeServiceModule from '@services/companyEmployeeService';
 import type { UseCompanySeatsResult } from '@hooks/useCompanySeats';
 import type { UseCompanyEmployeesResult } from '@hooks/useCompanyEmployees';
 import { CompanyEmployees } from './CompanyEmployees';
@@ -16,6 +21,20 @@ vi.mock('@hooks/useCompanySeats', () => ({
 vi.mock('@hooks/useCompanyEmployees', () => ({
   useCompanyEmployees: vi.fn(),
 }));
+
+vi.mock('@services/companyEmployeeService', async (importOriginal) => {
+  const actual = await importOriginal<typeof CompanyEmployeeServiceModule>();
+
+  return {
+    ...actual,
+    companyEmployeeService: {
+      ...actual.companyEmployeeService,
+      createEmployee: vi.fn(),
+      updateEmployee: vi.fn(),
+      resendInvitation: vi.fn(),
+    },
+  };
+});
 
 vi.mock('@components/layout', () => ({
   SIDEBAR_MENU_PRESETS: {
@@ -68,6 +87,17 @@ const renderPage = () =>
       <CompanyEmployees />
     </MemoryRouter>,
   );
+
+const CurrentLocation = () => {
+  const location = useLocation();
+
+  return (
+    <output aria-label="Localização atual">
+      {location.pathname}
+      {location.search}
+    </output>
+  );
+};
 
 describe('CompanyEmployees', () => {
   beforeEach(() => {
@@ -254,7 +284,7 @@ describe('CompanyEmployees', () => {
     expect(reloadEmployees).toHaveBeenCalledOnce();
   });
 
-  it('informa que a edição ainda não está disponível, sem chamar API de escrita', async () => {
+  it('abre o formulário de edição com os dados do colaborador selecionado', async () => {
     const user = userEvent.setup();
 
     renderPage();
@@ -265,6 +295,130 @@ describe('CompanyEmployees', () => {
       }),
     );
 
-    expect(screen.getByRole('status')).toHaveTextContent('Edição de Ana Paula Ferreira');
+    expect(screen.getByRole('heading', { name: 'Editar Colaborador' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Nome completo' })).toHaveValue(
+      'Ana Paula Ferreira',
+    );
+    expect(screen.getByRole('textbox', { name: 'E-mail corporativo' })).toHaveValue(
+      'ana@empresa.com.br',
+    );
+    expect(screen.getByRole('textbox', { name: 'Cargo' })).toHaveValue('Recepção');
+  });
+
+  it('cadastra um colaborador pela API e atualiza os dados da tela', async () => {
+    const user = userEvent.setup();
+    vi.mocked(companyEmployeeService.createEmployee).mockResolvedValueOnce(
+      employeesResult.employees[0],
+    );
+
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Cadastrar Colaborador' }));
+    await user.type(screen.getByRole('textbox', { name: 'Nome completo' }), 'Joana Silva');
+    await user.type(
+      screen.getByRole('textbox', { name: 'E-mail corporativo' }),
+      'joana@empresa.com.br',
+    );
+    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Recepcionista');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() =>
+      expect(companyEmployeeService.createEmployee).toHaveBeenCalledWith({
+        name: 'Joana Silva',
+        email: 'joana@empresa.com.br',
+        jobTitle: 'Recepcionista',
+      }),
+    );
+    expect(reloadEmployees).toHaveBeenCalled();
+    expect(reloadSeats).toHaveBeenCalled();
+    expect(
+      await screen.findByText(
+        'Colaborador cadastrado. O convite de acesso foi enviado por e-mail.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('reenvia o convite do colaborador pendente selecionado', async () => {
+    const user = userEvent.setup();
+    employeesMock.mockReturnValue({
+      ...employeesResult,
+      employees: [{ ...employeesResult.employees[0], status: 'PENDING' }],
+    });
+    vi.mocked(companyEmployeeService.resendInvitation).mockResolvedValueOnce(
+      employeesResult.employees[0],
+    );
+
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Reenviar convite' }));
+
+    await waitFor(() =>
+      expect(companyEmployeeService.resendInvitation).toHaveBeenCalledWith('employee-1'),
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Convite reenviado para Ana Paula Ferreira.',
+    );
+  });
+
+  it('reports the unavailable seats error and keeps the employee form open', async () => {
+    const user = userEvent.setup();
+    seatsMock.mockReturnValue({
+      ...seatsResult,
+      seats: {
+        ...seatsResult.seats!,
+        seatsUsed: 10,
+        seatsAvailable: 0,
+      },
+    });
+    vi.mocked(companyEmployeeService.createEmployee).mockRejectedValueOnce(
+      new CompanyEmployeeServiceError(
+        409,
+        'Não há vagas disponíveis. Compre mais assentos para cadastrar um colaborador.',
+      ),
+    );
+
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'Comprar mais vagas' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cadastrar Colaborador' }));
+    await user.type(screen.getByRole('textbox', { name: 'Nome completo' }), 'Joana Silva');
+    await user.type(
+      screen.getByRole('textbox', { name: 'E-mail corporativo' }),
+      'joana@empresa.com.br',
+    );
+    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Recepcionista');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não há vagas disponíveis. Compre mais assentos para cadastrar um colaborador.',
+    );
+    expect(screen.getByRole('dialog', { name: 'Cadastrar Colaborador' })).toBeInTheDocument();
+    expect(reloadEmployees).not.toHaveBeenCalled();
+    expect(reloadSeats).not.toHaveBeenCalled();
+  });
+
+  it('navigates the company with no available seats to seat checkout', async () => {
+    const user = userEvent.setup();
+    seatsMock.mockReturnValue({
+      ...seatsResult,
+      seats: {
+        ...seatsResult.seats!,
+        seatsUsed: 10,
+        seatsAvailable: 0,
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <CompanyEmployees />
+        <CurrentLocation />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Comprar mais vagas' }));
+
+    expect(screen.getByLabelText('Localização atual')).toHaveTextContent(
+      '/checkout/assentos?quantidade=1',
+    );
   });
 });

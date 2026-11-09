@@ -21,6 +21,13 @@ export { StudentCourseCard } from './StudentCourseCard';
 export type { EnrollmentStatus, StudentCourseCardProps } from './StudentCourseCard';
 export { LessonModal } from './LessonModal';
 export type { LessonModalProps } from './LessonModal';
+export { EmployeeFormModal } from './EmployeeFormModal';
+export type {
+  EmployeeAccessStatus,
+  EmployeeFormField,
+  EmployeeFormModalProps,
+  EmployeeFormValues,
+} from './EmployeeFormModal';
 export { LessonNavItem } from './LessonNavItem';
 export type { LessonNavItemProps, LessonStatus } from './LessonNavItem';
 export { Modal } from './Modal';

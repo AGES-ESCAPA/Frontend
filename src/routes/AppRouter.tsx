@@ -104,6 +104,12 @@ const CompanyEmployees = lazy(() =>
   })),
 );
 
+const EmployeeInvitation = lazy(() =>
+  import('@pages/EmployeeInvitation/EmployeeInvitation').then((m) => ({
+    default: m.EmployeeInvitation,
+  })),
+);
+
 const UnderConstruction = lazy(() =>
   import('@pages/UnderConstruction/UnderConstruction').then((m) => ({
     default: m.UnderConstruction,
@@ -157,6 +163,7 @@ export const AppRouter = () => {
             <Route path="/cadastro" element={<RegisterAccountType />} />
             <Route path="/cadastro/empresa" element={<RegisterCompany />} />
             <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
+            <Route path="/cadastro/colaborador/convite" element={<EmployeeInvitation />} />
             <Route
               path="/meus-cursos"
               element={

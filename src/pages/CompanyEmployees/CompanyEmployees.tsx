@@ -1,12 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
-import { Button, EmployeeTable, EmptyState, ProgressBar, SearchBar, SumCard } from '@components/ui';
-import type { Employee } from '@components/ui';
+import {
+  Button,
+  EmployeeFormModal,
+  EmployeeTable,
+  EmptyState,
+  ProgressBar,
+  SearchBar,
+  SumCard,
+} from '@components/ui';
+import type {
+  EmployeeAccessStatus,
+  Employee,
+  EmployeeFormField,
+  EmployeeFormValues,
+} from '@components/ui';
 import { useCompanySeats } from '@hooks/useCompanySeats';
 import { useCompanyEmployees } from '@hooks/useCompanyEmployees';
 import { mapCompanyEmployeeToRow } from '@utils/mapCompanyEmployee';
+import {
+  CompanyEmployeeServiceError,
+  companyEmployeeService,
+} from '@services/companyEmployeeService';
+import type { CompanyEmployee } from '@/types/companyEmployee';
 import styles from './CompanyEmployees.module.css';
 
 const COMPANY_USER: SidebarUser = {
@@ -36,10 +55,17 @@ const SkeletonTable = () => (
 );
 
 export const CompanyEmployees = () => {
+  const navigate = useNavigate();
   const [inputSearch, setInputSearch] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [employeeFormOpen, setEmployeeFormOpen] = useState(false);
+  const [employeeBeingEdited, setEmployeeBeingEdited] = useState<CompanyEmployee | null>(null);
+  const [isSubmittingEmployee, setIsSubmittingEmployee] = useState(false);
+  const [employeeFormFieldErrors, setEmployeeFormFieldErrors] = useState<
+    Partial<Record<EmployeeFormField, string>>
+  >({});
 
   const {
     seats,
@@ -76,14 +102,104 @@ export const CompanyEmployees = () => {
     setSearch(value.trim());
   }, []);
 
+  const openCreateForm = () => {
+    setEmployeeBeingEdited(null);
+    setEmployeeFormOpen(true);
+    setActionNotice(null);
+    setEmployeeFormFieldErrors({});
+  };
+
+  const openEditForm = (employee: Employee) => {
+    const companyEmployee = employees.find((current) => current.id === employee.id);
+    if (!companyEmployee) {
+      setActionNotice(`Não foi possível carregar os dados de ${employee.name} para edição.`);
+      return;
+    }
+
+    setEmployeeBeingEdited(companyEmployee);
+    setEmployeeFormOpen(true);
+    setActionNotice(null);
+    setEmployeeFormFieldErrors({});
+  };
+
+  const getFormAccessStatus = (status: CompanyEmployee['status']): EmployeeAccessStatus => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'active';
+      case 'PENDING':
+        return 'pending';
+      case 'INACTIVE':
+        return 'inactive';
+    }
+  };
+
+  const getApiAccessStatus = (
+    status: EmployeeAccessStatus | undefined,
+  ): CompanyEmployee['status'] => {
+    switch (status) {
+      case 'pending':
+        return 'PENDING';
+      case 'inactive':
+        return 'INACTIVE';
+      case 'active':
+      default:
+        return 'ACTIVE';
+    }
+  };
+
+  const handleEmployeeSubmit = async (values: EmployeeFormValues) => {
+    setIsSubmittingEmployee(true);
+    setActionNotice(null);
+
+    try {
+      if (employeeBeingEdited) {
+        await companyEmployeeService.updateEmployee(employeeBeingEdited.id, {
+          name: values.name,
+          email: values.email,
+          jobTitle: values.role,
+          status: getApiAccessStatus(values.accessStatus),
+        });
+        setActionNotice('Colaborador atualizado com sucesso.');
+      } else {
+        await companyEmployeeService.createEmployee({
+          name: values.name,
+          email: values.email,
+          jobTitle: values.role,
+        });
+        setActionNotice('Colaborador cadastrado. O convite de acesso foi enviado por e-mail.');
+      }
+
+      reloadAll();
+    } catch (error: unknown) {
+      if (
+        error instanceof CompanyEmployeeServiceError &&
+        error.status === 409 &&
+        error.message === 'Este e-mail já está cadastrado.'
+      ) {
+        setEmployeeFormFieldErrors({ email: error.message });
+      }
+      throw error;
+    } finally {
+      setIsSubmittingEmployee(false);
+    }
+  };
+
   useEffect(() => {
     if (employeesStatus === 'success' && totalPages > 0 && page >= totalPages) {
       setPage(totalPages - 1);
     }
   }, [employeesStatus, page, totalPages]);
 
-  const announcePendingAction = (action: string, employee: Employee) => {
-    setActionNotice(`${action} de ${employee.name} estará disponível em breve.`);
+  const handleResendInvitation = async (employee: Employee) => {
+    setActionNotice(null);
+    try {
+      await companyEmployeeService.resendInvitation(employee.id);
+      setActionNotice(`Convite reenviado para ${employee.name}.`);
+    } catch (error: unknown) {
+      setActionNotice(
+        error instanceof Error ? error.message : 'Não foi possível reenviar o convite.',
+      );
+    }
   };
 
   return (
@@ -174,9 +290,16 @@ export const CompanyEmployees = () => {
                 variant="primary"
                 label="Cadastrar Colaborador"
                 icon={<UserPlus size={18} aria-hidden="true" />}
-                title="Cadastro de colaboradores em breve"
-                disabled
+                onClick={openCreateForm}
               />
+              {seatsStatus === 'success' && seats?.seatsAvailable === 0 ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  label="Comprar mais vagas"
+                  onClick={() => navigate('/checkout/assentos?quantidade=1')}
+                />
+              ) : null}
             </div>
           </div>
 
@@ -239,9 +362,11 @@ export const CompanyEmployees = () => {
               )}
               <EmployeeTable
                 employees={rows}
-                onEdit={(employee) => announcePendingAction('Edição', employee)}
-                onResendInvite={(employee) => announcePendingAction('Reenvio de convite', employee)}
-                onUnlink={(employee) => announcePendingAction('Desvinculação', employee)}
+                onEdit={openEditForm}
+                onResendInvite={(employee) => void handleResendInvitation(employee)}
+                onUnlink={(employee) =>
+                  setActionNotice(`Desvinculação de ${employee.name} estará disponível em breve.`)
+                }
               />
             </div>
           ) : null}
@@ -286,6 +411,25 @@ export const CompanyEmployees = () => {
             </footer>
           ) : null}
         </section>
+
+        <EmployeeFormModal
+          open={employeeFormOpen}
+          onOpenChange={setEmployeeFormOpen}
+          mode={employeeBeingEdited ? 'edit' : 'create'}
+          initialValues={
+            employeeBeingEdited
+              ? {
+                  name: employeeBeingEdited.name,
+                  email: employeeBeingEdited.email,
+                  role: employeeBeingEdited.jobTitle ?? '',
+                  accessStatus: getFormAccessStatus(employeeBeingEdited.status),
+                }
+              : undefined
+          }
+          onSubmit={handleEmployeeSubmit}
+          fieldErrors={employeeFormFieldErrors}
+          isSubmitting={isSubmittingEmployee}
+        />
       </div>
     </AuthenticatedLayout>
   );

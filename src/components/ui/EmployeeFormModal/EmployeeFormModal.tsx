@@ -98,6 +98,9 @@ export const EmployeeFormModal = ({
   const [errors, setErrors] = useState<EmployeeFormErrors>({});
   const [wasSubmitted, setWasSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [dismissedFieldErrors, setDismissedFieldErrors] = useState<Set<EmployeeFormField>>(
+    () => new Set(),
+  );
   const baseId = useId();
   const initialValuesRef = useRef(initialValues);
 
@@ -112,6 +115,7 @@ export const EmployeeFormModal = ({
     setErrors({});
     setWasSubmitted(false);
     setSubmitError(null);
+    setDismissedFieldErrors(new Set());
   }, [
     open,
     mode,
@@ -120,6 +124,10 @@ export const EmployeeFormModal = ({
     initialValues?.role,
     initialValues?.accessStatus,
   ]);
+
+  useEffect(() => {
+    setDismissedFieldErrors(new Set());
+  }, [fieldErrors]);
 
   useEffect(() => {
     if (wasSubmitted) setErrors(validateForm(form));
@@ -158,7 +166,11 @@ export const EmployeeFormModal = ({
     }
   };
 
-  const getFieldError = (field: EmployeeFormField) => fieldErrors[field] ?? errors[field];
+  const getFieldError = (field: EmployeeFormField) =>
+    errors[field] ?? (dismissedFieldErrors.has(field) ? undefined : fieldErrors[field]);
+  const dismissFieldError = (field: EmployeeFormField) => {
+    setDismissedFieldErrors((current) => new Set(current).add(field));
+  };
   const nameId = `${baseId}-name`;
   const emailId = `${baseId}-email`;
   const roleId = `${baseId}-role`;
@@ -191,7 +203,10 @@ export const EmployeeFormModal = ({
             autoComplete="name"
             placeholder="Nome completo"
             value={form.name}
-            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+            onChange={(event) => {
+              dismissFieldError('name');
+              setForm((current) => ({ ...current, name: event.target.value }));
+            }}
             icon={<User size={18} aria-hidden="true" />}
             required
             disabled={isSubmitting}
@@ -213,7 +228,10 @@ export const EmployeeFormModal = ({
             autoComplete="email"
             placeholder="usuario@empresa.com.br"
             value={form.email}
-            onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+            onChange={(event) => {
+              dismissFieldError('email');
+              setForm((current) => ({ ...current, email: event.target.value }));
+            }}
             icon={<Mail size={18} aria-hidden="true" />}
             required
             disabled={isSubmitting}
@@ -229,7 +247,10 @@ export const EmployeeFormModal = ({
             autoComplete="organization-title"
             placeholder="Cargo do colaborador"
             value={form.role}
-            onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
+            onChange={(event) => {
+              dismissFieldError('role');
+              setForm((current) => ({ ...current, role: event.target.value }));
+            }}
             required
             disabled={isSubmitting}
             invalid={Boolean(getFieldError('role'))}
@@ -252,6 +273,7 @@ export const EmployeeFormModal = ({
               onChange={(event) => {
                 const value = event.target.value;
                 if (!isEmployeeAccessStatus(value)) return;
+                dismissFieldError('accessStatus');
                 setForm((current) => ({ ...current, accessStatus: value }));
               }}
               disabled={isSubmitting}
