@@ -1,0 +1,213 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+  min-width: 0;
+  max-width: var(--container-7xl);
+  margin-inline: auto;
+  font-family: var(--font-family-base);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-h4--line-height);
+  overflow-wrap: anywhere;
+}
+
+.subtitle,
+.panelDescription {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.cards > article {
+  overflow-wrap: anywhere;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-5);
+}
+
+.panel {
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.tableTitle {
+  color: var(--color-text-primary);
+  font-size: var(--text-h5);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-h5--line-height);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.search {
+  width: var(--container-xs);
+  max-width: 100%;
+}
+
+.employee {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.employeeName {
+  font-weight: var(--font-weight-semibold);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: calc(var(--space-20) * 2);
+}
+
+.progressBar {
+  flex: 1;
+}
+
+.progressValue {
+  min-width: var(--space-10);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  text-align: end;
+}
+
+.lastAccess {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.count {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.count strong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-8);
+  height: var(--space-8);
+  padding-inline: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-semibold);
+  background-color: var(--color-primary-900);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.pageButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.pageButton:disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-card-pending);
+}
+
+.pageButton:hover:not(:disabled) {
+  background-color: var(--color-primary-700);
+}
+
+.pageButtonActive,
+.pageButtonActive:hover:not(:disabled) {
+  color: var(--color-primary-900);
+  background-color: var(--color-info-300);
+  border-color: var(--color-info-300);
+}
+
+@media (width < 64rem) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (width < 40rem) {
+  .page {
+    gap: var(--space-6);
+  }
+
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .panel {
+    --panel-padding: var(--space-5);
+  }
+
+  .controls,
+  .search {
+    width: 100%;
+  }
+
+  /* Área de toque acessível nos botões da paginação. */
+  .pageButton {
+    min-width: var(--touch-target-min);
+    height: var(--touch-target-min);
+  }
+}
