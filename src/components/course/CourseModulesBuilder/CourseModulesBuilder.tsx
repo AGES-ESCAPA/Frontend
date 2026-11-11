@@ -772,6 +772,10 @@ export const CourseModulesBuilder = ({
                               );
                             }}
                             onDrop={(event) => {
+                              if (!draggingLessonRef.current) {
+                                return;
+                              }
+
                               event.preventDefault();
                               event.stopPropagation();
                               void handleLessonDrop(module.id, lesson.id);

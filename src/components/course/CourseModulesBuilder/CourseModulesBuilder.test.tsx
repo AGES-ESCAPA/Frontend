@@ -466,6 +466,30 @@ describe('CourseModulesBuilder', () => {
       expect(reorderedSecond).toHaveTextContent('Boas-vindas e objetivos do curso');
     });
 
+    it('should reorder modules when a module is dropped on an expanded lesson', async () => {
+      const user = userEvent.setup();
+      const { client, reorderLessons } = renderExpandedBuilder();
+
+      await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+
+      const secondModuleCard = screen
+        .getByDisplayValue('Hospitalidade aplicada na prática')
+        .closest('[data-module-card]') as HTMLElement;
+      const [firstLesson] = lessonItems();
+
+      fireEvent.dragStart(secondModuleCard);
+      fireEvent.dragOver(firstLesson);
+      fireEvent.drop(firstLesson);
+
+      await waitFor(() => {
+        expect(client.reorderModules).toHaveBeenCalledWith(COURSE_ID, [
+          SECOND_MODULE_ID,
+          FIRST_MODULE_ID,
+        ]);
+      });
+      expect(reorderLessons).not.toHaveBeenCalled();
+    });
+
     it('should not leak the lesson id into the module title when dropped on it', async () => {
       const user = userEvent.setup();
       const { client, reorderLessons } = renderExpandedBuilder();
