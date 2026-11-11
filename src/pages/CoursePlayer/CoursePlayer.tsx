@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Check, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { Button } from '@components/ui';
-import { LessonVideoPlayer } from '@components/course/LessonVideoPlayer/LessonVideoPlayer';
+import { VideoPlayer } from '@components/course/VideoPlayer/VideoPlayer';
 import { NavigationButton } from '@components/course/NavigationButton/NavigationButton';
 import { completeStudentLesson, StudentCurriculumError } from '@services/curriculumService';
 import { findLessonNeighbors } from '@/utils/lessonNavigation';
@@ -202,7 +202,7 @@ export const CoursePlayer = () => {
         <div className={`${styles.layout} ${isReadingLesson ? styles.layoutReading : ''}`}>
           {lesson.type === 'video' ? (
             <div className={styles.playerContainer}>
-              <LessonVideoPlayer
+              <VideoPlayer
                 key={lessonId}
                 src={lesson.videoUrl ?? ''}
                 title={lesson.title}

@@ -294,6 +294,104 @@ describe('CourseModulesBuilder', () => {
     expect(screen.getByText('Aula 1.3 Protocolos de recepção')).toBeInTheDocument();
   });
 
+  describe('lesson reordering', () => {
+    const FIRST_LESSON_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1';
+    const SECOND_LESSON_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
+
+    const renderExpandedBuilder = (
+      reorderLessons = vi.fn().mockImplementation((_moduleId: string, contentIds: string[]) => {
+        const byId = new Map(createModules()[0].contents.map((lesson) => [lesson.id, lesson]));
+
+        return Promise.resolve(
+          contentIds.map((id, index) => {
+            const lesson = byId.get(id);
+
+            if (!lesson) {
+              throw new Error(`Aula ${id} não encontrada no módulo de teste.`);
+            }
+
+            return { ...lesson, order: index + 1 };
+          }),
+        );
+      }),
+    ) => {
+      const client = createClient();
+
+      render(
+        <CourseModulesBuilder
+          courseId={COURSE_ID}
+          initialModules={createModules()}
+          client={client}
+          reorderLessons={reorderLessons}
+        />,
+      );
+
+      return { client, reorderLessons };
+    };
+
+    const lessonItems = () =>
+      within(screen.getByRole('list', { name: /aulas do módulo 1/i })).getAllByRole('listitem');
+
+    it('should reorder lessons inside a module and persist the new order', async () => {
+      const user = userEvent.setup();
+      const { client, reorderLessons } = renderExpandedBuilder();
+
+      await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+
+      const moduleCard = screen
+        .getByDisplayValue('Fundamentos do atendimento turístico')
+        .closest('[data-module-card]');
+      const [firstLesson, secondLesson] = lessonItems();
+
+      expect(moduleCard).toHaveAttribute('draggable', 'true');
+      fireEvent.pointerDown(secondLesson);
+      expect(moduleCard).toHaveAttribute('draggable', 'false');
+
+      fireEvent.dragStart(secondLesson);
+      fireEvent.dragOver(firstLesson);
+      fireEvent.drop(firstLesson);
+      fireEvent.dragEnd(secondLesson);
+
+      await waitFor(() => {
+        expect(reorderLessons).toHaveBeenCalledWith(FIRST_MODULE_ID, [
+          SECOND_LESSON_ID,
+          FIRST_LESSON_ID,
+        ]);
+      });
+      expect(client.reorderModules).not.toHaveBeenCalled();
+
+      const [reorderedFirst, reorderedSecond] = lessonItems();
+      expect(reorderedFirst).toHaveTextContent('Mapa da jornada do cliente');
+      expect(reorderedSecond).toHaveTextContent('Boas-vindas e objetivos do curso');
+    });
+
+    it('should restore the previous lesson order when the API rejects the reorder', async () => {
+      const user = userEvent.setup();
+      const reorderLessons = vi
+        .fn()
+        .mockRejectedValue(
+          new Error('contentIds must contain every content of the module exactly once'),
+        );
+      renderExpandedBuilder(reorderLessons);
+
+      await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+
+      const [firstLesson, secondLesson] = lessonItems();
+
+      fireEvent.dragStart(secondLesson);
+      fireEvent.dragOver(firstLesson);
+      fireEvent.drop(firstLesson);
+
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        'contentIds must contain every content of the module exactly once',
+      );
+
+      const [restoredFirst, restoredSecond] = lessonItems();
+      expect(restoredFirst).toHaveTextContent('Boas-vindas e objetivos do curso');
+      expect(restoredSecond).toHaveTextContent('Mapa da jornada do cliente');
+    });
+  });
+
   describe('lesson editing', () => {
     const TEXT_LESSON_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
 

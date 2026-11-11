@@ -19,10 +19,10 @@ const renderCard = () => {
   render(<ChangePasswordCard onNotify={onNotify} />);
   return {
     onNotify,
-    current: screen.getByLabelText(/^Senha atual/),
-    next: screen.getByLabelText(/^Nova senha/),
-    confirm: screen.getByLabelText(/^Confirmar nova senha/),
-    submit: screen.getByRole('button', { name: 'Alterar Senha' }),
+    current: screen.getByLabelText(/^Senha Atual/),
+    next: screen.getByLabelText(/^Nova Senha/),
+    confirm: screen.getByLabelText(/^Confirmar Nova Senha/),
+    submit: screen.getByRole('button', { name: 'Atualizar Senha' }),
   };
 };
 
@@ -121,6 +121,29 @@ describe('ChangePasswordCard', () => {
     expect(screen.getByText('A senha deve ter pelo menos 8 caracteres.')).toBeInTheDocument();
     expect(screen.getByText('As senhas devem ser iguais.')).toBeInTheDocument();
     expect(changePasswordMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the strength meter as the new password gets stronger', async () => {
+    const fields = renderCard();
+
+    expect(screen.getByRole('meter', { name: 'Força da senha: não informada' })).toHaveAttribute(
+      'aria-valuenow',
+      '0',
+    );
+
+    await userEvent.type(fields.next, 'abc');
+    expect(screen.getByRole('meter', { name: 'Força da senha: Fraca' })).toHaveAttribute(
+      'aria-valuenow',
+      '1',
+    );
+
+    await userEvent.clear(fields.next);
+    await userEvent.type(fields.next, 'S3nh@_F0rt3_Ex');
+    expect(screen.getByRole('meter', { name: 'Força da senha: Forte' })).toHaveAttribute(
+      'aria-valuenow',
+      '3',
+    );
+    expect(screen.getByText('Forte')).toBeInTheDocument();
   });
 
   it('shows the loading button and does not send twice while the request is pending', async () => {

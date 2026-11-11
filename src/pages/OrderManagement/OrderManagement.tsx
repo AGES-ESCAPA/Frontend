@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Building2, CircleX, Eye, RotateCcw, UserRound } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, CircleX, Eye, RotateCcw, UserRound } from 'lucide-react';
 
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
-import { formatCurrency, formatLongDate } from '@utils/formatters';
+import { formatCurrency } from '@utils/formatters';
 import { mapAdminOrderDetailsToOrderRow, toOrderCode } from '@utils/mapAdminOrder';
 import {
   Badge,
@@ -16,7 +16,6 @@ import {
   OrderCancellationAndRefund,
   OrderFilters,
   PAYMENT_ICONS,
-  PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
   SearchBar,
   SumCard,
@@ -40,6 +39,20 @@ const ADMIN_USER: SidebarUser = {
   name: 'Admin',
   role: 'Administrador',
   email: 'admin@email.com',
+};
+
+const ROW_ICON_SIZE = 14;
+
+const PAYMENT_LABELS = {
+  CARD: 'Cartão',
+  PIX: 'PIX',
+  BOLETO: 'Boleto',
+} as const;
+
+const formatShortDate = (value: string): string => {
+  const [year, month, day] = value.slice(0, 10).split('-');
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
 };
 
 const toAdminOrderFilters = (filters: OrderFiltersValue): AdminOrderFilters => ({
@@ -181,7 +194,7 @@ export const Ordermanagement = () => {
           <span
             className={`${styles.typeBadge} ${isCorporate ? styles.corporateBadge : styles.individualBadge}`}
           >
-            <TypeIcon size={24} aria-hidden="true" />
+            <TypeIcon size={ROW_ICON_SIZE} aria-hidden="true" />
             {ORDER_TYPE_LABELS[order.type]}
           </span>
         );
@@ -198,19 +211,19 @@ export const Ordermanagement = () => {
     },
     {
       id: 'purchaseDate',
-      header: 'Data da compra',
-      render: (order) => formatLongDate(order.purchaseDate.slice(0, 10)),
+      header: 'Data',
+      render: (order) => formatShortDate(order.purchaseDate),
     },
     {
       id: 'paymentMethod',
-      header: 'Forma de pagamento',
+      header: 'Pagamento',
       render: (order) => {
         const PaymentIcon = PAYMENT_ICONS[order.paymentMethod];
 
         return (
           <span className={styles.paymentMethod}>
-            <PaymentIcon size={24} aria-hidden="true" />
-            {PAYMENT_METHOD_LABELS[order.paymentMethod]}
+            <PaymentIcon size={ROW_ICON_SIZE} aria-hidden="true" />
+            {PAYMENT_LABELS[order.paymentMethod]}
           </span>
         );
       },
@@ -218,7 +231,6 @@ export const Ordermanagement = () => {
     {
       id: 'amount',
       header: 'Valor',
-      align: 'end',
       render: (order) => formatCurrency(order.amount),
     },
     {
@@ -237,36 +249,45 @@ export const Ordermanagement = () => {
     {
       id: 'actions',
       header: 'Ações',
-      render: (order) => (
-        <div className={styles.rowActions}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label={`Ver pedido ${toOrderCode(order.id)}`}
-            onClick={() => setSelectedOrderId(order.id)}
-          >
-            <Eye size={24} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label={`Reembolsar pedido ${toOrderCode(order.id)}`}
-            title="Disponível nos detalhes do pedido"
-            disabled
-          >
-            <RotateCcw size={24} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label={`Cancelar pedido ${toOrderCode(order.id)}`}
-            title="Disponível nos detalhes do pedido"
-            disabled
-          >
-            <CircleX size={24} aria-hidden="true" />
-          </button>
-        </div>
-      ),
+      render: (order) => {
+        const orderCode = toOrderCode(order.id);
+        const canManage = order.status === 'APPROVED';
+
+        return (
+          <div className={styles.rowActions}>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label={`Ver pedido ${orderCode}`}
+              onClick={() => setSelectedOrderId(order.id)}
+            >
+              <Eye size={ROW_ICON_SIZE} aria-hidden="true" />
+            </button>
+            {canManage ? (
+              <button
+                type="button"
+                className={styles.iconButton}
+                aria-label={`Reembolsar pedido ${orderCode}`}
+                title="Disponível nos detalhes do pedido"
+                disabled
+              >
+                <RotateCcw size={ROW_ICON_SIZE} aria-hidden="true" />
+              </button>
+            ) : null}
+            {canManage ? (
+              <button
+                type="button"
+                className={styles.iconButton}
+                aria-label={`Cancelar pedido ${orderCode}`}
+                title="Disponível nos detalhes do pedido"
+                disabled
+              >
+                <CircleX size={ROW_ICON_SIZE} aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        );
+      },
     },
   ];
 
@@ -281,14 +302,6 @@ export const Ordermanagement = () => {
               Consulte e gerencie as compras realizadas na plataforma.
             </p>
           </div>
-          <div className={styles.search}>
-            <SearchBar
-              value={search}
-              onChange={setSearch}
-              placeholder="Buscar pedido nesta página"
-              aria-label="Buscar pedido nesta página"
-            />
-          </div>
         </div>
       </section>
 
@@ -296,7 +309,7 @@ export const Ordermanagement = () => {
         <SumCard
           label="Receita aprovada"
           value={status === 'loading' ? '—' : formatCurrency(approvedRevenue)}
-          description={`${approvedOrders.length} pedidos ativos nesta página`}
+          description={`${approvedOrders.length} pedidos ativos`}
         />
 
         <SumCard
@@ -306,7 +319,7 @@ export const Ordermanagement = () => {
         />
 
         <SumCard
-          label="Cancelados e reembolsados"
+          label="Cancelados / reembolsados"
           value={status === 'loading' ? '—' : canceledOrRefundedCount}
           description="Acesso revogado"
         />
@@ -323,8 +336,17 @@ export const Ordermanagement = () => {
               value={filters}
               onChange={handleFiltersChange}
               courses={filterCourses}
+              showClearButton={false}
               className={styles.inlineFilters}
             />
+            <div className={styles.search}>
+              <SearchBar
+                value={search}
+                onChange={setSearch}
+                placeholder="Buscar pedido"
+                aria-label="Buscar pedido"
+              />
+            </div>
           </div>
         </header>
 
@@ -351,31 +373,38 @@ export const Ordermanagement = () => {
               className={styles.ordersTable}
               footer={
                 <div className={styles.tableFooter}>
-                  <p>
-                    Mostrando {filteredOrders.length} de {orders.length} pedidos nesta página
+                  <p className={styles.footerText}>
+                    Mostrando {filteredOrders.length} de {orders.length} pedidos
                   </p>
-                  <p className={styles.panelNote}>Liberação de acesso automática via checkout</p>
+                  <div className={styles.pagination}>
+                    <button
+                      type="button"
+                      className={styles.pageArrow}
+                      aria-label="Anterior"
+                      onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                      disabled={page === 0}
+                    >
+                      <ArrowLeft size={ROW_ICON_SIZE} aria-hidden="true" />
+                    </button>
+                    <span className={styles.pageIndicator}>
+                      Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.pageArrow}
+                      aria-label="Próxima"
+                      onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
+                      disabled={page + 1 >= totalPages}
+                    >
+                      <ArrowRight size={ROW_ICON_SIZE} aria-hidden="true" />
+                    </button>
+                  </div>
+                  <p className={`${styles.footerText} ${styles.panelNote}`}>
+                    Liberação de acesso automática via checkout
+                  </p>
                 </div>
               }
             />
-
-            <div className={styles.pagination}>
-              <Button
-                variant="outlined"
-                label="Anterior"
-                onClick={() => setPage((current) => Math.max(current - 1, 0))}
-                disabled={page === 0}
-              />
-              <span className={styles.pageIndicator}>
-                Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
-              </span>
-              <Button
-                variant="outlined"
-                label="Próxima"
-                onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
-                disabled={page + 1 >= totalPages}
-              />
-            </div>
           </>
         )}
       </section>

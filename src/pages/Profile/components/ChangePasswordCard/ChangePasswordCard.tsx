@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
-import { KeyRound } from 'lucide-react';
+import type { FormEvent, ReactNode } from 'react';
+import { Lock } from 'lucide-react';
 import { Button, FormField, Panel, PasswordInput } from '@components/ui';
 import type { ToastVariant } from '@components/ui';
 import { ProfileServiceError, profileService } from '@services/profileService';
+import { getPasswordStrength } from '@utils/passwordStrength';
 import styles from './ChangePasswordCard.module.css';
 
 export interface ChangePasswordCardProps {
@@ -83,33 +84,75 @@ export const ChangePasswordCard = ({ onNotify }: ChangePasswordCardProps) => {
     }
   };
 
-  const renderField = (field: PasswordField, label: string, autoComplete: string) => {
+  const renderField = (
+    field: PasswordField,
+    label: string,
+    autoComplete: string,
+    extra?: ReactNode,
+  ) => {
     const id = `change-password-${field}`;
     return (
-      <FormField label={label} htmlFor={id} required error={errors[field]}>
+      <FormField label={label} htmlFor={id} error={errors[field]}>
         <PasswordInput
           id={id}
+          icon={null}
           value={values[field]}
           onChange={(event) => changeValue(field, event.target.value)}
           autoComplete={autoComplete}
           invalid={errors[field] !== undefined}
           disabled={isSaving}
         />
+        {extra}
       </FormField>
     );
   };
 
+  const strength = getPasswordStrength(values.newPassword);
+
   return (
-    <Panel icon={<KeyRound size={22} />} title="Alterar Senha" className={styles.card}>
+    <Panel icon={<Lock size={22} />} title="Segurança & Senha" className={styles.card}>
       <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
         <div className={styles.fields}>
-          {renderField('currentPassword', 'Senha atual', 'current-password')}
-          {renderField('newPassword', 'Nova senha', 'new-password')}
-          {renderField('confirmPassword', 'Confirmar nova senha', 'new-password')}
+          {renderField('currentPassword', 'Senha Atual', 'current-password')}
+          {renderField(
+            'newPassword',
+            'Nova Senha',
+            'new-password',
+            <div
+              className={styles.strength}
+              role="meter"
+              aria-valuemin={0}
+              aria-valuemax={3}
+              aria-valuenow={strength.score}
+              aria-valuetext={strength.label || 'Não informada'}
+              aria-label={
+                strength.label
+                  ? `Força da senha: ${strength.label}`
+                  : 'Força da senha: não informada'
+              }
+            >
+              {strength.label ? (
+                <span className={styles.strengthLabel} data-level={strength.level}>
+                  {strength.label}
+                </span>
+              ) : null}
+              <span className={styles.strengthTrack}>
+                {[1, 2, 3].map((segment) => (
+                  <span
+                    key={segment}
+                    className={styles.segment}
+                    data-level={strength.level}
+                    data-filled={segment <= strength.score ? 'true' : 'false'}
+                  />
+                ))}
+              </span>
+            </div>,
+          )}
+          {renderField('confirmPassword', 'Confirmar Nova Senha', 'new-password')}
         </div>
 
         <div className={styles.actions}>
-          <Button type="submit" variant="primary" label="Alterar Senha" isLoading={isSaving} />
+          <Button type="submit" variant="primary" label="Atualizar Senha" isLoading={isSaving} />
         </div>
       </form>
     </Panel>

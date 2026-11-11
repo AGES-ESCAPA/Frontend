@@ -30,7 +30,7 @@ const toProgressPercent = (time: number, duration: number): number =>
 
 /**
  * Barra de controles do player: botão de tocar/pausar, tempo decorrido e linha do tempo.
- * Não controla o vídeo — quem gerencia o estado é o `LessonVideoPlayer`.
+ * Não controla o vídeo — quem gerencia o estado é o `VideoPlayer`.
  */
 export const PlayerControls: FC<PlayerControlsProps> = ({
   isPlaying,

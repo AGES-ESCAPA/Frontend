@@ -110,10 +110,10 @@ describe('Profile', () => {
     changePasswordMock.mockResolvedValue();
     const context = renderPage(studentUser);
 
-    await userEvent.type(await screen.findByLabelText(/^Senha atual/), 'escapa@2026');
-    await userEvent.type(screen.getByLabelText(/^Nova senha/), 'nova@senha2026');
-    await userEvent.type(screen.getByLabelText(/^Confirmar nova senha/), 'nova@senha2026');
-    await userEvent.click(screen.getByRole('button', { name: 'Alterar Senha' }));
+    await userEvent.type(await screen.findByLabelText(/^Senha Atual/), 'escapa@2026');
+    await userEvent.type(screen.getByLabelText(/^Nova Senha/), 'nova@senha2026');
+    await userEvent.type(screen.getByLabelText(/^Confirmar Nova Senha/), 'nova@senha2026');
+    await userEvent.click(screen.getByRole('button', { name: 'Atualizar Senha' }));
 
     expect(await screen.findByText('Senha alterada')).toBeInTheDocument();
     expect(changePasswordMock).toHaveBeenCalledWith('escapa@2026', 'nova@senha2026');

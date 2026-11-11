@@ -23,27 +23,18 @@ export interface ProfileDataCardProps {
   onNotify: (variant: ToastVariant, title: string, description?: string) => void;
 }
 
-const READ_ONLY_HINT = 'Identifica sua conta e não pode ser alterado.';
+/** CPF só de leitura, com espaço ao redor do traço: 000.000.000 - 00. */
+const displayCpf = (value: string) => maskCpf(value).replace(/-(?=\d{2}$)/, ' - ');
 
-const LockedField = ({
-  id,
-  label,
-  value,
-  type = 'text',
-}: {
-  id: string;
-  label: string;
-  value: string;
-  type?: 'text' | 'email';
-}) => (
-  <FormField label={label} htmlFor={id}>
-    <div className={styles.lockedField}>
-      <TextInput id={id} type={type} value={value} readOnly aria-describedby={`${id}-hint`} />
-      <p id={`${id}-hint`} className={styles.lockHint} role="tooltip">
-        {READ_ONLY_HINT}
-      </p>
-    </div>
-  </FormField>
+const LockedField = ({ id, label, value }: { id: string; label: string; value: string }) => (
+  <div className={styles.lockedField}>
+    <span className={styles.lockedLabel} id={id}>
+      {label}
+    </span>
+    <p className={styles.lockedValue} aria-labelledby={id}>
+      {value}
+    </p>
+  </div>
 );
 
 const formatOrDash = (value: string | null, format: (raw: string) => string = (raw) => raw) =>
@@ -138,98 +129,119 @@ export const ProfileDataCard = ({ profile, onSaved, onNotify }: ProfileDataCardP
   };
 
   return (
-    <Panel icon={<UserRound size={22} />} title="Dados Cadastrais" className={styles.card}>
-      <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
-        <AvatarUpload imageUrl={profile.avatarUrl} name={profile.name} onFileSelected={setPhoto} />
+    <AvatarUpload
+      imageUrl={profile.avatarUrl}
+      name={profile.name}
+      onFileSelected={setPhoto}
+      size="md"
+      compact
+      avatarClassName={styles.profileAvatar}
+    >
+      {({ avatar, changePhotoButton, error }) => (
+        <Panel icon={<UserRound size={22} />} title="Dados Cadastrais" className={styles.card}>
+          <form className={styles.form} onSubmit={(event) => void handleSubmit(event)} noValidate>
+            {error}
 
-        {profile.editable ? (
-          <div className={styles.fields}>
-            <FormField
-              label={isCompany ? 'Nome do Responsável' : 'Nome Completo'}
-              htmlFor="profile-name"
-              required
-              error={errors.name}
-            >
-              <TextInput
-                id="profile-name"
-                value={values.name}
-                onChange={(event) => changeValue('name', event.target.value)}
-                maxLength={PROFILE_TEXT_MAX_LENGTH}
-                autoComplete="name"
-                invalid={errors.name !== undefined}
-                disabled={isSaving}
-              />
-            </FormField>
+            {profile.editable ? (
+              <div className={styles.fields}>
+                <div className={styles.nameBlock}>
+                  <FormField
+                    label={isCompany ? 'Nome do Responsável' : 'Nome Completo'}
+                    htmlFor="profile-name"
+                    error={errors.name}
+                  >
+                    <TextInput
+                      id="profile-name"
+                      value={values.name}
+                      onChange={(event) => changeValue('name', event.target.value)}
+                      maxLength={PROFILE_TEXT_MAX_LENGTH}
+                      autoComplete="name"
+                      invalid={errors.name !== undefined}
+                      disabled={isSaving}
+                    />
+                  </FormField>
+                  <div className={styles.photoColumn}>
+                    {avatar}
+                    {changePhotoButton}
+                  </div>
+                </div>
 
-            {isCompany ? (
-              <FormField
-                label="Razão Social"
-                htmlFor="profile-company-name"
-                required
-                error={errors.companyName}
-              >
-                <TextInput
-                  id="profile-company-name"
-                  value={values.companyName}
-                  onChange={(event) => changeValue('companyName', event.target.value)}
-                  maxLength={PROFILE_TEXT_MAX_LENGTH}
-                  autoComplete="organization"
-                  invalid={errors.companyName !== undefined}
-                  disabled={isSaving}
+                {isCompany ? (
+                  <FormField
+                    label="Razão Social"
+                    htmlFor="profile-company-name"
+                    error={errors.companyName}
+                  >
+                    <TextInput
+                      id="profile-company-name"
+                      value={values.companyName}
+                      onChange={(event) => changeValue('companyName', event.target.value)}
+                      maxLength={PROFILE_TEXT_MAX_LENGTH}
+                      autoComplete="organization"
+                      invalid={errors.companyName !== undefined}
+                      disabled={isSaving}
+                    />
+                  </FormField>
+                ) : null}
+
+                <LockedField id="profile-email" label="E-mail" value={profile.email} />
+                <LockedField
+                  id="profile-document"
+                  label={isCompany ? 'CNPJ' : 'CPF'}
+                  value={formatOrDash(
+                    isCompany ? profile.cnpj : profile.cpf,
+                    isCompany ? maskCnpj : displayCpf,
+                  )}
                 />
-              </FormField>
+
+                <FormField label="Telefone" htmlFor="profile-phone" error={errors.phone}>
+                  <MaskedInput
+                    id="profile-phone"
+                    mask="phone"
+                    value={values.phone}
+                    onValueChange={(value) => changeValue('phone', value)}
+                    invalid={errors.phone !== undefined}
+                    disabled={isSaving}
+                  />
+                </FormField>
+              </div>
+            ) : (
+              <dl className={styles.readOnlyList}>
+                <div className={styles.nameBlock}>
+                  <ReadOnlyItem label="Nome Completo" value={profile.name} />
+                  <div className={styles.photoColumn}>
+                    {avatar}
+                    {changePhotoButton}
+                  </div>
+                </div>
+                <ReadOnlyItem label="E-mail" value={profile.email} />
+                <ReadOnlyItem label="CPF" value={formatOrDash(profile.cpf, displayCpf)} />
+                <ReadOnlyItem
+                  label="Telefone Corporativo"
+                  value={formatOrDash(toLocalPhoneDigits(profile.phone) || null, maskPhone)}
+                />
+                <ReadOnlyItem label="Empresa Vinculada" value={formatOrDash(profile.companyName)} />
+              </dl>
+            )}
+
+            {!profile.editable ? (
+              <p className={styles.notice}>
+                Seus dados são gerenciados pela empresa. Você pode alterar apenas a foto.
+              </p>
             ) : null}
 
-            <LockedField id="profile-email" label="E-mail" type="email" value={profile.email} />
-            <LockedField
-              id="profile-document"
-              label={isCompany ? 'CNPJ' : 'CPF'}
-              value={formatOrDash(
-                isCompany ? profile.cnpj : profile.cpf,
-                isCompany ? maskCnpj : maskCpf,
-              )}
-            />
-
-            <FormField label="Telefone" htmlFor="profile-phone" error={errors.phone}>
-              <MaskedInput
-                id="profile-phone"
-                mask="phone"
-                value={values.phone}
-                onValueChange={(value) => changeValue('phone', value)}
-                invalid={errors.phone !== undefined}
-                disabled={isSaving}
+            <div className={styles.actions}>
+              <Button
+                type="submit"
+                variant="primary"
+                label={profile.editable ? 'Salvar Alterações' : 'Salvar Foto'}
+                isLoading={isSaving}
+                disabled={!canSave}
               />
-            </FormField>
-          </div>
-        ) : (
-          <dl className={styles.readOnlyList}>
-            <ReadOnlyItem label="Nome Completo" value={profile.name} />
-            <ReadOnlyItem label="E-mail" value={profile.email} />
-            <ReadOnlyItem label="CPF" value={formatOrDash(profile.cpf, maskCpf)} />
-            <ReadOnlyItem
-              label="Telefone Corporativo"
-              value={formatOrDash(toLocalPhoneDigits(profile.phone) || null, maskPhone)}
-            />
-            <ReadOnlyItem label="Empresa Vinculada" value={formatOrDash(profile.companyName)} />
-          </dl>
-        )}
-
-        {!profile.editable ? (
-          <p className={styles.notice}>
-            Seus dados são gerenciados pela empresa. Você pode alterar apenas a foto.
-          </p>
-        ) : null}
-
-        <div className={styles.actions}>
-          <Button
-            type="submit"
-            variant="primary"
-            label={profile.editable ? 'Salvar Alterações' : 'Salvar Foto'}
-            isLoading={isSaving}
-            disabled={!canSave}
-          />
-        </div>
-      </form>
-    </Panel>
+            </div>
+          </form>
+        </Panel>
+      )}
+    </AvatarUpload>
   );
 };

@@ -20,6 +20,7 @@ export const COURSE_FORM_INITIAL_VALUES: CourseFormValues = {
   durationTime: '',
   deadline: '',
   price: '',
+  thumbnailUrl: '',
 };
 
 const REQUIRED_MESSAGE = 'Preenchimento obrigatório.';
@@ -160,6 +161,7 @@ export const buildCoursePayload = (
   level: toDifficulty(values.difficulty),
   description: trimmedOrNull(values.description),
   shortDescription: trimmedOrNull(values.shortDescription),
+  thumbnailUrl: values.thumbnailUrl.trim(),
   teaserVideoUrl: trimmedOrNull(values.teaserVideoUrl),
   durationTime: toNumber(values.durationTime),
   deadline: toNumber(values.deadline),
@@ -172,6 +174,7 @@ export const courseDetailToFormValues = (course: CourseDetail): CourseFormValues
   teaserVideoUrl: course.teaserVideoUrl ?? '',
   shortDescription: course.shortDescription ?? '',
   description: course.description ?? '',
+  thumbnailUrl: course.thumbnailUrl ?? '',
   category: course.category ?? '',
   difficulty: toDifficulty(course.level ?? '') ?? '',
   durationTime: numberToInput(course.durationTime),

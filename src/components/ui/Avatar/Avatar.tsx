@@ -4,17 +4,24 @@ import { useUserInitials } from '@hooks/useUserInitials';
 import styles from './Avatar.module.css';
 
 export type AvatarTheme = 'light' | 'dark';
-/** `sm` (36px) para Navbar e Sidebar; `lg` (80px) para a foto de perfil. */
-export type AvatarSize = 'sm' | 'lg';
+/** `sm` (36px) para Navbar e Sidebar; `md` (56px) no cabeçalho do perfil; `lg` (80px) empilhado. */
+export type AvatarSize = 'sm' | 'md' | 'lg';
 
 export interface AvatarProps {
   imageUrl?: string;
   name: string;
   theme?: AvatarTheme;
   size?: AvatarSize;
+  className?: string;
 }
 
-export const Avatar = ({ imageUrl, name, theme = 'light', size = 'sm' }: AvatarProps) => {
+export const Avatar = ({
+  imageUrl,
+  name,
+  theme = 'light',
+  size = 'sm',
+  className = '',
+}: AvatarProps) => {
   const initials = useUserInitials(name);
   const [hasImageError, setHasImageError] = useState(false);
 
@@ -33,7 +40,9 @@ export const Avatar = ({ imageUrl, name, theme = 'light', size = 'sm' }: AvatarP
       className={[
         styles.root,
         theme === 'dark' ? styles.dark : styles.light,
+        size === 'md' && styles.medium,
         size === 'lg' && styles.large,
+        className,
       ]
         .filter(Boolean)
         .join(' ')}

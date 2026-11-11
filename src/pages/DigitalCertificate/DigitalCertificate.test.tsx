@@ -350,6 +350,9 @@ describe('DigitalCertificate', () => {
     expect(screen.getAllByText(/21 de agosto de 2026/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/16h/).length).toBeGreaterThan(0);
     expect(screen.getByText(VERIFICATION_CODE)).toBeInTheDocument();
+    expect(screen.getByText('Paulo Henrique')).toBeInTheDocument();
+    expect(screen.getByText(/44 aulas/)).toBeInTheDocument();
+    expect(screen.queryByText(/R\$\s*249,90/)).not.toBeInTheDocument();
     expect(getCertificateByCodeMock).toHaveBeenCalledWith(
       VERIFICATION_CODE,
       expect.any(AbortSignal),

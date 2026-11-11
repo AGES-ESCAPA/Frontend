@@ -30,6 +30,27 @@ describe('CourseCard', () => {
     expect(screen.getByText(defaultProps.price)).toBeInTheDocument();
   });
 
+  it('no certificado mostra um convite ao focar o card', async () => {
+    render(<CourseCard {...defaultProps} variant="certificate" />);
+
+    screen.getByRole('button', { name: /ver detalhes do curso/i }).focus();
+
+    expect(
+      await screen.findByRole('tooltip', { name: 'Clique para saber mais sobre esse curso' }),
+    ).toBeInTheDocument();
+  });
+
+  it('no certificado mantém nota, duração e aulas, com o instrutor à direita e sem preço', () => {
+    render(<CourseCard {...defaultProps} rating={4.9} reviewsCount={2} variant="certificate" />);
+
+    expect(screen.getByText('4.9')).toBeInTheDocument();
+    expect(screen.getByText('(2)')).toBeInTheDocument();
+    expect(screen.getByText(defaultProps.duration)).toBeInTheDocument();
+    expect(screen.getByText(`${defaultProps.lessonsCount} aulas`)).toBeInTheDocument();
+    expect(screen.getByText(defaultProps.instructor)).toHaveClass(styles.instructorEnd);
+    expect(screen.queryByText(defaultProps.price)).not.toBeInTheDocument();
+  });
+
   it('renderiza as duas instâncias do Badge (categoria e nível)', () => {
     render(<CourseCard {...defaultProps} />);
 

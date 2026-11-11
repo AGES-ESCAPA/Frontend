@@ -15,3 +15,29 @@
   color: var(--color-error);
   text-align: center;
 }
+
+.errorInline {
+  margin: 0;
+  font-size: var(--text-body-4);
+  color: var(--color-error);
+  text-align: left;
+}
+
+/* Texto e ícone, sem o bloco preenchido do botão secundário. */
+.changePhoto.changePhoto {
+  min-height: 0;
+  height: auto;
+  padding: var(--space-1) 0;
+  gap: var(--space-2);
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--text-body-3--line-height);
+}
+
+.changePhoto.changePhoto:hover:not(:disabled) {
+  background: transparent;
+  color: var(--color-info-200);
+}

@@ -6,6 +6,8 @@
 }
 
 .content {
+  --content-sidebar: var(--sidebar-collapsed-width);
+
   width: calc(100% - var(--sidebar-collapsed-width));
   min-height: 100dvh;
   margin-left: var(--sidebar-collapsed-width);
@@ -18,6 +20,8 @@
    duplo clique ou expandida no hover/foco — então o conteúdo cede espaço nos
    dois casos, e não apenas quando ela está travada. */
 .layout:has([data-collapsed='false']) .content {
+  --content-sidebar: var(--sidebar-width);
+
   width: calc(100% - var(--sidebar-width));
   margin-left: var(--sidebar-width);
 }
@@ -32,6 +36,11 @@
 .wide {
   max-width: none;
   padding: var(--space-4) var(--space-6) var(--space-12);
+}
+
+.expanded {
+  max-width: 96rem;
+  padding: 0 var(--space-4);
 }
 
 @media (width <= 40rem) {
