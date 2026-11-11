@@ -86,6 +86,12 @@ const moveItemToTarget = <T extends { id: string }>(
   return nextItems;
 };
 
+/**
+ * Tipo próprio para que o id da aula não seja aceito como texto por inputs
+ * (ex.: o título do módulo) quando a aula é solta fora da lista.
+ */
+const LESSON_DRAG_MIME_TYPE = 'application/x-escapa-lesson';
+
 const MODULE_CARD_SELECTOR = '[data-module-card]';
 
 /**
@@ -593,11 +599,12 @@ export const CourseModulesBuilder = ({
               }}
               onDragLeave={() => setDragOverModuleId(null)}
               onDrop={(event) => {
+                event.preventDefault();
+
                 if (draggingLessonRef.current) {
                   return;
                 }
 
-                event.preventDefault();
                 void handleDrop(module.id);
               }}
             >
@@ -721,7 +728,7 @@ export const CourseModulesBuilder = ({
                               event.stopPropagation();
                               if (event.dataTransfer) {
                                 event.dataTransfer.effectAllowed = 'move';
-                                event.dataTransfer.setData('text/plain', lesson.id);
+                                event.dataTransfer.setData(LESSON_DRAG_MIME_TYPE, lesson.id);
                               }
                               draggingLessonRef.current = {
                                 moduleId: module.id,

@@ -466,6 +466,35 @@ describe('CourseModulesBuilder', () => {
       expect(reorderedSecond).toHaveTextContent('Boas-vindas e objetivos do curso');
     });
 
+    it('should not leak the lesson id into the module title when dropped on it', async () => {
+      const user = userEvent.setup();
+      const { client, reorderLessons } = renderExpandedBuilder();
+
+      await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+
+      const [firstLesson] = lessonItems();
+      const titleField = screen.getByDisplayValue('Fundamentos do atendimento turístico');
+      const dataTransfer = { effectAllowed: 'none', setData: vi.fn() };
+
+      fireEvent.dragStart(firstLesson, { dataTransfer });
+      const dropNotCancelled = fireEvent.drop(titleField);
+      fireEvent.dragEnd(firstLesson);
+      fireEvent.blur(titleField);
+
+      expect(dataTransfer.setData).toHaveBeenCalledWith(
+        'application/x-escapa-lesson',
+        FIRST_LESSON_ID,
+      );
+      expect(dataTransfer.setData).not.toHaveBeenCalledWith('text/plain', expect.anything());
+      expect(dropNotCancelled).toBe(false);
+      expect(titleField).toHaveValue('Fundamentos do atendimento turístico');
+      expect(reorderLessons).not.toHaveBeenCalled();
+      expect(client.updateModuleTitle).not.toHaveBeenCalledWith(
+        FIRST_MODULE_ID,
+        expect.stringContaining(FIRST_LESSON_ID),
+      );
+    });
+
     it('should restore the previous lesson order when the API rejects the reorder', async () => {
       const user = userEvent.setup();
       const reorderLessons = vi
