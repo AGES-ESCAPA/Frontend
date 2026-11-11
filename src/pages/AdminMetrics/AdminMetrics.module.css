@@ -20,8 +20,7 @@
   overflow-wrap: anywhere;
 }
 
-.description,
-.emptyMessage {
+.description {
   color: var(--color-text-muted);
   font-size: var(--text-body-3);
   line-height: var(--text-body-3--line-height);
@@ -35,6 +34,7 @@
 
 .summaryCard {
   justify-content: center;
+  overflow-wrap: anywhere;
 }
 
 .chartPanel {
@@ -55,20 +55,50 @@
   --color-primary-700: var(--color-primary-800);
 }
 
-.emptyMessage {
+.completionBody {
   display: grid;
   place-items: center;
-  min-height: var(--space-20);
-  text-align: center;
+  min-height: var(--donut-size-compact);
 }
 
-.chartPlaceholder {
+.evolutionBody {
   display: grid;
-  place-items: center;
+  align-items: center;
   min-width: 0;
-  min-height: var(--container-xs);
-  padding: var(--space-6);
-  border-block: var(--border-width-thin) dashed var(--color-border);
+  min-height: calc(var(--space-20) * 3);
+}
+
+.skeleton {
+  max-width: 100%;
+  background-color: var(--color-primary-600);
+  border-radius: var(--radius-md);
+}
+
+.countSkeleton {
+  width: calc(var(--space-20) * 2);
+  height: var(--text-h3);
+}
+
+.donutSkeleton {
+  width: var(--donut-size-compact);
+  height: var(--donut-size-compact);
+  border-radius: var(--radius-full);
+}
+
+.lineSkeleton {
+  width: 100%;
+  height: calc(var(--space-20) * 3);
+}
+
+.errorState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.retryButton {
+  min-height: var(--touch-target-min);
 }
 
 @media (width < 64rem) {
@@ -93,10 +123,5 @@
 
   .chartPanel {
     --panel-padding: var(--space-5);
-  }
-
-  .chartPlaceholder {
-    min-height: calc(var(--space-20) * 3);
-    padding: var(--space-4);
   }
 }
