@@ -1,10 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw, UserPlus } from 'lucide-react';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
-import { Button, EmployeeTable, EmptyState, ProgressBar, SearchBar, SumCard } from '@components/ui';
+import {
+  Button,
+  ConfirmDialog,
+  EmployeeTable,
+  EmptyState,
+  ProgressBar,
+  SearchBar,
+  SumCard,
+  Toast,
+} from '@components/ui';
 import type { Employee } from '@components/ui';
 import { useCompanySeats } from '@hooks/useCompanySeats';
+import { useToast } from '@hooks/useToast';
+import {
+  CompanyEmployeeServiceError,
+  companyEmployeeService,
+} from '@services/companyEmployeeService';
 import { useCompanyEmployees } from '@hooks/useCompanyEmployees';
 import { mapCompanyEmployeeToRow } from '@utils/mapCompanyEmployee';
 import styles from './CompanyEmployees.module.css';
@@ -40,12 +54,18 @@ export const CompanyEmployees = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [employeeToUnlink, setEmployeeToUnlink] = useState<Employee | null>(null);
+  const [isUnlinking, setIsUnlinking] = useState(false);
+  const [unlinkError, setUnlinkError] = useState<string | null>(null);
+  const unlinkInProgress = useRef(false);
+  const { toast, isOpen, showToast, dismissToast } = useToast();
 
   const {
     seats,
     status: seatsStatus,
     errorMessage: seatsError,
     reload: reloadSeats,
+    applySeats,
   } = useCompanySeats();
 
   const {
@@ -84,6 +104,61 @@ export const CompanyEmployees = () => {
 
   const announcePendingAction = (action: string, employee: Employee) => {
     setActionNotice(`${action} de ${employee.name} estará disponível em breve.`);
+  };
+
+  const handleUnlink = (employee: Employee) => {
+    setActionNotice(null);
+    setUnlinkError(null);
+    setEmployeeToUnlink(employee);
+  };
+
+  const handleUnlinkDialogChange = (open: boolean) => {
+    if (open || unlinkInProgress.current) return;
+    setEmployeeToUnlink(null);
+    setUnlinkError(null);
+  };
+
+  const handleConfirmUnlink = async () => {
+    if (!employeeToUnlink || unlinkInProgress.current) return;
+
+    const employee = employeeToUnlink;
+    unlinkInProgress.current = true;
+    setIsUnlinking(true);
+    setUnlinkError(null);
+
+    try {
+      const updatedSeats = await companyEmployeeService.unlinkEmployee(employee.id);
+
+      applySeats(updatedSeats);
+      reloadEmployees();
+      setEmployeeToUnlink(null);
+
+      showToast(
+        'success',
+        'Colaborador desvinculado',
+        `${employee.name} foi desvinculado. A vaga está disponível.`,
+      );
+    } catch (error: unknown) {
+      if (error instanceof CompanyEmployeeServiceError && error.status === 404) {
+        reloadAll();
+        setEmployeeToUnlink(null);
+
+        showToast(
+          'error',
+          'Colaborador não vinculado',
+          `${employee.name} já não está vinculado à empresa. Os dados estão sendo atualizados.`,
+        );
+      } else {
+        setUnlinkError(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível concluir a desvinculação. Tente novamente.',
+        );
+      }
+    } finally {
+      unlinkInProgress.current = false;
+      setIsUnlinking(false);
+    }
   };
 
   return (
@@ -237,11 +312,12 @@ export const CompanyEmployees = () => {
                   Atualizando colaboradores...
                 </span>
               )}
+
               <EmployeeTable
                 employees={rows}
                 onEdit={(employee) => announcePendingAction('Edição', employee)}
                 onResendInvite={(employee) => announcePendingAction('Reenvio de convite', employee)}
-                onUnlink={(employee) => announcePendingAction('Desvinculação', employee)}
+                onUnlink={handleUnlink}
               />
             </div>
           ) : null}
@@ -287,6 +363,36 @@ export const CompanyEmployees = () => {
           ) : null}
         </section>
       </div>
+
+      <ConfirmDialog
+        open={employeeToUnlink !== null}
+        title="Desvincular colaborador?"
+        description={
+          employeeToUnlink
+            ? `${employeeToUnlink.name} perderá acesso a todos os cursos. A vaga ficará disponível para um novo colaborador.`
+            : ''
+        }
+        confirmLabel="Desvincular"
+        isConfirming={isUnlinking}
+        errorMessage={unlinkError}
+        onConfirm={() => {
+          void handleConfirmUnlink();
+        }}
+        onOpenChange={handleUnlinkDialogChange}
+      />
+
+      {toast ? (
+        <Toast
+          key={toast.key}
+          open={isOpen}
+          variant={toast.variant}
+          title={toast.title}
+          description={toast.description}
+          onOpenChange={(open) => {
+            if (!open) dismissToast();
+          }}
+        />
+      ) : null}
     </AuthenticatedLayout>
   );
 };
