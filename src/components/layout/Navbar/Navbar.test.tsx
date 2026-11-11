@@ -11,7 +11,7 @@ describe('Navbar', () => {
     renderNavbar(<Navbar state="noAuth" />);
 
     expect(screen.getByAltText('escapa!')).toBeInTheDocument();
-    expect(screen.getByText('cursos')).toBeInTheDocument();
+    expect(screen.getByText('academy')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /acessar a plataforma/i })).toHaveAttribute(
       'href',
       '/login',
