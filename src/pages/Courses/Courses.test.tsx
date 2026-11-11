@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { courseService } from '@services/courseService';
-import { getCompanyAcquiredCourseIds } from '@services/companyCourseService';
+import { getCompanyAcquiredCourseIds, getCompanyCourses } from '@services/companyCourseService';
 import { getStudentCurriculum } from '@services/curriculumService';
 import { getStudentEnrollments, type StudentCourseCardResponse } from '@services/enrollmentService';
-import type { PublicCourseCard, PublicCoursesPage } from '@/types/course';
+import type { CompanyCourse, PublicCourseCard, PublicCoursesPage } from '@/types/course';
 import styles from '@components/ui/CourseCard/CourseCard.module.css';
 import { Courses } from './Courses';
 
@@ -28,6 +28,7 @@ vi.mock('@services/curriculumService', () => ({
 
 vi.mock('@services/companyCourseService', () => ({
   getCompanyAcquiredCourseIds: vi.fn(),
+  getCompanyCourses: vi.fn(),
 }));
 
 const getCoursesMock = vi.mocked(courseService.getCourses);
@@ -40,6 +41,7 @@ const courseFilters = {
 const getEnrollmentsMock = vi.mocked(getStudentEnrollments);
 const getCurriculumMock = vi.mocked(getStudentCurriculum);
 const getCompanyCoursesMock = vi.mocked(getCompanyAcquiredCourseIds);
+const getCompanyCourseListMock = vi.mocked(getCompanyCourses);
 
 const course: PublicCourseCard = {
   id: 'e0000000-0000-4000-e000-000000000005',
@@ -55,6 +57,21 @@ const course: PublicCourseCard = {
   instructor: 'Thamires Magalhães',
   ratingAverage: 4.7,
   reviewsCount: 94,
+};
+
+const companyCourse: CompanyCourse = {
+  id: course.id,
+  title: course.title,
+  shortDescription: course.shortDescription,
+  thumbnailUrl: course.thumbnailUrl,
+  category: 'Inovação',
+  level: 'AVANCADO',
+  durationTime: 840,
+  lessonsCount: 38,
+  instructorName: 'Thamires Magalhães',
+  rating: 4.7,
+  acquiredAt: '2026-10-01',
+  employeesWithAccess: 12,
 };
 
 const emptyPage: PublicCoursesPage = {
@@ -117,6 +134,7 @@ describe('Courses', () => {
     getEnrollmentsMock.mockReset().mockResolvedValue(emptyEnrollments);
     getCurriculumMock.mockReset();
     getCompanyCoursesMock.mockReset().mockResolvedValue([]);
+    getCompanyCourseListMock.mockReset().mockResolvedValue([]);
   });
 
   it('should integrate the student Sidebar and authenticated Navbar', async () => {
@@ -391,11 +409,73 @@ describe('Courses', () => {
     expect(await screen.findAllByText('Adquirido')).not.toHaveLength(0);
     expect(screen.queryByText(/R\$\s*127,00/)).not.toBeInTheDocument();
     expect(getEnrollmentsMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /acessar o curso/i })).not.toBeInTheDocument();
 
-    const [accessButton] = screen.getAllByRole('button', { name: /acessar o curso/i });
-    await userEvent.click(accessButton);
+    const [courseCard] = screen.getAllByRole('button', { name: /ver detalhes do curso/i });
+    await userEvent.click(courseCard);
 
     expect(await screen.findByTestId('location')).toHaveTextContent(`/cursos/${course.id}`);
     expect(getCurriculumMock).not.toHaveBeenCalled();
+  });
+
+  it('lists the courses the company bought on top with the employees that have access', async () => {
+    getCompanyCourseListMock.mockResolvedValue([companyCourse]);
+
+    renderCourses('/empresa/cursos');
+
+    const section = await screen.findByRole('region', { name: /cursos adquiridos/i });
+    expect(await within(section).findByText('Adquirido')).toBeInTheDocument();
+    expect(within(section).getByText('12 colaboradores com acesso')).toBeInTheDocument();
+    expect(
+      within(section).queryByRole('button', { name: /acessar o curso/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('opens the course page when the company clicks a bought course', async () => {
+    getCompanyCourseListMock.mockResolvedValue([companyCourse]);
+
+    render(
+      <MemoryRouter initialEntries={['/empresa/cursos']}>
+        <Routes>
+          <Route path="/empresa/cursos" element={<Courses />} />
+          <Route path="/cursos/:courseId" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const section = await screen.findByRole('region', { name: /cursos adquiridos/i });
+    await userEvent.click(
+      await within(section).findByRole('button', { name: /ver detalhes do curso/i }),
+    );
+
+    expect(await screen.findByTestId('location')).toHaveTextContent(`/cursos/${course.id}`);
+  });
+
+  it('invites a company without courses to explore the catalog', async () => {
+    renderCourses('/empresa/cursos');
+
+    expect(await screen.findByText(/ainda não adquiriu cursos/i)).toBeInTheDocument();
+  });
+
+  it('lets the company retry when the bought courses fail to load', async () => {
+    getCompanyCourseListMock.mockRejectedValueOnce(new Error('falha'));
+    getCompanyCourseListMock.mockResolvedValueOnce([companyCourse]);
+
+    renderCourses('/empresa/cursos');
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/não foi possível carregar os cursos adquiridos/i);
+
+    await userEvent.click(within(alert).getByRole('button', { name: /tentar novamente/i }));
+
+    expect(await screen.findByText('12 colaboradores com acesso')).toBeInTheDocument();
+  });
+
+  it('does not load the company courses for the student profile', async () => {
+    renderCourses('/aluno/cursos');
+    await waitForCatalog();
+
+    expect(getCompanyCourseListMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole('region', { name: /cursos adquiridos/i })).not.toBeInTheDocument();
   });
 });
