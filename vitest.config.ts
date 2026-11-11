@@ -39,7 +39,9 @@ export default defineConfig({
         // Dados mockados estáticos, sem lógica
         'src/data/courses.ts',
         'src/data/courseNavigation.ts',
+        'src/data/companyReport.ts',
         'src/pages/MyCourses/mockCourses.ts',
+        'src/pages/AdminMetrics/mockCourseMetrics.ts',
       ],
     },
   },

@@ -74,14 +74,16 @@ const AdminCourses = lazy(() =>
     default: m.AdminCourses,
   })),
 );
+
+const AdminMetrics = lazy(() =>
+  import('@pages/AdminMetrics/AdminMetrics').then((m) => ({
+    default: m.AdminMetrics,
+  })),
+);
 const DigitalCertificate = lazy(() =>
   import('@pages/DigitalCertificate/DigitalCertificate').then((m) => ({
     default: m.DigitalCertificate,
   })),
-);
-
-const AdminMetrics = lazy(() =>
-  import('@pages/AdminMetrics/AdminMetrics').then((m) => ({ default: m.AdminMetrics })),
 );
 
 const RegisterAccountType = lazy(() =>
@@ -99,6 +101,12 @@ const RegisterCompany = lazy(() =>
 const OrderManagement = lazy(() =>
   import('@/pages/OrderManagement/OrderManagement').then((m) => ({
     default: m.Ordermanagement,
+  })),
+);
+
+const CompanyDashboard = lazy(() =>
+  import('@pages/CompanyDashboard/CompanyDashboard').then((m) => ({
+    default: m.CompanyDashboard,
   })),
 );
 
@@ -282,7 +290,6 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/admin/metricas"
               element={
@@ -312,6 +319,14 @@ export const AppRouter = () => {
               element={
                 <ProtectedRoute allowedRoles={['COMPANY']}>
                   <CompanyEmployees />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <CompanyDashboard />
                 </ProtectedRoute>
               }
             />
