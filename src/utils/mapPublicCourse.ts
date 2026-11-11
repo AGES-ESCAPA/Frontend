@@ -1,6 +1,7 @@
 import type { CourseCardProps, CourseLevel } from '@components/ui/CourseCard/CourseCard';
 import type { BadgeCategory } from '@components/ui/Badge/Badge';
 import type {
+  CompanyCourse,
   CourseLesson,
   CourseModule,
   CourseSummary,
@@ -136,5 +137,27 @@ export const mapPublicCourseToCardProps = (
   lessonsCount: course.lessonsCount ?? 0,
   instructor: course.instructor ?? 'ESCAPA',
   price: formatCurrency(course.price ?? 0),
+  onClick,
+});
+
+/** Card de um curso comprado pela empresa: sempre adquirido, sem acesso à aula e com a contagem. */
+export const mapCompanyCourseToCardProps = (
+  course: CompanyCourse,
+  onClick: (id: string) => void,
+): CourseCardProps => ({
+  id: course.id,
+  imageUrl: course.thumbnailUrl ?? '',
+  category: mapCourseCategory(course.category ?? 'Curso'),
+  level: mapCourseLevel(course.level ?? ''),
+  title: course.title,
+  description: course.shortDescription ?? '',
+  rating: course.rating ?? undefined,
+  duration: formatWorkload(course.durationTime),
+  lessonsCount: course.lessonsCount ?? 0,
+  instructor: course.instructorName ?? 'ESCAPA',
+  price: '',
+  acquired: true,
+  showAccess: false,
+  employeesWithAccess: course.employeesWithAccess,
   onClick,
 });

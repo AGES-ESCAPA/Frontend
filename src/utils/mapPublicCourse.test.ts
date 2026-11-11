@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { PublicCourseCard, PublicCourseDetails } from '@/types/course';
+import type { CompanyCourse, PublicCourseCard, PublicCourseDetails } from '@/types/course';
 import {
+  mapCompanyCourseToCardProps,
   mapCourseCategory,
   mapCourseLevel,
   mapPublicCourseDetailsToSummary,
@@ -22,6 +23,21 @@ const course: PublicCourseCard = {
   instructor: 'Beatriz Nunes',
   ratingAverage: 4.5,
   reviewsCount: 2,
+};
+
+const companyCourse: CompanyCourse = {
+  id: 'e0000000-0000-4000-e000-000000000001',
+  title: 'Atendimento de Excelência em Hospedagem',
+  shortDescription: 'A jornada do hospede...',
+  thumbnailUrl: 'https://cdn.escapa.com/courses/atendimento.jpg',
+  category: 'Hospitalidade',
+  level: 'INICIANTE',
+  durationTime: 480,
+  lessonsCount: 15,
+  instructorName: 'Beatriz Nunes',
+  rating: 4.5,
+  acquiredAt: '2026-10-01',
+  employeesWithAccess: 12,
 };
 
 describe('mapPublicCourse', () => {
@@ -156,5 +172,49 @@ describe('mapPublicCourse', () => {
     expect(mapPublicCourseDetailsToSummary(details).teaserUrl).toBe(
       'https://vimeo.com/1226382615?share=copy&fl=sv&fe=ci',
     );
+  });
+
+  it('should map a company course to an acquired card without access and with employees', () => {
+    const onClick = vi.fn();
+    const props = mapCompanyCourseToCardProps(companyCourse, onClick);
+
+    expect(props).toMatchObject({
+      id: companyCourse.id,
+      title: 'Atendimento de Excelência em Hospedagem',
+      description: 'A jornada do hospede...',
+      category: 'hospitality',
+      level: 'basic',
+      lessonsCount: 15,
+      instructor: 'Beatriz Nunes',
+      rating: 4.5,
+      acquired: true,
+      showAccess: false,
+      employeesWithAccess: 12,
+    });
+
+    props.onClick(companyCourse.id);
+    expect(onClick).toHaveBeenCalledWith(companyCourse.id);
+  });
+
+  it('should fall back to safe defaults when a company course has missing fields', () => {
+    const props = mapCompanyCourseToCardProps(
+      {
+        ...companyCourse,
+        thumbnailUrl: null,
+        shortDescription: null,
+        rating: null,
+        lessonsCount: null,
+        instructorName: null,
+        employeesWithAccess: 0,
+      },
+      vi.fn(),
+    );
+
+    expect(props.imageUrl).toBe('');
+    expect(props.description).toBe('');
+    expect(props.rating).toBeUndefined();
+    expect(props.lessonsCount).toBe(0);
+    expect(props.instructor).toBe('ESCAPA');
+    expect(props.employeesWithAccess).toBe(0);
   });
 });
