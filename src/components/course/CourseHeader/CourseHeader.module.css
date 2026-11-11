@@ -212,3 +212,22 @@
     line-height: var(--text-h3--line-height);
   }
 }
+
+.acquiredTag {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  height: var(--badge-level-height);
+  min-height: var(--badge-level-height);
+  padding: var(--badge-level-padding-y) var(--badge-level-padding-x);
+  border-radius: var(--radius-full);
+  background-color: var(--color-warning-300);
+  color: var(--color-primary-900);
+  font-size: var(--text-badge);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-badge--line-height);
+  letter-spacing: var(--tracking-badge);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
