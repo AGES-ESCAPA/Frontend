@@ -23,5 +23,8 @@ export const getCompanyCourses = async (): Promise<CompanyCourse[]> => {
   }
 
   const json: ApiResponse<CompanyCourse[]> = await response.json();
-  return json.data ?? [];
+  if (!json || json.success !== true || !Array.isArray(json.data)) {
+    throw new Error('Resposta inválida do servidor.');
+  }
+  return json.data;
 };

@@ -59,6 +59,20 @@ describe('companyCourseService', () => {
     await expect(getCompanyCourses()).rejects.toThrow('Falha ao buscar cursos da empresa');
   });
 
+  it('trata resposta sem sucesso ou sem lista como erro, e não como lista vazia', async () => {
+    fetchMock.mockResolvedValueOnce(response({ success: false, data: [] }));
+    await expect(getCompanyCourses()).rejects.toThrow('Resposta inválida do servidor.');
+
+    fetchMock.mockResolvedValueOnce(response({ success: true }));
+    await expect(getCompanyCourses()).rejects.toThrow('Resposta inválida do servidor.');
+  });
+
+  it('propaga a falha de rede', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('Failed to fetch'));
+
+    await expect(getCompanyCourses()).rejects.toThrow('Failed to fetch');
+  });
+
   it('lista os ids dos cursos adquiridos', async () => {
     fetchMock.mockResolvedValueOnce(response({ success: true, data: ['course-1', 'course-2'] }));
 

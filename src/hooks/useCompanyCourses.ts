@@ -13,8 +13,9 @@ export interface UseCompanyCoursesResult {
 export const useCompanyCourses = (enabled: boolean): UseCompanyCoursesResult => {
   const [courses, setCourses] = useState<CompanyCourse[]>([]);
   const [status, setStatus] = useState<LoadStatus>(enabled ? 'loading' : 'success');
+  const [version, setVersion] = useState(0);
 
-  const load = useCallback(async (isCancelled: () => boolean = () => false) => {
+  const load = useCallback(async (isCancelled: () => boolean) => {
     setStatus('loading');
 
     try {
@@ -37,11 +38,9 @@ export const useCompanyCourses = (enabled: boolean): UseCompanyCoursesResult => 
     return () => {
       cancelled = true;
     };
-  }, [enabled, load]);
+  }, [enabled, load, version]);
 
-  const reload = useCallback(() => {
-    void load();
-  }, [load]);
+  const reload = useCallback(() => setVersion((current) => current + 1), []);
 
   return { courses, status, reload };
 };

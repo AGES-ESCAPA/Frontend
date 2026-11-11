@@ -157,7 +157,6 @@ export const mapCompanyCourseToCardProps = (
   instructor: course.instructorName ?? 'ESCAPA',
   price: '',
   acquired: true,
-  showAccess: false,
   employeesWithAccess: course.employeesWithAccess,
   onClick,
 });

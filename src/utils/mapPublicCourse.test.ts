@@ -188,7 +188,6 @@ describe('mapPublicCourse', () => {
       instructor: 'Beatriz Nunes',
       rating: 4.5,
       acquired: true,
-      showAccess: false,
       employeesWithAccess: 12,
     });
 
