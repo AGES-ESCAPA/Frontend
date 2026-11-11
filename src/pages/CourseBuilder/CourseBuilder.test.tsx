@@ -268,7 +268,9 @@ describe('CourseBuilder', () => {
     });
     expect(publishCourse).not.toHaveBeenCalled();
     expect(
-      await screen.findByText('A versão que os alunos veem permanece até você publicar o curso.'),
+      await screen.findByText(
+        'A versão que os alunos veem, inclusive módulos e aulas, permanece até você publicar o curso.',
+      ),
     ).toBeInTheDocument();
   });
 

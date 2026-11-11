@@ -509,7 +509,7 @@ export const CourseBuilder = () => {
           'success',
           nextStatus === 'PUBLISHED' ? 'Curso publicado com sucesso!' : 'Rascunho salvo!',
           nextStatus === 'DRAFT' && editingPublishedCourse
-            ? 'A versão que os alunos veem permanece até você publicar o curso.'
+            ? 'A versão que os alunos veem, inclusive módulos e aulas, permanece até você publicar o curso.'
             : 'Os dados do curso foram gravados.',
         );
       } catch (error: unknown) {
@@ -721,7 +721,11 @@ export const CourseBuilder = () => {
             ) : null}
 
             {courseId !== undefined && !isModulesLoading && modulesError === null ? (
-              <CourseModulesBuilder courseId={courseId} initialModules={modules} />
+              <CourseModulesBuilder
+                courseId={courseId}
+                initialModules={modules}
+                coursePublished={status === 'PUBLISHED'}
+              />
             ) : null}
           </Tabs.Content>
 
