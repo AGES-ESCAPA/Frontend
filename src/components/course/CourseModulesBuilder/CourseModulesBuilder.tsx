@@ -35,6 +35,11 @@ export interface CourseModulesBuilderProps {
   updateLesson?: (lessonId: string, payload: LessonPayload) => Promise<Lesson>;
   /** Devolve as aulas do módulo já na nova ordem. */
   reorderLessons?: (moduleId: string, contentIds: string[]) => Promise<AdminModuleContent[]>;
+  /**
+   * Curso já no ar: criar, editar, excluir e reordenar fica no rascunho.
+   * O aluno só vê a mudança depois de Publicar.
+   */
+  coursePublished?: boolean;
 }
 
 type BuilderStatus = 'idle' | 'saving' | 'success' | 'error';
@@ -58,6 +63,28 @@ const reindexLessons = (lessons: AdminModuleContent[]) =>
     ...lesson,
     order: index + 1,
   }));
+
+/**
+ * O item arrastado assume a posição do alvo: para cima ele entra antes do alvo,
+ * para baixo entra depois. Retorna `null` quando a ordem não muda.
+ */
+const moveItemToTarget = <T extends { id: string }>(
+  items: T[],
+  draggedId: string,
+  targetId: string,
+): T[] | null => {
+  const fromIndex = items.findIndex((item) => item.id === draggedId);
+  const toIndex = items.findIndex((item) => item.id === targetId);
+
+  if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+    return null;
+  }
+
+  const nextItems = [...items];
+  const [draggedItem] = nextItems.splice(fromIndex, 1);
+  nextItems.splice(toIndex, 0, draggedItem);
+  return nextItems;
+};
 
 const MODULE_CARD_SELECTOR = '[data-module-card]';
 
@@ -84,6 +111,11 @@ const formatModuleDuration = (totalMinutes: number) => {
 };
 
 const formatContentsCount = (total: number) => (total === 1 ? '1 aula' : `${total} aulas`);
+
+const visibleAfterPublish = (message: string, coursePublished: boolean) =>
+  coursePublished
+    ? `${message} Os alunos veem essa alteração quando você publicar o curso.`
+    : message;
 
 const mapLessonToModuleContent = (lesson: Lesson, fallbackOrder: number): AdminModuleContent => ({
   id: lesson.id,
@@ -130,6 +162,7 @@ export const CourseModulesBuilder = ({
   getLesson = getAdminLesson,
   updateLesson = updateLessonRequest,
   reorderLessons = reorderModuleLessons,
+  coursePublished = false,
 }: CourseModulesBuilderProps) => {
   const [modules, setModules] = useState(() => sortModulesByOrder(initialModules));
   const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(() => new Set());
@@ -238,7 +271,7 @@ export const CourseModulesBuilder = ({
         ),
       );
       savedTitlesRef.current.set(moduleId, updatedModule.title);
-      setFeedback('success', 'Título atualizado.');
+      setFeedback('success', visibleAfterPublish('Título atualizado.', coursePublished));
     } catch (error) {
       setModules((currentModules) =>
         currentModules.map((module) =>
@@ -269,7 +302,7 @@ export const CourseModulesBuilder = ({
       const reorderedModules = await client.reorderModules(courseId, moduleIds);
 
       setModules(sortModulesByOrder(reorderedModules));
-      setFeedback('success', 'Ordem dos módulos salva.');
+      setFeedback('success', visibleAfterPublish('Ordem dos módulos salva.', coursePublished));
     } catch (error) {
       // Em 400 nada foi alterado no servidor: voltamos à ordem anterior.
       setModules(previousModules);
@@ -305,21 +338,15 @@ export const CourseModulesBuilder = ({
     }
 
     const previousModules = orderedModules;
-    const draggingModule = orderedModules.find((module) => module.id === draggingModuleId);
+    const nextModules = moveItemToTarget(orderedModules, draggingModuleId, targetModuleId);
 
-    if (!draggingModule) {
-      setDraggingModuleId(null);
-      setDragOverModuleId(null);
+    setDraggingModuleId(null);
+    setDragOverModuleId(null);
+
+    if (!nextModules) {
       return;
     }
 
-    const modulesWithoutDragged = orderedModules.filter((module) => module.id !== draggingModuleId);
-    const targetIndex = modulesWithoutDragged.findIndex((module) => module.id === targetModuleId);
-    const nextModules = [...modulesWithoutDragged];
-
-    nextModules.splice(targetIndex, 0, draggingModule);
-    setDraggingModuleId(null);
-    setDragOverModuleId(null);
     await persistModuleOrder(nextModules, previousModules);
   };
 
@@ -346,7 +373,7 @@ export const CourseModulesBuilder = ({
           module.id === moduleId ? { ...module, contents: reorderedLessons } : module,
         ),
       );
-      setFeedback('success', 'Ordem das aulas salva.');
+      setFeedback('success', visibleAfterPublish('Ordem das aulas salva.', coursePublished));
     } catch (error) {
       setModules(previousModules);
       setFeedback(
@@ -372,17 +399,12 @@ export const CourseModulesBuilder = ({
     const lessons = module
       ? [...module.contents].sort((current, next) => current.order - next.order)
       : [];
-    const draggedLesson = lessons.find((lesson) => lesson.id === draggingLesson.lessonId);
+    const nextLessons = moveItemToTarget(lessons, draggingLesson.lessonId, targetLessonId);
 
-    if (!module || !draggedLesson) {
+    if (!module || !nextLessons) {
       return;
     }
 
-    const lessonsWithoutDragged = lessons.filter((lesson) => lesson.id !== draggedLesson.id);
-    const targetIndex = lessonsWithoutDragged.findIndex((lesson) => lesson.id === targetLessonId);
-    const nextLessons = [...lessonsWithoutDragged];
-
-    nextLessons.splice(targetIndex, 0, draggedLesson);
     await persistLessonOrder(moduleId, nextLessons, previousModules);
   };
 
@@ -423,7 +445,7 @@ export const CourseModulesBuilder = ({
       });
       savedTitlesRef.current.delete(moduleId);
       setModuleToDelete(null);
-      setFeedback('success', 'Módulo excluído.');
+      setFeedback('success', visibleAfterPublish('Módulo excluído.', coursePublished));
     } catch (error) {
       // Fecha o diálogo para a mensagem de erro ficar visível na tela.
       setModuleToDelete(null);
@@ -447,7 +469,7 @@ export const CourseModulesBuilder = ({
           module.id === payload.moduleId ? appendLessonToModule(module, createdLesson) : module,
         ),
       );
-      setFeedback('success', 'Aula adicionada.');
+      setFeedback('success', visibleAfterPublish('Aula adicionada.', coursePublished));
     } catch (error) {
       setFeedback(
         'error',
@@ -496,7 +518,9 @@ export const CourseModulesBuilder = ({
       );
       setFeedback(
         'success',
-        'Aula atualizada. Os alunos que já a concluíram serão notificados para refazê-la.',
+        coursePublished
+          ? 'Aula atualizada. Os alunos continuam na versão publicada até você publicar o curso.'
+          : 'Aula atualizada. Os alunos que já a concluíram serão notificados para refazê-la.',
       );
     } catch (error) {
       setFeedback(
@@ -508,9 +532,11 @@ export const CourseModulesBuilder = ({
   };
 
   const deleteDescription = moduleToDelete
-    ? `Esta ação excluirá o módulo “${moduleToDelete.title}” e ${formatContentsCount(
-        moduleToDelete.totalContents,
-      )} vinculada${moduleToDelete.totalContents === 1 ? '' : 's'} a ele. Não é possível desfazer.`
+    ? coursePublished
+      ? `O módulo “${moduleToDelete.title}” sai do construtor agora. Os alunos continuam vendo ele e as aulas publicadas até você publicar o curso.`
+      : `Esta ação excluirá o módulo “${moduleToDelete.title}” e ${formatContentsCount(
+          moduleToDelete.totalContents,
+        )} vinculada${moduleToDelete.totalContents === 1 ? '' : 's'} a ele. Não é possível desfazer.`
     : '';
 
   return (
