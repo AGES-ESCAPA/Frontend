@@ -16,6 +16,7 @@ import {
   OrderCancellationAndRefund,
   OrderFilters,
   PAYMENT_ICONS,
+  PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
   SearchBar,
   SumCard,
@@ -42,12 +43,6 @@ const ADMIN_USER: SidebarUser = {
 };
 
 const ROW_ICON_SIZE = 14;
-
-const PAYMENT_LABELS = {
-  CARD: 'Cartão',
-  PIX: 'PIX',
-  BOLETO: 'Boleto',
-} as const;
 
 const formatShortDate = (value: string): string => {
   const [year, month, day] = value.slice(0, 10).split('-');
@@ -223,7 +218,7 @@ export const Ordermanagement = () => {
         return (
           <span className={styles.paymentMethod}>
             <PaymentIcon size={ROW_ICON_SIZE} aria-hidden="true" />
-            {PAYMENT_LABELS[order.paymentMethod]}
+            {PAYMENT_METHOD_LABELS[order.paymentMethod]}
           </span>
         );
       },
