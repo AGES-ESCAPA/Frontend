@@ -471,6 +471,18 @@ describe('Courses', () => {
     expect(await screen.findByText('12 colaboradores com acesso')).toBeInTheDocument();
   });
 
+  it('keeps the catalog working when the bought courses fail to load', async () => {
+    getCoursesMock.mockResolvedValue(pageWithCourse);
+    getCompanyCourseListMock.mockRejectedValue(new Error('falha'));
+
+    renderCourses('/empresa/cursos');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /não foi possível carregar os cursos adquiridos/i,
+    );
+    expect((await screen.findAllByText(/R\$\s*127,00/)).length).toBeGreaterThan(0);
+  });
+
   it('does not load the company courses for the student profile', async () => {
     renderCourses('/aluno/cursos');
     await waitForCatalog();
