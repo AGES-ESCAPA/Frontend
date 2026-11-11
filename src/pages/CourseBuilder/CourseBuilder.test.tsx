@@ -620,6 +620,64 @@ describe('CourseBuilder', () => {
     expect(screen.getByText('Alteração nas regras de progressão.')).toBeInTheDocument();
   });
 
+  it('should keep unsaved rule edits when the progress rules request fails', async () => {
+    vi.mocked(updateProgressRules).mockRejectedValueOnce(new Error('Internal Server Error'));
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+
+    const sequentialRule = await screen.findByRole('checkbox', { name: /exigir conclusão/i });
+    await userEvent.click(sequentialRule);
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    expect(await screen.findByText('Não foi possível salvar o curso')).toBeInTheDocument();
+    expect(sequentialRule).not.toBeChecked();
+    expect(getCourseRules).toHaveBeenCalledTimes(1);
+  });
+
+  it('should confirm the publication even when reloading the rules afterwards fails', async () => {
+    vi.mocked(getCourseRules)
+      .mockResolvedValueOnce(EMPTY_RULES)
+      .mockRejectedValueOnce(new Error('Network Error'));
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('button', { name: 'Publicar Curso' }));
+
+    expect(await screen.findByText('Curso publicado com sucesso!')).toBeInTheDocument();
+    expect(screen.queryByText('Não foi possível publicar o curso')).not.toBeInTheDocument();
+    expect(getCourseRules).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not add the same prerequisite again when retrying after a failed publish', async () => {
+    vi.mocked(searchCoursePrerequisites).mockResolvedValue([
+      { id: 'pre-2', title: 'Gestão de Crises no Turismo' },
+    ]);
+    vi.mocked(publishCourse).mockRejectedValueOnce(new Error('Internal Server Error'));
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /buscar cursos para adicionar/i }),
+      'gestão',
+    );
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Gestão de Crises no Turismo' }),
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publicar Curso' }));
+    expect(await screen.findByText('Não foi possível publicar o curso')).toBeInTheDocument();
+    expect(screen.getByText('Gestão de Crises no Turismo')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publicar Curso' }));
+    await waitFor(() => {
+      expect(publishCourse).toHaveBeenCalledTimes(2);
+    });
+    expect(addCoursePrerequisite).toHaveBeenCalledTimes(1);
+  });
+
   it('should send the notify flag when publishing with the checkbox enabled', async () => {
     renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
     await screen.findByDisplayValue(SAVED_COURSE.title);

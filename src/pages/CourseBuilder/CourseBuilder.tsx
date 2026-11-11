@@ -427,6 +427,10 @@ export const CourseBuilder = () => {
    * Regras e pré-requisitos só são gravados aqui, junto com o rascunho ou a
    * publicação. Até esse clique a versão e o histórico permanecem como foram
    * carregados.
+   *
+   * O baseline em `savedConfigurationRef` avança a cada chamada bem-sucedida,
+   * então uma falha no meio não faz o próximo salvamento repetir o que já foi
+   * gravado (ex.: POST de pré-requisito, que responderia 400).
    */
   const persistConfiguration = useCallback(async (id: string) => {
     const rules = progressRulesRef.current;
@@ -440,6 +444,11 @@ export const CourseBuilder = () => {
         requireSequentialProgress: rules.requireSequentialProgress,
         enforceDeadlineBlock: rules.blockAccessAfterDeadline,
       });
+      savedConfigurationRef.current = {
+        ...savedConfigurationRef.current,
+        requireSequentialProgress: rules.requireSequentialProgress,
+        blockAccessAfterDeadline: rules.blockAccessAfterDeadline,
+      };
     }
 
     const currentIds = selectedPrerequisitesRef.current.map((item) => item.id);
@@ -449,12 +458,22 @@ export const CourseBuilder = () => {
     for (const prerequisiteId of currentIds) {
       if (!savedIds.has(prerequisiteId)) {
         await addCoursePrerequisite(id, prerequisiteId);
+        savedConfigurationRef.current = {
+          ...savedConfigurationRef.current,
+          prerequisiteIds: [...savedConfigurationRef.current.prerequisiteIds, prerequisiteId],
+        };
       }
     }
 
     for (const prerequisiteId of saved.prerequisiteIds) {
       if (!currentIdSet.has(prerequisiteId)) {
         await removeCoursePrerequisite(id, prerequisiteId);
+        savedConfigurationRef.current = {
+          ...savedConfigurationRef.current,
+          prerequisiteIds: savedConfigurationRef.current.prerequisiteIds.filter(
+            (savedId) => savedId !== prerequisiteId,
+          ),
+        };
       }
     }
   }, []);
@@ -475,8 +494,7 @@ export const CourseBuilder = () => {
       setSavingStatus(nextStatus);
 
       const editingPublishedCourse = status === 'PUBLISHED';
-      let savedId = courseId;
-      let configurationPersisted = false;
+      let finalCourseId: string;
 
       try {
         const payload = buildCoursePayload(values, nextStatus);
@@ -485,8 +503,6 @@ export const CourseBuilder = () => {
             ? await createCourse({ ...payload, instructorId: user?.id })
             : await updateCourse(courseId, payload);
 
-        savedId = saved.id;
-        configurationPersisted = true;
         await persistConfiguration(saved.id);
 
         if (courseId === undefined) {
@@ -504,7 +520,7 @@ export const CourseBuilder = () => {
             : saved;
 
         setStatus(finalCourse.status);
-        applyRules(await getCourseRules(finalCourse.id));
+        finalCourseId = finalCourse.id;
         showToast(
           'success',
           nextStatus === 'PUBLISHED' ? 'Curso publicado com sucesso!' : 'Rascunho salvo!',
@@ -513,13 +529,8 @@ export const CourseBuilder = () => {
             : 'Os dados do curso foram gravados.',
         );
       } catch (error: unknown) {
-        if (configurationPersisted && savedId !== undefined) {
-          try {
-            applyRules(await getCourseRules(savedId));
-          } catch {
-            // O histórico fica como estava; a mensagem abaixo cobre a falha do salvamento.
-          }
-        }
+        // As edições locais são mantidas: o que já foi gravado está refletido em
+        // `savedConfigurationRef`, e o restante vai no próximo salvamento.
         showToast(
           'error',
           nextStatus === 'PUBLISHED'
@@ -527,6 +538,14 @@ export const CourseBuilder = () => {
             : 'Não foi possível salvar o curso',
           error instanceof Error ? error.message : undefined,
         );
+        setSavingStatus(null);
+        return;
+      }
+
+      try {
+        applyRules(await getCourseRules(finalCourseId));
+      } catch {
+        // O salvamento já terminou; sem a releitura, o estado local continua valendo.
       } finally {
         setSavingStatus(null);
       }
