@@ -45,6 +45,12 @@ const Login = lazy(() =>
   })),
 );
 
+const AcceptEmployeeInvitation = lazy(() =>
+  import('@pages/AcceptEmployeeInvitation/AcceptEmployeeInvitation').then((m) => ({
+    default: m.AcceptEmployeeInvitation,
+  })),
+);
+
 const OrderConfirmation = lazy(() =>
   import('@pages/OrderConfirmation/OrderConfirmation').then((m) => ({
     default: m.OrderConfirmation,
@@ -181,6 +187,7 @@ export const AppRouter = () => {
               }
             />
             <Route path="/login" element={<Login />} />
+            <Route path="/convite" element={<AcceptEmployeeInvitation />} />
             <Route
               path="/checkout/confirmacao"
               element={

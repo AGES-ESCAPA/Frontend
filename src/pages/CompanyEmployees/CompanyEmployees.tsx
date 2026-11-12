@@ -1,12 +1,35 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
-import { Button, EmployeeTable, EmptyState, ProgressBar, SearchBar, SumCard } from '@components/ui';
-import type { Employee } from '@components/ui';
+import {
+  Button,
+  EmployeeFormModal,
+  EmployeeTable,
+  EmptyState,
+  Modal,
+  ProgressBar,
+  SearchBar,
+  SumCard,
+  Toast,
+} from '@components/ui';
+import type {
+  EmployeeAccessStatus,
+  Employee,
+  EmployeeFormField,
+  EmployeeFormValues,
+} from '@components/ui';
 import { useCompanySeats } from '@hooks/useCompanySeats';
 import { useCompanyEmployees } from '@hooks/useCompanyEmployees';
+import { useToast } from '@hooks/useToast';
 import { mapCompanyEmployeeToRow } from '@utils/mapCompanyEmployee';
+import {
+  CompanyEmployeeServiceError,
+  companyEmployeeService,
+  NO_SEATS_AVAILABLE_MESSAGE,
+} from '@services/companyEmployeeService';
+import type { CompanyEmployee } from '@/types/companyEmployee';
 import styles from './CompanyEmployees.module.css';
 
 const COMPANY_USER: SidebarUser = {
@@ -36,10 +59,19 @@ const SkeletonTable = () => (
 );
 
 export const CompanyEmployees = () => {
+  const navigate = useNavigate();
   const [inputSearch, setInputSearch] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const { toast, isOpen: isToastOpen, showToast, dismissToast } = useToast();
+  const [employeeFormOpen, setEmployeeFormOpen] = useState(false);
+  const [noSeatsNoticeOpen, setNoSeatsNoticeOpen] = useState(false);
+  const [employeeBeingEdited, setEmployeeBeingEdited] = useState<CompanyEmployee | null>(null);
+  const [isSubmittingEmployee, setIsSubmittingEmployee] = useState(false);
+  const [employeeFormFieldErrors, setEmployeeFormFieldErrors] = useState<
+    Partial<Record<EmployeeFormField, string>>
+  >({});
 
   const {
     seats,
@@ -76,14 +108,135 @@ export const CompanyEmployees = () => {
     setSearch(value.trim());
   }, []);
 
+  const openCreateForm = () => {
+    setActionNotice(null);
+    if (seatsStatus === 'success' && seats?.seatsAvailable === 0) {
+      setNoSeatsNoticeOpen(true);
+      return;
+    }
+
+    setEmployeeBeingEdited(null);
+    setEmployeeFormOpen(true);
+    setEmployeeFormFieldErrors({});
+  };
+
+  const openEditForm = (employee: Employee) => {
+    const companyEmployee = employees.find((current) => current.id === employee.id);
+    if (!companyEmployee) {
+      setActionNotice(`Não foi possível carregar os dados de ${employee.name} para edição.`);
+      return;
+    }
+
+    setEmployeeBeingEdited(companyEmployee);
+    setEmployeeFormOpen(true);
+    setActionNotice(null);
+    setEmployeeFormFieldErrors({});
+  };
+
+  const getFormAccessStatus = (status: CompanyEmployee['status']): EmployeeAccessStatus => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'active';
+      case 'PENDING':
+        return 'pending';
+      case 'INACTIVE':
+        return 'inactive';
+    }
+  };
+
+  const getApiAccessStatus = (
+    status: EmployeeAccessStatus | undefined,
+  ): CompanyEmployee['status'] => {
+    switch (status) {
+      case 'pending':
+        return 'PENDING';
+      case 'inactive':
+        return 'INACTIVE';
+      case 'active':
+      default:
+        return 'ACTIVE';
+    }
+  };
+
+  const handleResendInvitationById = async (employeeId: string, employeeName: string) => {
+    setActionNotice(null);
+    try {
+      await companyEmployeeService.resendInvite(employeeId);
+      showToast('success', 'Convite reenviado', `Um novo e-mail foi enviado para ${employeeName}.`);
+    } catch (error: unknown) {
+      showToast(
+        'error',
+        'Não foi possível reenviar o convite',
+        error instanceof Error ? error.message : 'Tente novamente mais tarde.',
+      );
+    }
+  };
+
+  const handleEmployeeSubmit = async (values: EmployeeFormValues) => {
+    setIsSubmittingEmployee(true);
+    setActionNotice(null);
+
+    try {
+      if (employeeBeingEdited) {
+        await companyEmployeeService.updateEmployee(employeeBeingEdited.id, {
+          name: values.name,
+          email: values.email,
+          jobTitle: values.role,
+          status: getApiAccessStatus(values.accessStatus),
+        });
+        showToast('success', 'Colaborador atualizado', 'Os dados foram atualizados com sucesso.');
+      } else {
+        const result = await companyEmployeeService.createEmployee({
+          name: values.name,
+          email: values.email,
+          jobTitle: values.role,
+        });
+        if (result.inviteSent) {
+          showToast(
+            'success',
+            'Colaborador cadastrado',
+            'O convite para criar a senha foi enviado por e-mail.',
+          );
+        } else {
+          showToast(
+            'error',
+            'Colaborador cadastrado, convite não enviado',
+            'O cadastro foi salvo, mas não foi possível enviar o convite.',
+            {
+              label: 'Reenviar convite',
+              onAction: () => {
+                void handleResendInvitationById(result.employee.id, result.employee.name);
+              },
+            },
+          );
+        }
+      }
+
+      setActionNotice(null);
+      reloadAll();
+    } catch (error: unknown) {
+      if (error instanceof CompanyEmployeeServiceError && error.status === 409) {
+        if (error.message === 'Este e-mail já está cadastrado.') {
+          setEmployeeFormFieldErrors({ email: error.message });
+        } else if (error.message === NO_SEATS_AVAILABLE_MESSAGE) {
+          setEmployeeFormOpen(false);
+          setNoSeatsNoticeOpen(true);
+        }
+      }
+      throw error;
+    } finally {
+      setIsSubmittingEmployee(false);
+    }
+  };
+
   useEffect(() => {
     if (employeesStatus === 'success' && totalPages > 0 && page >= totalPages) {
       setPage(totalPages - 1);
     }
   }, [employeesStatus, page, totalPages]);
 
-  const announcePendingAction = (action: string, employee: Employee) => {
-    setActionNotice(`${action} de ${employee.name} estará disponível em breve.`);
+  const handleResendInvitation = async (employee: Employee) => {
+    await handleResendInvitationById(employee.id, employee.name);
   };
 
   return (
@@ -174,8 +327,7 @@ export const CompanyEmployees = () => {
                 variant="primary"
                 label="Cadastrar Colaborador"
                 icon={<UserPlus size={18} aria-hidden="true" />}
-                title="Cadastro de colaboradores em breve"
-                disabled
+                onClick={openCreateForm}
               />
             </div>
           </div>
@@ -239,9 +391,11 @@ export const CompanyEmployees = () => {
               )}
               <EmployeeTable
                 employees={rows}
-                onEdit={(employee) => announcePendingAction('Edição', employee)}
-                onResendInvite={(employee) => announcePendingAction('Reenvio de convite', employee)}
-                onUnlink={(employee) => announcePendingAction('Desvinculação', employee)}
+                onEdit={openEditForm}
+                onResendInvite={(employee) => void handleResendInvitation(employee)}
+                onUnlink={(employee) =>
+                  setActionNotice(`Desvinculação de ${employee.name} estará disponível em breve.`)
+                }
               />
             </div>
           ) : null}
@@ -286,6 +440,66 @@ export const CompanyEmployees = () => {
             </footer>
           ) : null}
         </section>
+
+        <EmployeeFormModal
+          open={employeeFormOpen}
+          onOpenChange={setEmployeeFormOpen}
+          mode={employeeBeingEdited ? 'edit' : 'create'}
+          initialValues={
+            employeeBeingEdited
+              ? {
+                  name: employeeBeingEdited.name,
+                  email: employeeBeingEdited.email,
+                  role: employeeBeingEdited.jobTitle ?? '',
+                  accessStatus: getFormAccessStatus(employeeBeingEdited.status),
+                }
+              : undefined
+          }
+          onSubmit={handleEmployeeSubmit}
+          fieldErrors={employeeFormFieldErrors}
+          isSubmitting={isSubmittingEmployee}
+        />
+        <Modal
+          open={noSeatsNoticeOpen}
+          onOpenChange={setNoSeatsNoticeOpen}
+          title="Vagas esgotadas"
+          size="sm"
+          footer={
+            <>
+              <Button
+                type="button"
+                label="Fechar"
+                variant="secondary"
+                onClick={() => setNoSeatsNoticeOpen(false)}
+              />
+              <Button
+                type="button"
+                label="Comprar vagas"
+                variant="primary"
+                onClick={() => {
+                  setNoSeatsNoticeOpen(false);
+                  navigate('/checkout/assentos?quantidade=1');
+                }}
+              />
+            </>
+          }
+        >
+          <p role="alert">
+            Suas vagas acabaram. Compre mais assentos para cadastrar um novo colaborador.
+          </p>
+        </Modal>
+        <Toast
+          key={toast?.key}
+          open={isToastOpen}
+          onOpenChange={(open) => {
+            if (!open) dismissToast();
+          }}
+          title={toast?.title ?? ''}
+          description={toast?.description}
+          variant={toast?.variant}
+          actionLabel={toast?.action?.label}
+          onAction={toast?.action?.onAction}
+        />
       </div>
     </AuthenticatedLayout>
   );
