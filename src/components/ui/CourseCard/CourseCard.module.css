@@ -198,6 +198,14 @@
   white-space: nowrap;
 }
 
+.employees {
+  flex-shrink: 0;
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-info-300);
+  white-space: nowrap;
+}
+
 .footer .accessButton {
   flex-shrink: 0;
   min-height: 2.25rem;
