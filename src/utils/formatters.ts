@@ -283,3 +283,36 @@ export const formatDateTime = (localDateTime: string): string => {
 
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(date);
 };
+
+const COMPACT_PT_BR_FORMATTER = new Intl.NumberFormat('pt-BR', {
+  notation: 'compact',
+  compactDisplay: 'short',
+  maximumFractionDigits: 1,
+});
+
+/**
+ * Formata contagens inteiras de matrículas:
+ * - Abaixo de 1.000: número integral (ex: 850 -> "850")
+ * - A partir de 1.000: notação compacta pt-BR (ex: 4820 -> "4,8 mil")
+ */
+export const formatCompactEnrollmentCount = (count: number): string => {
+  const safeCount = Number.isFinite(count) ? Math.max(0, Math.trunc(count)) : 0;
+
+  if (safeCount < 1000) {
+    return safeCount.toLocaleString('pt-BR');
+  }
+
+  // Remove espaço não-quebrável (\u00a0) gerado pelo Intl em alguns ambientes (Node/jsdom)
+  // para garantir comparação consistente em tela e testes ("4,8 mil").
+  return COMPACT_PT_BR_FORMATTER.format(safeCount).replace(/\u00a0/g, ' ');
+};
+
+/**
+ * Gera a linha de apoio do card "Curso Mais Acessado".
+ * Ex: 4820 -> "Mais de 4,8 mil matrículas" | 1 -> "Mais de 1 matrícula"
+ */
+export const formatMostAccessedCourseSubtitle = (enrollments: number): string => {
+  const safeCount = Number.isFinite(enrollments) ? Math.max(0, Math.trunc(enrollments)) : 0;
+  const formatted = formatCompactEnrollmentCount(safeCount);
+  return safeCount === 1 ? `Mais de ${formatted} matrícula` : `Mais de ${formatted} matrículas`;
+};

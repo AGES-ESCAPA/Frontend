@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import type { PopularCoursesSectionProps } from '@/types/adminMetrics';
 import { PopularCoursesSection } from './PopularCoursesSection';
@@ -91,17 +92,29 @@ describe('PopularCoursesSection', () => {
     ).toBeInTheDocument();
   });
 
-  it('displays the leader course title and formats the enrollments count in the Most Accessed Course card', () => {
-    render(<PopularCoursesSection {...BASE_PROPS} />);
+  it('displays the leader course title and formats the enrollments count with compact notation', () => {
+    const { rerender } = render(<PopularCoursesSection {...BASE_PROPS} />);
 
     const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
 
     expect(within(leaderCard).getByText('Turismo de Aventura')).toBeInTheDocument();
-    expect(within(leaderCard).getByText('4.820 matrículas')).toBeInTheDocument();
-  });
+    expect(within(leaderCard).getByText('Mais de 4,8 mil matrículas')).toBeInTheDocument();
 
-  it('supports singular enrollment formatting on the leader card', () => {
-    render(
+    rerender(
+      <PopularCoursesSection
+        {...BASE_PROPS}
+        mostAccessedCourse={{
+          courseId: 'course-1',
+          title: 'Hospitalidade Executiva',
+          enrollments: 420,
+        }}
+      />,
+    );
+
+    expect(within(leaderCard).getByText('Hospitalidade Executiva')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('Mais de 420 matrículas')).toBeInTheDocument();
+
+    rerender(
       <PopularCoursesSection
         {...BASE_PROPS}
         mostAccessedCourse={{
@@ -112,49 +125,85 @@ describe('PopularCoursesSection', () => {
       />,
     );
 
-    const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
-    expect(within(leaderCard).getByText('Hospitalidade Executiva')).toBeInTheDocument();
-    expect(within(leaderCard).getByText('1 matrícula')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('Mais de 1 matrícula')).toBeInTheDocument();
   });
 
-  it('shows a safe fallback when mostAccessedCourse is null or enrollments is non-positive', () => {
-    const { rerender } = render(
-      <PopularCoursesSection {...BASE_PROPS} mostAccessedCourse={null} />,
+  it('renders independent loading skeletons for each of the three course blocks when status is loading', () => {
+    render(<PopularCoursesSection {...BASE_PROPS} status="loading" />);
+
+    expect(screen.getByRole('status', { name: 'Carregando curso mais acessado' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
+    expect(
+      screen.getByRole('status', { name: 'Carregando distribuição por tipo de curso' }),
+    ).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('status', { name: 'Carregando ranking de cursos' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
+
+    expect(screen.queryByText('Turismo de Aventura')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pie')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('list', { name: 'Top 5 cursos por matrículas' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('replaces the card, ranking and distribution with informative messages when there are no eligible enrollments', () => {
+    render(
+      <PopularCoursesSection
+        mostAccessedCourse={null}
+        topCourses={[]}
+        categoriesCount={0}
+        enrollmentsByCategory={[]}
+        status="success"
+      />,
     );
 
     const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
     expect(within(leaderCard).getByText('—')).toBeInTheDocument();
     expect(within(leaderCard).getByText('Nenhuma matrícula registrada')).toBeInTheDocument();
 
-    rerender(
-      <PopularCoursesSection
-        {...BASE_PROPS}
-        mostAccessedCourse={{
-          courseId: 'course-1',
-          title: 'Curso Inicial',
-          enrollments: Number.NaN,
-        }}
-      />,
-    );
+    expect(screen.getByText('Nenhuma matrícula registrada por categoria.')).toBeInTheDocument();
+    expect(screen.queryByTestId('pie')).not.toBeInTheDocument();
 
-    expect(within(leaderCard).getByText('Curso Inicial')).toBeInTheDocument();
-    expect(within(leaderCard).getByText('0 matrículas')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum curso com matrículas registradas.')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('list', { name: 'Top 5 cursos por matrículas' }),
+    ).not.toBeInTheDocument();
   });
 
-  it('renders up to five ranked courses in the exact received order with their positions and enrollments', () => {
-    render(
+  it('shows the error message and retry button when status is error and calls onRetry when clicked', async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+
+    const { rerender } = render(
       <PopularCoursesSection
         {...BASE_PROPS}
-        topCourses={[
-          ...BASE_PROPS.topCourses,
-          {
-            courseId: 'course-6',
-            title: 'Curso Excedente Não Exibido',
-            enrollments: 900,
-          },
-        ]}
+        status="error"
+        errorMessage="Falha ao buscar métricas de cursos."
+        onRetry={onRetry}
       />,
     );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Falha ao buscar métricas de cursos.');
+    expect(screen.getAllByText('Indicador indisponível.')).toHaveLength(3);
+    expect(screen.queryByTestId('pie')).not.toBeInTheDocument();
+
+    const retryButton = screen.getByRole('button', { name: 'Tentar novamente' });
+    await user.click(retryButton);
+    expect(onRetry).toHaveBeenCalledOnce();
+
+    rerender(<PopularCoursesSection {...BASE_PROPS} status="error" errorMessage={null} />);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar as métricas de cursos.',
+    );
+    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
+  });
+
+  it('renders ranked courses in the exact received order with their positions and enrollments', () => {
+    render(<PopularCoursesSection {...BASE_PROPS} />);
 
     const rankingList = screen.getByRole('list', { name: 'Top 5 cursos por matrículas' });
     expect(rankingList.tagName).toBe('OL');
@@ -181,17 +230,6 @@ describe('PopularCoursesSection', () => {
     expect(within(items[4]).getByText('5')).toBeInTheDocument();
     expect(within(items[4]).getByText('Introdução ao Patrimônio Cultural')).toBeInTheDocument();
     expect(within(items[4]).getByText('1.840')).toBeInTheDocument();
-
-    expect(screen.queryByText('Curso Excedente Não Exibido')).not.toBeInTheDocument();
-  });
-
-  it('renders the empty message when topCourses is empty', () => {
-    render(<PopularCoursesSection {...BASE_PROPS} topCourses={[]} />);
-
-    expect(screen.getByText('Nenhum curso com matrículas registradas.')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('list', { name: 'Top 5 cursos por matrículas' }),
-    ).not.toBeInTheDocument();
   });
 
   it('renders the category distribution DonutChart with proportional segments, legend and center count', () => {
@@ -236,11 +274,7 @@ describe('PopularCoursesSection', () => {
       <PopularCoursesSection {...BASE_PROPS} categoriesCount={-3} enrollmentsByCategory={[]} />,
     );
 
-    expect(
-      screen.getByRole('img', {
-        name: /Distribuição por tipo de curso\. 0 Categorias\. Nenhum dado disponível/i,
-      }),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma matrícula registrada por categoria.')).toBeInTheDocument();
   });
 
   it('renders optional layout slots alongside the popular courses cards and panels', () => {

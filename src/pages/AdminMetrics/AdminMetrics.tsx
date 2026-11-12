@@ -1,8 +1,8 @@
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import { BarList, DonutChart, Panel, SumCard } from '@components/ui';
-import type { PopularCoursesMetricsData } from '@/types/adminMetrics';
+import { useAdminCourseMetrics } from '@hooks/useAdminCourseMetrics';
 import { PopularCoursesSection } from './components/PopularCoursesSection';
-import { MOCK_COURSE_METRICS, MOCK_ENGAGED_COMPANIES } from './mockCourseMetrics';
+import { MOCK_ENGAGED_COMPANIES } from './mockCourseMetrics';
 import styles from './AdminMetrics.module.css';
 
 const ADMIN_USER = { name: 'Admin', role: 'Administrador' };
@@ -12,12 +12,9 @@ const MENU_ITEMS = SIDEBAR_MENU_PRESETS.admin.map((item) => ({
 }));
 const NO_DATA_MESSAGE = 'Dados ainda não disponíveis.';
 
-export interface AdminMetricsProps {
-  /** Dados de indicadores de cursos populares já preparados pela camada de integração. */
-  courseMetrics?: PopularCoursesMetricsData;
-}
+export const AdminMetrics = () => {
+  const { metrics, status, errorMessage, reload } = useAdminCourseMetrics();
 
-export const AdminMetrics = ({ courseMetrics = MOCK_COURSE_METRICS }: AdminMetricsProps) => {
   const kpiLeadingCards = (
     <>
       <SumCard
@@ -92,10 +89,13 @@ export const AdminMetrics = ({ courseMetrics = MOCK_COURSE_METRICS }: AdminMetri
         </header>
 
         <PopularCoursesSection
-          mostAccessedCourse={courseMetrics.mostAccessedCourse}
-          topCourses={courseMetrics.topCourses}
-          categoriesCount={courseMetrics.categoriesCount}
-          enrollmentsByCategory={courseMetrics.enrollmentsByCategory}
+          status={status}
+          errorMessage={errorMessage}
+          onRetry={reload}
+          mostAccessedCourse={metrics?.mostAccessedCourse ?? null}
+          topCourses={metrics?.topCourses ?? []}
+          categoriesCount={metrics?.categoriesCount ?? 0}
+          enrollmentsByCategory={metrics?.enrollmentsByCategory ?? []}
           kpiLeadingCards={kpiLeadingCards}
           kpiTrailingCards={kpiTrailingCards}
           middlePanel={middlePanel}

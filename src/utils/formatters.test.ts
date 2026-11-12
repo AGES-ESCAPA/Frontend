@@ -19,6 +19,8 @@ import {
   truncate,
   toCourseCode,
   formatCourseVersion,
+  formatCompactEnrollmentCount,
+  formatMostAccessedCourseSubtitle,
 } from './formatters';
 
 describe('formatDuration', () => {
@@ -266,5 +268,41 @@ describe('formatDateTime', () => {
   it('should return an empty string for an invalid value', () => {
     expect(formatDateTime('not a date')).toBe('');
     expect(formatDateTime('')).toBe('');
+  });
+});
+
+describe('formatCompactEnrollmentCount', () => {
+  it('keeps counts below 1000 as full integers', () => {
+    expect(formatCompactEnrollmentCount(0)).toBe('0');
+    expect(formatCompactEnrollmentCount(1)).toBe('1');
+    expect(formatCompactEnrollmentCount(42)).toBe('42');
+    expect(formatCompactEnrollmentCount(999)).toBe('999');
+  });
+
+  it('formats counts from 1000 onwards using pt-BR compact notation without non-breaking spaces', () => {
+    expect(formatCompactEnrollmentCount(1000)).toBe('1 mil');
+    expect(formatCompactEnrollmentCount(4820)).toBe('4,8 mil');
+    expect(formatCompactEnrollmentCount(12500)).toBe('12,5 mil');
+  });
+
+  it('clamps negative, fractional or non-finite values safely to zero or integer', () => {
+    expect(formatCompactEnrollmentCount(-25)).toBe('0');
+    expect(formatCompactEnrollmentCount(Number.NaN)).toBe('0');
+    expect(formatCompactEnrollmentCount(Number.POSITIVE_INFINITY)).toBe('0');
+    expect(formatCompactEnrollmentCount(850.9)).toBe('850');
+  });
+});
+
+describe('formatMostAccessedCourseSubtitle', () => {
+  it('returns the compact enrollment subtitle for counts of 1000 or more', () => {
+    expect(formatMostAccessedCourseSubtitle(4820)).toBe('Mais de 4,8 mil matrículas');
+    expect(formatMostAccessedCourseSubtitle(1000)).toBe('Mais de 1 mil matrículas');
+  });
+
+  it('returns singular and plural subtitles for counts below 1000', () => {
+    expect(formatMostAccessedCourseSubtitle(1)).toBe('Mais de 1 matrícula');
+    expect(formatMostAccessedCourseSubtitle(420)).toBe('Mais de 420 matrículas');
+    expect(formatMostAccessedCourseSubtitle(0)).toBe('Mais de 0 matrículas');
+    expect(formatMostAccessedCourseSubtitle(Number.NaN)).toBe('Mais de 0 matrículas');
   });
 });
