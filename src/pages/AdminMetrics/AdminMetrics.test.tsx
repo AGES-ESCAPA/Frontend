@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import type * as Recharts from 'recharts';
 import { adminMetricsService, AdminMetricsServiceError } from '@services/adminMetricsService';
 import type * as AdminMetricsServiceModule from '@services/adminMetricsService';
-import type { AdminMetricsOverview } from '@/types/adminMetrics';
+import type { AdminMetricsOverview, PopularCoursesMetricsData } from '@/types/adminMetrics';
 import { adminMetricsOverview, zeroAdminMetricsOverview } from '@/test/adminMetricsFixtures';
 import { AdminMetrics } from './AdminMetrics';
 
@@ -18,18 +18,18 @@ vi.mock('@services/adminMetricsService', async (importOriginal) => ({
 }));
 
 const getOverviewMock = vi.mocked(adminMetricsService.getOverview);
-const renderPage = () =>
+const renderPage = (courseMetrics?: PopularCoursesMetricsData) =>
   render(
     <MemoryRouter initialEntries={['/admin/metricas']}>
-      <AdminMetrics />
+      <AdminMetrics courseMetrics={courseMetrics} />
     </MemoryRouter>,
   );
 
-describe('AdminMetrics — integração da US-36', () => {
-  beforeEach(() => {
-    getOverviewMock.mockReset().mockResolvedValue(adminMetricsOverview);
-  });
+beforeEach(() => {
+  getOverviewMock.mockReset().mockResolvedValue(adminMetricsOverview);
+});
 
+describe('AdminMetrics — integração da US-36', () => {
   it('preserves the authenticated shell and all four metric areas', async () => {
     renderPage();
     await screen.findByText('68%');
@@ -37,8 +37,6 @@ describe('AdminMetrics — integração da US-36', () => {
     expect(
       main.getByRole('heading', { level: 1, name: 'Relatórios Gerais & Métricas' }),
     ).toBeInTheDocument();
-    expect(main.getAllByRole('article')).toHaveLength(2);
-    expect(main.getAllByRole('region')).toHaveLength(2);
     expect(main.getByRole('article', { name: 'Alunos ativos' })).toBeInTheDocument();
     expect(main.getByRole('article', { name: 'Empresas parceiras' })).toBeInTheDocument();
     for (const title of ['Taxa Média de Conclusão', 'Evolução de Alunos Ativos']) {
@@ -88,7 +86,10 @@ describe('AdminMetrics — integração da US-36', () => {
       expect(main.getByRole('status', { name })).toHaveAttribute('aria-busy', 'true');
     }
     expect(main.getAllByRole('status')).toHaveLength(4);
-    expect(main.queryByRole('img')).not.toBeInTheDocument();
+    for (const name of ['Taxa Média de Conclusão', 'Evolução de Alunos Ativos']) {
+      expect(within(main.getByRole('region', { name })).queryByRole('img')).not.toBeInTheDocument();
+    }
+    expect(main.getByRole('img', { name: /Distribuição por tipo de curso/ })).toBeInTheDocument();
     expect(main.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
     expect(getOverviewMock).toHaveBeenCalledOnce();
   });
@@ -167,9 +168,16 @@ describe('AdminMetrics — integração da US-36', () => {
         ).toBeInTheDocument();
       }
       const main = within(screen.getByRole('main'));
-      expect(main.queryByRole('img')).not.toBeInTheDocument();
+      for (const name of ['Taxa Média de Conclusão', 'Evolução de Alunos Ativos']) {
+        expect(
+          within(main.getByRole('region', { name })).queryByRole('img'),
+        ).not.toBeInTheDocument();
+      }
+      expect(main.getByRole('img', { name: /Distribuição por tipo de curso/ })).toBeInTheDocument();
       expect(main.queryByRole('status')).not.toBeInTheDocument();
-      expect(main.getAllByRole('region')).toHaveLength(2);
+      expect(
+        main.getByRole('region', { name: 'Indicadores de cursos mais populares' }),
+      ).toBeInTheDocument();
     },
   );
 
@@ -191,5 +199,68 @@ describe('AdminMetrics — integração da US-36', () => {
     expect(await screen.findByText('68%')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+});
+
+describe('AdminMetrics — integração US-37 (Cursos Populares)', () => {
+  it('renders the popular courses metric blocks and rankings alongside the overview', async () => {
+    renderPage();
+    await screen.findByText('68%');
+
+    expect(screen.getByRole('article', { name: 'Curso Mais Acessado' })).toHaveTextContent(
+      'Turismo de Aventura',
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Distribuição por Tipo de Curso' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Top 5 Empresas Mais Engajadas' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Top 5 Cursos por Acesso' })).toBeInTheDocument();
+  });
+
+  it('passes custom courseMetrics props down to the popular courses section', async () => {
+    const customMetrics: PopularCoursesMetricsData = {
+      mostAccessedCourse: {
+        courseId: 'c-10',
+        title: 'Sommelier e Enologia Aplicada',
+        enrollments: 640,
+      },
+      topCourses: [
+        {
+          courseId: 'c-10',
+          title: 'Sommelier e Enologia Aplicada',
+          enrollments: 640,
+        },
+        {
+          courseId: 'c-20',
+          title: 'Recepção Bilíngue na Hotelaria',
+          enrollments: 410,
+        },
+      ],
+      categoriesCount: 2,
+      enrollmentsByCategory: [
+        { category: 'Gastronomia', percentage: 60.95 },
+        { category: 'Hospitalidade', percentage: 39.05 },
+      ],
+    };
+
+    renderPage(customMetrics);
+    await screen.findByText('68%');
+    expect(
+      within(screen.getByRole('article', { name: 'Alunos ativos' })).getByText('12.847'),
+    ).toBeInTheDocument();
+
+    const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
+    expect(within(leaderCard).getByText('Sommelier e Enologia Aplicada')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('640 matrículas')).toBeInTheDocument();
+
+    const rankingList = screen.getByRole('list', { name: 'Top 5 cursos por matrículas' });
+    expect(within(rankingList).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(rankingList).getByText('Recepção Bilíngue na Hotelaria')).toBeInTheDocument();
+
+    const legend = screen.getByRole('list', { name: 'Legenda do gráfico' });
+    expect(legend).toHaveTextContent(/Gastronomia: 60,95%/);
+    expect(legend).toHaveTextContent(/Hospitalidade: 39,05%/);
   });
 });

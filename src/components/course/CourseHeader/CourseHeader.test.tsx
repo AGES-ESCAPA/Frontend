@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
@@ -7,15 +7,19 @@ import { AuthContext } from '@contexts/authContextDefinition';
 import type { AuthContextValue } from '@contexts/authContextDefinition';
 import type { UserRole } from '@/types/auth';
 import { getCourseAccessPath } from '@utils/courseAccess';
-import { loadOwnedCourseIds } from '@utils/ownedCourses';
+import { loadCompanyOwnedCourseIds, loadOwnedCourseIds } from '@utils/ownedCourses';
 import { CourseHeader } from './CourseHeader';
 import { featuredCourse } from '@/data/courses';
 import type { CourseSummary } from '@/types/course';
 
-vi.mock('@utils/ownedCourses', () => ({ loadOwnedCourseIds: vi.fn() }));
+vi.mock('@utils/ownedCourses', () => ({
+  loadOwnedCourseIds: vi.fn(),
+  loadCompanyOwnedCourseIds: vi.fn(),
+}));
 vi.mock('@utils/courseAccess', () => ({ getCourseAccessPath: vi.fn() }));
 
 const loadOwnedMock = vi.mocked(loadOwnedCourseIds);
+const loadCompanyOwnedMock = vi.mocked(loadCompanyOwnedCourseIds);
 const accessPathMock = vi.mocked(getCourseAccessPath);
 
 const authAs = (role: UserRole): AuthContextValue => ({
@@ -173,20 +177,6 @@ describe('CourseHeader', () => {
     expect(screen.queryByRole('button', { name: 'Acessar curso' })).not.toBeInTheDocument();
   });
 
-  it('does not look up enrollments for a company, which buys the course for its team', () => {
-    render(
-      withAuth(
-        'COMPANY',
-        <MemoryRouter>
-          <CourseHeader course={featuredCourse} />
-        </MemoryRouter>,
-      ),
-    );
-
-    expect(screen.getByRole('button', { name: 'Comprar curso' })).toBeEnabled();
-    expect(loadOwnedMock).not.toHaveBeenCalled();
-  });
-
   it('offers free lessons when every lesson in the course is free', async () => {
     const user = userEvent.setup();
     const onViewFreeLessons = vi.fn();
@@ -222,5 +212,45 @@ describe('CourseHeader', () => {
 
     expect(onViewFreeLessons).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem('escapa:purchase-redirect')).toBeNull();
+  });
+});
+
+describe('CourseHeader (empresa)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    loadOwnedMock.mockReset().mockResolvedValue(new Set());
+    loadCompanyOwnedMock.mockReset().mockResolvedValue(new Set());
+  });
+
+  const renderAsCompany = () =>
+    render(
+      withAuth(
+        'COMPANY',
+        <MemoryRouter>
+          <CourseHeader course={featuredCourse} />
+        </MemoryRouter>,
+      ),
+    );
+
+  it('shows the acquired tag instead of price and buy button when the company owns the course', async () => {
+    loadCompanyOwnedMock.mockResolvedValue(new Set([featuredCourse.id]));
+
+    renderAsCompany();
+
+    expect(await screen.findByText('Adquirido')).toBeInTheDocument();
+    expect(screen.queryByText(featuredCourse.price)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /comprar/i })).not.toBeInTheDocument();
+    expect(loadOwnedMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps price and buy button when the company has not acquired the course', async () => {
+    renderAsCompany();
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Comprar curso' })).toBeEnabled(),
+    );
+    expect(screen.getByText(featuredCourse.price)).toBeInTheDocument();
+    expect(screen.queryByText('Adquirido')).not.toBeInTheDocument();
+    expect(loadOwnedMock).not.toHaveBeenCalled();
   });
 });
