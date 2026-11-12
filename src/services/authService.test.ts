@@ -222,4 +222,141 @@ describe('authService', () => {
       });
     });
   });
+
+  describe('invites', () => {
+    const inviteToken = 'convite-felipe-andrade-dev';
+
+    const invite = {
+      name: 'Felipe Andrade',
+      email: 'felipe.andrade@vistamar.com.br',
+      companyName: 'Pousada Vista Mar LTDA',
+    };
+
+    const employeeUser = {
+      id: 'employee-1',
+      name: 'Felipe Andrade',
+      email: 'felipe.andrade@vistamar.com.br',
+      profile: 'EMPLOYEE',
+    };
+
+    const errorResponse = (status: number, message: string) => ({
+      ok: false,
+      status,
+      json: () => Promise.resolve({ status, error: 'Error', message }),
+    });
+
+    it('GETs the invite of the token', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ success: true, data: invite }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(authService.getInvite(inviteToken)).resolves.toEqual(invite);
+
+      expect(fetchMock.mock.calls[0][0]).toContain(`/auth/invites/${inviteToken}`);
+    });
+
+    it('encodes the token in the invite URL', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ success: true, data: invite }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await authService.getInvite('a/b?c');
+
+      expect(fetchMock.mock.calls[0][0]).toContain('/auth/invites/a%2Fb%3Fc');
+    });
+
+    it('rejects an invalid or used invite with status 404', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(errorResponse(404, 'Invite not found')));
+
+      await expect(authService.getInvite(inviteToken)).rejects.toMatchObject({
+        name: AuthServiceError.name,
+        status: 404,
+      });
+    });
+
+    it('rejects an expired invite with status 410', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(errorResponse(410, 'Invite has expired')));
+
+      await expect(authService.getInvite(inviteToken)).rejects.toMatchObject({
+        name: AuthServiceError.name,
+        status: 410,
+      });
+    });
+
+    it('POSTs the password and returns the employee session', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              accessToken: 'jwt-token',
+              tokenType: 'Bearer',
+              expiresIn: 3600,
+              user: employeeUser,
+            },
+          }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(authService.createInvitePassword(inviteToken, 'senha-segura')).resolves.toEqual({
+        token: 'jwt-token',
+        expiresIn: 3600,
+        user: {
+          id: 'employee-1',
+          name: 'Felipe Andrade',
+          email: 'felipe.andrade@vistamar.com.br',
+          role: 'EMPLOYEE',
+        },
+      });
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain(`/auth/invites/${inviteToken}/password`);
+      expect(init.method).toBe('POST');
+      expect(init.body).toBe(JSON.stringify({ password: 'senha-segura' }));
+    });
+
+    it('rejects a password the backend considers invalid with status 400', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(errorResponse(400, 'Password must be at least 8 characters')),
+      );
+
+      await expect(authService.createInvitePassword(inviteToken, '1234567')).rejects.toMatchObject({
+        name: AuthServiceError.name,
+        status: 400,
+      });
+    });
+
+    it('rejects the password of an invite already used with status 404', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(errorResponse(404, 'Invite not found')));
+
+      await expect(
+        authService.createInvitePassword(inviteToken, 'senha-segura'),
+      ).rejects.toMatchObject({ name: AuthServiceError.name, status: 404 });
+    });
+
+    it('rejects the password of an expired invite with status 410', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(errorResponse(410, 'Invite has expired')));
+
+      await expect(
+        authService.createInvitePassword(inviteToken, 'senha-segura'),
+      ).rejects.toMatchObject({ name: AuthServiceError.name, status: 410 });
+    });
+
+    it('propagates a network failure', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+      await expect(authService.createInvitePassword(inviteToken, 'senha-segura')).rejects.toThrow(
+        'Failed to fetch',
+      );
+    });
+  });
 });

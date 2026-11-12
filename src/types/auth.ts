@@ -53,3 +53,17 @@ export interface StudentRegistrationSession {
 
 export type RegistrationField = keyof StudentRegistrationValues;
 export type RegistrationErrors = Partial<Record<RegistrationField, string>>;
+
+export interface AccountInvite {
+  name: string;
+  email: string;
+  companyName: string;
+}
+
+export interface InvitePasswordValues {
+  password: string;
+  passwordConfirmation: string;
+}
+
+export type InvitePasswordField = keyof InvitePasswordValues;
+export type InvitePasswordErrors = Partial<Record<InvitePasswordField, string>>;
