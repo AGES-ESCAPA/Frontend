@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
@@ -6,6 +8,8 @@ import {
   Avatar,
   Badge,
   BarList,
+  Button,
+  EmptyState,
   FilterTabs,
   LineChart,
   Panel,
@@ -15,10 +19,15 @@ import {
   Table,
 } from '@components/ui';
 import type { TableColumn } from '@components/ui';
-import { mockCompanyReportOverview, mockEmployeeProgress } from '@/data/companyReport';
-import type { EmployeeProgress, EmployeeProgressStatus } from '@/types/companyReport';
+import { useCompanyReportOverview } from '@hooks/useCompanyReportOverview';
+import { useEmployeeProgress } from '@hooks/useEmployeeProgress';
+import type { LoadStatus } from '@hooks/usePublicCourses';
+import type {
+  CompanyReportOverview,
+  EmployeeProgress,
+  EmployeeProgressStatus,
+} from '@/types/companyReport';
 import {
-  filterEmployeeProgress,
   formatHours,
   formatLastAccess,
   formatMonthLabel,
@@ -37,7 +46,8 @@ const menuItems = SIDEBAR_MENU_PRESETS.company.map((item) => ({
   active: item.route === '/empresa/dashboard',
 }));
 
-const PAGE_SIZE = 8;
+const EMPLOYEES_ROUTE = '/empresa/colaboradores';
+const UNAVAILABLE = '—';
 const MAX_PAGE_BUTTONS = 5;
 const TREND_LABEL = 'vs último mês';
 
@@ -153,35 +163,64 @@ const Pagination = ({ page, totalPages, onChange }: PaginationProps) => (
   </nav>
 );
 
+interface SkeletonProps {
+  label: string;
+  className: string;
+}
+
+/** Bloco em carregamento: anunciado uma vez ao leitor de tela, com a forma do conteúdo. */
+const Skeleton = ({ label, className }: SkeletonProps) => (
+  <div role="status" aria-label={label} aria-busy="true">
+    <div aria-hidden="true" className={`${styles.skeleton} ${className}`} />
+  </div>
+);
+
+interface BlockErrorProps {
+  message: string;
+  onRetry: () => void;
+}
+
+/** Falha de um bloco: os outros continuam na tela e este oferece uma nova tentativa. */
+const BlockError = ({ message, onRetry }: BlockErrorProps) => (
+  <div className={styles.blockError}>
+    <p className={styles.blockErrorMessage} role="alert">
+      {message}
+    </p>
+    <Button
+      className={styles.retryButton}
+      type="button"
+      variant="outlined"
+      label="Tentar novamente"
+      onClick={onRetry}
+    />
+  </div>
+);
+
+/** Valor do card: esqueleto enquanto carrega e traço quando os indicadores falharam. */
+const renderCardValue = (
+  status: LoadStatus,
+  overview: CompanyReportOverview | null,
+  label: string,
+  format: (data: CompanyReportOverview) => string,
+): ReactNode => {
+  if (status === 'loading') {
+    return <Skeleton label={`Carregando ${label}`} className={styles.valueSkeleton} />;
+  }
+
+  return overview ? format(overview) : UNAVAILABLE;
+};
+
 export const CompanyDashboard = () => {
-  const overview = mockCompanyReportOverview;
+  const report = useCompanyReportOverview();
   const [inputSearch, setInputSearch] = useState('');
   const [search, setSearch] = useState('');
   const [statusLabel, setStatusLabel] = useState(STATUS_LABELS[0]);
   const [page, setPage] = useState(0);
+  const status = STATUS_OPTIONS[statusLabel] ?? null;
+  const employees = useEmployeeProgress(search, status, page);
 
   const columns = useMemo(() => buildColumns(new Date()), []);
-  const filteredRows = useMemo(
-    () =>
-      filterEmployeeProgress(mockEmployeeProgress, {
-        search,
-        status: STATUS_OPTIONS[statusLabel] ?? null,
-      }),
-    [search, statusLabel],
-  );
-  const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE);
-  const pageRows = filteredRows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-
-  const departmentItems = overview.completionByJobTitle.map((item) => ({
-    id: item.jobTitle,
-    label: item.jobTitle,
-    value: item.completionRate,
-    displayValue: formatPercent(item.completionRate),
-  }));
-  const monthlyHours = overview.monthlyHours.map((item) => ({
-    label: formatMonthLabel(item.month),
-    value: item.averageHours,
-  }));
+  const overview = report.status === 'success' ? report.overview : null;
 
   const handleSearch = useCallback((value: string) => {
     setPage(0);
@@ -191,6 +230,75 @@ export const CompanyDashboard = () => {
   const handleStatusChange = (label: string) => {
     setPage(0);
     setStatusLabel(label);
+  };
+
+  // Sem busca, filtro nem página, uma lista vazia quer dizer que a empresa não tem colaboradores
+  // em cursos: no lugar de indicadores zerados, o gestor é levado à Gestão de Colaboradores.
+  const isEmptyCompany =
+    employees.status === 'success' &&
+    employees.totalElements === 0 &&
+    search.trim() === '' &&
+    status === null &&
+    page === 0;
+
+  const departmentItems = (overview?.completionByJobTitle ?? []).map((item) => ({
+    id: item.jobTitle,
+    label: item.jobTitle,
+    value: item.completionRate,
+    displayValue: formatPercent(item.completionRate),
+  }));
+  const monthlyHours = (overview?.monthlyHours ?? []).map((item) => ({
+    label: formatMonthLabel(item.month),
+    value: item.averageHours,
+  }));
+
+  const renderChart = (label: string, chart: ReactNode) => {
+    if (report.status === 'loading') {
+      return <Skeleton label={`Carregando ${label}`} className={styles.chartSkeleton} />;
+    }
+
+    return overview ? chart : <p className={styles.unavailable}>Gráfico indisponível.</p>;
+  };
+
+  const renderTable = () => {
+    if (employees.status === 'loading') {
+      return (
+        <Skeleton
+          label="Carregando acompanhamento por colaborador"
+          className={styles.tableSkeleton}
+        />
+      );
+    }
+
+    if (employees.status === 'error') {
+      return (
+        <BlockError
+          message={employees.errorMessage ?? 'Não foi possível carregar o acompanhamento.'}
+          onRetry={employees.reload}
+        />
+      );
+    }
+
+    return (
+      <Table<EmployeeProgress>
+        columns={columns}
+        data={employees.rows}
+        getRowId={getEmployeeProgressId}
+        caption="Acompanhamento por colaborador"
+        emptyMessage="Nenhum colaborador encontrado para a busca ou o filtro."
+        footer={
+          <div className={styles.footer}>
+            <p className={styles.count}>
+              Mostrando <strong>{employees.rows.length}</strong> de{' '}
+              <strong>{employees.totalElements}</strong> registros
+            </p>
+            {employees.totalPages > 1 ? (
+              <Pagination page={page} totalPages={employees.totalPages} onChange={setPage} />
+            ) : null}
+          </div>
+        }
+      />
+    );
   };
 
   return (
@@ -204,97 +312,126 @@ export const CompanyDashboard = () => {
           </p>
         </header>
 
-        <section className={styles.cards} aria-label="Indicadores da equipe">
-          <SumCard
-            label="Taxa de conclusão global"
-            value={formatPercent(overview.completionRate)}
-            trend={{ value: overview.completionRateChange, label: TREND_LABEL }}
-          />
-          <SumCard
-            label="Média de horas cursadas"
-            value={formatHours(overview.averageHoursPerEmployee)}
-            description="por colaborador"
-          />
-          <SumCard
-            label="Certificados emitidos"
-            value={overview.certificatesThisQuarter.toLocaleString('pt-BR')}
-            description="no trimestre atual"
-          />
-          <SumCard
-            label="Engajamento semanal"
-            value={formatPercent(overview.weeklyEngagement)}
-            trend={
-              overview.weeklyEngagementChange === undefined
-                ? undefined
-                : { value: overview.weeklyEngagementChange, label: TREND_LABEL }
+        {isEmptyCompany ? (
+          <EmptyState
+            title="Sua equipe ainda não está em nenhum curso"
+            description="Cadastre colaboradores e atribua cursos a eles para acompanhar o engajamento da equipe por aqui."
+            action={
+              <Button asChild variant="primary" label="Ir para Gestão de Colaboradores">
+                <Link to={EMPLOYEES_ROUTE} />
+              </Button>
             }
-            description="colaboradores ativos"
           />
-        </section>
-
-        <div className={styles.charts}>
-          <Panel className={styles.panel} title="Conclusão por Departamento">
-            <BarList
-              items={departmentItems}
-              max={100}
-              aria-label="Taxa de conclusão por departamento"
-              emptyMessage="Nenhum departamento com colaboradores matriculados."
-            />
-          </Panel>
-
-          <Panel className={styles.panel} title="Evolução Mensal de Horas">
-            <p className={styles.panelDescription}>Média de horas dedicadas nos últimos 6 meses</p>
-            <LineChart
-              data={monthlyHours}
-              valueFormatter={formatHours}
-              height={220}
-              ariaLabel="Média mensal de horas por colaborador"
-            />
-          </Panel>
-        </div>
-
-        <Panel className={styles.panel}>
-          <div className={styles.toolbar}>
-            <h2 className={styles.tableTitle}>Acompanhamento por Colaborador</h2>
-            <div className={styles.controls}>
-              <div className={styles.search}>
-                <SearchBar
-                  value={inputSearch}
-                  onChange={setInputSearch}
-                  onSearch={handleSearch}
-                  placeholder="Buscar colaborador"
-                  aria-label="Buscar colaborador pelo nome"
-                />
-              </div>
-              <FilterTabs
-                options={STATUS_LABELS}
-                selected={statusLabel}
-                onChange={handleStatusChange}
-                variant="ghost-dark"
-                groupLabel="Filtrar por situação do curso"
+        ) : (
+          <>
+            {report.status === 'error' ? (
+              <BlockError
+                message={
+                  report.errorMessage ?? 'Não foi possível carregar os indicadores da equipe.'
+                }
+                onRetry={report.reload}
               />
-            </div>
-          </div>
+            ) : null}
 
-          <Table<EmployeeProgress>
-            columns={columns}
-            data={pageRows}
-            getRowId={getEmployeeProgressId}
-            caption="Acompanhamento por colaborador"
-            emptyMessage="Nenhum colaborador encontrado para a busca ou o filtro."
-            footer={
-              <div className={styles.footer}>
-                <p className={styles.count}>
-                  Mostrando <strong>{pageRows.length}</strong> de{' '}
-                  <strong>{filteredRows.length}</strong> registros
+            <section className={styles.cards} aria-label="Indicadores da equipe">
+              <SumCard
+                label="Taxa de conclusão global"
+                value={renderCardValue(
+                  report.status,
+                  overview,
+                  'taxa de conclusão global',
+                  (data) => formatPercent(data.completionRate),
+                )}
+                trend={
+                  overview
+                    ? { value: overview.completionRateChange, label: TREND_LABEL }
+                    : undefined
+                }
+              />
+              <SumCard
+                label="Média de horas cursadas"
+                value={renderCardValue(report.status, overview, 'média de horas cursadas', (data) =>
+                  formatHours(data.averageHoursPerEmployee),
+                )}
+                description="por colaborador"
+              />
+              <SumCard
+                label="Certificados emitidos"
+                value={renderCardValue(report.status, overview, 'certificados emitidos', (data) =>
+                  data.certificatesThisQuarter.toLocaleString('pt-BR'),
+                )}
+                description="no trimestre atual"
+              />
+              <SumCard
+                label="Engajamento semanal"
+                value={renderCardValue(report.status, overview, 'engajamento semanal', (data) =>
+                  formatPercent(data.weeklyEngagement),
+                )}
+                trend={
+                  overview?.weeklyEngagementChange == null
+                    ? undefined
+                    : { value: overview.weeklyEngagementChange, label: TREND_LABEL }
+                }
+                description="colaboradores ativos"
+              />
+            </section>
+
+            <div className={styles.charts}>
+              <Panel className={styles.panel} title="Conclusão por Departamento">
+                {renderChart(
+                  'conclusão por departamento',
+                  <BarList
+                    items={departmentItems}
+                    max={100}
+                    aria-label="Taxa de conclusão por departamento"
+                    emptyMessage="Nenhum departamento com colaboradores matriculados."
+                  />,
+                )}
+              </Panel>
+
+              <Panel className={styles.panel} title="Evolução Mensal de Horas">
+                <p className={styles.panelDescription}>
+                  Média de horas dedicadas nos últimos 6 meses
                 </p>
-                {totalPages > 1 ? (
-                  <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-                ) : null}
+                {renderChart(
+                  'evolução mensal de horas',
+                  <LineChart
+                    data={monthlyHours}
+                    valueFormatter={formatHours}
+                    height={220}
+                    ariaLabel="Média mensal de horas por colaborador"
+                  />,
+                )}
+              </Panel>
+            </div>
+
+            <Panel className={styles.panel}>
+              <div className={styles.toolbar}>
+                <h2 className={styles.tableTitle}>Acompanhamento por Colaborador</h2>
+                <div className={styles.controls}>
+                  <div className={styles.search}>
+                    <SearchBar
+                      value={inputSearch}
+                      onChange={setInputSearch}
+                      onSearch={handleSearch}
+                      placeholder="Buscar colaborador"
+                      aria-label="Buscar colaborador pelo nome"
+                    />
+                  </div>
+                  <FilterTabs
+                    options={STATUS_LABELS}
+                    selected={statusLabel}
+                    onChange={handleStatusChange}
+                    variant="ghost-dark"
+                    groupLabel="Filtrar por situação do curso"
+                  />
+                </div>
               </div>
-            }
-          />
-        </Panel>
+
+              {renderTable()}
+            </Panel>
+          </>
+        )}
       </div>
     </AuthenticatedLayout>
   );
