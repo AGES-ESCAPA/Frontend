@@ -16,7 +16,7 @@ export interface CompanyReportOverview {
   certificatesThisQuarter: number;
   weeklyEngagement: number;
   /**
-   * Ainda não enviado pela API: só o último acesso fica gravado, então não há a semana anterior
+   * Pode não vir da API: só o último acesso fica gravado, então nem sempre há a semana anterior
    * para comparar. Sem ele, o card de engajamento aparece sem variação.
    */
   weeklyEngagementChange?: number;
@@ -42,4 +42,19 @@ export interface EmployeeProgress {
   /** `LocalDateTime` sem fuso; nulo quando o colaborador nunca abriu uma aula do curso. */
   lastAccessAt: string | null;
   certificateIssued: boolean;
+}
+
+/** Busca pelo nome do colaborador e filtro pela situação do curso, aplicados pelo backend. */
+export interface EmployeeProgressFilters {
+  search: string;
+  status: EmployeeProgressStatus | null;
+}
+
+/** `PageResponse` do backend com as linhas do acompanhamento. */
+export interface EmployeeProgressPage {
+  content: EmployeeProgress[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
 }
