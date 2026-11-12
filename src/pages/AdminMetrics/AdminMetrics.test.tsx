@@ -152,6 +152,10 @@ describe('AdminMetrics — integração da US-36', () => {
   it.each([
     [new AdminMetricsServiceError(0, 'Verifique sua conexão.'), 'Verifique sua conexão.'],
     [
+      new AdminMetricsServiceError(404, 'Resource not found: /api/v1/admin/metrics/overview'),
+      'Não foi possível carregar os indicadores. Tente novamente.',
+    ],
+    [
       new AdminMetricsServiceError(500, 'Internal error'),
       'Não foi possível carregar os indicadores. Tente novamente.',
     ],

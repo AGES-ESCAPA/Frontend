@@ -18,7 +18,7 @@ const getErrorMessage = (error: unknown): string => {
     return 'Sua sessão expirou. Entre novamente para consultar os indicadores.';
   }
   if (error.status === 403) return 'Você não tem permissão para consultar os indicadores.';
-  if (error.status >= 500) return FALLBACK_MESSAGE;
+  if (error.status >= 400) return FALLBACK_MESSAGE;
   return error.message.trim() ? error.message : FALLBACK_MESSAGE;
 };
 

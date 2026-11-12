@@ -58,9 +58,13 @@ describe('useAdminMetricsOverview', () => {
       new AdminMetricsServiceError(403, 'Access denied'),
       'Você não tem permissão para consultar os indicadores.',
     ],
+    [
+      new AdminMetricsServiceError(404, 'Resource not found: /api/v1/admin/metrics/overview'),
+      fallback,
+    ],
     [new AdminMetricsServiceError(503, 'Internal error'), fallback],
     [new AdminMetricsServiceError(200, 'Resposta inválida.'), 'Resposta inválida.'],
-    [new AdminMetricsServiceError(400, '   '), fallback],
+    [new AdminMetricsServiceError(0, '   '), fallback],
     [new Error('Technical error'), fallback],
     ['unknown rejection', fallback],
   ])('exposes a comprehensible error for %s', async (error, expected) => {
