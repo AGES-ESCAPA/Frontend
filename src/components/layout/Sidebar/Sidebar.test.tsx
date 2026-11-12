@@ -186,7 +186,7 @@ describe('Sidebar', () => {
     const sidebar = screen.getByRole('complementary');
 
     await userEvent.tab();
-    expect(within(sidebar).getByRole('link', { name: 'Academy' })).toHaveFocus();
+    expect(within(sidebar).getByRole('link', { name: 'Cursos' })).toHaveFocus();
     expect(sidebar).toHaveAttribute('data-collapsed', 'false');
   });
 
@@ -310,7 +310,7 @@ describe('Sidebar', () => {
       'true',
     );
     expect(
-      within(screen.getByRole('complementary')).getByRole('link', { name: 'Academy' }),
+      within(screen.getByRole('complementary')).getByRole('link', { name: 'Cursos' }),
     ).toBeInTheDocument();
   });
 
