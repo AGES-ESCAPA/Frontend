@@ -121,6 +121,36 @@ describe('CourseCard', () => {
     expect(handleClick).not.toHaveBeenCalled();
   });
 
+  it('esconde o botão Acessar e o preço do curso adquirido quando showAccess é falso', () => {
+    render(<CourseCard {...defaultProps} acquired showAccess={false} />);
+
+    expect(screen.getByText('Adquirido')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /acessar o curso/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(defaultProps.price)).not.toBeInTheDocument();
+  });
+
+  it('mostra a quantidade de colaboradores com acesso no lugar do preço', () => {
+    render(<CourseCard {...defaultProps} acquired showAccess={false} employeesWithAccess={12} />);
+
+    expect(screen.getByText('12 colaboradores com acesso')).toBeInTheDocument();
+    expect(screen.queryByText(defaultProps.price)).not.toBeInTheDocument();
+  });
+
+  it('usa o singular quando só um colaborador tem acesso', () => {
+    render(<CourseCard {...defaultProps} acquired showAccess={false} employeesWithAccess={1} />);
+
+    expect(screen.getByText('1 colaborador com acesso')).toBeInTheDocument();
+  });
+
+  it('abre os detalhes ao clicar no card adquirido sem botão de acesso', () => {
+    const handleClick = vi.fn();
+    render(<CourseCard {...defaultProps} acquired showAccess={false} onClick={handleClick} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /ver detalhes do curso/i }));
+
+    expect(handleClick).toHaveBeenCalledWith(defaultProps.id);
+  });
+
   it('exibe o placeholder quando a imagem falha ao carregar', () => {
     const { container } = render(<CourseCard {...defaultProps} />);
 

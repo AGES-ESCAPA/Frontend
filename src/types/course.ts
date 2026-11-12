@@ -260,3 +260,22 @@ export interface CourseSummary {
   materials: CourseMaterial[];
   modules: CourseModule[];
 }
+
+/** Curso comprado pela empresa, retornado por GET /api/v1/company/courses. */
+export interface CompanyCourse {
+  id: string;
+  title: string;
+  shortDescription: string | null;
+  thumbnailUrl: string | null;
+  category: string | null;
+  level: string | null;
+  /** Carga horária em minutos. */
+  durationTime: number | null;
+  lessonsCount: number | null;
+  instructorName: string | null;
+  rating: number | null;
+  /** Data da compra (yyyy-MM-dd). */
+  acquiredAt: string;
+  /** Quantidade de colaboradores com acesso ao curso. */
+  employeesWithAccess: number;
+}

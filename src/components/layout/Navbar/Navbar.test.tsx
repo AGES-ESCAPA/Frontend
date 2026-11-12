@@ -11,7 +11,7 @@ describe('Navbar', () => {
     renderNavbar(<Navbar state="noAuth" />);
 
     expect(screen.getByAltText('escapa!')).toBeInTheDocument();
-    expect(screen.getByText('cursos')).toBeInTheDocument();
+    expect(screen.getByText('academy')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /acessar a plataforma/i })).toHaveAttribute(
       'href',
       '/login',
@@ -25,7 +25,7 @@ describe('Navbar', () => {
   it('renders the register variant without right-side actions', () => {
     renderNavbar(<Navbar state="register" />);
 
-    expect(screen.getByText('cursos')).toBeInTheDocument();
+    expect(screen.getByText('academy')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Começar Agora' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument();
   });
