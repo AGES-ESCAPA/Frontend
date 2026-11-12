@@ -29,9 +29,16 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
 
   const isAuthenticated = auth?.isAuthenticated ?? Boolean(localStorage.getItem('access_token'));
   const isLearner = auth?.user?.role === 'STUDENT' || auth?.user?.role === 'EMPLOYEE';
+  const isCompany = auth?.user?.role === 'COMPANY';
   // Aluno que já tem o curso entra nele, em vez de ver a oferta de compra de novo.
-  const ownership = useCourseOwnership(course.id, isLearner && !isFreeOnly);
+  const ownership = useCourseOwnership(
+    course.id,
+    (isLearner || isCompany) && !isFreeOnly,
+    isCompany ? 'company' : 'student',
+  );
   const isOwned = ownership.owned;
+  // Empresa dona do curso vê o selo "Adquirido" no lugar do preço e da compra.
+  const isCompanyOwned = isCompany && isOwned;
   const isCheckingOwnership = ownership.status === 'loading';
 
   const handleAccess = async () => {
@@ -121,7 +128,15 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
 
         <aside
           className={styles.purchase}
-          aria-label={isFreeOnly ? 'Aulas grátis' : isOwned ? 'Acessar curso' : 'Comprar curso'}
+          aria-label={
+            isFreeOnly
+              ? 'Aulas grátis'
+              : isCompanyOwned
+                ? 'Curso adquirido'
+                : isOwned
+                  ? 'Acessar curso'
+                  : 'Comprar curso'
+          }
         >
           {course.thumbnailUrl ? (
             <div className={styles.cover}>
@@ -133,25 +148,31 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
             </div>
           )}
           <div className={styles.purchaseBody}>
-            <div className={styles.priceBlock}>
-              <strong>{course.price}</strong>
-              <small>{course.accessPeriod} · Certificado incluso</small>
-            </div>
-            <Button
-              label={
-                isFreeOnly
-                  ? `Ver aulas grátis (${freeLessonCount})`
-                  : isOwned
-                    ? 'Acessar curso'
-                    : isAuthenticated
-                      ? 'Comprar curso'
-                      : 'Cadastre-se para Comprar'
-              }
-              variant="primary"
-              fullWidth
-              disabled={isCheckingOwnership}
-              onClick={handleCta}
-            />
+            {isCompanyOwned ? (
+              <span className={styles.acquiredTag}>Adquirido</span>
+            ) : (
+              <>
+                <div className={styles.priceBlock}>
+                  <strong>{course.price}</strong>
+                  <small>{course.accessPeriod} · Certificado incluso</small>
+                </div>
+                <Button
+                  label={
+                    isFreeOnly
+                      ? `Ver aulas grátis (${freeLessonCount})`
+                      : isOwned
+                        ? 'Acessar curso'
+                        : isAuthenticated
+                          ? 'Comprar curso'
+                          : 'Cadastre-se para Comprar'
+                  }
+                  variant="primary"
+                  fullWidth
+                  disabled={isCheckingOwnership}
+                  onClick={handleCta}
+                />
+              </>
+            )}
             <ul className={styles.benefits}>
               {course.benefits.map((benefit) => (
                 <li key={benefit}>
