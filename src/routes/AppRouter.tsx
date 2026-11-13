@@ -74,14 +74,16 @@ const AdminCourses = lazy(() =>
     default: m.AdminCourses,
   })),
 );
+
+const AdminMetrics = lazy(() =>
+  import('@pages/AdminMetrics/AdminMetrics').then((m) => ({
+    default: m.AdminMetrics,
+  })),
+);
 const DigitalCertificate = lazy(() =>
   import('@pages/DigitalCertificate/DigitalCertificate').then((m) => ({
     default: m.DigitalCertificate,
   })),
-);
-
-const AdminMetrics = lazy(() =>
-  import('@pages/AdminMetrics/AdminMetrics').then((m) => ({ default: m.AdminMetrics })),
 );
 
 const RegisterAccountType = lazy(() =>
@@ -102,6 +104,12 @@ const OrderManagement = lazy(() =>
   })),
 );
 
+const CompanyDashboard = lazy(() =>
+  import('@pages/CompanyDashboard/CompanyDashboard').then((m) => ({
+    default: m.CompanyDashboard,
+  })),
+);
+
 const CompanyEmployees = lazy(() =>
   import('@pages/CompanyEmployees/CompanyEmployees').then((m) => ({
     default: m.CompanyEmployees,
@@ -116,6 +124,12 @@ const UnderConstruction = lazy(() =>
 const RegisterIndividual = lazy(() =>
   import('@pages/RegisterIndividual/RegisterIndividual').then((m) => ({
     default: m.RegisterIndividual,
+  })),
+);
+
+const CreatePassword = lazy(() =>
+  import('@pages/CreatePassword/CreatePassword').then((m) => ({
+    default: m.CreatePassword,
   })),
 );
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
@@ -161,6 +175,7 @@ export const AppRouter = () => {
             <Route path="/cadastro" element={<RegisterAccountType />} />
             <Route path="/cadastro/empresa" element={<RegisterCompany />} />
             <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
+            <Route path="/criar-senha" element={<CreatePassword />} />
             <Route
               path="/meus-cursos"
               element={
@@ -282,7 +297,6 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/admin/metricas"
               element={
@@ -312,6 +326,14 @@ export const AppRouter = () => {
               element={
                 <ProtectedRoute allowedRoles={['COMPANY']}>
                   <CompanyEmployees />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <CompanyDashboard />
                 </ProtectedRoute>
               }
             />

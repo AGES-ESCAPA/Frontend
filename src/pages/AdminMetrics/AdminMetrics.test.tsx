@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type * as Recharts from 'recharts';
+import type { PopularCoursesMetricsData } from '@/types/adminMetrics';
 import { AdminMetrics } from './AdminMetrics';
 
 vi.mock('recharts', async (importOriginal) => ({
@@ -8,10 +9,10 @@ vi.mock('recharts', async (importOriginal) => ({
   ResponsiveContainer: (await import('@/test/FixedChartContainer')).FixedChartContainer,
 }));
 
-const renderPage = () =>
+const renderPage = (courseMetrics?: PopularCoursesMetricsData) =>
   render(
     <MemoryRouter initialEntries={['/admin/metricas']}>
-      <AdminMetrics />
+      <AdminMetrics courseMetrics={courseMetrics} />
     </MemoryRouter>,
   );
 
@@ -20,7 +21,7 @@ describe('AdminMetrics — estrutura da US-36', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders the authenticated shell and all four metric areas', () => {
+  it('renders the authenticated shell and all metric areas', () => {
     renderPage();
     const main = screen.getByRole('main');
     expect(
@@ -34,8 +35,7 @@ describe('AdminMetrics — estrutura da US-36', () => {
     expect(
       within(main).getByRole('region', { name: 'Evolução de Alunos Ativos' }),
     ).toBeInTheDocument();
-    expect(within(main).getAllByRole('article')).toHaveLength(2);
-    expect(within(main).getAllByRole('region')).toHaveLength(2);
+
     for (const title of ['Taxa Média de Conclusão', 'Evolução de Alunos Ativos']) {
       const panel = within(main).getByRole('region', { name: title });
       expect(within(panel).getByRole('heading', { level: 2, name: title })).toBeInTheDocument();
@@ -80,5 +80,63 @@ describe('AdminMetrics — estrutura da US-36', () => {
     renderPage();
     expect(screen.getByRole('region', { name: 'Evolução de Alunos Ativos' })).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('AdminMetrics — integração US-37 (Cursos Populares)', () => {
+  it('renders the popular courses metric blocks and rankings', () => {
+    renderPage();
+
+    expect(screen.getByRole('article', { name: 'Curso Mais Acessado' })).toHaveTextContent(
+      'Turismo de Aventura',
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Distribuição por Tipo de Curso' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Top 5 Empresas Mais Engajadas' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Top 5 Cursos por Acesso' })).toBeInTheDocument();
+  });
+
+  it('passes custom courseMetrics props down to the popular courses section', () => {
+    const customMetrics: PopularCoursesMetricsData = {
+      mostAccessedCourse: {
+        courseId: 'c-10',
+        title: 'Sommelier e Enologia Aplicada',
+        enrollments: 640,
+      },
+      topCourses: [
+        {
+          courseId: 'c-10',
+          title: 'Sommelier e Enologia Aplicada',
+          enrollments: 640,
+        },
+        {
+          courseId: 'c-20',
+          title: 'Recepção Bilíngue na Hotelaria',
+          enrollments: 410,
+        },
+      ],
+      categoriesCount: 2,
+      enrollmentsByCategory: [
+        { category: 'Gastronomia', percentage: 60.95 },
+        { category: 'Hospitalidade', percentage: 39.05 },
+      ],
+    };
+
+    renderPage(customMetrics);
+
+    const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
+    expect(within(leaderCard).getByText('Sommelier e Enologia Aplicada')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('640 matrículas')).toBeInTheDocument();
+
+    const rankingList = screen.getByRole('list', { name: 'Top 5 cursos por matrículas' });
+    expect(within(rankingList).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(rankingList).getByText('Recepção Bilíngue na Hotelaria')).toBeInTheDocument();
+
+    const legend = screen.getByRole('list', { name: 'Legenda do gráfico' });
+    expect(legend).toHaveTextContent(/Gastronomia: 60,95%/);
+    expect(legend).toHaveTextContent(/Hospitalidade: 39,05%/);
   });
 });
