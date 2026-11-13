@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { companyEmployeeService } from '@services/companyEmployeeService';
 import type { CompanySeats } from '@/types/companyEmployee';
 import type { LoadStatus } from './usePublicCourses';
@@ -8,6 +8,7 @@ export interface UseCompanySeatsResult {
   status: LoadStatus;
   errorMessage: string | null;
   reload: () => void;
+  applySeats: (updated: CompanySeats) => void;
 }
 
 export function useCompanySeats(): UseCompanySeatsResult {
@@ -15,10 +16,13 @@ export function useCompanySeats(): UseCompanySeatsResult {
   const [status, setStatus] = useState<LoadStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const requestId = useRef(0);
+  const currentRequest = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    let active = true;
+    const id = ++requestId.current;
+    currentRequest.current = controller;
 
     setStatus('loading');
     setErrorMessage(null);
@@ -26,13 +30,13 @@ export function useCompanySeats(): UseCompanySeatsResult {
     void companyEmployeeService
       .getSeats(controller.signal)
       .then((result) => {
-        if (!active) return;
+        if (controller.signal.aborted || id !== requestId.current) return;
 
         setSeats(result);
         setStatus('success');
       })
       .catch((error: unknown) => {
-        if (!active || controller.signal.aborted) return;
+        if (controller.signal.aborted || id !== requestId.current) return;
 
         setSeats(null);
         setErrorMessage(error instanceof Error ? error.message : 'Falha ao carregar as vagas.');
@@ -40,12 +44,20 @@ export function useCompanySeats(): UseCompanySeatsResult {
       });
 
     return () => {
-      active = false;
       controller.abort();
+      if (currentRequest.current === controller) currentRequest.current = null;
     };
   }, [version]);
 
   const reload = useCallback(() => setVersion((current) => current + 1), []);
 
-  return { seats, status, errorMessage, reload };
+  const applySeats = useCallback((updated: CompanySeats) => {
+    requestId.current += 1;
+    currentRequest.current?.abort();
+    setSeats(updated);
+    setStatus('success');
+    setErrorMessage(null);
+  }, []);
+
+  return { seats, status, errorMessage, reload, applySeats };
 }
