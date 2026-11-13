@@ -4,7 +4,7 @@ import { AuthProvider } from '@contexts/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RegistrationFeedback } from '@routes/RegistrationFeedback';
 
-// ─── Lazy Loading ─────────────────────────────────────────────────────────────
+// ─── Lazy Loading ─────────────────────────────────────────────────────────[...]
 // Adicione novas páginas aqui seguindo este padrão.
 // O .then((m) => ({ default: m.NomeDaPagina })) é necessário porque
 // usamos named exports (não default exports).
@@ -42,12 +42,6 @@ const CoursePlayer = lazy(() =>
 const Login = lazy(() =>
   import('@pages/Login/Login').then((m) => ({
     default: m.Login,
-  })),
-);
-
-const AcceptEmployeeInvitation = lazy(() =>
-  import('@pages/AcceptEmployeeInvitation/AcceptEmployeeInvitation').then((m) => ({
-    default: m.AcceptEmployeeInvitation,
   })),
 );
 
@@ -126,7 +120,7 @@ const RegisterIndividual = lazy(() =>
     default: m.RegisterIndividual,
   })),
 );
-// ─── Fallback de Carregamento ─────────────────────────────────────────────────
+// ─── Fallback de Carregamento ───────────────────��───────────────────────────
 
 const PageLoader = () => (
   <div
@@ -146,7 +140,7 @@ const PageLoader = () => (
   </div>
 );
 
-// ─── Rotas ────────────────────────────────────────────────────────────────────
+// ─── Rotas ──────────────────────────────────────────────────────────��[...]
 
 /**
  * AppRouter — configuração central de rotas.
@@ -187,7 +181,6 @@ export const AppRouter = () => {
               }
             />
             <Route path="/login" element={<Login />} />
-            <Route path="/convite" element={<AcceptEmployeeInvitation />} />
             <Route
               path="/checkout/confirmacao"
               element={
