@@ -56,6 +56,10 @@ const PENDING_STATUS_OPTIONS: readonly SelectInputOption[] = [
   { value: 'inactive', label: 'Inativo' },
 ];
 
+const FIXED_PENDING_STATUS_OPTIONS: readonly SelectInputOption[] = [
+  { value: 'pending', label: 'Pendente' },
+];
+
 const GENERIC_SUBMIT_ERROR = 'Não foi possível salvar o colaborador. Tente novamente.';
 const NO_FIELD_ERRORS: Partial<Record<EmployeeFormField, string>> = {};
 
@@ -72,11 +76,14 @@ const createFormState = (
 const isEmployeeAccessStatus = (value: string): value is EmployeeAccessStatus =>
   value === 'pending' || value === 'active' || value === 'inactive';
 
-const validateForm = (form: EmployeeFormState): EmployeeFormErrors => {
+const validateForm = (
+  form: EmployeeFormState,
+  mode: EmployeeFormModalProps['mode'],
+): EmployeeFormErrors => {
   const errors: EmployeeFormErrors = {};
 
   if (!form.name.trim()) errors.name = 'Informe o nome completo.';
-  if (!form.role.trim()) errors.role = 'Informe o cargo.';
+  if (mode === 'edit' && !form.role.trim()) errors.role = 'Informe o cargo.';
   if (!form.email.trim()) {
     errors.email = 'Informe o e-mail corporativo.';
   } else if (!isValidEmail(form.email)) {
@@ -137,8 +144,8 @@ export const EmployeeFormModal = ({
   }, [fieldErrors, submitError]);
 
   useEffect(() => {
-    if (wasSubmitted) setErrors(validateForm(form));
-  }, [form, wasSubmitted]);
+    if (wasSubmitted) setErrors(validateForm(form, mode));
+  }, [form, mode, wasSubmitted]);
 
   const isPendingEmployee = mode === 'edit' && initialValues?.accessStatus === 'pending';
   const statusOptions = isPendingEmployee ? PENDING_STATUS_OPTIONS : STATUS_OPTIONS;
@@ -153,7 +160,7 @@ export const EmployeeFormModal = ({
     if (isSubmitting) return;
 
     setWasSubmitted(true);
-    const validationErrors = validateForm(form);
+    const validationErrors = validateForm(form, mode);
     setErrors(validationErrors);
     setSubmitError(null);
     if (Object.keys(validationErrors).length > 0) return;
@@ -161,7 +168,7 @@ export const EmployeeFormModal = ({
     const values: EmployeeFormValues = {
       name: form.name.trim(),
       email: form.email.trim(),
-      role: form.role.trim(),
+      role: mode === 'edit' ? form.role.trim() : '',
       ...(mode === 'edit' ? { accessStatus: form.accessStatus } : {}),
     };
 
@@ -247,51 +254,49 @@ export const EmployeeFormModal = ({
           />
         </FormField>
 
-        <FormField label="Cargo" htmlFor={roleId} required error={getFieldError('role')}>
-          <TextInput
-            id={roleId}
-            name="role"
-            autoComplete="organization-title"
-            placeholder="Cargo do colaborador"
-            value={form.role}
-            onChange={(event) => {
-              dismissFieldError('role');
-              setForm((current) => ({ ...current, role: event.target.value }));
-            }}
-            required
-            disabled={isSubmitting}
-            invalid={Boolean(getFieldError('role'))}
-            aria-describedby={getFieldError('role') ? `${roleId}-error` : undefined}
-          />
-        </FormField>
-
         {mode === 'edit' ? (
-          <FormField
-            className={styles.accessStatus}
-            label="Status do acesso"
-            htmlFor={accessStatusId}
-            required
-            error={getFieldError('accessStatus')}
-          >
-            <SelectInput
-              id={accessStatusId}
-              name="accessStatus"
-              options={statusOptions}
-              value={form.accessStatus}
+          <FormField label="Cargo" htmlFor={roleId} required error={getFieldError('role')}>
+            <TextInput
+              id={roleId}
+              name="role"
+              autoComplete="organization-title"
+              placeholder="Cargo do colaborador"
+              value={form.role}
               onChange={(event) => {
-                const value = event.target.value;
-                if (!isEmployeeAccessStatus(value)) return;
-                dismissFieldError('accessStatus');
-                setForm((current) => ({ ...current, accessStatus: value }));
+                dismissFieldError('role');
+                setForm((current) => ({ ...current, role: event.target.value }));
               }}
+              required
               disabled={isSubmitting}
-              invalid={Boolean(getFieldError('accessStatus'))}
-              aria-describedby={
-                getFieldError('accessStatus') ? `${accessStatusId}-error` : undefined
-              }
+              invalid={Boolean(getFieldError('role'))}
+              aria-describedby={getFieldError('role') ? `${roleId}-error` : undefined}
             />
           </FormField>
         ) : null}
+
+        <FormField
+          className={styles.accessStatus}
+          label="Status do acesso"
+          htmlFor={accessStatusId}
+          required
+          error={getFieldError('accessStatus')}
+        >
+          <SelectInput
+            id={accessStatusId}
+            name="accessStatus"
+            options={mode === 'create' ? FIXED_PENDING_STATUS_OPTIONS : statusOptions}
+            value={mode === 'create' ? 'pending' : form.accessStatus}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (!isEmployeeAccessStatus(value)) return;
+              dismissFieldError('accessStatus');
+              setForm((current) => ({ ...current, accessStatus: value }));
+            }}
+            disabled={mode === 'create' || isSubmitting}
+            invalid={Boolean(getFieldError('accessStatus'))}
+            aria-describedby={getFieldError('accessStatus') ? `${accessStatusId}-error` : undefined}
+          />
+        </FormField>
       </div>
 
       {submitError ? (

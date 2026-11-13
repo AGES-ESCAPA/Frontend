@@ -27,7 +27,6 @@ const renderModal = (props: Partial<EmployeeFormModalProps> = {}) => {
 const fillRequiredFields = async (email = 'ana@empresa.com.br') => {
   await user.type(screen.getByLabelText(/^Nome completo/), 'Ana Silva');
   await user.type(screen.getByLabelText(/^E-mail corporativo/), email);
-  await user.type(screen.getByLabelText(/^Cargo/), 'Analista de Turismo');
 };
 
 afterEach(() => cleanup());
@@ -39,8 +38,14 @@ describe('EmployeeFormModal', () => {
     expect(screen.getByRole('dialog', { name: 'Cadastrar Colaborador' })).toBeInTheDocument();
     expect(screen.getByLabelText(/^Nome completo/)).toBeInTheDocument();
     expect(screen.getByLabelText(/^E-mail corporativo/)).toHaveAttribute('type', 'email');
-    expect(screen.getByLabelText(/^Cargo/)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/^Status do acesso/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Cargo/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^Status do acesso/)).toHaveValue('pending');
+    expect(screen.getByLabelText(/^Status do acesso/)).toBeDisabled();
+    expect(
+      within(screen.getByLabelText(/^Status do acesso/)).getByRole('option', {
+        name: 'Pendente',
+      }),
+    ).toBeInTheDocument();
 
     await fillRequiredFields();
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
@@ -49,7 +54,7 @@ describe('EmployeeFormModal', () => {
     expect(onSubmit).toHaveBeenCalledWith({
       name: 'Ana Silva',
       email: 'ana@empresa.com.br',
-      role: 'Analista de Turismo',
+      role: '',
     });
     expect(onOpenChange).toHaveBeenCalledWith(false);
   }, 10_000);
@@ -81,12 +86,10 @@ describe('EmployeeFormModal', () => {
 
     expect(await screen.findByText('Informe o nome completo.')).toBeInTheDocument();
     expect(screen.getByText('Informe o e-mail corporativo.')).toBeInTheDocument();
-    expect(screen.getByText('Informe o cargo.')).toBeInTheDocument();
     expect(screen.getByLabelText(/^Nome completo/)).toHaveAttribute('aria-invalid', 'true');
 
     await user.type(screen.getByLabelText(/^Nome completo/), 'Ana Silva');
     await user.type(screen.getByLabelText(/^E-mail corporativo/), 'email-invalido');
-    await user.type(screen.getByLabelText(/^Cargo/), 'Analista');
 
     expect(await screen.findByText('Informe um e-mail válido.')).toBeInTheDocument();
   });
@@ -134,7 +137,8 @@ describe('EmployeeFormModal', () => {
 
     expect(screen.getByLabelText(/^Nome completo/)).toBeDisabled();
     expect(screen.getByLabelText(/^E-mail corporativo/)).toBeDisabled();
-    expect(screen.getByLabelText(/^Cargo/)).toBeDisabled();
+    expect(screen.queryByLabelText(/^Cargo/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^Status do acesso/)).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Salvar' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Salvar' })).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled();

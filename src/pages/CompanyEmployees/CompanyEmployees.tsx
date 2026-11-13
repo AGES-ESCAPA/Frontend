@@ -105,24 +105,27 @@ export const CompanyEmployees = () => {
       return;
     }
 
-    setEmployeeFormFieldErrors({});
     setEmployeeFormOpen(true);
+    setEmployeeFormFieldErrors({});
   };
 
-  const handleEdit = (employee: Employee) => {
+  const openEditForm = (employee: Employee) => {
     setActionNotice(`Edição de ${employee.name} estará disponível em breve.`);
   };
 
   const resendInvitation = async (employeeId: string, employeeName: string) => {
     try {
       const result = await companyEmployeeService.resendInvite(employeeId);
-      showToast(
-        result.inviteSent ? 'success' : 'error',
-        result.inviteSent ? 'Convite reenviado' : 'Convite não enviado',
-        result.inviteSent
-          ? `Um novo e-mail foi enviado para ${employeeName}.`
-          : 'O servidor não conseguiu enviar o convite agora. Tente novamente.',
-      );
+      if (!result.inviteSent) {
+        showToast(
+          'error',
+          'Convite não enviado',
+          `Não foi possível enviar o convite para ${result.email}. Tente novamente mais tarde.`,
+        );
+        return;
+      }
+
+      showToast('success', 'Convite reenviado', `Um novo e-mail foi enviado para ${employeeName}.`);
     } catch (error: unknown) {
       showToast(
         'error',
@@ -141,9 +144,6 @@ export const CompanyEmployees = () => {
         name: values.name,
         email: values.email,
       });
-
-      setEmployeeFormOpen(false);
-      setEmployeeFormFieldErrors({});
       if (result.inviteSent) {
         showToast(
           'success',
@@ -157,7 +157,9 @@ export const CompanyEmployees = () => {
           'O cadastro foi salvo, mas não foi possível enviar o convite.',
           {
             label: 'Reenviar convite',
-            onAction: () => void resendInvitation(result.id, result.name),
+            onAction: () => {
+              void resendInvitation(result.id, result.name);
+            },
           },
         );
       }
@@ -217,7 +219,11 @@ export const CompanyEmployees = () => {
           ) : null}
           {seatsStatus === 'success' && seats ? (
             <div className={styles.cards}>
-              <SumCard label="Vagas contratadas" value={seats.seatsTotal} description="Total de vagas do plano" />
+              <SumCard
+                label="Vagas contratadas"
+                value={seats.seatsTotal}
+                description="Total de vagas do plano"
+              />
               <SumCard
                 label="Vagas ocupadas"
                 value={seats.seatsUsed}
@@ -236,7 +242,9 @@ export const CompanyEmployees = () => {
           <div className={styles.toolbar}>
             <div className={styles.panelTitle}>
               <h2 id="collaborators-heading">Colaboradores</h2>
-              {employeesStatus === 'success' ? <span className={styles.count}>{totalElements}</span> : null}
+              {employeesStatus === 'success' ? (
+                <span className={styles.count}>{totalElements}</span>
+              ) : null}
             </div>
             <div className={styles.controls}>
               <div className={styles.search}>
@@ -259,11 +267,17 @@ export const CompanyEmployees = () => {
           </div>
 
           {seatsStatus === 'loading' ? (
-            <div role="status" aria-label="Carregando ocupação das vagas" className={styles.progressSkeleton} />
+            <div
+              role="status"
+              aria-label="Carregando ocupação das vagas"
+              className={styles.progressSkeleton}
+            />
           ) : null}
           {seatsStatus === 'success' && seats ? (
             <div className={styles.occupancy}>
-              <span>{seats.seatsUsed}/{seats.seatsTotal} vagas</span>
+              <span>
+                {seats.seatsUsed}/{seats.seatsTotal} vagas
+              </span>
               <ProgressBar
                 value={seats.seatsUsed}
                 max={seats.seatsTotal}
@@ -297,25 +311,51 @@ export const CompanyEmployees = () => {
           ) : null}
           {showEmployeesTable ? (
             <div className={styles.tableWrapper}>
-              {isLoadingEmployees ? <span role="status" className={styles.loadingIndicator}>Atualizando colaboradores...</span> : null}
+              {isLoadingEmployees ? (
+                <span role="status" className={styles.loadingIndicator}>
+                  Atualizando colaboradores...
+                </span>
+              ) : null}
               <EmployeeTable
                 employees={rows}
-                onEdit={handleEdit}
+                onEdit={openEditForm}
                 onResendInvite={(employee) => void resendInvitation(employee.id, employee.name)}
-                onUnlink={(employee) => setActionNotice(`Desvinculação de ${employee.name} estará disponível em breve.`)}
+                onUnlink={(employee) =>
+                  setActionNotice(`Desvinculação de ${employee.name} estará disponível em breve.`)
+                }
               />
             </div>
           ) : null}
-          {actionNotice ? <p role="status" className={styles.notice}>{actionNotice}</p> : null}
+          {actionNotice ? (
+            <p role="status" className={styles.notice}>
+              {actionNotice}
+            </p>
+          ) : null}
           {showEmployeesFooter ? (
             <footer className={styles.footer}>
-              <span>Exibindo {rows.length} de {totalElements} colaboradores</span>
+              <span>
+                Exibindo {rows.length} de {totalElements} colaboradores
+              </span>
               <span>A empresa não consome cursos no perfil gestor</span>
               {totalPages > 1 ? (
                 <nav aria-label="Paginação de colaboradores" className={styles.pagination}>
-                  <Button type="button" variant="outlined" label="Anterior" disabled={page === 0 || isLoadingEmployees} onClick={() => setPage((current) => Math.max(0, current - 1))} />
-                  <span>Página {page + 1} de {totalPages}</span>
-                  <Button type="button" variant="outlined" label="Próxima" disabled={page + 1 >= totalPages || isLoadingEmployees} onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))} />
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    label="Anterior"
+                    disabled={page === 0 || isLoadingEmployees}
+                    onClick={() => setPage((current) => Math.max(0, current - 1))}
+                  />
+                  <span>
+                    Página {page + 1} de {totalPages}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    label="Próxima"
+                    disabled={page + 1 >= totalPages || isLoadingEmployees}
+                    onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
+                  />
                 </nav>
               ) : null}
             </footer>
@@ -337,7 +377,12 @@ export const CompanyEmployees = () => {
           size="sm"
           footer={
             <>
-              <Button type="button" label="Fechar" variant="secondary" onClick={() => setNoSeatsNoticeOpen(false)} />
+              <Button
+                type="button"
+                label="Fechar"
+                variant="secondary"
+                onClick={() => setNoSeatsNoticeOpen(false)}
+              />
               <Button
                 type="button"
                 label="Comprar vagas"
@@ -350,12 +395,16 @@ export const CompanyEmployees = () => {
             </>
           }
         >
-          <p role="alert">Suas vagas acabaram. Compre mais assentos para cadastrar um novo colaborador.</p>
+          <p role="alert">
+            Suas vagas acabaram. Compre mais assentos para cadastrar um novo colaborador.
+          </p>
         </Modal>
         <Toast
           key={toast?.key}
           open={isToastOpen}
-          onOpenChange={(open) => { if (!open) dismissToast(); }}
+          onOpenChange={(open) => {
+            if (!open) dismissToast();
+          }}
           title={toast?.title ?? ''}
           description={toast?.description}
           variant={toast?.variant}

@@ -1,7 +1,11 @@
 import { authenticatedFetch, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
-import type { CompanyEmployee, CompanyEmployeePage, CompanySeats } from '@/types/companyEmployee';
+import type {
+  CompanyEmployeePage,
+  CompanyEmployeeStatus,
+  CompanySeats,
+} from '@/types/companyEmployee';
 
 const COMPANY_URL = `${getApiBaseUrl()}/company`;
 export const COMPANY_EMPLOYEES_PAGE_SIZE = 10;
@@ -11,7 +15,11 @@ export const NO_SEATS_AVAILABLE_MESSAGE =
 const NETWORK_ERROR =
   'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
 
-function getErrorMessage(status: number, serverMessage?: string | null): string {
+function getErrorMessage(
+  status: number,
+  serverMessage?: string | null,
+  context?: 'resendInvite',
+): string {
   switch (status) {
     case 400:
       return serverMessage ?? 'Não foi possível processar a solicitação.';
@@ -28,7 +36,14 @@ function getErrorMessage(status: number, serverMessage?: string | null): string 
     case 409: {
       const normalized = (serverMessage ?? '').toLowerCase();
 
-      if ((normalized.includes('no free seat') || normalized.includes('all')) && normalized.includes('seat')) {
+      if (context === 'resendInvite') {
+        return 'Somente colaboradores pendentes podem receber um novo convite.';
+      }
+
+      if (
+        (normalized.includes('no free seat') || normalized.includes('all')) &&
+        normalized.includes('seat')
+      ) {
         return NO_SEATS_AVAILABLE_MESSAGE;
       }
 
@@ -74,7 +89,13 @@ export interface CompanyEmployeeInput {
   email: string;
 }
 
-export interface CompanyEmployeeCreateResponse extends CompanyEmployee {
+export interface CompanyEmployeeCreateResponse {
+  id: string;
+  name: string;
+  email: string;
+  status: CompanyEmployeeStatus;
+  assignedCourses: number;
+  avatarUrl: string | null;
   inviteSent: boolean;
 }
 
@@ -84,7 +105,11 @@ export interface ResendInviteResponse {
   inviteSent: boolean;
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  errorContext?: 'resendInvite',
+): Promise<T> {
   let response: Response;
 
   try {
@@ -99,7 +124,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const serverMessage = await readApiErrorMessage(response);
     throw new CompanyEmployeeServiceError(
       response.status,
-      getErrorMessage(response.status, serverMessage),
+      getErrorMessage(response.status, serverMessage, errorContext),
     );
   }
 
@@ -152,8 +177,12 @@ export const companyEmployeeService = {
   },
 
   resendInvite(employeeId: string): Promise<ResendInviteResponse> {
-    return request<ResendInviteResponse>(`/employees/${encodeURIComponent(employeeId)}/invite`, {
-      method: 'POST',
-    });
+    return request<ResendInviteResponse>(
+      `/employees/${encodeURIComponent(employeeId)}/invite`,
+      {
+        method: 'POST',
+      },
+      'resendInvite',
+    );
   },
 };

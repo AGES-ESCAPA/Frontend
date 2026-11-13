@@ -30,7 +30,6 @@ vi.mock('@services/companyEmployeeService', async (importOriginal) => {
     companyEmployeeService: {
       ...actual.companyEmployeeService,
       createEmployee: vi.fn(),
-      updateEmployee: vi.fn(),
       resendInvite: vi.fn(),
     },
   };
@@ -284,7 +283,7 @@ describe('CompanyEmployees', () => {
     expect(reloadEmployees).toHaveBeenCalledOnce();
   });
 
-  it('abre o formulário de edição com os dados do colaborador selecionado', async () => {
+  it('informa que a edição ainda não está disponível, sem chamar API de escrita', async () => {
     const user = userEvent.setup();
 
     renderPage();
@@ -295,56 +294,22 @@ describe('CompanyEmployees', () => {
       }),
     );
 
-    expect(screen.getByRole('heading', { name: 'Editar Colaborador' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Nome completo' })).toHaveValue(
-      'Ana Paula Ferreira',
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Edição de Ana Paula Ferreira estará disponível em breve.',
     );
-    expect(screen.getByRole('textbox', { name: 'E-mail corporativo' })).toHaveValue(
-      'ana@empresa.com.br',
-    );
-    expect(screen.getByRole('textbox', { name: 'Cargo' })).toHaveValue('Recepção');
+    expect(companyEmployeeService.createEmployee).not.toHaveBeenCalled();
+    expect(companyEmployeeService.resendInvite).not.toHaveBeenCalled();
   });
-
-  it('salva as alterações do colaborador pela API', async () => {
-    const user = userEvent.setup();
-    vi.mocked(companyEmployeeService.updateEmployee).mockResolvedValueOnce(
-      employeesResult.employees[0],
-    );
-
-    renderPage();
-
-    await user.click(screen.getByRole('button', { name: 'Editar colaborador' }));
-    await user.clear(screen.getByRole('textbox', { name: 'Nome completo' }));
-    await user.type(screen.getByRole('textbox', { name: 'Nome completo' }), 'Ana Beatriz');
-    await user.clear(screen.getByRole('textbox', { name: 'E-mail corporativo' }));
-    await user.type(
-      screen.getByRole('textbox', { name: 'E-mail corporativo' }),
-      'ana.nova@empresa.com.br',
-    );
-    await user.clear(screen.getByRole('textbox', { name: 'Cargo' }));
-    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Gerência');
-    await user.selectOptions(
-      screen.getByRole('combobox', { name: 'Status do acesso' }),
-      'inactive',
-    );
-    await user.click(screen.getByRole('button', { name: 'Salvar' }));
-
-    await waitFor(() =>
-      expect(companyEmployeeService.updateEmployee).toHaveBeenCalledWith('employee-1', {
-        name: 'Ana Beatriz',
-        email: 'ana.nova@empresa.com.br',
-        jobTitle: 'Gerência',
-        status: 'INACTIVE',
-      }),
-    );
-    expect(reloadEmployees).toHaveBeenCalled();
-    expect(reloadSeats).toHaveBeenCalled();
-  }, 10_000);
 
   it('cadastra um colaborador pela API e atualiza os dados da tela', async () => {
     const user = userEvent.setup();
     vi.mocked(companyEmployeeService.createEmployee).mockResolvedValueOnce({
-      employee: employeesResult.employees[0],
+      id: 'employee-2',
+      name: 'Joana Silva',
+      email: 'joana@empresa.com.br',
+      status: 'PENDING',
+      assignedCourses: 2,
+      avatarUrl: null,
       inviteSent: true,
     });
 
@@ -356,14 +321,13 @@ describe('CompanyEmployees', () => {
       screen.getByRole('textbox', { name: 'E-mail corporativo' }),
       'joana@empresa.com.br',
     );
-    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Recepcionista');
+    expect(screen.queryByRole('textbox', { name: 'Cargo' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
 
     await waitFor(() =>
       expect(companyEmployeeService.createEmployee).toHaveBeenCalledWith({
         name: 'Joana Silva',
         email: 'joana@empresa.com.br',
-        jobTitle: 'Recepcionista',
       }),
     );
     expect(reloadEmployees).toHaveBeenCalled();
@@ -378,12 +342,19 @@ describe('CompanyEmployees', () => {
   it('keeps the employee when invitation delivery fails and offers a resend action', async () => {
     const user = userEvent.setup();
     vi.mocked(companyEmployeeService.createEmployee).mockResolvedValueOnce({
-      employee: employeesResult.employees[0],
+      id: 'employee-2',
+      name: 'Joana Silva',
+      email: 'joana@empresa.com.br',
+      status: 'PENDING',
+      assignedCourses: 2,
+      avatarUrl: null,
       inviteSent: false,
     });
-    vi.mocked(companyEmployeeService.resendInvite).mockResolvedValueOnce(
-      employeesResult.employees[0],
-    );
+    vi.mocked(companyEmployeeService.resendInvite).mockResolvedValueOnce({
+      id: 'employee-2',
+      email: 'joana@empresa.com.br',
+      inviteSent: true,
+    });
 
     renderPage();
 
@@ -393,7 +364,6 @@ describe('CompanyEmployees', () => {
       screen.getByRole('textbox', { name: 'E-mail corporativo' }),
       'joana@empresa.com.br',
     );
-    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Recepcionista');
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(
@@ -405,9 +375,7 @@ describe('CompanyEmployees', () => {
     await user.click(screen.getByText('Reenviar convite'));
 
     await waitFor(() =>
-      expect(companyEmployeeService.resendInvite).toHaveBeenCalledWith(
-        employeesResult.employees[0].id,
-      ),
+      expect(companyEmployeeService.resendInvite).toHaveBeenCalledWith('employee-2'),
     );
     expect(await screen.findByText('Convite reenviado')).toBeInTheDocument();
   });
@@ -418,9 +386,11 @@ describe('CompanyEmployees', () => {
       ...employeesResult,
       employees: [{ ...employeesResult.employees[0], status: 'PENDING' }],
     });
-    vi.mocked(companyEmployeeService.resendInvite).mockResolvedValueOnce(
-      employeesResult.employees[0],
-    );
+    vi.mocked(companyEmployeeService.resendInvite).mockResolvedValueOnce({
+      id: 'employee-1',
+      email: 'ana@empresa.com.br',
+      inviteSent: true,
+    });
 
     renderPage();
 
@@ -432,6 +402,30 @@ describe('CompanyEmployees', () => {
     expect(await screen.findByText('Convite reenviado')).toBeInTheDocument();
     expect(
       screen.getByText('Um novo e-mail foi enviado para Ana Paula Ferreira.'),
+    ).toBeInTheDocument();
+  });
+
+  it('avisa quando a API não consegue enviar o convite novamente', async () => {
+    const user = userEvent.setup();
+    employeesMock.mockReturnValue({
+      ...employeesResult,
+      employees: [{ ...employeesResult.employees[0], status: 'PENDING' }],
+    });
+    vi.mocked(companyEmployeeService.resendInvite).mockResolvedValueOnce({
+      id: 'employee-1',
+      email: 'ana@empresa.com.br',
+      inviteSent: false,
+    });
+
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Reenviar convite' }));
+
+    expect(await screen.findByText('Convite não enviado')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Não foi possível enviar o convite para ana@empresa.com.br. Tente novamente mais tarde.',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -480,7 +474,6 @@ describe('CompanyEmployees', () => {
       screen.getByRole('textbox', { name: 'E-mail corporativo' }),
       'joana@empresa.com.br',
     );
-    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Recepcionista');
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(await screen.findByRole('dialog', { name: 'Vagas esgotadas' })).toBeInTheDocument();
@@ -508,7 +501,6 @@ describe('CompanyEmployees', () => {
       screen.getByRole('textbox', { name: 'E-mail corporativo' }),
       'joana@empresa.com.br',
     );
-    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Recepcionista');
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(await screen.findByText('Este e-mail já está cadastrado.')).toBeInTheDocument();
@@ -516,13 +508,12 @@ describe('CompanyEmployees', () => {
     const emailField = screen.getByRole('textbox', { name: 'E-mail corporativo' });
     expect(emailField).toHaveAttribute('aria-invalid', 'true');
     expect(emailField).toHaveValue('joana@empresa.com.br');
-    expect(screen.getByRole('textbox', { name: 'Cargo' })).toHaveValue('Recepcionista');
   });
 
   it('displays the API validation message for a 400 response', async () => {
     const user = userEvent.setup();
     vi.mocked(companyEmployeeService.createEmployee).mockRejectedValueOnce(
-      new CompanyEmployeeServiceError(400, 'Informe um cargo válido.'),
+      new CompanyEmployeeServiceError(400, 'Informe um nome válido.'),
     );
 
     renderPage();
@@ -533,12 +524,10 @@ describe('CompanyEmployees', () => {
       screen.getByRole('textbox', { name: 'E-mail corporativo' }),
       'joana@empresa.com.br',
     );
-    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Recepcionista');
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Informe um cargo válido.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Informe um nome válido.');
     expect(screen.getByRole('dialog', { name: 'Cadastrar Colaborador' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Cargo' })).toHaveValue('Recepcionista');
   });
 
   it('preserves entered form values after a network failure', async () => {
@@ -558,7 +547,6 @@ describe('CompanyEmployees', () => {
       screen.getByRole('textbox', { name: 'E-mail corporativo' }),
       'joana@empresa.com.br',
     );
-    await user.type(screen.getByRole('textbox', { name: 'Cargo' }), 'Recepcionista');
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -568,6 +556,5 @@ describe('CompanyEmployees', () => {
     expect(screen.getByRole('textbox', { name: 'E-mail corporativo' })).toHaveValue(
       'joana@empresa.com.br',
     );
-    expect(screen.getByRole('textbox', { name: 'Cargo' })).toHaveValue('Recepcionista');
   });
 });

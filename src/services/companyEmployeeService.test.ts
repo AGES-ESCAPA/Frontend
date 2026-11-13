@@ -69,7 +69,15 @@ describe('companyEmployeeService', () => {
   });
 
   it('cadastra colaborador enviando apenas nome e e-mail e recebe a resposta plana da API', async () => {
-    const created = { ...employee, inviteSent: true };
+    const created = {
+      id: 'employee-1',
+      name: 'Ana Paula Ferreira',
+      email: 'ana@empresa.com.br',
+      status: 'PENDING',
+      assignedCourses: 3,
+      avatarUrl: null,
+      inviteSent: true,
+    };
     fetchMock.mockResolvedValueOnce(response({ success: true, data: created }, 201));
 
     await expect(
@@ -112,6 +120,15 @@ describe('companyEmployeeService', () => {
     fetchMock.mockResolvedValueOnce(
       response({ message: 'Employee employee-1 is not pending: ACTIVE' }, 409),
     );
+    await expect(companyEmployeeService.resendInvite('employee-1')).rejects.toMatchObject({
+      status: 409,
+      message: 'Somente colaboradores pendentes podem receber um novo convite.',
+    });
+  });
+
+  it('usa uma mensagem específica de reenvio para qualquer conflito 409', async () => {
+    fetchMock.mockResolvedValueOnce(response({ message: 'Conflict' }, 409));
+
     await expect(companyEmployeeService.resendInvite('employee-1')).rejects.toMatchObject({
       status: 409,
       message: 'Somente colaboradores pendentes podem receber um novo convite.',
