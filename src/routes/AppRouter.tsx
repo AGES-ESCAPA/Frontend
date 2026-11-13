@@ -126,6 +126,12 @@ const RegisterIndividual = lazy(() =>
     default: m.RegisterIndividual,
   })),
 );
+
+const CreatePassword = lazy(() =>
+  import('@pages/CreatePassword/CreatePassword').then((m) => ({
+    default: m.CreatePassword,
+  })),
+);
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -169,6 +175,7 @@ export const AppRouter = () => {
             <Route path="/cadastro" element={<RegisterAccountType />} />
             <Route path="/cadastro/empresa" element={<RegisterCompany />} />
             <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
+            <Route path="/criar-senha" element={<CreatePassword />} />
             <Route
               path="/meus-cursos"
               element={
