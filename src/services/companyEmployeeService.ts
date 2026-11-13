@@ -1,12 +1,7 @@
 import { authenticatedFetch, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
-import type {
-  CompanyEmployee,
-  CompanyEmployeePage,
-  CompanyEmployeeStatus,
-  CompanySeats,
-} from '@/types/companyEmployee';
+import type { CompanyEmployee, CompanyEmployeePage, CompanySeats } from '@/types/companyEmployee';
 
 const COMPANY_URL = `${getApiBaseUrl()}/company`;
 export const COMPANY_EMPLOYEES_PAGE_SIZE = 10;
@@ -30,31 +25,26 @@ function getErrorMessage(status: number, serverMessage?: string | null): string 
     case 404:
       return 'Não foi possível encontrar os dados da empresa.';
 
-    case 409:
-      if (
-        serverMessage?.toLocaleLowerCase().includes('vagas') ||
-        serverMessage?.toLowerCase().includes('no seats')
-      ) {
+    case 409: {
+      const normalized = (serverMessage ?? '').toLowerCase();
+
+      if ((normalized.includes('no free seat') || normalized.includes('all')) && normalized.includes('seat')) {
         return NO_SEATS_AVAILABLE_MESSAGE;
       }
+
       if (
-        serverMessage?.toLowerCase().includes('email already registered') ||
-        serverMessage?.toLocaleLowerCase().includes('e-mail já está cadastrado') ||
-        serverMessage?.toLocaleLowerCase().includes('email já está cadastrado')
+        normalized.includes('email already registered') ||
+        normalized.includes('e-mail já está cadastrado') ||
+        normalized.includes('email já está cadastrado')
       ) {
         return 'Este e-mail já está cadastrado.';
       }
-      if (serverMessage?.toLowerCase().includes('only pending employees')) {
+
+      if (normalized.includes('is not pending')) {
         return 'Somente colaboradores pendentes podem receber um novo convite.';
       }
 
       return 'Este e-mail já está cadastrado ou a solicitação conflita com os dados existentes.';
-
-    case 503: {
-      const lowerMessage = serverMessage?.toLowerCase() ?? '';
-      return lowerMessage.includes('invite') || lowerMessage.includes('convite')
-        ? (serverMessage ?? 'O serviço de convites está indisponível.')
-        : 'O serviço de convites está indisponível. Tente novamente mais tarde.';
     }
 
     case 429:
@@ -82,23 +72,16 @@ export class CompanyEmployeeServiceError extends Error {
 export interface CompanyEmployeeInput {
   name: string;
   email: string;
-  jobTitle: string;
 }
 
-export interface CompanyEmployeeCreationResult {
-  employee: CompanyEmployee;
+export interface CompanyEmployeeCreateResponse extends CompanyEmployee {
   inviteSent: boolean;
 }
 
-export interface CompleteInvitationInput {
-  token: string;
-  password: string;
-}
-
-export interface EmployeeInvitation {
-  name: string;
+export interface ResendInviteResponse {
+  id: string;
   email: string;
-  companyName: string;
+  inviteSent: boolean;
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -135,41 +118,6 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body.data;
 }
 
-async function requestPublic<T>(path: string, init: RequestInit = {}): Promise<T> {
-  let response: Response;
-  try {
-    response = await fetch(`${getApiBaseUrl()}${path}`, {
-      ...init,
-      headers: { 'Content-Type': 'application/json', ...init.headers },
-    });
-  } catch (error: unknown) {
-    if (init.signal?.aborted) throw error;
-    throw new CompanyEmployeeServiceError(0, NETWORK_ERROR);
-  }
-
-  if (!response.ok) {
-    const serverMessage = await readApiErrorMessage(response);
-    const message =
-      response.status === 410
-        ? 'Este convite expirou. Peça ao gestor para enviar um novo.'
-        : response.status === 404
-          ? 'Este convite não é válido ou já foi utilizado.'
-          : getErrorMessage(response.status, serverMessage);
-    throw new CompanyEmployeeServiceError(response.status, message);
-  }
-
-  let body: ApiResponse<T>;
-  try {
-    body = (await response.json()) as ApiResponse<T>;
-  } catch {
-    throw new CompanyEmployeeServiceError(response.status, 'Resposta inválida do servidor.');
-  }
-  if (!body || body.success !== true || body.data == null) {
-    throw new CompanyEmployeeServiceError(response.status, 'Resposta inválida do servidor.');
-  }
-  return body.data;
-}
-
 export const companyEmployeeService = {
   getSeats(signal?: AbortSignal): Promise<CompanySeats> {
     return request<CompanySeats>('/seats', { signal });
@@ -193,43 +141,19 @@ export const companyEmployeeService = {
     return request<CompanyEmployeePage>(`/employees?${params.toString()}`, { signal });
   },
 
-  createEmployee(input: CompanyEmployeeInput): Promise<CompanyEmployeeCreationResult> {
-    return request<CompanyEmployeeCreationResult>('/employees', {
+  createEmployee(input: CompanyEmployeeInput): Promise<CompanyEmployeeCreateResponse> {
+    return request<CompanyEmployeeCreateResponse>('/employees', {
       method: 'POST',
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        name: input.name,
+        email: input.email,
+      }),
     });
   },
 
-  updateEmployee(
-    employeeId: string,
-    input: CompanyEmployeeInput & { status: CompanyEmployeeStatus },
-  ): Promise<CompanyEmployee> {
-    return request<CompanyEmployee>(`/employees/${encodeURIComponent(employeeId)}`, {
-      method: 'PUT',
-      body: JSON.stringify(input),
-    });
-  },
-
-  resendInvite(employeeId: string): Promise<CompanyEmployee> {
-    return request<CompanyEmployee>(`/employees/${encodeURIComponent(employeeId)}/invitation`, {
+  resendInvite(employeeId: string): Promise<ResendInviteResponse> {
+    return request<ResendInviteResponse>(`/employees/${encodeURIComponent(employeeId)}/invite`, {
       method: 'POST',
-    });
-  },
-
-  getInvitation(token: string, signal?: AbortSignal): Promise<EmployeeInvitation> {
-    return requestPublic<EmployeeInvitation>(`/auth/invites/${encodeURIComponent(token)}`, {
-      signal,
-    });
-  },
-
-  async completeInvitation(input: CompleteInvitationInput): Promise<void> {
-    await requestPublic<{
-      accessToken: string;
-      expiresIn: number;
-      user: { id: string; name: string; email: string; profile: string };
-    }>(`/auth/invites/${encodeURIComponent(input.token)}/password`, {
-      method: 'POST',
-      body: JSON.stringify({ password: input.password }),
     });
   },
 };
