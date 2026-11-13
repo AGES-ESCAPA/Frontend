@@ -218,4 +218,52 @@ describe('companyEmployeeService', () => {
       CompanyEmployeeServiceError,
     );
   });
+
+  it('envia DELETE autenticado com o identificador do colaborador e retorna vagas', async () => {
+    localStorage.setItem('access_token', 'token-desvinculacao');
+    fetchMock.mockResolvedValueOnce(response({ success: true, data: seats }));
+
+    await expect(companyEmployeeService.unlinkEmployee('employee-1')).resolves.toEqual(seats);
+
+    const [url, options] = fetchMock.mock.calls[0];
+
+    expect(String(url)).toBe('http://localhost:8080/api/v1/company/employees/employee-1');
+    expect(options?.method).toBe('DELETE');
+    expect(options?.body).toBeUndefined();
+    expect(new Headers(options?.headers).get('Authorization')).toBe('Bearer token-desvinculacao');
+  });
+
+  it('codifica o id no path sem mudar a rota', async () => {
+    fetchMock.mockResolvedValueOnce(response({ success: true, data: seats }));
+
+    await companyEmployeeService.unlinkEmployee('id/com barra');
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/employees/id%2Fcom%20barra');
+  });
+
+  it('propaga HTTP 404 da desvinculação com o status tipado', async () => {
+    fetchMock.mockResolvedValueOnce(response({ message: 'Not found' }, 404));
+
+    await expect(companyEmployeeService.unlinkEmployee('employee-1')).rejects.toMatchObject({
+      name: 'CompanyEmployeeServiceError',
+      status: 404,
+    });
+  });
+
+  it('diferencia erro de rede durante desvinculação', async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    await expect(companyEmployeeService.unlinkEmployee('employee-1')).rejects.toMatchObject({
+      name: 'CompanyEmployeeServiceError',
+      status: 0,
+    });
+  });
+
+  it('recusa sucesso sem o resumo de vagas esperado', async () => {
+    fetchMock.mockResolvedValueOnce(response({ success: true, data: null }));
+
+    await expect(companyEmployeeService.unlinkEmployee('employee-1')).rejects.toThrow(
+      'Resposta inválida',
+    );
+  });
 });

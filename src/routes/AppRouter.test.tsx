@@ -22,6 +22,9 @@ vi.mock('@pages/MyCourses/MyCourses', () => ({ MyCourses: () => <h1>Meus cursos<
 vi.mock('@pages/CompanyEmployees/CompanyEmployees', () => ({
   CompanyEmployees: () => <h1>Gestão de Funcionários</h1>,
 }));
+vi.mock('@pages/AdminCourses/AdminCourses', () => ({
+  AdminCourses: () => <h1>Gestão de Cursos</h1>,
+}));
 vi.mock('@pages/UnderConstruction/UnderConstruction', () => ({
   UnderConstruction: () => <h1>Página em construção</h1>,
 }));
@@ -99,6 +102,51 @@ describe('AppRouter — /admin/metricas', () => {
     expect(window.location.pathname).toBe('/admin/metricas');
     expect(
       screen.queryByRole('heading', { name: 'Relatórios Gerais & Métricas' }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('AppRouter — /empresa/dashboard', () => {
+  const company: AuthUser = { ...admin, id: 'company-1', role: 'COMPANY' };
+
+  beforeEach(() => {
+    localStorage.clear();
+    window.history.replaceState(null, '', '/empresa/dashboard');
+  });
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+    vi.restoreAllMocks();
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('renders the engagement dashboard for a company instead of the company fallback', async () => {
+    restoreSession(company);
+    render(<AppRouter />);
+    expect(
+      await screen.findByRole('heading', { name: 'Dashboard de Engajamento' }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/empresa/dashboard');
+    expect(screen.queryByRole('heading', { name: 'Página em construção' })).not.toBeInTheDocument();
+  });
+
+  it('redirects anonymous visitors to login and preserves the requested URL', async () => {
+    render(<AppRouter />);
+    expect(await screen.findByText('Login: /empresa/dashboard')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
+  });
+
+  it.each([
+    ['ADMIN', '/admin/cursos', 'Gestão de Cursos'],
+    ['STUDENT', '/meus-cursos', 'Meus cursos'],
+    ['EMPLOYEE', '/meus-cursos', 'Meus cursos'],
+  ] as const)('denies the %s profile and redirects to %s', async (role, destination, heading) => {
+    restoreSession({ ...company, role });
+    render(<AppRouter />);
+    await waitFor(() => expect(window.location.pathname).toBe(destination));
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Dashboard de Engajamento' }),
     ).not.toBeInTheDocument();
   });
 });

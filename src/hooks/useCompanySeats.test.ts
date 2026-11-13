@@ -49,4 +49,26 @@ describe('useCompanySeats', () => {
 
     await waitFor(() => expect(result.current.status).toBe('success'));
   });
+
+  it('aplica vagas devolvidas pela desvinculação e ignora uma consulta antiga', async () => {
+    let resolveOld!: (value: typeof seats) => void;
+
+    getSeatsMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveOld = resolve;
+      }),
+    );
+
+    const { result } = renderHook(() => useCompanySeats());
+    const updated = { ...seats, seatsUsed: 8, seatsAvailable: 2 };
+
+    act(() => result.current.applySeats(updated));
+
+    expect(result.current.seats).toEqual(updated);
+    expect(result.current.status).toBe('success');
+
+    await act(async () => resolveOld(seats));
+
+    expect(result.current.seats).toEqual(updated);
+  });
 });

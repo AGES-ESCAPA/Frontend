@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
 import {
   Button,
+  ConfirmDialog,
   EmployeeFormModal,
   EmployeeTable,
   EmptyState,
@@ -65,12 +66,17 @@ export const CompanyEmployees = () => {
   const [employeeFormFieldErrors, setEmployeeFormFieldErrors] = useState<
     Partial<Record<EmployeeFormField, string>>
   >({});
+  const [employeeToUnlink, setEmployeeToUnlink] = useState<Employee | null>(null);
+  const [isUnlinking, setIsUnlinking] = useState(false);
+  const [unlinkError, setUnlinkError] = useState<string | null>(null);
+  const unlinkInProgress = useRef(false);
 
   const {
     seats,
     status: seatsStatus,
     errorMessage: seatsError,
     reload: reloadSeats,
+    applySeats,
   } = useCompanySeats();
 
   const {
@@ -185,6 +191,61 @@ export const CompanyEmployees = () => {
       setPage(totalPages - 1);
     }
   }, [employeesStatus, page, totalPages]);
+
+  const handleUnlink = (employee: Employee) => {
+    setActionNotice(null);
+    setUnlinkError(null);
+    setEmployeeToUnlink(employee);
+  };
+
+  const handleUnlinkDialogChange = (open: boolean) => {
+    if (open || unlinkInProgress.current) return;
+    setEmployeeToUnlink(null);
+    setUnlinkError(null);
+  };
+
+  const handleConfirmUnlink = async () => {
+    if (!employeeToUnlink || unlinkInProgress.current) return;
+
+    const employee = employeeToUnlink;
+    unlinkInProgress.current = true;
+    setIsUnlinking(true);
+    setUnlinkError(null);
+
+    try {
+      const updatedSeats = await companyEmployeeService.unlinkEmployee(employee.id);
+
+      applySeats(updatedSeats);
+      reloadEmployees();
+      setEmployeeToUnlink(null);
+
+      showToast(
+        'success',
+        'Colaborador desvinculado',
+        `${employee.name} foi desvinculado. A vaga está disponível.`,
+      );
+    } catch (error: unknown) {
+      if (error instanceof CompanyEmployeeServiceError && error.status === 404) {
+        reloadAll();
+        setEmployeeToUnlink(null);
+
+        showToast(
+          'error',
+          'Colaborador não vinculado',
+          `${employee.name} já não está vinculado à empresa. Os dados estão sendo atualizados.`,
+        );
+      } else {
+        setUnlinkError(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível concluir a desvinculação. Tente novamente.',
+        );
+      }
+    } finally {
+      unlinkInProgress.current = false;
+      setIsUnlinking(false);
+    }
+  };
 
   return (
     <AuthenticatedLayout role="company" items={menuItems} user={COMPANY_USER}>
@@ -320,9 +381,7 @@ export const CompanyEmployees = () => {
                 employees={rows}
                 onEdit={openEditForm}
                 onResendInvite={(employee) => void resendInvitation(employee.id, employee.name)}
-                onUnlink={(employee) =>
-                  setActionNotice(`Desvinculação de ${employee.name} estará disponível em breve.`)
-                }
+                onUnlink={handleUnlink}
               />
             </div>
           ) : null}
@@ -412,6 +471,23 @@ export const CompanyEmployees = () => {
           onAction={toast?.action?.onAction}
         />
       </div>
+
+      <ConfirmDialog
+        open={employeeToUnlink !== null}
+        title="Desvincular colaborador?"
+        description={
+          employeeToUnlink
+            ? `${employeeToUnlink.name} perderá acesso a todos os cursos. A vaga ficará disponível para um novo colaborador.`
+            : ''
+        }
+        confirmLabel="Desvincular"
+        isConfirming={isUnlinking}
+        errorMessage={unlinkError}
+        onConfirm={() => {
+          void handleConfirmUnlink();
+        }}
+        onOpenChange={handleUnlinkDialogChange}
+      />
     </AuthenticatedLayout>
   );
 };

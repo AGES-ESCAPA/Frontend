@@ -144,6 +144,10 @@ async function request<T>(
 }
 
 export const companyEmployeeService = {
+  unlinkEmployee(id: string): Promise<CompanySeats> {
+    return request<CompanySeats>(`/employees/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
+
   getSeats(signal?: AbortSignal): Promise<CompanySeats> {
     return request<CompanySeats>('/seats', { signal });
   },

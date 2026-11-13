@@ -4,7 +4,7 @@ import { AuthProvider } from '@contexts/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RegistrationFeedback } from '@routes/RegistrationFeedback';
 
-// ─── Lazy Loading ─────────────────────────────────────────────────────────[...]
+// ─── Lazy Loading ─────────────────────────────────────────────────────────────
 // Adicione novas páginas aqui seguindo este padrão.
 // O .then((m) => ({ default: m.NomeDaPagina })) é necessário porque
 // usamos named exports (não default exports).
@@ -104,6 +104,12 @@ const OrderManagement = lazy(() =>
   })),
 );
 
+const CompanyDashboard = lazy(() =>
+  import('@pages/CompanyDashboard/CompanyDashboard').then((m) => ({
+    default: m.CompanyDashboard,
+  })),
+);
+
 const CompanyEmployees = lazy(() =>
   import('@pages/CompanyEmployees/CompanyEmployees').then((m) => ({
     default: m.CompanyEmployees,
@@ -120,7 +126,13 @@ const RegisterIndividual = lazy(() =>
     default: m.RegisterIndividual,
   })),
 );
-// ─── Fallback de Carregamento ───────────────────��───────────────────────────
+
+const CreatePassword = lazy(() =>
+  import('@pages/CreatePassword/CreatePassword').then((m) => ({
+    default: m.CreatePassword,
+  })),
+);
+// ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
   <div
@@ -140,7 +152,7 @@ const PageLoader = () => (
   </div>
 );
 
-// ─── Rotas ──────────────────────────────────────────────────────────��[...]
+// ─── Rotas ────────────────────────────────────────────────────────────────────
 
 /**
  * AppRouter — configuração central de rotas.
@@ -163,6 +175,7 @@ export const AppRouter = () => {
             <Route path="/cadastro" element={<RegisterAccountType />} />
             <Route path="/cadastro/empresa" element={<RegisterCompany />} />
             <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
+            <Route path="/criar-senha" element={<CreatePassword />} />
             <Route
               path="/meus-cursos"
               element={
@@ -313,6 +326,14 @@ export const AppRouter = () => {
               element={
                 <ProtectedRoute allowedRoles={['COMPANY']}>
                   <CompanyEmployees />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empresa/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['COMPANY']}>
+                  <CompanyDashboard />
                 </ProtectedRoute>
               }
             />
