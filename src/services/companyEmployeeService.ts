@@ -45,11 +45,11 @@ export class CompanyEmployeeServiceError extends Error {
   }
 }
 
-async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function request<T>(path: string, signal?: AbortSignal, init: RequestInit = {}): Promise<T> {
   let response: Response;
 
   try {
-    response = await authenticatedFetch(`${COMPANY_URL}${path}`, { signal });
+    response = await authenticatedFetch(`${COMPANY_URL}${path}`, { ...init, signal });
   } catch (error: unknown) {
     if (signal?.aborted) throw error;
 
@@ -76,6 +76,12 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 export const companyEmployeeService = {
+  unlinkEmployee(id: string): Promise<CompanySeats> {
+    return request<CompanySeats>(`/employees/${encodeURIComponent(id)}`, undefined, {
+      method: 'DELETE',
+    });
+  },
+
   getSeats(signal?: AbortSignal): Promise<CompanySeats> {
     return request<CompanySeats>('/seats', signal);
   },
