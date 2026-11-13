@@ -1,18 +1,28 @@
-import { authenticatedFetch } from '@services/api';
+import { authenticatedFetch, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
-import type { CompanyEmployeePage, CompanySeats } from '@/types/companyEmployee';
+import type {
+  CompanyEmployeePage,
+  CompanyEmployeeStatus,
+  CompanySeats,
+} from '@/types/companyEmployee';
 
 const COMPANY_URL = `${getApiBaseUrl()}/company`;
 export const COMPANY_EMPLOYEES_PAGE_SIZE = 10;
+export const NO_SEATS_AVAILABLE_MESSAGE =
+  'Não há vagas disponíveis. Compre mais assentos para cadastrar um colaborador.';
 
 const NETWORK_ERROR =
   'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
 
-function getErrorMessage(status: number): string {
+function getErrorMessage(
+  status: number,
+  serverMessage?: string | null,
+  context?: 'resendInvite',
+): string {
   switch (status) {
     case 400:
-      return 'Não foi possível processar a solicitação.';
+      return serverMessage ?? 'Não foi possível processar a solicitação.';
 
     case 401:
       return 'Sua sessão não está válida. Entre novamente para continuar.';
@@ -22,6 +32,35 @@ function getErrorMessage(status: number): string {
 
     case 404:
       return 'Não foi possível encontrar os dados da empresa.';
+
+    case 409: {
+      const normalized = (serverMessage ?? '').toLowerCase();
+
+      if (context === 'resendInvite') {
+        return 'Somente colaboradores pendentes podem receber um novo convite.';
+      }
+
+      if (
+        (normalized.includes('no free seat') || normalized.includes('all')) &&
+        normalized.includes('seat')
+      ) {
+        return NO_SEATS_AVAILABLE_MESSAGE;
+      }
+
+      if (
+        normalized.includes('email already registered') ||
+        normalized.includes('e-mail já está cadastrado') ||
+        normalized.includes('email já está cadastrado')
+      ) {
+        return 'Este e-mail já está cadastrado.';
+      }
+
+      if (normalized.includes('is not pending')) {
+        return 'Somente colaboradores pendentes podem receber um novo convite.';
+      }
+
+      return 'Este e-mail já está cadastrado ou a solicitação conflita com os dados existentes.';
+    }
 
     case 429:
       return 'Muitas solicitações realizadas. Aguarde um momento e tente novamente.';
@@ -45,19 +84,48 @@ export class CompanyEmployeeServiceError extends Error {
   }
 }
 
-async function request<T>(path: string, signal?: AbortSignal, init: RequestInit = {}): Promise<T> {
+export interface CompanyEmployeeInput {
+  name: string;
+  email: string;
+}
+
+export interface CompanyEmployeeCreateResponse {
+  id: string;
+  name: string;
+  email: string;
+  status: CompanyEmployeeStatus;
+  assignedCourses: number;
+  avatarUrl: string | null;
+  inviteSent: boolean;
+}
+
+export interface ResendInviteResponse {
+  id: string;
+  email: string;
+  inviteSent: boolean;
+}
+
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  errorContext?: 'resendInvite',
+): Promise<T> {
   let response: Response;
 
   try {
-    response = await authenticatedFetch(`${COMPANY_URL}${path}`, { ...init, signal });
+    response = await authenticatedFetch(`${COMPANY_URL}${path}`, init);
   } catch (error: unknown) {
-    if (signal?.aborted) throw error;
+    if (init.signal?.aborted) throw error;
 
     throw new CompanyEmployeeServiceError(0, NETWORK_ERROR);
   }
 
   if (!response.ok) {
-    throw new CompanyEmployeeServiceError(response.status, getErrorMessage(response.status));
+    const serverMessage = await readApiErrorMessage(response);
+    throw new CompanyEmployeeServiceError(
+      response.status,
+      getErrorMessage(response.status, serverMessage, errorContext),
+    );
   }
 
   let body: ApiResponse<T>;
@@ -77,13 +145,11 @@ async function request<T>(path: string, signal?: AbortSignal, init: RequestInit 
 
 export const companyEmployeeService = {
   unlinkEmployee(id: string): Promise<CompanySeats> {
-    return request<CompanySeats>(`/employees/${encodeURIComponent(id)}`, undefined, {
-      method: 'DELETE',
-    });
+    return request<CompanySeats>(`/employees/${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
 
   getSeats(signal?: AbortSignal): Promise<CompanySeats> {
-    return request<CompanySeats>('/seats', signal);
+    return request<CompanySeats>('/seats', { signal });
   },
 
   listEmployees(
@@ -101,6 +167,26 @@ export const companyEmployeeService = {
     params.set('page', String(page));
     params.set('size', String(size));
 
-    return request<CompanyEmployeePage>(`/employees?${params.toString()}`, signal);
+    return request<CompanyEmployeePage>(`/employees?${params.toString()}`, { signal });
+  },
+
+  createEmployee(input: CompanyEmployeeInput): Promise<CompanyEmployeeCreateResponse> {
+    return request<CompanyEmployeeCreateResponse>('/employees', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: input.name,
+        email: input.email,
+      }),
+    });
+  },
+
+  resendInvite(employeeId: string): Promise<ResendInviteResponse> {
+    return request<ResendInviteResponse>(
+      `/employees/${encodeURIComponent(employeeId)}/invite`,
+      {
+        method: 'POST',
+      },
+      'resendInvite',
+    );
   },
 };

@@ -1,0 +1,20 @@
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.accessStatus label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-5);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.submitError {
+  margin-top: var(--space-4);
+  color: var(--color-error-300);
+  font-size: var(--text-body-3);
+}
