@@ -1,4 +1,4 @@
-import type { EmployeeProgress, EmployeeProgressStatus } from '@/types/companyReport';
+import type { EmployeeProgress } from '@/types/companyReport';
 
 const MONTH_ABBREVIATIONS = [
   'Jan',
@@ -70,34 +70,5 @@ export const formatLastAccess = (lastAccessAt: string | null, now: Date): string
   return `${pad(date.getDate())} ${MONTH_ABBREVIATIONS[date.getMonth()]} ${date.getFullYear()}`;
 };
 
-const normalize = (text: string): string =>
-  text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .trim()
-    .toLowerCase();
-
-export interface EmployeeProgressFilters {
-  search: string;
-  status: EmployeeProgressStatus | null;
-}
-
+/** O curso está concluído quando o progresso chega a 100%: a barra fica verde. */
 export const isCompleted = (row: EmployeeProgress): boolean => row.progress >= 100;
-
-/**
- * Filtra as linhas pelo nome do colaborador (sem diferenciar acentos e maiúsculas) e pelo status.
- * Provisório: na integração (#186), a busca e o filtro passam a ser feitos pelo backend.
- */
-export const filterEmployeeProgress = (
-  rows: EmployeeProgress[],
-  { search, status }: EmployeeProgressFilters,
-): EmployeeProgress[] => {
-  const term = normalize(search);
-
-  return rows.filter((row) => {
-    if (status === 'COMPLETED' && !isCompleted(row)) return false;
-    if (status === 'IN_PROGRESS' && isCompleted(row)) return false;
-
-    return term === '' || normalize(row.name).includes(term);
-  });
-};

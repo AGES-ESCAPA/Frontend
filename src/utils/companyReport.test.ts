@@ -1,6 +1,5 @@
 import type { EmployeeProgress } from '@/types/companyReport';
 import {
-  filterEmployeeProgress,
   formatHours,
   formatLastAccess,
   formatMonthLabel,
@@ -91,47 +90,5 @@ describe('isCompleted', () => {
     [99, false],
   ])('should treat a progress of %d as completed: %s', (progress, expected) => {
     expect(isCompleted(row({ progress }))).toBe(expected);
-  });
-});
-
-describe('filterEmployeeProgress', () => {
-  const rows = [
-    row({ userId: 'ana', name: 'Ana Silva', progress: 100 }),
-    row({ userId: 'joao', name: 'João Souza', progress: 40 }),
-    row({ userId: 'mariana', name: 'Mariana Souza', progress: 0 }),
-  ];
-  const ids = (result: EmployeeProgress[]) => result.map((item) => item.userId);
-
-  it('should return every row without search or status', () => {
-    expect(ids(filterEmployeeProgress(rows, { search: '', status: null }))).toEqual([
-      'ana',
-      'joao',
-      'mariana',
-    ]);
-  });
-
-  it('should search the name ignoring accents, case and surrounding spaces', () => {
-    expect(ids(filterEmployeeProgress(rows, { search: '  JOAO ', status: null }))).toEqual([
-      'joao',
-    ]);
-  });
-
-  it('should keep only completed rows', () => {
-    expect(ids(filterEmployeeProgress(rows, { search: '', status: 'COMPLETED' }))).toEqual(['ana']);
-  });
-
-  it('should keep rows in progress, including the ones not started', () => {
-    expect(ids(filterEmployeeProgress(rows, { search: '', status: 'IN_PROGRESS' }))).toEqual([
-      'joao',
-      'mariana',
-    ]);
-  });
-
-  it('should combine the search with the status', () => {
-    expect(ids(filterEmployeeProgress(rows, { search: 'souza', status: 'IN_PROGRESS' }))).toEqual([
-      'joao',
-      'mariana',
-    ]);
-    expect(ids(filterEmployeeProgress(rows, { search: 'souza', status: 'COMPLETED' }))).toEqual([]);
   });
 });
