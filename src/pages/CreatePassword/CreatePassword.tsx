@@ -24,6 +24,14 @@ const INVITE_ERROR_MESSAGES = {
   410: 'Este link expirou. Peça ao gestor da sua empresa um novo convite.',
 } as const;
 
+/**
+ * O backend recusa a senha com 400 e uma mensagem técnica em inglês, então o aviso fica no campo,
+ * em português, com a regra que ele valida.
+ */
+const PASSWORD_REJECTED_MESSAGE = 'A senha não foi aceita. Use pelo menos 8 caracteres.';
+const NETWORK_ERROR_DESCRIPTION = 'Verifique sua conexão e tente novamente.';
+const SERVER_ERROR_DESCRIPTION = 'Ocorreu um erro no servidor. Tente novamente em instantes.';
+
 export const CreatePassword = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -35,6 +43,7 @@ export const CreatePassword = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitErrorStatus, setSubmitErrorStatus] = useState<AccountInviteErrorStatus>(null);
   const [toastOpen, setToastOpen] = useState(false);
+  const [toastDescription, setToastDescription] = useState(NETWORK_ERROR_DESCRIPTION);
 
   // O convite pode deixar de valer entre abrir a tela e enviar a senha.
   const inviteErrorStatus = submitErrorStatus ?? (status === 'error' ? errorStatus : null);
@@ -60,9 +69,16 @@ export const CreatePassword = () => {
       login(session.token, session.user, session.expiresIn);
       navigate(MY_COURSES_ROUTE, { replace: true });
     } catch (error: unknown) {
-      if (error instanceof AuthServiceError && (error.status === 404 || error.status === 410)) {
+      if (!(error instanceof AuthServiceError)) {
+        // O fetch só rejeita sem resposta HTTP: falha de rede.
+        setToastDescription(NETWORK_ERROR_DESCRIPTION);
+        setToastOpen(true);
+      } else if (error.status === 404 || error.status === 410) {
         setSubmitErrorStatus(error.status);
+      } else if (error.status === 400 || error.status === 422) {
+        setErrors({ password: PASSWORD_REJECTED_MESSAGE });
       } else {
+        setToastDescription(SERVER_ERROR_DESCRIPTION);
         setToastOpen(true);
       }
     } finally {
@@ -185,7 +201,7 @@ export const CreatePassword = () => {
         onOpenChange={setToastOpen}
         variant="error"
         title="Não foi possível criar a senha"
-        description="Verifique sua conexão e tente novamente."
+        description={toastDescription}
       />
     </div>
   );

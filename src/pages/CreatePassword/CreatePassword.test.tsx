@@ -176,9 +176,49 @@ describe('CreatePassword', () => {
     await user.click(screen.getByRole('button', { name: 'Criar' }));
 
     expect(await screen.findByText('Não foi possível criar a senha')).toBeInTheDocument();
+    expect(screen.getByText('Verifique sua conexão e tente novamente.')).toBeInTheDocument();
     expect(screen.getByLabelText('Nova senha')).toHaveValue('senha-segura');
     expect(screen.getByLabelText('Confirmar senha')).toHaveValue('senha-segura');
     expect(screen.getByTestId('location')).toHaveTextContent('/criar-senha');
+  });
+
+  it('shows the password the backend rejected (400) as a field error, not as a connection problem', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(authService, 'getInvite').mockResolvedValue(invite);
+    vi.spyOn(authService, 'createInvitePassword').mockRejectedValue(
+      new AuthServiceError(400, 'Password must be at least 8 characters'),
+    );
+    renderCreatePassword();
+
+    await fillPasswords(user, 'senha-segura');
+    await user.click(screen.getByRole('button', { name: 'Criar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'A senha não foi aceita. Use pelo menos 8 caracteres.',
+    );
+    expect(screen.getByLabelText('Nova senha')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.queryByText('Verifique sua conexão e tente novamente.')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nova senha')).toHaveValue('senha-segura');
+    expect(localStorage.getItem('access_token')).toBeNull();
+  });
+
+  it('reports a server error (500) as a server problem, not as a connection problem', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(authService, 'getInvite').mockResolvedValue(invite);
+    vi.spyOn(authService, 'createInvitePassword').mockRejectedValue(
+      new AuthServiceError(500, 'Internal Server Error'),
+    );
+    renderCreatePassword();
+
+    await fillPasswords(user, 'senha-segura');
+    await user.click(screen.getByRole('button', { name: 'Criar' }));
+
+    expect(await screen.findByText('Não foi possível criar a senha')).toBeInTheDocument();
+    expect(
+      screen.getByText('Ocorreu um erro no servidor. Tente novamente em instantes.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Verifique sua conexão e tente novamente.')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Nova senha')).toHaveValue('senha-segura');
   });
 
   it('treats a link without token as invalid without calling the API', async () => {
