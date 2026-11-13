@@ -73,23 +73,31 @@
   border-color: color-mix(in srgb, var(--color-white) 18%, transparent);
 }
 
+/*
+ * A variante danger tem altura, fonte e raio próprios (41px, body-3, radius-lg), diferentes dos
+ * outros botões. Aqui os dois botões do modal ficam com o mesmo tamanho, com no mínimo a área de
+ * toque. A altura não é fixa: um rótulo que não cabe na metade do modal ("Confirmar cancelamento"
+ * no celular) quebra linha, e o grid estica o outro botão para a mesma altura.
+ */
 .actions .cancelButton,
 .actions .confirmButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
   min-width: 0;
-  height: 44px;
-  min-height: 44px;
-  max-height: 44px;
-  padding: 0 var(--space-3);
-  box-sizing: border-box;
+  height: auto;
+  min-height: var(--touch-target-min);
+  padding: var(--space-2) var(--space-3);
   font-size: var(--text-body-3);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1;
-  border-width: 1px;
+  line-height: 1.25;
+  border-width: var(--border-width-thin);
   border-radius: var(--radius-lg);
+}
+
+/* O Button mantém o rótulo em uma linha e corta com reticências; aqui ele pode quebrar. */
+.actions .cancelButton > span,
+.actions .confirmButton > span {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  text-wrap: balance;
 }
 
 .actions .cancelButton:hover:not(:disabled) {
