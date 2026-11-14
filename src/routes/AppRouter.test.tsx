@@ -14,7 +14,7 @@ vi.mock('recharts', async (importOriginal) => ({
 }));
 vi.mock('@services/adminMetricsService', async (importOriginal) => ({
   ...(await importOriginal<typeof AdminMetricsServiceModule>()),
-  adminMetricsService: { getOverview: vi.fn() },
+  adminMetricsService: { getOverview: vi.fn(), getCourseMetrics: vi.fn() },
 }));
 vi.mock('@hooks/useNotifications', () => ({
   useNotifications: (): UseNotificationsResult => ({
@@ -64,6 +64,12 @@ describe('AppRouter — /admin/metricas', () => {
     vi.mocked(adminMetricsService.getOverview)
       .mockReset()
       .mockResolvedValue(zeroAdminMetricsOverview);
+    vi.mocked(adminMetricsService.getCourseMetrics).mockReset().mockResolvedValue({
+      mostAccessedCourse: null,
+      topCourses: [],
+      categoriesCount: 0,
+      enrollmentsByCategory: [],
+    });
     localStorage.clear();
     window.history.replaceState(null, '', '/admin/metricas');
   });

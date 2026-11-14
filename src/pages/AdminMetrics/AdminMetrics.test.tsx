@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import type * as Recharts from 'recharts';
 import { adminMetricsService, AdminMetricsServiceError } from '@services/adminMetricsService';
 import type * as AdminMetricsServiceModule from '@services/adminMetricsService';
-import type { AdminMetricsOverview, PopularCoursesMetricsData } from '@/types/adminMetrics';
+import type { AdminCourseMetrics, AdminMetricsOverview } from '@/types/adminMetrics';
 import { adminMetricsOverview, zeroAdminMetricsOverview } from '@/test/adminMetricsFixtures';
 import { AdminMetrics } from './AdminMetrics';
 
@@ -14,19 +14,46 @@ vi.mock('recharts', async (importOriginal) => ({
 }));
 vi.mock('@services/adminMetricsService', async (importOriginal) => ({
   ...(await importOriginal<typeof AdminMetricsServiceModule>()),
-  adminMetricsService: { getOverview: vi.fn() },
+  adminMetricsService: { getOverview: vi.fn(), getCourseMetrics: vi.fn() },
 }));
 
+const MOCK_API_COURSE_METRICS: AdminCourseMetrics = {
+  mostAccessedCourse: {
+    courseId: 'e0000000-0000-4000-e000-000000000001',
+    title: 'Turismo de Aventura',
+    enrollments: 4820,
+  },
+  topCourses: [
+    {
+      courseId: 'e0000000-0000-4000-e000-000000000001',
+      title: 'Turismo de Aventura',
+      enrollments: 4820,
+    },
+    {
+      courseId: 'e0000000-0000-4000-e000-000000000002',
+      title: 'Ecoturismo e Educação Ambiental',
+      enrollments: 3940,
+    },
+  ],
+  categoriesCount: 2,
+  enrollmentsByCategory: [
+    { category: 'Hospitalidade', percentage: 66.67 },
+    { category: 'Inteligência Artificial', percentage: 33.33 },
+  ],
+};
+
 const getOverviewMock = vi.mocked(adminMetricsService.getOverview);
-const renderPage = (courseMetrics?: PopularCoursesMetricsData) =>
+const getCourseMetricsMock = vi.mocked(adminMetricsService.getCourseMetrics);
+const renderPage = () =>
   render(
     <MemoryRouter initialEntries={['/admin/metricas']}>
-      <AdminMetrics courseMetrics={courseMetrics} />
+      <AdminMetrics />
     </MemoryRouter>,
   );
 
 beforeEach(() => {
   getOverviewMock.mockReset().mockResolvedValue(adminMetricsOverview);
+  getCourseMetricsMock.mockReset().mockResolvedValue(MOCK_API_COURSE_METRICS);
 });
 
 describe('AdminMetrics — integração da US-36', () => {
@@ -85,11 +112,9 @@ describe('AdminMetrics — integração da US-36', () => {
     ]) {
       expect(main.getByRole('status', { name })).toHaveAttribute('aria-busy', 'true');
     }
-    expect(main.getAllByRole('status')).toHaveLength(4);
     for (const name of ['Taxa Média de Conclusão', 'Evolução de Alunos Ativos']) {
       expect(within(main.getByRole('region', { name })).queryByRole('img')).not.toBeInTheDocument();
     }
-    expect(main.getByRole('img', { name: /Distribuição por tipo de curso/ })).toBeInTheDocument();
     expect(main.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
     expect(getOverviewMock).toHaveBeenCalledOnce();
   });
@@ -206,14 +231,21 @@ describe('AdminMetrics — integração da US-36', () => {
   });
 });
 
-describe('AdminMetrics — integração US-37 (Cursos Populares)', () => {
-  it('renders the popular courses metric blocks and rankings alongside the overview', async () => {
+describe('AdminMetrics — integração US-37 (Cursos Mais Populares #190)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('renders the popular courses blocks alongside the overview', async () => {
     renderPage();
     await screen.findByText('68%');
 
-    expect(screen.getByRole('article', { name: 'Curso Mais Acessado' })).toHaveTextContent(
-      'Turismo de Aventura',
-    );
+    expect(
+      await within(screen.getByRole('article', { name: 'Curso Mais Acessado' })).findByText(
+        'Turismo de Aventura',
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Distribuição por Tipo de Curso' }),
     ).toBeInTheDocument();
@@ -223,48 +255,116 @@ describe('AdminMetrics — integração US-37 (Cursos Populares)', () => {
     expect(screen.getByRole('heading', { name: 'Top 5 Cursos por Acesso' })).toBeInTheDocument();
   });
 
-  it('passes custom courseMetrics props down to the popular courses section', async () => {
-    const customMetrics: PopularCoursesMetricsData = {
-      mostAccessedCourse: {
-        courseId: 'c-10',
-        title: 'Sommelier e Enologia Aplicada',
-        enrollments: 640,
-      },
-      topCourses: [
-        {
-          courseId: 'c-10',
-          title: 'Sommelier e Enologia Aplicada',
-          enrollments: 640,
-        },
-        {
-          courseId: 'c-20',
-          title: 'Recepção Bilíngue na Hotelaria',
-          enrollments: 410,
-        },
-      ],
-      categoriesCount: 2,
-      enrollmentsByCategory: [
-        { category: 'Gastronomia', percentage: 60.95 },
-        { category: 'Hospitalidade', percentage: 39.05 },
-      ],
-    };
+  it('shows independent loading skeletons in the three course blocks while the request is pending', () => {
+    vi.mocked(adminMetricsService.getCourseMetrics).mockReturnValue(
+      new Promise<AdminCourseMetrics>(() => {}),
+    );
 
-    renderPage(customMetrics);
-    await screen.findByText('68%');
+    renderPage();
+
     expect(
-      within(screen.getByRole('article', { name: 'Alunos ativos' })).getByText('12.847'),
+      screen.getByRole('status', { name: 'Carregando curso mais acessado' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Carregando distribuição por tipo de curso' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Carregando ranking de cursos' }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders real course metrics with compact formatting, ordered ranking and category distribution', async () => {
+    vi.mocked(adminMetricsService.getCourseMetrics).mockResolvedValue(MOCK_API_COURSE_METRICS);
+
+    renderPage();
+
+    const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
+    expect(await within(leaderCard).findByText('Turismo de Aventura')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('Mais de 4,8 mil matrículas')).toBeInTheDocument();
+
+    const rankingList = screen.getByRole('list', { name: 'Top 5 cursos por matrículas' });
+    const items = within(rankingList).getAllByRole('listitem');
+    expect(items).toHaveLength(2);
+    expect(within(items[0]).getByText('Turismo de Aventura')).toBeInTheDocument();
+    expect(within(items[0]).getByText('4.820')).toBeInTheDocument();
+    expect(within(items[1]).getByText('Ecoturismo e Educação Ambiental')).toBeInTheDocument();
+    expect(within(items[1]).getByText('3.940')).toBeInTheDocument();
+
+    const distributionChart = screen.getByRole('img', {
+      name: /Distribuição por tipo de curso\. 2 Categorias\. Hospitalidade: 66,67%\. Inteligência Artificial: 33,33%/i,
+    });
+    expect(within(distributionChart).getByText('2')).toBeInTheDocument();
+    expect(within(distributionChart).getByText('Categorias')).toBeInTheDocument();
+
+    const legend = screen.getByRole('list', { name: 'Legenda do gráfico' });
+    expect(legend).toHaveTextContent(/Hospitalidade: 66,67%/);
+    expect(legend).toHaveTextContent(/Inteligência Artificial: 33,33%/);
+  });
+
+  it('shows informative empty messages without rendering an empty chart when the platform has no enrollments', async () => {
+    vi.mocked(adminMetricsService.getCourseMetrics).mockResolvedValue({
+      mostAccessedCourse: null,
+      topCourses: [],
+      categoriesCount: 0,
+      enrollmentsByCategory: [],
+    });
+
+    renderPage();
+
+    expect(
+      await screen.findByText('Nenhuma matrícula registrada por categoria.'),
     ).toBeInTheDocument();
 
     const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
-    expect(within(leaderCard).getByText('Sommelier e Enologia Aplicada')).toBeInTheDocument();
-    expect(within(leaderCard).getByText('640 matrículas')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('—')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('Nenhuma matrícula registrada')).toBeInTheDocument();
 
-    const rankingList = screen.getByRole('list', { name: 'Top 5 cursos por matrículas' });
-    expect(within(rankingList).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(rankingList).getByText('Recepção Bilíngue na Hotelaria')).toBeInTheDocument();
+    expect(screen.getByText('Nenhum curso com matrículas registradas.')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('img', { name: /Distribuição por tipo de curso/i }),
+    ).not.toBeInTheDocument();
+  });
 
-    const legend = screen.getByRole('list', { name: 'Legenda do gráfico' });
-    expect(legend).toHaveTextContent(/Gastronomia: 60,95%/);
-    expect(legend).toHaveTextContent(/Hospitalidade: 39,05%/);
+  it('handles course metrics error and retries only the course endpoint while keeping US-36 indicators intact', async () => {
+    const user = userEvent.setup();
+    vi.mocked(adminMetricsService.getCourseMetrics)
+      .mockRejectedValueOnce(new Error('Não foi possível carregar as métricas de cursos.'))
+      .mockResolvedValueOnce(MOCK_API_COURSE_METRICS);
+
+    renderPage();
+    await screen.findByText('68%');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar as métricas de cursos.',
+    );
+
+    // Os indicadores globais da US-36 permanecem visíveis e intactos.
+    expect(screen.getByRole('article', { name: 'Alunos ativos' })).toHaveTextContent('12.847');
+    expect(screen.getByRole('article', { name: 'Empresas parceiras' })).toHaveTextContent('1.532');
+    expect(screen.getByRole('region', { name: 'Taxa Média de Conclusão' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Evolução de Alunos Ativos' })).toBeInTheDocument();
+
+    const retryButton = screen.getByRole('button', { name: 'Tentar novamente' });
+    await user.click(retryButton);
+
+    const leaderCard = screen.getByRole('article', { name: 'Curso Mais Acessado' });
+    expect(await within(leaderCard).findByText('Turismo de Aventura')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('Mais de 4,8 mil matrículas')).toBeInTheDocument();
+    expect(adminMetricsService.getCourseMetrics).toHaveBeenCalledTimes(2);
+    expect(getOverviewMock).toHaveBeenCalledOnce();
+  });
+
+  it('aborts the course metrics request when the page unmounts', () => {
+    let capturedSignal: AbortSignal | undefined;
+    vi.mocked(adminMetricsService.getCourseMetrics).mockImplementation((signal) => {
+      capturedSignal = signal;
+      return new Promise<AdminCourseMetrics>(() => {});
+    });
+
+    const { unmount } = renderPage();
+
+    expect(capturedSignal?.aborted).toBe(false);
+    unmount();
+    expect(capturedSignal?.aborted).toBe(true);
   });
 });

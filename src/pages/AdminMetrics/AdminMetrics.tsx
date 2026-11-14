@@ -1,14 +1,14 @@
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import { BarList, Button, DonutChart, LineChart, Panel, SumCard } from '@components/ui';
+import { useAdminCourseMetrics } from '@hooks/useAdminCourseMetrics';
 import { useAdminMetricsOverview } from '@hooks/useAdminMetricsOverview';
 import {
   formatAdminMetricsCompletionRate,
   formatAdminMetricsCount,
   mapAdminMetricsMonthlySeries,
 } from '@utils/adminMetrics';
-import type { PopularCoursesMetricsData } from '@/types/adminMetrics';
 import { PopularCoursesSection } from './components/PopularCoursesSection';
-import { MOCK_COURSE_METRICS, MOCK_ENGAGED_COMPANIES } from './mockCourseMetrics';
+import { MOCK_ENGAGED_COMPANIES } from './mockCourseMetrics';
 import styles from './AdminMetrics.module.css';
 
 const ADMIN_USER = { name: 'Admin', role: 'Administrador' };
@@ -29,13 +29,10 @@ const MetricSkeleton = ({ label, variant }: MetricSkeletonProps) => (
   </div>
 );
 
-export interface AdminMetricsProps {
-  /** Dados de indicadores de cursos populares já preparados pela camada de integração. */
-  courseMetrics?: PopularCoursesMetricsData;
-}
-
-export const AdminMetrics = ({ courseMetrics = MOCK_COURSE_METRICS }: AdminMetricsProps) => {
+export const AdminMetrics = () => {
   const { status, data, errorMessage, reload } = useAdminMetricsOverview();
+  // Indicadores de cursos (US-37): carregamento, erro e nova tentativa próprios, sem afetar os de cima.
+  const courseMetrics = useAdminCourseMetrics();
 
   const kpiLeadingCards = (
     <>
@@ -156,10 +153,13 @@ export const AdminMetrics = ({ courseMetrics = MOCK_COURSE_METRICS }: AdminMetri
         ) : null}
 
         <PopularCoursesSection
-          mostAccessedCourse={courseMetrics.mostAccessedCourse}
-          topCourses={courseMetrics.topCourses}
-          categoriesCount={courseMetrics.categoriesCount}
-          enrollmentsByCategory={courseMetrics.enrollmentsByCategory}
+          status={courseMetrics.status}
+          errorMessage={courseMetrics.errorMessage}
+          onRetry={courseMetrics.reload}
+          mostAccessedCourse={courseMetrics.metrics?.mostAccessedCourse ?? null}
+          topCourses={courseMetrics.metrics?.topCourses ?? []}
+          categoriesCount={courseMetrics.metrics?.categoriesCount ?? 0}
+          enrollmentsByCategory={courseMetrics.metrics?.enrollmentsByCategory ?? []}
           kpiLeadingCards={kpiLeadingCards}
           kpiTrailingCards={kpiTrailingCards}
           middlePanel={middlePanel}

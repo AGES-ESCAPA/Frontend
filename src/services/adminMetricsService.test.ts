@@ -1,4 +1,5 @@
 import { setUnauthorizedHandler } from '@services/api';
+import type { AdminCourseMetrics } from '@/types/adminMetrics';
 import { adminMetricsOverview, zeroAdminMetricsOverview } from '@/test/adminMetricsFixtures';
 import { adminMetricsService } from './adminMetricsService';
 
@@ -206,5 +207,140 @@ describe('adminMetricsService.getOverview', () => {
     vi.spyOn(response, 'json').mockRejectedValue(error);
     fetchMock.mockResolvedValue(response);
     await expect(adminMetricsService.getOverview()).rejects.toBe(error);
+  });
+});
+
+const courseMetrics: AdminCourseMetrics = {
+  mostAccessedCourse: {
+    courseId: 'e0000000-0000-4000-e000-000000000001',
+    title: 'Turismo de Aventura',
+    enrollments: 4820,
+  },
+  topCourses: [
+    {
+      courseId: 'e0000000-0000-4000-e000-000000000001',
+      title: 'Turismo de Aventura',
+      enrollments: 4820,
+    },
+  ],
+  categoriesCount: 2,
+  enrollmentsByCategory: [
+    { category: 'Hospitalidade', percentage: 66.67 },
+    { category: 'Inteligência Artificial', percentage: 33.33 },
+  ],
+};
+
+const emptyCourseMetrics: AdminCourseMetrics = {
+  mostAccessedCourse: null,
+  topCourses: [],
+  categoriesCount: 0,
+  enrollmentsByCategory: [],
+};
+
+const courseFallback = 'Não foi possível carregar os indicadores de cursos. Tente novamente.';
+const courseInvalidResponse =
+  'Não foi possível carregar os indicadores de cursos. O servidor retornou uma resposta inválida.';
+
+describe('adminMetricsService.getCourseMetrics', () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+    localStorage.setItem('access_token', 'admin-jwt-token');
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('sends an authenticated GET with the supplied signal and unwraps the API response', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ success: true, data: courseMetrics, message: 'Operation completed' }),
+    );
+    const controller = new AbortController();
+
+    expect(await adminMetricsService.getCourseMetrics(controller.signal)).toEqual(courseMetrics);
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://localhost:8080/api/v1/admin/metrics/courses');
+    expect(init?.method).toBe('GET');
+    expect(init?.signal).toBe(controller.signal);
+    expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer admin-jwt-token');
+  });
+
+  it('accepts the empty payload of a platform without eligible enrollments', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true, data: emptyCourseMetrics }));
+    expect(await adminMetricsService.getCourseMetrics()).toEqual(emptyCourseMetrics);
+  });
+
+  it('reports network failures with status zero and a connection message', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    await expect(adminMetricsService.getCourseMetrics()).rejects.toMatchObject({
+      name: 'AdminMetricsServiceError',
+      status: 0,
+      message:
+        'Não foi possível carregar os indicadores de cursos. Verifique sua conexão e tente novamente.',
+    });
+  });
+
+  it('keeps the API error message for diagnosis without showing it', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ message: 'Access denied: user is not ADMIN' }, 403));
+    await expect(adminMetricsService.getCourseMetrics()).rejects.toMatchObject({
+      status: 403,
+      message: courseFallback,
+      serverMessage: 'Access denied: user is not ADMIN',
+    });
+  });
+
+  it('handles a non-JSON HTTP error body', async () => {
+    fetchMock.mockResolvedValue(new Response('<html>502 Bad Gateway</html>', { status: 502 }));
+    await expect(adminMetricsService.getCourseMetrics()).rejects.toMatchObject({
+      status: 502,
+      message: courseFallback,
+      serverMessage: null,
+    });
+  });
+
+  it('propagates AbortError without wrapping it', async () => {
+    const error = new DOMException('Cancelled', 'AbortError');
+    fetchMock.mockRejectedValue(error);
+    await expect(adminMetricsService.getCourseMetrics()).rejects.toBe(error);
+  });
+
+  it.each([
+    ['unsuccessful envelope', { success: false, data: courseMetrics }],
+    ['null payload', { success: true, data: null }],
+    ['null ranking', { success: true, data: { ...courseMetrics, topCourses: null } }],
+    [
+      'missing distribution',
+      { success: true, data: { ...courseMetrics, enrollmentsByCategory: undefined } },
+    ],
+    ['string category count', { success: true, data: { ...courseMetrics, categoriesCount: '2' } }],
+    [
+      'ranking item without enrollments',
+      {
+        success: true,
+        data: { ...courseMetrics, topCourses: [{ courseId: 'x', title: 'Curso' }] },
+      },
+    ],
+    [
+      'invalid leader',
+      { success: true, data: { ...courseMetrics, mostAccessedCourse: { title: 'Curso' } } },
+    ],
+    [
+      'category without percentage',
+      {
+        success: true,
+        data: { ...courseMetrics, enrollmentsByCategory: [{ category: 'Hospitalidade' }] },
+      },
+    ],
+  ])('rejects a response with %s instead of breaking the page', async (_name, body) => {
+    fetchMock.mockResolvedValue(jsonResponse(body));
+    await expect(adminMetricsService.getCourseMetrics()).rejects.toMatchObject({
+      status: 200,
+      message: courseInvalidResponse,
+    });
   });
 });
