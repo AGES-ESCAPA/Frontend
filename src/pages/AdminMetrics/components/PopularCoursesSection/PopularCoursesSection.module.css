@@ -5,6 +5,58 @@
   min-width: 0;
 }
 
+.errorBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background-color: var(--color-surface);
+  border: var(--border-width-thin) solid var(--color-error-300);
+  border-radius: var(--radius-lg);
+}
+
+.errorMessage {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.retryButton {
+  flex-shrink: 0;
+}
+
+.emptyMessage {
+  display: grid;
+  place-items: center;
+  min-height: var(--space-20);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  text-align: center;
+}
+
+.skeleton {
+  width: 100%;
+  background-color: var(--color-primary-700);
+  border-radius: var(--radius-md);
+}
+
+.cardSkeleton {
+  height: var(--space-12);
+}
+
+.donutSkeleton {
+  height: calc(var(--space-20) * 2);
+}
+
+.listSkeleton {
+  height: calc(var(--space-20) * 2);
+}
+
 .kpiGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -142,6 +194,11 @@
 @media (width <= 40rem) {
   .section {
     gap: var(--space-4);
+  }
+
+  .errorBanner {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .kpiGrid {

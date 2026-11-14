@@ -1,4 +1,5 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { adminMetricsService } from '@services/adminMetricsService';
 import { authService } from '@services/authService';
 import type { AuthUser } from '@/types/auth';
 import { AppRouter } from './AppRouter';
@@ -7,6 +8,11 @@ import type * as Recharts from 'recharts';
 vi.mock('recharts', async (importOriginal) => ({
   ...(await importOriginal<typeof Recharts>()),
   ResponsiveContainer: (await import('@/test/FixedChartContainer')).FixedChartContainer,
+}));
+vi.mock('@services/adminMetricsService', () => ({
+  adminMetricsService: {
+    getCourseMetrics: vi.fn(),
+  },
 }));
 vi.mock('@pages/Login/Login', async () => {
   const { useLocation } = await import('react-router-dom');
@@ -42,6 +48,18 @@ const restoreSession = (user: AuthUser) => {
 
 describe('AppRouter — /admin/metricas', () => {
   beforeEach(() => {
+    vi.mocked(adminMetricsService.getCourseMetrics).mockReset().mockResolvedValue({
+      mostAccessedCourse: null,
+      topCourses: [],
+      categoriesCount: 0,
+      enrollmentsByCategory: [],
+    });
+    vi.mocked(adminMetricsService.getCourseMetrics).mockReset().mockResolvedValue({
+      mostAccessedCourse: null,
+      topCourses: [],
+      categoriesCount: 0,
+      enrollmentsByCategory: [],
+    });
     localStorage.clear();
     window.history.replaceState(null, '', '/admin/metricas');
   });

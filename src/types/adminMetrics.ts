@@ -1,35 +1,41 @@
 import type { ReactNode } from 'react';
+import type { LoadStatus } from '@hooks/usePublicCourses';
 
-export interface PopularCourseLeaderView {
+export interface AdminCourseRankingItem {
   courseId: string;
   title: string;
-  /** Quantidade total de matrículas do curso líder. */
+  /** Quantidade total de matrículas elegíveis do curso. */
   enrollments: number;
 }
 
-export interface PopularCourseRankItemView {
-  courseId: string;
-  title: string;
-  enrollments: number;
-}
-
-export interface CourseCategoryDistributionItemView {
+export interface AdminCategoryEnrollmentShare {
   category: string;
   percentage: number;
 }
 
-export interface PopularCoursesMetricsData {
+export interface AdminCourseMetrics {
   /** Curso com maior número de matrículas exibido no card "Curso Mais Acessado". */
-  mostAccessedCourse: PopularCourseLeaderView | null;
+  mostAccessedCourse: AdminCourseRankingItem | null;
   /** Lista ordenada de até cinco cursos com maior número de matrículas. */
-  topCourses: PopularCourseRankItemView[];
+  topCourses: AdminCourseRankingItem[];
   /** Quantidade total de categorias exibida no centro do gráfico de rosca. */
   categoriesCount: number;
   /** Distribuição percentual de matrículas por categoria de curso. */
-  enrollmentsByCategory: CourseCategoryDistributionItemView[];
+  enrollmentsByCategory: AdminCategoryEnrollmentShare[];
 }
 
-export interface PopularCoursesSectionProps extends PopularCoursesMetricsData {
+export type PopularCourseLeaderView = AdminCourseRankingItem;
+export type PopularCourseRankItemView = AdminCourseRankingItem;
+export type CourseCategoryDistributionItemView = AdminCategoryEnrollmentShare;
+export type PopularCoursesMetricsData = AdminCourseMetrics;
+
+export interface PopularCoursesSectionProps extends AdminCourseMetrics {
+  /** Estado do carregamento dos indicadores de cursos (`'loading' | 'success' | 'error'`). */
+  status?: LoadStatus;
+  /** Mensagem de falha exibida quando `status === 'error'`. */
+  errorMessage?: string | null;
+  /** Ação de nova tentativa disparada pelo botão "Tentar novamente". */
+  onRetry?: () => void;
   /** Cards exibidos antes do card "Curso Mais Acessado" na grade superior de KPIs. */
   kpiLeadingCards?: ReactNode;
   /** Cards exibidos após o card "Curso Mais Acessado" na grade superior de KPIs. */
