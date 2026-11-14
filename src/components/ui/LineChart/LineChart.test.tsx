@@ -25,6 +25,7 @@ const renderChart = (points: LineChartPoint[] = data) =>
 describe('LineChart', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('should draw one dot per item with its label on the horizontal axis', () => {
@@ -188,6 +189,56 @@ describe('LineChart', () => {
       const value = await screen.findByText('20h', { selector: 'strong' });
       expect(value.previousElementSibling).toHaveTextContent('Jun');
     });
+  });
+
+  it('keeps all six points and their summary when axis labels adapt to a narrow container', () => {
+    class NarrowResizeObserver {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+
+      observe(target: Element) {
+        this.callback(
+          [{ target, contentRect: { width: 180, height: 240 } } as ResizeObserverEntry],
+          this as unknown as ResizeObserver,
+        );
+      }
+
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('ResizeObserver', NarrowResizeObserver);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+      new DOMRect(0, 0, 42, 12),
+    );
+    const monthlyData = [
+      { label: 'jun. 26', value: 10 },
+      { label: 'jul. 26', value: 0 },
+      { label: 'ago. 26', value: 12 },
+      { label: 'set. 26', value: 13 },
+      { label: 'out. 26', value: 14 },
+      { label: 'nov. 26', value: 15 },
+    ];
+    const { container } = render(
+      <LineChart
+        data={monthlyData}
+        valueFormatter={formatHours}
+        height={240}
+        ariaLabel="Evolução mensal"
+        variant="minimal"
+        xAxisInterval="preserveStartEnd"
+      />,
+    );
+
+    expect(container.querySelectorAll('.recharts-line-dot')).toHaveLength(6);
+    expect(
+      screen.getByRole('img', {
+        name: 'Evolução mensal. jun. 26: 10h. jul. 26: 0h. ago. 26: 12h. set. 26: 13h. out. 26: 14h. nov. 26: 15h.',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('jun. 26', { selector: 'tspan' })).toBeInTheDocument();
+    expect(screen.getByText('nov. 26', { selector: 'tspan' })).toBeInTheDocument();
+    expect(
+      container.querySelectorAll('.recharts-xAxis .recharts-cartesian-axis-tick').length,
+    ).toBeLessThan(6);
   });
 
   it('should follow the container width and keep the given height', () => {
