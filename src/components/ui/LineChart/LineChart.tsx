@@ -28,6 +28,8 @@ export interface LineChartProps {
   ariaLabel: string;
   /** `default`: eixo vertical e grade sólida (US-35). `minimal`: sem eixo vertical e com grade tracejada (US-36). */
   variant?: LineChartVariant;
+  /** Adapta os rótulos ao espaço disponível sem remover pontos da série. */
+  xAxisInterval?: number | 'preserveStartEnd';
   emptyMessage?: string;
   className?: string;
 }
@@ -89,6 +91,7 @@ export const LineChart = ({
   height,
   ariaLabel,
   variant = 'default',
+  xAxisInterval = 0,
   emptyMessage = DEFAULT_EMPTY_MESSAGE,
   className = '',
 }: LineChartProps) => {
@@ -131,7 +134,7 @@ export const LineChart = ({
             tickLine={false}
             tick={variantStyles.xAxisTick}
             padding={variantStyles.xAxisPadding}
-            interval={0}
+            interval={xAxisInterval}
             tickSize={0}
             tickMargin={X_AXIS_TICK_GAP}
             height={X_AXIS_TICK_GAP + X_AXIS_LABEL_HEIGHT}
