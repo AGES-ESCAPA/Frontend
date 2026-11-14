@@ -4,7 +4,7 @@ import { formatMostAccessedCourseSubtitle } from '@utils/formatters';
 import type { PopularCoursesSectionProps } from '@/types/adminMetrics';
 import styles from './PopularCoursesSection.module.css';
 
-const DEFAULT_ERROR_MESSAGE = 'Não foi possível carregar as métricas de cursos.';
+const DEFAULT_ERROR_MESSAGE = 'Não foi possível carregar os indicadores de cursos.';
 const UNAVAILABLE_MESSAGE = 'Indicador indisponível.';
 const EMPTY_LEADER_MESSAGE = 'Nenhuma matrícula registrada';
 const EMPTY_DISTRIBUTION_MESSAGE = 'Nenhuma matrícula registrada por categoria.';
@@ -57,23 +57,6 @@ export const PopularCoursesSection = ({
       className={`${styles.section} ${className}`.trim()}
       aria-label="Indicadores de cursos mais populares"
     >
-      {status === 'error' ? (
-        <div className={styles.errorBanner}>
-          <p className={styles.errorMessage} role="alert">
-            {errorMessage ?? DEFAULT_ERROR_MESSAGE}
-          </p>
-          {onRetry ? (
-            <Button
-              type="button"
-              variant="primary"
-              label="Tentar novamente"
-              onClick={onRetry}
-              className={styles.retryButton}
-            />
-          ) : null}
-        </div>
-      ) : null}
-
       <div className={styles.kpiGrid}>
         {kpiLeadingCards}
         <SumCard
@@ -102,6 +85,25 @@ export const PopularCoursesSection = ({
         />
         {kpiTrailingCards}
       </div>
+
+      {/* Abaixo dos KPIs, junto dos blocos de cursos: os cards de alunos e empresas da mesma grade
+          têm carregamento e erro próprios. */}
+      {status === 'error' ? (
+        <div className={styles.errorBanner}>
+          <p className={styles.errorMessage} role="alert">
+            {errorMessage ?? DEFAULT_ERROR_MESSAGE}
+          </p>
+          {onRetry ? (
+            <Button
+              type="button"
+              variant="primary"
+              label="Tentar novamente"
+              onClick={onRetry}
+              className={styles.retryButton}
+            />
+          ) : null}
+        </div>
+      ) : null}
 
       <div
         className={`${styles.chartsGrid} ${hasMiddlePanel ? styles.chartsGridThreeCols : ''}`.trim()}

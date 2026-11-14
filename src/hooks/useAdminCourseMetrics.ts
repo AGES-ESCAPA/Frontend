@@ -7,7 +7,6 @@ export interface UseAdminCourseMetricsResult {
   metrics: AdminCourseMetrics | null;
   status: LoadStatus;
   errorMessage: string | null;
-  isEmpty: boolean;
   reload: () => void;
 }
 
@@ -34,7 +33,9 @@ export const useAdminCourseMetrics = (): UseAdminCourseMetricsResult => {
       setMetrics(null);
       setStatus('error');
       setErrorMessage(
-        error instanceof Error ? error.message : 'Não foi possível carregar as métricas de cursos.',
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível carregar os indicadores de cursos.',
       );
     }
   }, []);
@@ -53,9 +54,5 @@ export const useAdminCourseMetrics = (): UseAdminCourseMetricsResult => {
     void load(controller.signal);
   }, [load]);
 
-  const isEmpty =
-    status === 'success' &&
-    (metrics === null || metrics.mostAccessedCourse === null || metrics.topCourses.length === 0);
-
-  return { metrics, status, errorMessage, isEmpty, reload };
+  return { metrics, status, errorMessage, reload };
 };

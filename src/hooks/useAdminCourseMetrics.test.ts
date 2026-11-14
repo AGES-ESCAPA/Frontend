@@ -41,17 +41,15 @@ describe('useAdminCourseMetrics', () => {
 
     expect(result.current.status).toBe('loading');
     expect(result.current.metrics).toBeNull();
-    expect(result.current.isEmpty).toBe(false);
 
     await waitFor(() => expect(result.current.status).toBe('success'));
 
     expect(result.current.metrics).toEqual(MOCK_METRICS);
     expect(result.current.errorMessage).toBeNull();
-    expect(result.current.isEmpty).toBe(false);
     expect(adminMetricsService.getCourseMetrics).toHaveBeenCalledWith(expect.any(AbortSignal));
   });
 
-  it('marks isEmpty as true when the platform has no eligible enrollments', async () => {
+  it('resolves with the empty payload when the platform has no eligible enrollments', async () => {
     vi.mocked(adminMetricsService.getCourseMetrics).mockResolvedValue({
       mostAccessedCourse: null,
       topCourses: [],
@@ -63,8 +61,8 @@ describe('useAdminCourseMetrics', () => {
 
     await waitFor(() => expect(result.current.status).toBe('success'));
 
-    expect(result.current.isEmpty).toBe(true);
     expect(result.current.metrics?.mostAccessedCourse).toBeNull();
+    expect(result.current.metrics?.topCourses).toEqual([]);
   });
 
   it('exposes the error message and retries when reload is called', async () => {
@@ -94,7 +92,7 @@ describe('useAdminCourseMetrics', () => {
     const { result } = renderHook(() => useAdminCourseMetrics());
 
     await waitFor(() => expect(result.current.status).toBe('error'));
-    expect(result.current.errorMessage).toBe('Não foi possível carregar as métricas de cursos.');
+    expect(result.current.errorMessage).toBe('Não foi possível carregar os indicadores de cursos.');
   });
 
   it('aborts the in-flight request on unmount and ignores aborted responses', async () => {

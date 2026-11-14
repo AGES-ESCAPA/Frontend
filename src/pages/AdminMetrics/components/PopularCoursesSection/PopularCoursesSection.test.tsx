@@ -112,7 +112,7 @@ describe('PopularCoursesSection', () => {
     );
 
     expect(within(leaderCard).getByText('Hospitalidade Executiva')).toBeInTheDocument();
-    expect(within(leaderCard).getByText('Mais de 420 matrículas')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('420 matrículas')).toBeInTheDocument();
 
     rerender(
       <PopularCoursesSection
@@ -125,7 +125,7 @@ describe('PopularCoursesSection', () => {
       />,
     );
 
-    expect(within(leaderCard).getByText('Mais de 1 matrícula')).toBeInTheDocument();
+    expect(within(leaderCard).getByText('1 matrícula')).toBeInTheDocument();
   });
 
   it('renders independent loading skeletons for each of the three course blocks when status is loading', () => {
@@ -197,7 +197,7 @@ describe('PopularCoursesSection', () => {
 
     rerender(<PopularCoursesSection {...BASE_PROPS} status="error" errorMessage={null} />);
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Não foi possível carregar as métricas de cursos.',
+      'Não foi possível carregar os indicadores de cursos.',
     );
     expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
   });

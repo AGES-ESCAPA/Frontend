@@ -1,6 +1,9 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { adminMetricsService } from '@services/adminMetricsService';
 import { authService } from '@services/authService';
+import { adminMetricsService } from '@services/adminMetricsService';
+import type * as AdminMetricsServiceModule from '@services/adminMetricsService';
+import type { UseNotificationsResult } from '@hooks/useNotifications';
+import { zeroAdminMetricsOverview } from '@/test/adminMetricsFixtures';
 import type { AuthUser } from '@/types/auth';
 import { AppRouter } from './AppRouter';
 import type * as Recharts from 'recharts';
@@ -9,10 +12,20 @@ vi.mock('recharts', async (importOriginal) => ({
   ...(await importOriginal<typeof Recharts>()),
   ResponsiveContainer: (await import('@/test/FixedChartContainer')).FixedChartContainer,
 }));
-vi.mock('@services/adminMetricsService', () => ({
-  adminMetricsService: {
-    getCourseMetrics: vi.fn(),
-  },
+vi.mock('@services/adminMetricsService', async (importOriginal) => ({
+  ...(await importOriginal<typeof AdminMetricsServiceModule>()),
+  adminMetricsService: { getOverview: vi.fn(), getCourseMetrics: vi.fn() },
+}));
+vi.mock('@hooks/useNotifications', () => ({
+  useNotifications: (): UseNotificationsResult => ({
+    notifications: [],
+    unreadCount: 0,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
+  }),
 }));
 vi.mock('@pages/Login/Login', async () => {
   const { useLocation } = await import('react-router-dom');
@@ -48,12 +61,9 @@ const restoreSession = (user: AuthUser) => {
 
 describe('AppRouter — /admin/metricas', () => {
   beforeEach(() => {
-    vi.mocked(adminMetricsService.getCourseMetrics).mockReset().mockResolvedValue({
-      mostAccessedCourse: null,
-      topCourses: [],
-      categoriesCount: 0,
-      enrollmentsByCategory: [],
-    });
+    vi.mocked(adminMetricsService.getOverview)
+      .mockReset()
+      .mockResolvedValue(zeroAdminMetricsOverview);
     vi.mocked(adminMetricsService.getCourseMetrics).mockReset().mockResolvedValue({
       mostAccessedCourse: null,
       topCourses: [],
@@ -80,6 +90,8 @@ describe('AppRouter — /admin/metricas', () => {
     expect(screen.queryByRole('heading', { name: 'Página em construção' })).not.toBeInTheDocument();
     expect(authService.getCurrentUser).toHaveBeenCalledWith('test-token');
     expect(screen.getByRole('region', { name: 'Evolução de Alunos Ativos' })).toBeInTheDocument();
+    expect(await screen.findByText('0%')).toBeInTheDocument();
+    expect(adminMetricsService.getOverview).toHaveBeenCalledWith(expect.any(AbortSignal));
   });
 
   it('redirects anonymous visitors to login and preserves the requested URL', async () => {
@@ -89,6 +101,7 @@ describe('AppRouter — /admin/metricas', () => {
       await screen.findByText('Login: /admin/metricas?periodo=6#evolucao'),
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe('/login');
+    expect(adminMetricsService.getOverview).not.toHaveBeenCalled();
     expect(
       screen.queryByRole('heading', { name: 'Relatórios Gerais & Métricas' }),
     ).not.toBeInTheDocument();
@@ -102,6 +115,7 @@ describe('AppRouter — /admin/metricas', () => {
     restoreSession({ ...admin, role });
     render(<AppRouter />);
     await waitFor(() => expect(window.location.pathname).toBe(destination));
+    expect(adminMetricsService.getOverview).not.toHaveBeenCalled();
     expect(
       await screen.findByRole('heading', {
         name: role === 'COMPANY' ? 'Gestão de Funcionários' : 'Meus cursos',
@@ -117,6 +131,7 @@ describe('AppRouter — /admin/metricas', () => {
     vi.spyOn(authService, 'getCurrentUser').mockReturnValue(new Promise<AuthUser>(() => {}));
     render(<AppRouter />);
     expect(screen.getByRole('status', { name: 'Restaurando sessão' })).toBeInTheDocument();
+    expect(adminMetricsService.getOverview).not.toHaveBeenCalled();
     expect(window.location.pathname).toBe('/admin/metricas');
     expect(
       screen.queryByRole('heading', { name: 'Relatórios Gerais & Métricas' }),

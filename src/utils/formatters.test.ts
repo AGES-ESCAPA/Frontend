@@ -285,6 +285,13 @@ describe('formatCompactEnrollmentCount', () => {
     expect(formatCompactEnrollmentCount(12500)).toBe('12,5 mil');
   });
 
+  it('rounds down so the compact count never exceeds the real one', () => {
+    expect(formatCompactEnrollmentCount(4850)).toBe('4,8 mil');
+    expect(formatCompactEnrollmentCount(4960)).toBe('4,9 mil');
+    expect(formatCompactEnrollmentCount(999999)).toBe('999,9 mil');
+    expect(formatCompactEnrollmentCount(1250000)).toBe('1,2 mi');
+  });
+
   it('clamps negative, fractional or non-finite values safely to zero or integer', () => {
     expect(formatCompactEnrollmentCount(-25)).toBe('0');
     expect(formatCompactEnrollmentCount(Number.NaN)).toBe('0');
@@ -294,15 +301,21 @@ describe('formatCompactEnrollmentCount', () => {
 });
 
 describe('formatMostAccessedCourseSubtitle', () => {
-  it('returns the compact enrollment subtitle for counts of 1000 or more', () => {
+  it('says "Mais de" when the compact notation hides part of the count', () => {
     expect(formatMostAccessedCourseSubtitle(4820)).toBe('Mais de 4,8 mil matrículas');
-    expect(formatMostAccessedCourseSubtitle(1000)).toBe('Mais de 1 mil matrículas');
+    expect(formatMostAccessedCourseSubtitle(4960)).toBe('Mais de 4,9 mil matrículas');
+    expect(formatMostAccessedCourseSubtitle(999999)).toBe('Mais de 999,9 mil matrículas');
   });
 
-  it('returns singular and plural subtitles for counts below 1000', () => {
-    expect(formatMostAccessedCourseSubtitle(1)).toBe('Mais de 1 matrícula');
-    expect(formatMostAccessedCourseSubtitle(420)).toBe('Mais de 420 matrículas');
-    expect(formatMostAccessedCourseSubtitle(0)).toBe('Mais de 0 matrículas');
-    expect(formatMostAccessedCourseSubtitle(Number.NaN)).toBe('Mais de 0 matrículas');
+  it('shows the exact count when the compact notation is exact', () => {
+    expect(formatMostAccessedCourseSubtitle(1000)).toBe('1 mil matrículas');
+    expect(formatMostAccessedCourseSubtitle(4800)).toBe('4,8 mil matrículas');
+  });
+
+  it('shows the exact count with singular and plural below 1000', () => {
+    expect(formatMostAccessedCourseSubtitle(1)).toBe('1 matrícula');
+    expect(formatMostAccessedCourseSubtitle(420)).toBe('420 matrículas');
+    expect(formatMostAccessedCourseSubtitle(0)).toBe('0 matrículas');
+    expect(formatMostAccessedCourseSubtitle(Number.NaN)).toBe('0 matrículas');
   });
 });

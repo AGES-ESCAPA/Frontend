@@ -24,11 +24,6 @@ export interface AdminCourseMetrics {
   enrollmentsByCategory: AdminCategoryEnrollmentShare[];
 }
 
-export type PopularCourseLeaderView = AdminCourseRankingItem;
-export type PopularCourseRankItemView = AdminCourseRankingItem;
-export type CourseCategoryDistributionItemView = AdminCategoryEnrollmentShare;
-export type PopularCoursesMetricsData = AdminCourseMetrics;
-
 export interface PopularCoursesSectionProps extends AdminCourseMetrics {
   /** Estado do carregamento dos indicadores de cursos (`'loading' | 'success' | 'error'`). */
   status?: LoadStatus;
@@ -45,4 +40,18 @@ export interface PopularCoursesSectionProps extends AdminCourseMetrics {
   /** Painel inferior exibido abaixo da linha de distribuição e rankings. */
   bottomPanel?: ReactNode;
   className?: string;
+}
+
+export interface AdminMetricsMonthlyActiveStudents {
+  /** Mês-calendário no formato YYYY-MM. */
+  month: string;
+  activeStudents: number;
+}
+
+export interface AdminMetricsOverview {
+  activeStudents: number;
+  partnerCompanies: number;
+  /** Percentual de 0 a 100: 68 representa 68%. */
+  averageCompletionRate: number;
+  activeStudentsByMonth: AdminMetricsMonthlyActiveStudents[];
 }
