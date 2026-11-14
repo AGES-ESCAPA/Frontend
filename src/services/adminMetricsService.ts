@@ -12,11 +12,14 @@ const INVALID_RESPONSE_MESSAGE =
 
 export class AdminMetricsServiceError extends Error {
   readonly status: number;
+  /** Mensagem original da API, só para diagnóstico: vem em inglês e não é exibida na tela. */
+  readonly serverMessage: string | null;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, serverMessage: string | null = null) {
     super(message);
     this.name = 'AdminMetricsServiceError';
     this.status = status;
+    this.serverMessage = serverMessage;
   }
 }
 
@@ -26,22 +29,16 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 
-const monthIndex = (value: unknown): number | null => {
-  if (typeof value !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return null;
-  return Number(value.slice(0, 4)) * 12 + Number(value.slice(5)) - 1;
-};
+const isMonth = (value: unknown): boolean =>
+  typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 
-const isMonthlySeries = (value: unknown): boolean => {
-  if (!Array.isArray(value) || value.length !== 6) return false;
-  let previousIndex: number | null = null;
-  for (const item of value) {
-    if (!isRecord(item) || !isCount(item.activeStudents)) return false;
-    const index = monthIndex(item.month);
-    if (index === null || (previousIndex !== null && index !== previousIndex + 1)) return false;
-    previousIndex = index;
-  }
-  return true;
-};
+/**
+ * Valida só o formato de cada mês. Quantidade e sequência ficam com o gráfico: uma série diferente
+ * do esperado não pode derrubar os cards de alunos e empresas, que vêm na mesma resposta.
+ */
+const isMonthlySeries = (value: unknown): boolean =>
+  Array.isArray(value) &&
+  value.every((item) => isRecord(item) && isMonth(item.month) && isCount(item.activeStudents));
 
 const isOverviewResponse = (
   value: unknown,
@@ -75,7 +72,8 @@ export const adminMetricsService = {
     if (!response.ok) {
       throw new AdminMetricsServiceError(
         response.status,
-        (await readApiErrorMessage(response)) ?? HTTP_ERROR_MESSAGE,
+        HTTP_ERROR_MESSAGE,
+        await readApiErrorMessage(response),
       );
     }
 

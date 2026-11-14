@@ -59,6 +59,20 @@ describe('adminMetricsService.getOverview', () => {
     expect(await adminMetricsService.getOverview()).toEqual(data);
   });
 
+  it.each([
+    ['an empty series', []],
+    ['a shorter series', adminMetricsOverview.activeStudentsByMonth.slice(1)],
+    [
+      'a longer series',
+      [{ month: '2026-05', activeStudents: 8000 }, ...adminMetricsOverview.activeStudentsByMonth],
+    ],
+    ['months out of order', [...adminMetricsOverview.activeStudentsByMonth].reverse()],
+  ])('keeps the counters available with %s', async (_name, activeStudentsByMonth) => {
+    const data = { ...adminMetricsOverview, activeStudentsByMonth };
+    fetchMock.mockResolvedValue(jsonResponse({ success: true, data }));
+    expect(await adminMetricsService.getOverview()).toEqual(data);
+  });
+
   it('reports network failures with status zero and a connection message', async () => {
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
     await expect(adminMetricsService.getOverview()).rejects.toMatchObject({
@@ -68,22 +82,24 @@ describe('adminMetricsService.getOverview', () => {
     });
   });
 
-  it('preserves the HTTP status and API error message', async () => {
+  it('keeps the API error message for diagnosis without showing it', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ message: 'Access denied: user is not ADMIN' }, 403));
     await expect(adminMetricsService.getOverview()).rejects.toMatchObject({
       name: 'AdminMetricsServiceError',
       status: 403,
-      message: 'Access denied: user is not ADMIN',
+      message: fallback,
+      serverMessage: 'Access denied: user is not ADMIN',
     });
   });
 
   it.each([{}, { message: '' }, { message: '   ' }, { message: 42 }])(
-    'uses a fallback for an HTTP error with no usable message: %j',
+    'has no server message for an HTTP error with no usable message: %j',
     async (body) => {
       fetchMock.mockResolvedValue(jsonResponse(body, 503));
       await expect(adminMetricsService.getOverview()).rejects.toMatchObject({
         status: 503,
         message: fallback,
+        serverMessage: null,
       });
     },
   );
@@ -93,6 +109,7 @@ describe('adminMetricsService.getOverview', () => {
     await expect(adminMetricsService.getOverview()).rejects.toMatchObject({
       status: 502,
       message: fallback,
+      serverMessage: null,
     });
   });
 
@@ -136,11 +153,6 @@ describe('adminMetricsService.getOverview', () => {
     ['rate above 100', { averageCompletionRate: 101 }],
     ['null rate', { averageCompletionRate: null }],
     ['non-array series', { activeStudentsByMonth: {} }],
-    ['empty series', { activeStudentsByMonth: [] }],
-    [
-      'incomplete series',
-      { activeStudentsByMonth: adminMetricsOverview.activeStudentsByMonth.slice(1) },
-    ],
     [
       'null month item',
       { activeStudentsByMonth: [null, ...adminMetricsOverview.activeStudentsByMonth.slice(1)] },
@@ -153,19 +165,6 @@ describe('adminMetricsService.getOverview', () => {
           ...adminMetricsOverview.activeStudentsByMonth.slice(1),
         ],
       },
-    ],
-    [
-      'duplicate month',
-      {
-        activeStudentsByMonth: [
-          adminMetricsOverview.activeStudentsByMonth[1],
-          ...adminMetricsOverview.activeStudentsByMonth.slice(1),
-        ],
-      },
-    ],
-    [
-      'unordered months',
-      { activeStudentsByMonth: [...adminMetricsOverview.activeStudentsByMonth].reverse() },
     ],
     [
       'invalid monthly count',
