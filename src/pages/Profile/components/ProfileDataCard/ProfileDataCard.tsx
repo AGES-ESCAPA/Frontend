@@ -234,6 +234,7 @@ export const ProfileDataCard = ({ profile, onSaved, onNotify }: ProfileDataCardP
               <Button
                 type="submit"
                 variant="primary"
+                size="sm"
                 label={profile.editable ? 'Salvar Alterações' : 'Salvar Foto'}
                 isLoading={isSaving}
                 disabled={!canSave}

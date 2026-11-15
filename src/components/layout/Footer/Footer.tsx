@@ -52,7 +52,7 @@ export const Footer = ({
   categories = defaultCategories,
   year = getCurrentYear(),
 }: FooterProps) => {
-  const copyright = `© ${year} Escapa! Cursos. Todos os direitos reservados.`;
+  const copyright = `© ${year} Escapa! Academy. Todos os direitos reservados.`;
 
   if (variant === 'compact') {
     return (

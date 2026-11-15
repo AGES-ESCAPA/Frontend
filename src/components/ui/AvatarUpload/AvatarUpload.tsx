@@ -88,6 +88,7 @@ export const AvatarUpload = ({
     <Button
       type="button"
       variant={compact ? 'ghost' : 'secondary'}
+      size={compact ? 'md' : 'sm'}
       className={compact ? styles.changePhoto : undefined}
       label="Alterar foto"
       icon={<Camera size={compact ? 16 : 18} />}

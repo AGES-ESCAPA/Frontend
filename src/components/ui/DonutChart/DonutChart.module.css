@@ -1,0 +1,106 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+/* A margem negativa desconta a folga interna do gráfico: a caixa fica do tamanho do anel. */
+.compact {
+  width: var(--donut-size-compact);
+  margin: calc(var(--space-3) * -1);
+}
+
+.chart {
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  max-width: var(--container-sm);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+.distribution {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--container-xs), 100%), 1fr));
+  align-items: center;
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  pointer-events: none;
+  text-align: center;
+}
+
+.center > * {
+  max-width: 62%;
+  overflow-wrap: anywhere;
+}
+
+.centerValue {
+  color: var(--color-text-primary);
+  font-size: clamp(var(--text-body-4), var(--donut-center-value-fluid), var(--text-h3));
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-h3--line-height);
+}
+
+.compact .centerValue {
+  font-size: var(--text-h6);
+}
+
+.centerLabel {
+  color: var(--color-text-muted);
+  font-size: clamp(var(--text-body-5), var(--donut-center-label-fluid), var(--text-body-4));
+  line-height: var(--text-body-4--line-height);
+}
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  text-align: center;
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--container-xs), 100%), 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legendItem {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+}
+
+.legendItem span {
+  overflow-wrap: anywhere;
+}
+
+.legendSwatch {
+  flex: 0 0 var(--space-3);
+  width: var(--space-3);
+  height: var(--space-3);
+  margin-block-start: calc((var(--text-body-4--line-height) - var(--space-3)) / 2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}

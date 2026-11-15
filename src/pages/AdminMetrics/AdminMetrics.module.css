@@ -1,0 +1,137 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+  font-family: var(--font-family-base);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--text-h4--line-height);
+  overflow-wrap: anywhere;
+}
+
+.description {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.summaryCard {
+  justify-content: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.chartPanel {
+  min-width: 0;
+}
+
+.completionRegion {
+  display: grid;
+  min-width: 0;
+}
+
+.completionPanel {
+  background-color: var(--color-primary-700);
+}
+
+/* Altera o token do trilho somente nesta rosca, preservando o componente compartilhado. */
+.completionDonut {
+  --color-primary-700: var(--color-primary-800);
+}
+
+.completionBody {
+  display: grid;
+  place-items: center;
+  min-height: var(--donut-size-compact);
+}
+
+.evolutionBody {
+  display: grid;
+  align-items: center;
+  min-width: 0;
+  min-height: calc(var(--space-20) * 3);
+}
+
+.skeleton {
+  max-width: 100%;
+  background-color: var(--color-primary-600);
+  border-radius: var(--radius-md);
+}
+
+.countSkeleton {
+  width: calc(var(--space-20) * 2);
+  height: var(--text-h3);
+}
+
+.donutSkeleton {
+  width: var(--donut-size-compact);
+  height: var(--donut-size-compact);
+  border-radius: var(--radius-full);
+}
+
+.lineSkeleton {
+  width: 100%;
+  height: calc(var(--space-20) * 3);
+}
+
+.errorState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.retryButton {
+  min-height: var(--touch-target-min);
+}
+
+.rankingList {
+  gap: var(--space-2);
+}
+
+.rankingList > li {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.rankingList > li:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.rankingList > li > span {
+  background-color: var(--color-neutral-800);
+  border-radius: var(--radius-sm);
+}
+
+.rankingList div[role='progressbar'] {
+  height: var(--space-2);
+  background-color: var(--color-primary-700);
+}
+
+@media (width < 64rem) {
+  .completionRegion {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (width < 40rem) {
+  .page {
+    gap: var(--space-4);
+  }
+
+  .chartPanel {
+    --panel-padding: var(--space-5);
+  }
+}

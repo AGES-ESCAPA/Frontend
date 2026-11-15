@@ -283,3 +283,52 @@ export const formatDateTime = (localDateTime: string): string => {
 
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(date);
 };
+
+const COMPACT_PT_BR_FORMATTER = new Intl.NumberFormat('pt-BR', {
+  notation: 'compact',
+  compactDisplay: 'short',
+  maximumFractionDigits: 1,
+});
+
+const toSafeCount = (count: number): number =>
+  Number.isFinite(count) ? Math.max(0, Math.trunc(count)) : 0;
+
+/**
+ * Arredonda para baixo na casa decimal que a notação compacta mostra (4.860 -> 4.800, "4,8 mil"):
+ * o Intl arredonda para o mais próximo e faria 4.960 virar "5 mil", mais do que o real.
+ */
+const floorToCompactPrecision = (count: number): number => {
+  const step = 10 ** (Math.floor(Math.log10(count) / 3) * 3 - 1);
+  return Math.floor(count / step) * step;
+};
+
+/**
+ * Formata contagens inteiras de matrículas:
+ * - Abaixo de 1.000: número integral (ex: 850 -> "850")
+ * - A partir de 1.000: notação compacta pt-BR, sempre arredondada para baixo (ex: 4960 -> "4,9 mil")
+ */
+export const formatCompactEnrollmentCount = (count: number): string => {
+  const safeCount = toSafeCount(count);
+
+  if (safeCount < 1000) {
+    return safeCount.toLocaleString('pt-BR');
+  }
+
+  // Remove espaço não-quebrável (\u00a0) gerado pelo Intl em alguns ambientes (Node/jsdom)
+  // para garantir comparação consistente em tela e testes ("4,8 mil").
+  return COMPACT_PT_BR_FORMATTER.format(floorToCompactPrecision(safeCount)).replace(/\u00a0/g, ' ');
+};
+
+/**
+ * Gera a linha de apoio do card "Curso Mais Acessado". O "Mais de" só aparece quando a notação
+ * compacta esconde parte do número; nos demais casos a contagem é exata.
+ * Ex: 4820 -> "Mais de 4,8 mil matrículas" | 4800 -> "4,8 mil matrículas" | 1 -> "1 matrícula"
+ */
+export const formatMostAccessedCourseSubtitle = (enrollments: number): string => {
+  const safeCount = toSafeCount(enrollments);
+  const formatted = formatCompactEnrollmentCount(safeCount);
+  const noun = safeCount === 1 ? 'matrícula' : 'matrículas';
+  const isApproximate = safeCount >= 1000 && floorToCompactPrecision(safeCount) < safeCount;
+
+  return isApproximate ? `Mais de ${formatted} ${noun}` : `${formatted} ${noun}`;
+};

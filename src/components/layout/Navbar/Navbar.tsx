@@ -106,7 +106,7 @@ export const Navbar = ({
             <img src={logo} alt="escapa!" />
           </a>
           <span className={styles.divider} aria-hidden="true" />
-          <span className={styles.context}>cursos</span>
+          <span className={styles.context}>academy</span>
         </div>
       )}
 

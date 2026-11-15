@@ -31,7 +31,14 @@ export interface CourseCardProps {
   onClick: (id: string) => void;
   /** Abre o curso adquirido. Se omitido, o botão Acessar reutiliza `onClick`. */
   onAccess?: (id: string) => void;
+  /** Mostra o botão Acessar no curso adquirido (padrão: sim). A empresa não assiste aos cursos. */
+  showAccess?: boolean;
+  /** Colaboradores com acesso ao curso (visão da empresa): ocupa o lugar do preço e do Acessar. */
+  employeesWithAccess?: number;
 }
+
+const formatEmployeesWithAccess = (count: number): string =>
+  count === 1 ? '1 colaborador com acesso' : `${count} colaboradores com acesso`;
 
 export const CourseCard = ({
   id,
@@ -50,6 +57,8 @@ export const CourseCard = ({
   variant = 'default',
   onClick,
   onAccess,
+  showAccess = true,
+  employeesWithAccess,
 }: CourseCardProps) => {
   const [imageError, setImageError] = useState(false);
   const showPlaceholder = imageError || !imageUrl;
@@ -74,6 +83,32 @@ export const CourseCard = ({
       event.preventDefault();
       onClick(id);
     }
+  };
+
+  // O que ocupa o fim do rodapé: contagem da empresa, preço ou acesso ao curso adquirido.
+  const renderFooterEnd = () => {
+    if (employeesWithAccess !== undefined) {
+      return (
+        <span className={styles.employees}>{formatEmployeesWithAccess(employeesWithAccess)}</span>
+      );
+    }
+    if (!acquired) {
+      return <span className={styles.price}>{price}</span>;
+    }
+    if (!showAccess) {
+      return null;
+    }
+    return (
+      <Button
+        type="button"
+        label="Acessar"
+        variant="ghost-dark"
+        className={styles.accessButton}
+        aria-label={`Acessar o curso ${title}`}
+        onClick={handleAccessClick}
+        onKeyDown={handleAccessKeyDown}
+      />
+    );
   };
 
   const card = (
@@ -139,19 +174,7 @@ export const CourseCard = ({
         {variant !== 'certificate' && (
           <div className={styles.footer}>
             <span className={styles.instructor}>{instructor}</span>
-            {acquired ? (
-              <Button
-                type="button"
-                label="Acessar"
-                variant="ghost-dark"
-                className={styles.accessButton}
-                aria-label={`Acessar o curso ${title}`}
-                onClick={handleAccessClick}
-                onKeyDown={handleAccessKeyDown}
-              />
-            ) : (
-              <span className={styles.price}>{price}</span>
-            )}
+            {renderFooterEnd()}
           </div>
         )}
       </div>

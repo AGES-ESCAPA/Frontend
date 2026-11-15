@@ -1,0 +1,1 @@
+export { PopularCoursesSection } from './PopularCoursesSection';

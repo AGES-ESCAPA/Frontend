@@ -40,6 +40,7 @@ export default defineConfig({
         'src/data/courses.ts',
         'src/data/courseNavigation.ts',
         'src/pages/MyCourses/mockCourses.ts',
+        'src/pages/AdminMetrics/mockCourseMetrics.ts',
       ],
     },
   },
