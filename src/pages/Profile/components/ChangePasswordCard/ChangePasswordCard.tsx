@@ -109,7 +109,13 @@ export const ChangePasswordCard = ({ onNotify }: ChangePasswordCardProps) => {
         </div>
 
         <div className={styles.actions}>
-          <Button type="submit" variant="primary" label="Alterar Senha" isLoading={isSaving} />
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            label="Alterar Senha"
+            isLoading={isSaving}
+          />
         </div>
       </form>
     </Panel>

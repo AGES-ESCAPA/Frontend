@@ -238,3 +238,10 @@
     animation: none;
   }
 }
+
+/* Mesma altura dos botões size="sm" ao lado. */
+.search input {
+  padding-block: var(--space-2);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}

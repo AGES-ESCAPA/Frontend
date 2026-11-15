@@ -209,6 +209,46 @@ describe('CompanyEmployees', () => {
     }
   });
 
+  it('navega entre as páginas pelos botões Próxima e Anterior', async () => {
+    const user = userEvent.setup();
+
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'Anterior' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Próxima' }));
+
+    expect(employeesMock).toHaveBeenLastCalledWith('', 1);
+    expect(screen.getByText('Página 2 de 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Anterior' }));
+
+    expect(employeesMock).toHaveBeenLastCalledWith('', 0);
+    expect(screen.getByText('Página 1 de 2')).toBeInTheDocument();
+  });
+
+  it('volta para a última página existente quando a página atual deixa de existir', async () => {
+    const user = userEvent.setup();
+    let totalPages = 2;
+    employeesMock.mockImplementation(() => ({ ...employeesResult, totalPages }));
+
+    const { rerender } = renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Próxima' }));
+    expect(employeesMock).toHaveBeenLastCalledWith('', 1);
+
+    // O último colaborador da segunda página foi desvinculado: a lista agora tem uma página só.
+    totalPages = 1;
+    rerender(
+      <MemoryRouter>
+        <CompanyEmployees />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(employeesMock).toHaveBeenLastCalledWith('', 0));
+  });
+
   it('mostra mensagem de primeiro cadastro para empresa vazia', () => {
     employeesMock.mockReturnValue({
       ...employeesResult,

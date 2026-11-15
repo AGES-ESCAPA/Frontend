@@ -137,6 +137,16 @@
   background-color: var(--color-danger-surface-hover);
 }
 
+/* ── Sizes ─────────────────────────────────────────────────────────── */
+/* sm — texto de 14px e 40px de altura; o padrão (md) usa 18px e 44px. */
+.sizeSm {
+  gap: var(--space-2);
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
 /* ── Disabled State ────────────────────────────────────────────────── */
 .disabled {
   opacity: 0.5;

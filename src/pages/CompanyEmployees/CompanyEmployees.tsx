@@ -258,6 +258,7 @@ export const CompanyEmployees = () => {
           <Button
             type="button"
             variant="secondary"
+            size="sm"
             label="Atualizar dados"
             icon={<RefreshCw size={18} aria-hidden="true" />}
             onClick={reloadAll}
@@ -271,6 +272,7 @@ export const CompanyEmployees = () => {
               <p>{seatsError}</p>
               <Button
                 type="button"
+                size="sm"
                 label="Tentar novamente"
                 aria-label="Tentar carregar as vagas novamente"
                 variant="outlined"
@@ -320,6 +322,7 @@ export const CompanyEmployees = () => {
               <Button
                 type="button"
                 variant="primary"
+                size="sm"
                 label="Cadastrar Colaborador"
                 icon={<UserPlus size={18} aria-hidden="true" />}
                 onClick={openCreateForm}
@@ -354,6 +357,7 @@ export const CompanyEmployees = () => {
               <Button
                 type="button"
                 variant="outlined"
+                size="sm"
                 label="Tentar novamente"
                 aria-label="Tentar carregar os colaboradores novamente"
                 onClick={reloadEmployees}
@@ -401,6 +405,7 @@ export const CompanyEmployees = () => {
                   <Button
                     type="button"
                     variant="outlined"
+                    size="sm"
                     label="Anterior"
                     disabled={page === 0 || isLoadingEmployees}
                     onClick={() => setPage((current) => Math.max(0, current - 1))}
@@ -411,6 +416,7 @@ export const CompanyEmployees = () => {
                   <Button
                     type="button"
                     variant="outlined"
+                    size="sm"
                     label="Próxima"
                     disabled={page + 1 >= totalPages || isLoadingEmployees}
                     onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}

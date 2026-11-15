@@ -83,6 +83,7 @@ export const AvatarUpload = ({
       <Button
         type="button"
         variant="secondary"
+        size="sm"
         label="Alterar foto"
         icon={<Camera size={18} />}
         onClick={handleButtonClick}
