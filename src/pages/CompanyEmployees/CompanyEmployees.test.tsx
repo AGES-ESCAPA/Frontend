@@ -30,6 +30,7 @@ vi.mock('@services/companyEmployeeService', async (importOriginal) => {
     companyEmployeeService: {
       ...actual.companyEmployeeService,
       createEmployee: vi.fn(),
+      updateEmployee: vi.fn(),
       resendInvite: vi.fn(),
       unlinkEmployee: vi.fn(),
     },
@@ -328,22 +329,240 @@ describe('CompanyEmployees', () => {
     expect(reloadEmployees).toHaveBeenCalledOnce();
   });
 
-  it('informa que a edição ainda não está disponível, sem chamar API de escrita', async () => {
-    const user = userEvent.setup();
+  describe('edição de colaborador', () => {
+    const updateMock = () => vi.mocked(companyEmployeeService.updateEmployee);
 
-    renderPage();
+    const updated = {
+      id: 'employee-1',
+      name: 'Ana Paula Souza',
+      email: 'ana.souza@empresa.com.br',
+      jobTitle: 'Gerente',
+      status: 'ACTIVE' as const,
+      assignedCourses: 3,
+      avatarUrl: null,
+      inviteSent: null,
+    };
 
-    await user.click(
-      screen.getByRole('button', {
-        name: 'Editar colaborador',
-      }),
-    );
+    const openEdit = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.click(screen.getByRole('button', { name: 'Editar colaborador' }));
+      return screen.getByRole('dialog', { name: 'Editar Colaborador' });
+    };
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Edição de Ana Paula Ferreira estará disponível em breve.',
-    );
-    expect(companyEmployeeService.createEmployee).not.toHaveBeenCalled();
-    expect(companyEmployeeService.resendInvite).not.toHaveBeenCalled();
+    const replaceText = async (
+      user: ReturnType<typeof userEvent.setup>,
+      name: string,
+      value: string,
+    ) => {
+      const field = screen.getByRole('textbox', { name });
+      await user.clear(field);
+      await user.type(field, value);
+    };
+
+    it('abre o modal preenchido com os dados atuais do colaborador', async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await openEdit(user);
+
+      expect(screen.getByRole('textbox', { name: 'Nome completo' })).toHaveValue(
+        'Ana Paula Ferreira',
+      );
+      expect(screen.getByRole('textbox', { name: 'E-mail corporativo' })).toHaveValue(
+        'ana@empresa.com.br',
+      );
+      expect(screen.getByRole('textbox', { name: 'Cargo' })).toHaveValue('Recepção');
+      expect(screen.getByRole('combobox', { name: 'Status do acesso' })).toHaveValue('active');
+      expect(companyEmployeeService.updateEmployee).not.toHaveBeenCalled();
+    });
+
+    it('salva a edição pela API, fecha o modal, recarrega resumo e lista e confirma', async () => {
+      const user = userEvent.setup();
+      updateMock().mockResolvedValueOnce(updated);
+      renderPage();
+
+      await openEdit(user);
+      await replaceText(user, 'Nome completo', 'Ana Paula Souza');
+      await replaceText(user, 'E-mail corporativo', 'ana.souza@empresa.com.br');
+      await replaceText(user, 'Cargo', 'Gerente');
+      await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      await waitFor(() =>
+        expect(companyEmployeeService.updateEmployee).toHaveBeenCalledWith('employee-1', {
+          name: 'Ana Paula Souza',
+          email: 'ana.souza@empresa.com.br',
+          jobTitle: 'Gerente',
+          status: 'ACTIVE',
+        }),
+      );
+      expect(await screen.findByText('Colaborador atualizado')).toBeInTheDocument();
+      expect(screen.getByText('Os dados de Ana Paula Souza foram salvos.')).toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'Editar Colaborador' })).not.toBeInTheDocument();
+      expect(reloadSeats).toHaveBeenCalled();
+      expect(reloadEmployees).toHaveBeenCalled();
+      expect(companyEmployeeService.createEmployee).not.toHaveBeenCalled();
+    });
+
+    it('envia INACTIVE ao trocar o status e recarrega os cards para atualizar os ativos', async () => {
+      const user = userEvent.setup();
+      updateMock().mockResolvedValueOnce({ ...updated, status: 'INACTIVE' });
+      renderPage();
+
+      await openEdit(user);
+      await user.selectOptions(
+        screen.getByRole('combobox', { name: 'Status do acesso' }),
+        'inactive',
+      );
+      await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      await waitFor(() =>
+        expect(companyEmployeeService.updateEmployee).toHaveBeenCalledWith(
+          'employee-1',
+          expect.objectContaining({ status: 'INACTIVE' }),
+        ),
+      );
+      await waitFor(() => expect(reloadSeats).toHaveBeenCalled());
+      expect(reloadEmployees).toHaveBeenCalled();
+    });
+
+    it('colaborador pendente só pode ficar pendente ou ser inativado, e pendente vai como ACTIVE', async () => {
+      const user = userEvent.setup();
+      employeesMock.mockReturnValue({
+        ...employeesResult,
+        employees: [{ ...employeesResult.employees[0], status: 'PENDING' }],
+      });
+      updateMock().mockResolvedValueOnce({ ...updated, status: 'PENDING' });
+      renderPage();
+
+      await openEdit(user);
+      const status = screen.getByRole('combobox', { name: 'Status do acesso' });
+      expect(status).toHaveValue('pending');
+      expect(
+        Array.from(status.querySelectorAll('option')).map((option) => option.textContent),
+      ).toEqual(['Pendente', 'Inativo']);
+      await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      await waitFor(() =>
+        expect(companyEmployeeService.updateEmployee).toHaveBeenCalledWith(
+          'employee-1',
+          expect.objectContaining({ status: 'ACTIVE' }),
+        ),
+      );
+    });
+
+    it('avisa quando um novo convite foi enviado para o e-mail trocado', async () => {
+      const user = userEvent.setup();
+      updateMock().mockResolvedValueOnce({ ...updated, status: 'PENDING', inviteSent: true });
+      renderPage();
+
+      await openEdit(user);
+      await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(
+        await screen.findByText(
+          'Os dados de Ana Paula Souza foram salvos e um novo convite foi enviado para o e-mail informado.',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it('oferece reenviar o convite quando o e-mail do novo convite falha', async () => {
+      const user = userEvent.setup();
+      updateMock().mockResolvedValueOnce({ ...updated, status: 'PENDING', inviteSent: false });
+      vi.mocked(companyEmployeeService.resendInvite).mockResolvedValueOnce({
+        id: 'employee-1',
+        email: 'ana.souza@empresa.com.br',
+        inviteSent: true,
+      });
+      renderPage();
+
+      await openEdit(user);
+      await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(
+        await screen.findByText('Colaborador atualizado, convite não enviado'),
+      ).toBeInTheDocument();
+      await user.click(screen.getByText('Reenviar convite'));
+      await waitFor(() =>
+        expect(companyEmployeeService.resendInvite).toHaveBeenCalledWith('employee-1'),
+      );
+    });
+
+    it('mostra o e-mail em uso (409) no campo de e-mail e mantém o que foi digitado', async () => {
+      const user = userEvent.setup();
+      updateMock().mockRejectedValueOnce(
+        new CompanyEmployeeServiceError(409, 'Este e-mail já está cadastrado.'),
+      );
+      renderPage();
+
+      await openEdit(user);
+      await replaceText(user, 'E-mail corporativo', 'outra@empresa.com.br');
+      await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(await screen.findByText('Este e-mail já está cadastrado.')).toBeInTheDocument();
+      const emailField = screen.getByRole('textbox', { name: 'E-mail corporativo' });
+      expect(emailField).toHaveAttribute('aria-invalid', 'true');
+      expect(emailField).toHaveValue('outra@empresa.com.br');
+      expect(screen.getByRole('dialog', { name: 'Editar Colaborador' })).toBeInTheDocument();
+      expect(reloadEmployees).not.toHaveBeenCalled();
+    });
+
+    it('404 informa que o colaborador não foi encontrado, fecha o modal e recarrega a lista', async () => {
+      const user = userEvent.setup();
+      updateMock().mockRejectedValueOnce(
+        new CompanyEmployeeServiceError(
+          404,
+          'Colaborador não encontrado. Ele pode ter sido desvinculado da empresa.',
+        ),
+      );
+      renderPage();
+
+      await openEdit(user);
+      await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(await screen.findByText('Colaborador não encontrado')).toBeInTheDocument();
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('dialog', { name: 'Editar Colaborador' }),
+        ).not.toBeInTheDocument(),
+      );
+      expect(reloadEmployees).toHaveBeenCalled();
+      expect(reloadSeats).toHaveBeenCalled();
+    });
+
+    it('mantém o que foi digitado após uma falha de rede', async () => {
+      const user = userEvent.setup();
+      updateMock().mockRejectedValueOnce(
+        new CompanyEmployeeServiceError(
+          0,
+          'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
+        ),
+      );
+      renderPage();
+
+      await openEdit(user);
+      await replaceText(user, 'Nome completo', 'Ana Paula Souza');
+      await replaceText(user, 'Cargo', 'Gerente');
+      await user.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Não foi possível conectar ao servidor.',
+      );
+      expect(screen.getByRole('dialog', { name: 'Editar Colaborador' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Nome completo' })).toHaveValue('Ana Paula Souza');
+      expect(screen.getByRole('textbox', { name: 'Cargo' })).toHaveValue('Gerente');
+      expect(reloadEmployees).not.toHaveBeenCalled();
+    });
+
+    it('abre o cadastro vazio depois de uma edição', async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await openEdit(user);
+      await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+      await user.click(screen.getByRole('button', { name: 'Cadastrar Colaborador' }));
+
+      expect(screen.getByRole('dialog', { name: 'Cadastrar Colaborador' })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Nome completo' })).toHaveValue('');
+    });
   });
 
   it('cadastra um colaborador pela API e atualiza os dados da tela', async () => {
