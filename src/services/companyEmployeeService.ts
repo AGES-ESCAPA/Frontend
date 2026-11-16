@@ -2,6 +2,7 @@ import { authenticatedFetch, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 import type {
+  CompanyEmployee,
   CompanyEmployeePage,
   CompanyEmployeeStatus,
   CompanySeats,
@@ -12,13 +13,19 @@ export const COMPANY_EMPLOYEES_PAGE_SIZE = 10;
 export const NO_SEATS_AVAILABLE_MESSAGE =
   'Não há vagas disponíveis. Compre mais assentos para cadastrar um colaborador.';
 
+export const EMAIL_IN_USE_MESSAGE = 'Este e-mail já está cadastrado.';
+export const EMPLOYEE_NOT_FOUND_MESSAGE =
+  'Colaborador não encontrado. Ele pode ter sido desvinculado da empresa.';
+
+type ErrorContext = 'resendInvite' | 'updateEmployee';
+
 const NETWORK_ERROR =
   'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
 
 function getErrorMessage(
   status: number,
   serverMessage?: string | null,
-  context?: 'resendInvite',
+  context?: ErrorContext,
 ): string {
   switch (status) {
     case 400:
@@ -31,10 +38,16 @@ function getErrorMessage(
       return 'Você não tem permissão para acessar os dados desta empresa.';
 
     case 404:
+      if (context === 'updateEmployee') return EMPLOYEE_NOT_FOUND_MESSAGE;
       return 'Não foi possível encontrar os dados da empresa.';
 
     case 409: {
       const normalized = (serverMessage ?? '').toLowerCase();
+
+      // Na edição, o único conflito possível é o e-mail em uso por outra conta.
+      if (context === 'updateEmployee') {
+        return EMAIL_IN_USE_MESSAGE;
+      }
 
       if (context === 'resendInvite') {
         return 'Somente colaboradores pendentes podem receber um novo convite.';
@@ -52,7 +65,7 @@ function getErrorMessage(
         normalized.includes('e-mail já está cadastrado') ||
         normalized.includes('email já está cadastrado')
       ) {
-        return 'Este e-mail já está cadastrado.';
+        return EMAIL_IN_USE_MESSAGE;
       }
 
       if (normalized.includes('is not pending')) {
@@ -99,6 +112,21 @@ export interface CompanyEmployeeCreateResponse {
   inviteSent: boolean;
 }
 
+/** O gestor só escolhe entre ativo e inativo; quem não tem senha continua PENDING no backend. */
+export type EditableEmployeeStatus = Exclude<CompanyEmployeeStatus, 'PENDING'>;
+
+export interface CompanyEmployeeUpdateInput {
+  name: string;
+  email: string;
+  jobTitle: string;
+  status: EditableEmployeeStatus;
+}
+
+export interface CompanyEmployeeUpdateResponse extends CompanyEmployee {
+  /** Nulo quando a edição não gerou convite; senão, se o e-mail do novo convite foi enviado. */
+  inviteSent: boolean | null;
+}
+
 export interface ResendInviteResponse {
   id: string;
   email: string;
@@ -108,7 +136,7 @@ export interface ResendInviteResponse {
 async function request<T>(
   path: string,
   init: RequestInit = {},
-  errorContext?: 'resendInvite',
+  errorContext?: ErrorContext,
 ): Promise<T> {
   let response: Response;
 
@@ -178,6 +206,25 @@ export const companyEmployeeService = {
         email: input.email,
       }),
     });
+  },
+
+  updateEmployee(
+    id: string,
+    input: CompanyEmployeeUpdateInput,
+  ): Promise<CompanyEmployeeUpdateResponse> {
+    return request<CompanyEmployeeUpdateResponse>(
+      `/employees/${encodeURIComponent(id)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: input.name,
+          email: input.email,
+          jobTitle: input.jobTitle,
+          status: input.status,
+        }),
+      },
+      'updateEmployee',
+    );
   },
 
   resendInvite(employeeId: string): Promise<ResendInviteResponse> {

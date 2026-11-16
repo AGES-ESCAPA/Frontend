@@ -266,4 +266,94 @@ describe('companyEmployeeService', () => {
       'Resposta inválida',
     );
   });
+
+  describe('updateEmployee', () => {
+    const input = {
+      name: 'Ana Paula Souza',
+      email: 'ana.souza@empresa.com.br',
+      jobTitle: 'Gerente',
+      status: 'INACTIVE' as const,
+    };
+
+    it('envia PUT autenticado com os dados e retorna o colaborador atualizado', async () => {
+      localStorage.setItem('access_token', 'token-edicao');
+      const updated = { ...employee, ...input, inviteSent: null };
+      fetchMock.mockResolvedValueOnce(response({ success: true, data: updated }));
+
+      await expect(companyEmployeeService.updateEmployee('employee-1', input)).resolves.toEqual(
+        updated,
+      );
+
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe('http://localhost:8080/api/v1/company/employees/employee-1');
+      expect(init?.method).toBe('PUT');
+      expect(JSON.parse(String(init?.body))).toEqual(input);
+      expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer token-edicao');
+    });
+
+    it('envia a troca de status e devolve o aviso de convite', async () => {
+      fetchMock.mockResolvedValueOnce(
+        response({ success: true, data: { ...employee, status: 'PENDING', inviteSent: true } }),
+      );
+
+      const result = await companyEmployeeService.updateEmployee('employee-1', {
+        ...input,
+        status: 'ACTIVE',
+      });
+
+      expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).status).toBe('ACTIVE');
+      expect(result.status).toBe('PENDING');
+      expect(result.inviteSent).toBe(true);
+    });
+
+    it('codifica o id no path', async () => {
+      fetchMock.mockResolvedValueOnce(response({ success: true, data: employee }));
+      await companyEmployeeService.updateEmployee('a/b c', input);
+
+      expect(fetchMock.mock.calls[0][0]).toBe(
+        'http://localhost:8080/api/v1/company/employees/a%2Fb%20c',
+      );
+    });
+
+    it('trata qualquer 409 da edição como e-mail em uso', async () => {
+      fetchMock.mockResolvedValueOnce(response({ message: 'Duplicate registration: email' }, 409));
+      await expect(
+        companyEmployeeService.updateEmployee('employee-1', input),
+      ).rejects.toMatchObject({
+        status: 409,
+        message: 'Este e-mail já está cadastrado.',
+      });
+    });
+
+    it('informa que o colaborador não foi encontrado no 404', async () => {
+      fetchMock.mockResolvedValueOnce(response({ message: 'Employee not found' }, 404));
+      await expect(
+        companyEmployeeService.updateEmployee('employee-1', input),
+      ).rejects.toMatchObject({
+        status: 404,
+        message: 'Colaborador não encontrado. Ele pode ter sido desvinculado da empresa.',
+      });
+    });
+
+    it('preserva a mensagem de validação do 400', async () => {
+      fetchMock.mockResolvedValueOnce(response({ message: 'jobTitle is required' }, 400));
+      await expect(
+        companyEmployeeService.updateEmployee('employee-1', input),
+      ).rejects.toMatchObject({
+        status: 400,
+        message: 'jobTitle is required',
+      });
+    });
+
+    it('diferencia erro de rede de erro HTTP', async () => {
+      fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      await expect(
+        companyEmployeeService.updateEmployee('employee-1', input),
+      ).rejects.toMatchObject({
+        name: 'CompanyEmployeeServiceError',
+        status: 0,
+        message: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
+      });
+    });
+  });
 });

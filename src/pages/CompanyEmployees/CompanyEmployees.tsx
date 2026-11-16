@@ -15,7 +15,12 @@ import {
   SumCard,
   Toast,
 } from '@components/ui';
-import type { Employee, EmployeeFormField, EmployeeFormValues } from '@components/ui';
+import type {
+  Employee,
+  EmployeeAccessStatus,
+  EmployeeFormField,
+  EmployeeFormValues,
+} from '@components/ui';
 import { useCompanySeats } from '@hooks/useCompanySeats';
 import { useCompanyEmployees } from '@hooks/useCompanyEmployees';
 import { useToast } from '@hooks/useToast';
@@ -23,8 +28,11 @@ import { mapCompanyEmployeeToRow } from '@utils/mapCompanyEmployee';
 import {
   CompanyEmployeeServiceError,
   companyEmployeeService,
+  EMAIL_IN_USE_MESSAGE,
   NO_SEATS_AVAILABLE_MESSAGE,
 } from '@services/companyEmployeeService';
+import type { EditableEmployeeStatus } from '@services/companyEmployeeService';
+import type { CompanyEmployee, CompanyEmployeeStatus } from '@/types/companyEmployee';
 import styles from './CompanyEmployees.module.css';
 
 const COMPANY_USER: SidebarUser = {
@@ -36,6 +44,23 @@ const menuItems = SIDEBAR_MENU_PRESETS.company.map((item) => ({
   ...item,
   active: item.route === '/empresa/colaboradores',
 }));
+
+const ACCESS_STATUS: Record<CompanyEmployeeStatus, EmployeeAccessStatus> = {
+  ACTIVE: 'active',
+  PENDING: 'pending',
+  INACTIVE: 'inactive',
+};
+
+/** "Pendente" no modal significa manter o acesso liberado: o backend o mantém PENDING até criar a senha. */
+const toEditableStatus = (accessStatus?: EmployeeAccessStatus): EditableEmployeeStatus =>
+  accessStatus === 'inactive' ? 'INACTIVE' : 'ACTIVE';
+
+const toFormValues = (employee: CompanyEmployee): EmployeeFormValues => ({
+  name: employee.name,
+  email: employee.email,
+  role: employee.jobTitle ?? '',
+  accessStatus: ACCESS_STATUS[employee.status],
+});
 
 const SkeletonCards = () => (
   <div className={styles.cards} role="status" aria-label="Carregando resumo de vagas">
@@ -61,6 +86,7 @@ export const CompanyEmployees = () => {
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const { toast, isOpen: isToastOpen, showToast, dismissToast } = useToast();
   const [employeeFormOpen, setEmployeeFormOpen] = useState(false);
+  const [employeeToEdit, setEmployeeToEdit] = useState<CompanyEmployee | null>(null);
   const [noSeatsNoticeOpen, setNoSeatsNoticeOpen] = useState(false);
   const [isSubmittingEmployee, setIsSubmittingEmployee] = useState(false);
   const [employeeFormFieldErrors, setEmployeeFormFieldErrors] = useState<
@@ -111,13 +137,25 @@ export const CompanyEmployees = () => {
       return;
     }
 
+    setEmployeeToEdit(null);
     setEmployeeFormOpen(true);
     setEmployeeFormFieldErrors({});
   };
 
-  const openEditForm = (employee: Employee) => {
-    setActionNotice(`Edição de ${employee.name} estará disponível em breve.`);
+  const openEditForm = (row: Employee) => {
+    setActionNotice(null);
+    const employee = employees.find((current) => current.id === row.id);
+    if (!employee) return;
+
+    setEmployeeToEdit(employee);
+    setEmployeeFormFieldErrors({});
+    setEmployeeFormOpen(true);
   };
+
+  const employeeFormInitialValues = useMemo(
+    () => (employeeToEdit ? toFormValues(employeeToEdit) : null),
+    [employeeToEdit],
+  );
 
   const resendInvitation = async (employeeId: string, employeeName: string) => {
     try {
@@ -141,7 +179,66 @@ export const CompanyEmployees = () => {
     }
   };
 
+  const showUpdateInviteToast = (employeeId: string, name: string, inviteSent: boolean | null) => {
+    if (inviteSent === false) {
+      showToast(
+        'error',
+        'Colaborador atualizado, convite não enviado',
+        'Os dados foram salvos, mas não foi possível enviar o convite para o novo e-mail.',
+        {
+          label: 'Reenviar convite',
+          onAction: () => {
+            void resendInvitation(employeeId, name);
+          },
+        },
+      );
+      return;
+    }
+
+    showToast(
+      'success',
+      'Colaborador atualizado',
+      inviteSent
+        ? `Os dados de ${name} foram salvos e um novo convite foi enviado para o e-mail informado.`
+        : `Os dados de ${name} foram salvos.`,
+    );
+  };
+
+  const handleEmployeeUpdate = async (employee: CompanyEmployee, values: EmployeeFormValues) => {
+    setIsSubmittingEmployee(true);
+    setActionNotice(null);
+
+    try {
+      const updated = await companyEmployeeService.updateEmployee(employee.id, {
+        name: values.name,
+        email: values.email,
+        jobTitle: values.role,
+        status: toEditableStatus(values.accessStatus),
+      });
+      showUpdateInviteToast(updated.id, updated.name, updated.inviteSent);
+      reloadAll();
+    } catch (error: unknown) {
+      if (error instanceof CompanyEmployeeServiceError && error.status === 404) {
+        // Resolve sem erro: o modal fecha e a lista é recarregada sem o colaborador.
+        showToast('error', 'Colaborador não encontrado', error.message);
+        reloadAll();
+        return;
+      }
+      if (error instanceof CompanyEmployeeServiceError && error.status === 409) {
+        setEmployeeFormFieldErrors({ email: EMAIL_IN_USE_MESSAGE });
+      }
+      throw error;
+    } finally {
+      setIsSubmittingEmployee(false);
+    }
+  };
+
   const handleEmployeeSubmit = async (values: EmployeeFormValues) => {
+    if (employeeToEdit) {
+      await handleEmployeeUpdate(employeeToEdit, values);
+      return;
+    }
+
     setIsSubmittingEmployee(true);
     setActionNotice(null);
 
@@ -173,7 +270,7 @@ export const CompanyEmployees = () => {
       reloadAll();
     } catch (error: unknown) {
       if (error instanceof CompanyEmployeeServiceError && error.status === 409) {
-        if (error.message === 'Este e-mail já está cadastrado.') {
+        if (error.message === EMAIL_IN_USE_MESSAGE) {
           setEmployeeFormFieldErrors({ email: error.message });
         } else if (error.message === NO_SEATS_AVAILABLE_MESSAGE) {
           setEmployeeFormOpen(false);
@@ -430,7 +527,8 @@ export const CompanyEmployees = () => {
         <EmployeeFormModal
           open={employeeFormOpen}
           onOpenChange={setEmployeeFormOpen}
-          mode="create"
+          mode={employeeToEdit ? 'edit' : 'create'}
+          initialValues={employeeFormInitialValues}
           onSubmit={handleEmployeeSubmit}
           fieldErrors={employeeFormFieldErrors}
           isSubmitting={isSubmittingEmployee}
