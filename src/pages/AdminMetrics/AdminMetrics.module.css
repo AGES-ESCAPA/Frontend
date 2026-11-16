@@ -26,34 +26,82 @@
   line-height: var(--text-body-3--line-height);
 }
 
+.periodLabel {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--text-body-4--line-height);
+}
+
 .summaryCard {
-  justify-content: center;
+  justify-content: flex-start;
+  gap: var(--space-1);
   min-width: 0;
-  overflow-wrap: anywhere;
+  padding: var(--space-4) var(--space-5);
+  background-color: var(--color-primary-800);
+}
+
+.summaryCard > p:nth-child(2) {
+  white-space: nowrap;
+}
+
+.summaryCard > p:nth-child(3) {
+  margin-top: var(--space-1);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
 }
 
 .chartPanel {
   min-width: 0;
+  height: 100%;
+}
+
+.panelTitle h2 {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-4--line-height);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
 }
 
 .completionRegion {
+  --donut-size-compact: 5.75rem;
+
   display: grid;
   min-width: 0;
 }
 
 .completionPanel {
-  background-color: var(--color-primary-700);
+  --panel-padding: var(--space-4) var(--space-5);
+  --panel-gap: var(--space-2);
+
+  height: 100%;
+  background-color: var(--color-primary-800);
+  box-shadow: none;
 }
 
-/* Altera o token do trilho somente nesta rosca, preservando o componente compartilhado. */
-.completionDonut {
-  --color-primary-700: var(--color-primary-800);
+.completionPanel h2 {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--text-body-4--line-height);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
 }
 
 .completionBody {
   display: grid;
+  flex: 1;
   place-items: center;
   min-height: var(--donut-size-compact);
+}
+
+.completionBody .completionDonut {
+  margin: 0;
 }
 
 .evolutionBody {
@@ -85,17 +133,6 @@
   height: calc(var(--space-20) * 3);
 }
 
-.errorState {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.retryButton {
-  min-height: var(--touch-target-min);
-}
-
 .rankingList {
   gap: var(--space-2);
 }
@@ -120,6 +157,17 @@
   background-color: var(--color-primary-700);
 }
 
+.completionDonut strong {
+  max-width: none;
+  font-size: var(--text-body-1);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.completionDonut strong + span {
+  display: none;
+}
+
 @media (width < 64rem) {
   .completionRegion {
     grid-column: 1 / -1;
@@ -133,5 +181,9 @@
 
   .chartPanel {
     --panel-padding: var(--space-5);
+  }
+
+  .completionPanel {
+    --panel-padding: var(--space-4) var(--space-5);
   }
 }

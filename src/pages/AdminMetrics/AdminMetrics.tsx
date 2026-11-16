@@ -1,14 +1,14 @@
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
-import { BarList, Button, DonutChart, LineChart, Panel, SumCard } from '@components/ui';
+import { BarList, DonutChart, LineChart, Panel, SumCard } from '@components/ui';
 import { useAdminCourseMetrics } from '@hooks/useAdminCourseMetrics';
 import { useAdminMetricsOverview } from '@hooks/useAdminMetricsOverview';
 import {
   formatAdminMetricsCompletionRate,
   formatAdminMetricsCount,
   mapAdminMetricsMonthlySeries,
+  roundAdminMetricsCompletionRate,
 } from '@utils/adminMetrics';
 import { PopularCoursesSection } from './components/PopularCoursesSection';
-import { MOCK_ENGAGED_COMPANIES } from './mockCourseMetrics';
 import styles from './AdminMetrics.module.css';
 
 const ADMIN_USER = { name: 'Admin', role: 'Administrador' };
@@ -17,6 +17,7 @@ const MENU_ITEMS = SIDEBAR_MENU_PRESETS.admin.map((item) => ({
   active: item.route === '/admin/metricas',
 }));
 const CHART_HEIGHT = 240;
+const TREND_LABEL = 'vs mês anterior';
 
 interface MetricSkeletonProps {
   label: string;
@@ -30,7 +31,7 @@ const MetricSkeleton = ({ label, variant }: MetricSkeletonProps) => (
 );
 
 export const AdminMetrics = () => {
-  const { status, data, errorMessage, reload } = useAdminMetricsOverview();
+  const { status, data } = useAdminMetricsOverview();
   // Indicadores de cursos (US-37): carregamento, erro e nova tentativa próprios, sem afetar os de cima.
   const courseMetrics = useAdminCourseMetrics();
 
@@ -48,6 +49,11 @@ export const AdminMetrics = () => {
             '—'
           )
         }
+        trend={
+          status === 'success'
+            ? { value: data.activeStudentsChange, label: TREND_LABEL }
+            : undefined
+        }
       />
       <SumCard
         className={styles.summaryCard}
@@ -60,6 +66,11 @@ export const AdminMetrics = () => {
           ) : (
             '—'
           )
+        }
+        trend={
+          status === 'success'
+            ? { value: data.partnerCompaniesChange, label: TREND_LABEL }
+            : undefined
         }
       />
     </>
@@ -78,15 +89,22 @@ export const AdminMetrics = () => {
             <DonutChart
               className={styles.completionDonut}
               variant="progress"
-              segments={[{ label: 'Conclusão média', value: data.averageCompletionRate }]}
+              segments={[
+                {
+                  label: 'Conclusão média',
+                  value: roundAdminMetricsCompletionRate(data.averageCompletionRate),
+                },
+              ]}
               max={100}
               centerValue={formatAdminMetricsCompletionRate(data.averageCompletionRate)}
               centerLabel=""
               ariaLabel="Taxa média de conclusão"
               size="compact"
+              innerRadius="70%"
+              outerRadius="88%"
             />
           ) : (
-            <p className={styles.description}>Indicador indisponível.</p>
+            <p className={styles.description}>—</p>
           )}
         </div>
       </Panel>
@@ -94,21 +112,37 @@ export const AdminMetrics = () => {
   );
 
   const middlePanel = (
-    <Panel title="Top 5 Empresas Mais Engajadas" className={styles.chartPanel}>
-      <BarList
-        ranked
-        items={MOCK_ENGAGED_COMPANIES}
-        emptyMessage="Nenhuma empresa com matrículas registradas."
-        aria-label="Top 5 empresas mais engajadas"
-        className={styles.rankingList}
-      />
+    <Panel
+      title="Top 5 Empresas Mais Engajadas"
+      className={`${styles.chartPanel} ${styles.panelTitle}`}
+    >
+      {status === 'loading' ? (
+        <MetricSkeleton label="Carregando empresas mais engajadas" variant="line" />
+      ) : status === 'success' ? (
+        <BarList
+          ranked
+          items={data.topEngagedCompanies.map((company) => ({
+            id: company.companyId,
+            label: company.name,
+            value: company.enrollments,
+          }))}
+          emptyMessage="Nenhuma empresa com matrículas registradas."
+          aria-label="Top 5 empresas mais engajadas"
+          className={styles.rankingList}
+        />
+      ) : (
+        <p className={styles.description}>—</p>
+      )}
     </Panel>
   );
 
   const bottomPanel = (
     <section aria-label="Evolução de Alunos Ativos" id="evolucao">
-      <Panel className={styles.chartPanel} title="Evolução de Alunos Ativos">
-        <p className={styles.description}>Últimos seis meses</p>
+      <Panel
+        className={`${styles.chartPanel} ${styles.panelTitle}`}
+        title="Evolução de Alunos Ativos"
+      >
+        <p className={styles.periodLabel}>Últimos seis meses</p>
         <div className={styles.evolutionBody}>
           {status === 'loading' ? (
             <MetricSkeleton label="Carregando evolução de alunos ativos" variant="line" />
@@ -122,7 +156,7 @@ export const AdminMetrics = () => {
               xAxisInterval="preserveStartEnd"
             />
           ) : (
-            <p className={styles.description}>Indicador indisponível.</p>
+            <p className={styles.description}>—</p>
           )}
         </div>
       </Panel>
@@ -136,21 +170,6 @@ export const AdminMetrics = () => {
           <h1 className={styles.title}>Relatórios Gerais &amp; Métricas</h1>
           <p className={styles.description}>Visão geral de alunos e empresas parceiras.</p>
         </header>
-
-        {status === 'error' ? (
-          <div className={styles.errorState}>
-            <p className={styles.description} role="alert">
-              {errorMessage}
-            </p>
-            <Button
-              className={styles.retryButton}
-              type="button"
-              variant="primary"
-              label="Tentar novamente"
-              onClick={reload}
-            />
-          </div>
-        ) : null}
 
         <PopularCoursesSection
           status={courseMetrics.status}

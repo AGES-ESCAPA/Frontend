@@ -65,12 +65,13 @@
 }
 
 .leaderCard {
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: var(--space-2);
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4) var(--space-5);
   background-color: var(--color-primary-800);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-2xl);
   overflow-wrap: anywhere;
 }
 
@@ -93,8 +94,13 @@
   min-width: 0;
 }
 
+/* Mesma trilha dos quatro KPIs: a distribuição ocupa as duas primeiras colunas. */
 .chartsGridThreeCols {
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.chartsGridThreeCols > :first-child {
+  grid-column: span 2;
 }
 
 .panel {
@@ -136,31 +142,46 @@
   background-color: var(--color-primary-700);
 }
 
-/* DonutChart e legenda lado a lado no painel de distribuição, fiel ao protótipo */
+/* DonutChart e legenda lado a lado, maiores para ocupar a altura do card. */
 .distributionChart {
   display: grid;
-  grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-6);
+  width: 100%;
+  min-height: 0;
 }
 
 .distributionChart > div {
-  max-width: 11rem;
+  width: min(100%, 15rem);
+  max-width: none;
+  justify-self: center;
+}
+
+.distributionChart strong + span {
+  max-width: 80%;
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-3--line-height);
 }
 
 .distributionChart > ul {
   grid-template-columns: 1fr;
-  gap: var(--space-3);
+  align-content: center;
+  gap: var(--space-5);
 }
 
 .distributionChart > ul > li {
   align-items: center;
   color: var(--color-text-primary);
-  font-size: var(--text-body-4);
-  line-height: var(--text-body-4--line-height);
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
 }
 
 .distributionChart > ul > li > svg {
+  flex-basis: var(--space-4);
+  width: var(--space-4);
+  height: var(--space-4);
   margin-block-start: 0;
   border-radius: var(--radius-sm);
 }
@@ -168,16 +189,6 @@
 .rankingList > li:last-child {
   padding-bottom: 0;
   border-bottom: none;
-}
-
-@media (width < 80rem) {
-  .chartsGridThreeCols {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .chartsGridThreeCols > :first-child {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (width < 64rem) {
@@ -188,6 +199,10 @@
   .chartsGrid,
   .chartsGridThreeCols {
     grid-template-columns: 1fr;
+  }
+
+  .chartsGridThreeCols > :first-child {
+    grid-column: auto;
   }
 }
 

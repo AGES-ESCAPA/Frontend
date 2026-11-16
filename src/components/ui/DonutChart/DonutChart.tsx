@@ -15,6 +15,10 @@ interface CommonDonutChartProps {
   ariaLabel: string;
   /** `compact` limita o gráfico a um anel pequeno, sem folga em volta, para caber em um card. */
   size?: 'default' | 'compact';
+  /** Raio interno do anel, em porcentagem do gráfico. */
+  innerRadius?: string;
+  /** Raio externo do anel, em porcentagem do gráfico. */
+  outerRadius?: string;
   className?: string;
 }
 
@@ -124,6 +128,8 @@ export const DonutChart = (props: DonutChartProps) => {
     showLegend = false,
     ariaLabel,
     size = 'default',
+    innerRadius = '62%',
+    outerRadius = '86%',
     className = '',
   } = props;
   const id = useId().replace(/:/g, '');
@@ -183,8 +189,8 @@ export const DonutChart = (props: DonutChartProps) => {
                 data={chartData}
                 dataKey="value"
                 nameKey="label"
-                innerRadius="62%"
-                outerRadius="86%"
+                innerRadius={innerRadius}
+                outerRadius={outerRadius}
                 stroke="none"
                 startAngle={0}
                 endAngle={-360}
@@ -226,7 +232,8 @@ export const DonutChart = (props: DonutChartProps) => {
                   <rect width="100%" height="100%" fill={style.fill} />
                 </svg>
                 <span>
-                  {segment.label}: {formatValue(segment.value)}%. Cor: {style.colorName}.
+                  {segment.label}: {formatValue(segment.value)}%.
+                  <span className={styles.srOnly}>{` Cor: ${style.colorName}.`}</span>
                 </span>
               </li>
             );

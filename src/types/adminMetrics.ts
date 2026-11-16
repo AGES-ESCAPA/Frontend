@@ -48,10 +48,29 @@ export interface AdminMetricsMonthlyActiveStudents {
   activeStudents: number;
 }
 
+export interface AdminEngagedCompany {
+  companyId: string;
+  name: string;
+  /** Matrículas elegíveis dos colaboradores vinculados à empresa. */
+  enrollments: number;
+}
+
 export interface AdminMetricsOverview {
   activeStudents: number;
   partnerCompanies: number;
   /** Percentual de 0 a 100: 68 representa 68%. */
   averageCompletionRate: number;
   activeStudentsByMonth: AdminMetricsMonthlyActiveStudents[];
+  /**
+   * Variação percentual contra o último dia do mês anterior.
+   * Pode ser negativa ou maior que 100; 0 quando não havia base.
+   */
+  activeStudentsChange: number;
+  /**
+   * Variação percentual das empresas ativas criadas neste mês.
+   * Pode ser negativa ou maior que 100; 0 quando não havia base.
+   */
+  partnerCompaniesChange: number;
+  /** Até cinco empresas ativas, da mais engajada para a menos. */
+  topEngagedCompanies: AdminEngagedCompany[];
 }

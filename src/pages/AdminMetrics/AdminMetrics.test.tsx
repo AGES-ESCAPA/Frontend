@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import type * as Recharts from 'recharts';
 import { adminMetricsService, AdminMetricsServiceError } from '@services/adminMetricsService';
 import type * as AdminMetricsServiceModule from '@services/adminMetricsService';
-import type { AdminCourseMetrics, AdminMetricsOverview } from '@/types/adminMetrics';
+import type { AdminCourseMetrics } from '@/types/adminMetrics';
 import { adminMetricsOverview, zeroAdminMetricsOverview } from '@/test/adminMetricsFixtures';
 import { AdminMetrics } from './AdminMetrics';
 
@@ -100,7 +100,7 @@ describe('AdminMetrics — integração da US-36', () => {
     );
   });
 
-  it('shows four independently labelled skeletons while the overview is pending', () => {
+  it('shows five independently labelled skeletons while the overview is pending', () => {
     getOverviewMock.mockReturnValue(new Promise(() => {}));
     renderPage();
     const main = within(screen.getByRole('main'));
@@ -108,6 +108,7 @@ describe('AdminMetrics — integração da US-36', () => {
       'Carregando alunos ativos',
       'Carregando empresas parceiras',
       'Carregando taxa média de conclusão',
+      'Carregando empresas mais engajadas',
       'Carregando evolução de alunos ativos',
     ]) {
       expect(main.getByRole('status', { name })).toHaveAttribute('aria-busy', 'true');
@@ -116,18 +117,29 @@ describe('AdminMetrics — integração da US-36', () => {
       expect(within(main.getByRole('region', { name })).queryByRole('img')).not.toBeInTheDocument();
     }
     expect(main.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Nenhuma empresa com matrículas registradas.'),
+    ).not.toBeInTheDocument();
     expect(getOverviewMock).toHaveBeenCalledOnce();
   });
 
   it('shows real Brazilian counts and an accessible progress donut using the actual rate', async () => {
     renderPage();
     await screen.findByText('68%');
-    expect(
-      within(screen.getByRole('article', { name: 'Alunos ativos' })).getByText('12.847'),
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('article', { name: 'Empresas parceiras' })).getByText('1.532'),
-    ).toBeInTheDocument();
+    const activeStudents = within(screen.getByRole('article', { name: 'Alunos ativos' }));
+    const partnerCompanies = within(screen.getByRole('article', { name: 'Empresas parceiras' }));
+    expect(activeStudents.getByText('12.847')).toBeInTheDocument();
+    expect(activeStudents.getByText('+12,5%')).toBeInTheDocument();
+    expect(activeStudents.getByText('vs mês anterior')).toBeInTheDocument();
+    expect(partnerCompanies.getByText('1.532')).toBeInTheDocument();
+    expect(partnerCompanies.getByText('-3%')).toBeInTheDocument();
+    expect(partnerCompanies.getByText('vs mês anterior')).toBeInTheDocument();
+    const companies = within(screen.getByRole('list', { name: 'Top 5 empresas mais engajadas' }));
+    expect(companies.getByText('Euro Trip')).toBeInTheDocument();
+    expect(companies.getByText('259')).toBeInTheDocument();
+    expect(companies.getByText('Ibis')).toBeInTheDocument();
+    expect(companies.getByText('206')).toBeInTheDocument();
+    expect(companies.queryByText('CVC')).not.toBeInTheDocument();
     const completion = within(screen.getByRole('region', { name: 'Taxa Média de Conclusão' }));
     expect(
       completion.getByRole('img', { name: /Taxa média de conclusão.*68 de 100, 68%/ }),
@@ -136,11 +148,15 @@ describe('AdminMetrics — integração da US-36', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('shows a fractional rate with a Brazilian decimal separator', async () => {
+  it('shows the completion rate as an integer, rounding the two decimal places', async () => {
     getOverviewMock.mockResolvedValue({ ...adminMetricsOverview, averageCompletionRate: 66.67 });
     renderPage();
-    expect(await screen.findByText('66,67%')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /66,67 de 100, 66,67%/ })).toBeInTheDocument();
+    const completion = within(
+      await screen.findByRole('region', { name: 'Taxa Média de Conclusão' }),
+    );
+    expect(completion.getByText('67%')).toBeInTheDocument();
+    expect(completion.queryByText('66,67%')).not.toBeInTheDocument();
+    expect(completion.getByRole('img', { name: /67 de 100, 67%/ })).toBeInTheDocument();
   });
 
   it('draws six monthly points including zero and keeps every formatted value accessible', async () => {
@@ -157,11 +173,12 @@ describe('AdminMetrics — integração da US-36', () => {
   it('renders a zero overview as successful metrics and six zero points', async () => {
     getOverviewMock.mockResolvedValue(zeroAdminMetricsOverview);
     renderPage();
-    expect(await screen.findByText('0%')).toBeInTheDocument();
+    const completion = await screen.findByRole('region', { name: 'Taxa Média de Conclusão' });
+    expect(await within(completion).findByText('0%')).toBeInTheDocument();
     for (const label of ['Alunos ativos', 'Empresas parceiras']) {
-      expect(
-        within(screen.getByRole('article', { name: label })).getByText('0'),
-      ).toBeInTheDocument();
+      const card = within(screen.getByRole('article', { name: label }));
+      expect(card.getByText('0')).toBeInTheDocument();
+      expect(card.getByText('0%')).toBeInTheDocument();
     }
     expect(
       screen.getByRole('img', { name: /Taxa média de conclusão.*0 de 100, 0%/ }),
@@ -172,6 +189,7 @@ describe('AdminMetrics — integração da US-36', () => {
     expect(chart.querySelectorAll('.recharts-line-dot')).toHaveLength(6);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.queryByText('Nenhum dado disponível.')).not.toBeInTheDocument();
+    expect(screen.getByText('Nenhuma empresa com matrículas registradas.')).toBeInTheDocument();
   });
 
   it.each([
@@ -185,12 +203,14 @@ describe('AdminMetrics — integração da US-36', () => {
       'Não foi possível carregar os indicadores. Tente novamente.',
     ],
   ])(
-    'shows an error and retry action for %s without inventing zero values',
+    'shows a dash instead of an error banner for %s without inventing zero values',
     async (error, message) => {
       getOverviewMock.mockRejectedValue(error);
       renderPage();
-      expect(await screen.findByRole('alert')).toHaveTextContent(message);
-      expect(screen.getAllByRole('button', { name: 'Tentar novamente' })).toHaveLength(1);
+      expect(await screen.findAllByText('—')).not.toHaveLength(0);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.queryByText(message)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
       for (const label of ['Alunos ativos', 'Empresas parceiras']) {
         expect(
           within(screen.getByRole('article', { name: label })).getByText('—'),
@@ -205,30 +225,16 @@ describe('AdminMetrics — integração da US-36', () => {
       expect(main.getByRole('img', { name: /Distribuição por tipo de curso/ })).toBeInTheDocument();
       expect(main.queryByRole('status')).not.toBeInTheDocument();
       expect(
+        main.queryByRole('list', { name: 'Top 5 empresas mais engajadas' }),
+      ).not.toBeInTheDocument();
+      expect(
+        main.getByRole('heading', { name: 'Top 5 Empresas Mais Engajadas' }).closest('section'),
+      ).toHaveTextContent('—');
+      expect(
         main.getByRole('region', { name: 'Indicadores de cursos mais populares' }),
       ).toBeInTheDocument();
     },
   );
-
-  it('retries after a failure, shows skeletons and recovers without reloading the page', async () => {
-    const user = userEvent.setup();
-    let resolveRetry!: (data: AdminMetricsOverview) => void;
-    const retry = new Promise<AdminMetricsOverview>((resolve) => {
-      resolveRetry = resolve;
-    });
-    getOverviewMock
-      .mockRejectedValueOnce(new AdminMetricsServiceError(0, 'Verifique sua conexão.'))
-      .mockReturnValueOnce(retry);
-    renderPage();
-    await user.click(await screen.findByRole('button', { name: 'Tentar novamente' }));
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(within(screen.getByRole('main')).getAllByRole('status')).toHaveLength(4);
-    expect(getOverviewMock).toHaveBeenCalledTimes(2);
-    resolveRetry(adminMetricsOverview);
-    expect(await screen.findByText('68%')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Tentar novamente' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
-  });
 });
 
 describe('AdminMetrics — integração US-37 (Cursos Mais Populares #190)', () => {
