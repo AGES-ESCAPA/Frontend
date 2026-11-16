@@ -152,82 +152,77 @@ export const DigitalCertificate = () => {
       )}
 
       {status === 'success' && certificate && (
-        <div className={showAuthenticatedLayout ? styles.layoutFrame : styles.layoutPassthrough}>
-          <div className={showAuthenticatedLayout ? styles.layoutScale : styles.layoutPassthrough}>
-            <div className={styles.layout}>
-              <div className={styles.mainColumn}>
-                <div className={styles.certificateSlot}>
-                  <CertificateCard
-                    studentName={certificate.student.name}
-                    courseTitle={certificate.course.title}
-                    workload={formatWorkload(certificate.certificate.workload)}
-                    conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
-                    verificationCode={certificate.certificate.verificationCode}
-                  />
-                </div>
-
-                <p className={styles.disclaimer}>
-                  O certificado acima atesta que {certificate.student.name} concluiu com êxito o
-                  curso {certificate.course.title} em{' '}
-                  {formatLongDate(certificate.certificate.conclusionDate)}. O certificado indica que
-                  todo o curso foi concluído pelo aluno. A duração do curso representa a duração
-                  total dos vídeos e aulas em texto no curso no momento da conclusão.
-                </p>
-              </div>
-
-              <aside className={styles.sidebar}>
-                <div className={styles.sidebarInner}>
-                  <AboutUser
-                    name={certificate.student.name}
-                    avatarUrl={certificate.student.avatarUrl ?? undefined}
-                    conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
-                    workload={formatWorkload(certificate.certificate.workload)}
-                    course={certificate.course.title}
-                    isVerified={certificate.student.isVerified}
-                  />
-
-                  <div className={styles.courseSummary}>
-                    <h2 className={styles.courseSummaryTitle}>Sobre o curso:</h2>
-                    <CourseCard
-                      id={certificate.course.id}
-                      imageUrl={certificate.course.thumbnailUrl ?? ''}
-                      category={mapCourseCategory(certificate.course.category)}
-                      level={mapCourseLevel(certificate.course.level)}
-                      title={certificate.course.title}
-                      description={certificate.course.description}
-                      rating={certificate.course.rating ?? undefined}
-                      reviewsCount={certificate.course.reviewsCount}
-                      duration={formatWorkload(certificate.course.durationTime)}
-                      lessonsCount={certificate.course.lessonsCount}
-                      instructor={certificate.course.instructor}
-                      price={formatCurrency(certificate.course.price)}
-                      variant="certificate"
-                      onClick={(id) => navigate(`/cursos/${id}`)}
-                    />
-                  </div>
-                </div>
-              </aside>
-
-              {isOwner && (
-                <div className={styles.actions}>
-                  <Button
-                    ref={downloadButtonRef}
-                    label={isDownloading ? 'Baixando…' : 'Baixar'}
-                    variant="primary"
-                    icon={<Download size={18} />}
-                    isLoading={isDownloading}
-                    onClick={handleDownload}
-                  />
-                  <Button
-                    label="Compartilhar"
-                    variant="primary"
-                    icon={<Share2 size={18} />}
-                    onClick={handleShare}
-                  />
-                </div>
-              )}
+        <div className={styles.layout}>
+          <div className={styles.mainColumn}>
+            <div className={styles.certificateSlot}>
+              <CertificateCard
+                studentName={certificate.student.name}
+                courseTitle={certificate.course.title}
+                workload={formatWorkload(certificate.certificate.workload)}
+                conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
+                verificationCode={certificate.certificate.verificationCode}
+              />
             </div>
+
+            <p className={styles.disclaimer}>
+              O certificado acima atesta que {certificate.student.name} concluiu com êxito o curso{' '}
+              {certificate.course.title} em {formatLongDate(certificate.certificate.conclusionDate)}
+              . O certificado indica que todo o curso foi concluído pelo aluno. A duração do curso
+              representa a duração total dos vídeos e aulas em texto no curso no momento da
+              conclusão.
+            </p>
           </div>
+
+          <aside className={styles.sidebar}>
+            <div className={styles.sidebarInner}>
+              <AboutUser
+                name={certificate.student.name}
+                avatarUrl={certificate.student.avatarUrl ?? undefined}
+                conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
+                workload={formatWorkload(certificate.certificate.workload)}
+                course={certificate.course.title}
+              />
+
+              <div className={styles.courseSummary}>
+                <h2 className={styles.courseSummaryTitle}>Sobre o curso:</h2>
+                <CourseCard
+                  id={certificate.course.id}
+                  imageUrl={certificate.course.thumbnailUrl ?? ''}
+                  category={mapCourseCategory(certificate.course.category)}
+                  level={mapCourseLevel(certificate.course.level)}
+                  title={certificate.course.title}
+                  description={certificate.course.description}
+                  rating={certificate.course.rating ?? undefined}
+                  reviewsCount={certificate.course.reviewsCount}
+                  duration={formatWorkload(certificate.course.durationTime)}
+                  lessonsCount={certificate.course.lessonsCount}
+                  instructor={certificate.course.instructor}
+                  price={formatCurrency(certificate.course.price)}
+                  variant="certificate"
+                  onClick={(id) => navigate(`/cursos/${id}`)}
+                />
+              </div>
+            </div>
+          </aside>
+
+          {isOwner && (
+            <div className={styles.actions}>
+              <Button
+                ref={downloadButtonRef}
+                label={isDownloading ? 'Baixando…' : 'Baixar'}
+                variant="primary"
+                icon={<Download size={18} />}
+                isLoading={isDownloading}
+                onClick={handleDownload}
+              />
+              <Button
+                label="Compartilhar"
+                variant="primary"
+                icon={<Share2 size={18} />}
+                onClick={handleShare}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -31,6 +31,7 @@
   flex-direction: column;
   min-height: 0;
   padding: var(--space-3) var(--space-4);
+  container-type: inline-size;
 }
 
 /* Na casca autenticada o respiro externo já fica no main; aqui só um fio no topo. */
@@ -52,65 +53,32 @@
 }
 
 /* Proporção do protótipo: certificado com 939px e coluna lateral com 413px. */
+/* `100cqi` é a largura útil do `.page`; com a sidebar aberta ela diminui e o
+   layout encolhe junto. */
 .layout {
+  --certificate-layout-width: min(100cqi, 92rem, var(--certificate-fit-width));
+  /* Mesmo recuo da moldura do certificado (`inset: 1.4cqi` na largura da coluna). */
+  --certificate-frame-inset: calc(
+    (var(--certificate-layout-width) - var(--space-20)) * 2.25 / 3.25 * 0.014
+  );
+
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 2.25fr) minmax(0, 1fr);
   gap: var(--space-6) var(--space-20);
   align-content: start;
   align-items: start;
-  width: 100%;
+  width: var(--certificate-layout-width);
   min-height: 0;
-  max-width: min(92rem, var(--certificate-fit-width));
   margin: 0 auto;
   container-type: inline-size;
-  /* Mesmo recuo da moldura do certificado (`inset: 1.4cqi` na largura da coluna). */
-  --certificate-frame-inset: calc((100cqi - var(--space-20)) * 2.25 / 3.25 * 0.014);
-}
-
-/* A sidebar aberta só reduz a largura. O miolo continua com a largura (e a
-   altura) da sidebar recolhida e é comprimido no eixo X para caber. */
-.layoutPassthrough {
-  display: contents;
-}
-
-.layoutFrame {
-  width: 100%;
-  overflow: hidden;
-  container-type: inline-size;
-}
-
-.layoutScale {
-  --collapsed-layout-width: min(
-    92rem,
-    var(--certificate-fit-width),
-    calc(
-      100cqi + var(--content-sidebar, var(--sidebar-collapsed-width)) -
-        var(--sidebar-collapsed-width)
-    )
-  );
-
-  width: var(--collapsed-layout-width);
-  margin: 0 auto;
-  transform-origin: top left;
-  transform: scaleX(min(1, calc(100cqi / var(--collapsed-layout-width))));
-}
-
-.layoutScale .layout {
-  --certificate-frame-inset: calc(
-    (var(--collapsed-layout-width) - var(--space-20)) * 2.25 / 3.25 * 0.014
-  );
 }
 
 @media (width < 64rem) {
   .layout {
-    grid-template-columns: 1fr;
-    max-width: 92rem;
-  }
+    --certificate-layout-width: min(100cqi, 92rem);
 
-  .layoutScale {
-    width: 100%;
-    transform: none;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -167,7 +135,7 @@
 }
 
 .courseSummaryTitle {
-  margin: 0;
+  margin: var(--space-6) 0 0;
   color: var(--color-text-primary);
   font-size: var(--text-body-3);
   line-height: var(--text-body-3--line-height);
