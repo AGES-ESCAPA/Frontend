@@ -102,11 +102,14 @@ export const Navbar = ({
     >
       {!isProfile && (
         <div className={styles.leftGroup}>
-          <a href="/" className={styles.brand} aria-label="Página inicial">
-            <img src={logo} alt="escapa!" />
+          <a href="/" className={styles.brand} aria-label="ESCAPA Academy, página inicial">
+            <img src={logo} alt="" />
+            <span className={styles.divider} aria-hidden="true" />
+            <span className={styles.brandText}>
+              <span className={styles.context}>Academy</span>
+              <span className={styles.tagline}>Da Pesquisa à Prática</span>
+            </span>
           </a>
-          <span className={styles.divider} aria-hidden="true" />
-          <span className={styles.context}>academy</span>
         </div>
       )}
 

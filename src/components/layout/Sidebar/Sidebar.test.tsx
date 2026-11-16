@@ -36,7 +36,8 @@ describe('Sidebar', () => {
     const sidebar = screen.getByRole('complementary', { name: /menu lateral — aluno/i });
     expect(sidebar).toBeInTheDocument();
 
-    expect(screen.getByRole('img', { name: /escapa!/i })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /ESCAPA Academy/i })).toBeInTheDocument();
+    expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
     expect(
       screen.getByRole('navigation', { name: /navegação do perfil aluno/i }),
     ).toBeInTheDocument();
