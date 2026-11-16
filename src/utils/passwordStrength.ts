@@ -7,9 +7,11 @@ export interface PasswordStrength {
   label: '' | 'Fraca' | 'Média' | 'Forte';
 }
 
+const MIN_LENGTH = 8;
+
 const countCriteria = (password: string) =>
   [
-    password.length >= 8,
+    password.length >= MIN_LENGTH,
     /[a-z]/.test(password) && /[A-Z]/.test(password),
     /\d/.test(password),
     /[^A-Za-z0-9]/.test(password),
@@ -18,6 +20,10 @@ const countCriteria = (password: string) =>
 /** Três níveis da barra em "Nova Senha": fraca, média e forte. Vazia mantém a barra visível. */
 export const getPasswordStrength = (password: string): PasswordStrength => {
   if (password.length === 0) return { level: 'vazia', score: 0, label: '' };
+
+  // Abaixo do mínimo o formulário recusa a senha, então a barra não sobe para média
+  // só porque os outros critérios foram cumpridos.
+  if (password.length < MIN_LENGTH) return { level: 'fraca', score: 1, label: 'Fraca' };
 
   const criteria = countCriteria(password);
   if (criteria <= 1) return { level: 'fraca', score: 1, label: 'Fraca' };

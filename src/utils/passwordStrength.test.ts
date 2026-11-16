@@ -11,6 +11,10 @@ describe('getPasswordStrength', () => {
     expect(getPasswordStrength('abcdefgh')).toEqual({ level: 'fraca', score: 1, label: 'Fraca' });
   });
 
+  it('marca como fraca quando está abaixo do tamanho mínimo, mesmo cumprindo os outros critérios', () => {
+    expect(getPasswordStrength('Abc123!')).toEqual({ level: 'fraca', score: 1, label: 'Fraca' });
+  });
+
   it('marca como média com parte dos critérios', () => {
     expect(getPasswordStrength('Abcdefgh')).toEqual({ level: 'media', score: 2, label: 'Média' });
     expect(getPasswordStrength('Abcdefg1')).toEqual({ level: 'media', score: 2, label: 'Média' });
