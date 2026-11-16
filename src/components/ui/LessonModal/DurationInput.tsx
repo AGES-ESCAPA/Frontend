@@ -16,7 +16,7 @@ export const DurationInput = ({
   value,
   onChange,
   className,
-  placeholder = '000:00',
+  placeholder = '00:00',
   'aria-invalid': ariaInvalid,
   'aria-describedby': ariaDescribedBy,
 }: DurationInputProps) => {

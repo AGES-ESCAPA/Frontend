@@ -4,12 +4,12 @@ import {
   formatDuration,
   formatCurrency,
   durationSecondsToDigitBuffer,
+  extractDurationMaskDigits,
   formatDurationMaskFromDigits,
-  formatSecondsToDurationMask,
+  getDurationMaskUnits,
   formatSecondsToTimecode,
   formatTime,
   parseDurationDigitBuffer,
-  parseDurationMask,
   parseTimecodeToSeconds,
   formatWorkload,
   formatLongDate,
@@ -61,49 +61,66 @@ describe('parseTimecodeToSeconds', () => {
   });
 });
 
-describe('formatDurationMaskFromDigits', () => {
-  it('should pad partial minutes as 000:00', () => {
-    expect(formatDurationMaskFromDigits('12')).toBe('012:00');
+describe('extractDurationMaskDigits', () => {
+  it('should drop separators and leading zeros', () => {
+    expect(extractDurationMaskDigits('00:32')).toBe('32');
   });
 
-  it('should split the last two digits as seconds', () => {
-    expect(formatDurationMaskFromDigits('1240')).toBe('012:40');
+  it('should keep at most six digits', () => {
+    expect(extractDurationMaskDigits('1234567')).toBe('123456');
   });
 });
 
-describe('formatSecondsToDurationMask', () => {
-  it('should format seconds into 000:00', () => {
-    expect(formatSecondsToDurationMask(760)).toBe('012:40');
+describe('formatDurationMaskFromDigits', () => {
+  it('should fill seconds first, like a timer', () => {
+    expect(formatDurationMaskFromDigits('3')).toBe('00:03');
+    expect(formatDurationMaskFromDigits('32')).toBe('00:32');
+    expect(formatDurationMaskFromDigits('125')).toBe('01:25');
+  });
+
+  it('should show minutes and seconds up to four digits', () => {
+    expect(formatDurationMaskFromDigits('1240')).toBe('12:40');
+  });
+
+  it('should add the hours beyond four digits', () => {
+    expect(formatDurationMaskFromDigits('10530')).toBe('1:05:30');
+    expect(formatDurationMaskFromDigits('123456')).toBe('12:34:56');
+  });
+});
+
+describe('getDurationMaskUnits', () => {
+  it('should name the units shown by the mask', () => {
+    expect(getDurationMaskUnits('1240')).toBe('min:seg');
+    expect(getDurationMaskUnits('10530')).toBe('h:min:seg');
   });
 });
 
 describe('durationSecondsToDigitBuffer', () => {
   it('should rebuild the digit buffer from seconds', () => {
+    expect(durationSecondsToDigitBuffer(32)).toBe('32');
     expect(durationSecondsToDigitBuffer(760)).toBe('1240');
+    expect(durationSecondsToDigitBuffer(3930)).toBe('10530');
+  });
+
+  it('should cap the duration at 99:59:59', () => {
+    expect(durationSecondsToDigitBuffer(1_000_000)).toBe('995959');
   });
 });
 
 describe('parseDurationDigitBuffer', () => {
   it('should convert the digit buffer into seconds', () => {
+    expect(parseDurationDigitBuffer('32')).toBe(32);
     expect(parseDurationDigitBuffer('1240')).toBe(760);
+    expect(parseDurationDigitBuffer('10530')).toBe(3930);
   });
 
-  it('should reject buffers that produce invalid seconds', () => {
+  it('should reject minutes or seconds above 59', () => {
     expect(parseDurationDigitBuffer('1299')).toBeNull();
-  });
-});
-
-describe('parseDurationMask', () => {
-  it('should convert 000:00 into seconds', () => {
-    expect(parseDurationMask('012:40')).toBe(760);
+    expect(parseDurationDigitBuffer('7500')).toBeNull();
   });
 
-  it('should reject seconds above 59', () => {
-    expect(parseDurationMask('012:60')).toBeNull();
-  });
-
-  it('should reject incomplete masks', () => {
-    expect(parseDurationMask('12:40')).toBeNull();
+  it('should reject an empty buffer', () => {
+    expect(parseDurationDigitBuffer('')).toBeNull();
   });
 });
 

@@ -8,3 +8,13 @@ export const toVimeoEmbedUrl = (src?: string): string | null => {
 
   return match ? `https://player.vimeo.com/video/${match[1]}?${VIMEO_EMBED_QUERY}` : null;
 };
+
+/** URL `https` do Vimeo que aponta para um vídeo (o caminho traz o id numérico). */
+export const isVimeoVideoUrl = (src: string): boolean => {
+  try {
+    const { protocol, hostname, pathname } = new URL(src);
+    return protocol === 'https:' && /(^|\.)vimeo\.com$/i.test(hostname) && /\/\d+/.test(pathname);
+  } catch {
+    return false;
+  }
+};
