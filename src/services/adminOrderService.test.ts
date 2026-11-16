@@ -103,6 +103,15 @@ describe('adminOrderService.list', () => {
     expect(parsed.searchParams.get('size')).toBe('20');
   });
 
+  it('should send the search term to the API', async () => {
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: summaryPage }));
+
+    await adminOrderService.list({ search: 'PED-1A2B' }, 0, 10);
+
+    const [url] = authenticatedFetchMock.mock.calls[0];
+    expect(new URL(String(url)).searchParams.get('search')).toBe('PED-1A2B');
+  });
+
   it('should omit empty filters from the query string', async () => {
     authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: summaryPage }));
 
@@ -113,6 +122,7 @@ describe('adminOrderService.list', () => {
     expect(parsed.searchParams.has('type')).toBe(false);
     expect(parsed.searchParams.has('courseId')).toBe(false);
     expect(parsed.searchParams.has('status')).toBe(false);
+    expect(parsed.searchParams.has('search')).toBe(false);
   });
 
   it('should throw with the API message when the response is not ok', async () => {
@@ -138,6 +148,42 @@ describe('adminOrderService.list', () => {
     expect(error).toBeInstanceOf(AdminOrderServiceError);
     expect((error as AdminOrderServiceError).status).toBe(0);
     expect((error as AdminOrderServiceError).message).toContain('conexão');
+  });
+});
+
+describe('adminOrderService.stats', () => {
+  beforeEach(() => {
+    authenticatedFetchMock.mockReset();
+  });
+
+  it('should fetch the totals with the filters and without pagination params', async () => {
+    const stats = { approvedCount: 12, approvedRevenue: 3540.5, cancelledOrRefundedCount: 3 };
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: stats }));
+
+    const result = await adminOrderService.stats({ type: 'CORPORATE', from: '2026-01-01' });
+
+    expect(result).toEqual(stats);
+    const [url] = authenticatedFetchMock.mock.calls[0];
+    const parsed = new URL(String(url));
+    expect(parsed.pathname).toMatch(/\/admin\/orders\/stats$/);
+    expect(parsed.searchParams.get('type')).toBe('CORPORATE');
+    expect(parsed.searchParams.get('from')).toBe('2026-01-01');
+    expect(parsed.searchParams.has('page')).toBe(false);
+    expect(parsed.searchParams.has('size')).toBe(false);
+  });
+
+  it('should throw with the API message when the response is not ok', async () => {
+    authenticatedFetchMock.mockResolvedValue(
+      jsonResponse(
+        { status: 403, error: 'Forbidden', message: 'Access denied: user is not ADMIN' },
+        403,
+      ),
+    );
+
+    const error = await adminOrderService.stats({}).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AdminOrderServiceError);
+    expect((error as AdminOrderServiceError).status).toBe(403);
   });
 });
 
