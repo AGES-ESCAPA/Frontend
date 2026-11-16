@@ -12,6 +12,8 @@ export interface StudentCourseCardResponse {
   progressPercentage: number | null;
   enrollmentStatus: EnrollmentStatus;
   certificateCode?: string | null;
+  /** Nota (1 a 5) que o aluno deu ao curso; `null` se ainda não avaliou. */
+  myRating?: number | null;
 }
 
 export interface PageResult<T> {

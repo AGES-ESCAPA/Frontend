@@ -30,7 +30,13 @@ const ClassificationCardBase = ({
   onFieldChange,
 }: ClassificationCardProps) => (
   <Panel title="Classificação" icon={<Shapes size={22} />} className={styles.panel}>
-    <FormField label="Categoria Principal" htmlFor={CATEGORY_ID} required error={categoryError}>
+    <FormField
+      className={styles.field}
+      label="Categoria Principal"
+      htmlFor={CATEGORY_ID}
+      required
+      error={categoryError}
+    >
       <CategoryCombobox
         id={CATEGORY_ID}
         value={category}
@@ -44,7 +50,12 @@ const ClassificationCardBase = ({
       />
     </FormField>
 
-    <FormField label="Nível de Dificuldade" required error={difficultyError}>
+    <FormField
+      className={styles.field}
+      label="Nível de Dificuldade"
+      required
+      error={difficultyError}
+    >
       <div className={styles.levelGroup} role="group" aria-label="Nível de dificuldade do curso">
         {COURSE_DIFFICULTIES.map((option) => (
           <Button

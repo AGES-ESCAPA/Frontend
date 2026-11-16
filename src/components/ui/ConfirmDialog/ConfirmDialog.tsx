@@ -10,6 +10,7 @@ export interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   isConfirming?: boolean;
+  errorMessage?: string | null;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
 }
@@ -21,6 +22,7 @@ export const ConfirmDialog = ({
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
   isConfirming = false,
+  errorMessage,
   onConfirm,
   onOpenChange,
 }: ConfirmDialogProps) => {
@@ -37,8 +39,17 @@ export const ConfirmDialog = ({
           <span className={styles.icon} aria-hidden="true">
             <AlertTriangle size={20} />
           </span>
+
           <Dialog.Title className={styles.title}>{title}</Dialog.Title>
+
           <Dialog.Description className={styles.description}>{description}</Dialog.Description>
+
+          {errorMessage ? (
+            <p role="alert" className={styles.errorMessage}>
+              {errorMessage}
+            </p>
+          ) : null}
+
           <div className={styles.actions}>
             <Button
               type="button"
@@ -49,6 +60,7 @@ export const ConfirmDialog = ({
               disabled={isConfirming}
               onClick={() => handleOpenChange(false)}
             />
+
             <Button
               type="button"
               variant="danger"

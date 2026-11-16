@@ -39,14 +39,22 @@
   object-fit: contain;
 }
 
-.brandKicker {
+.brandName {
   margin-top: var(--space-4);
+  color: var(--color-text-primary);
+  font-size: var(--text-body-2);
+  line-height: var(--text-body-2--line-height);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-wide);
+}
+
+.brandKicker {
+  margin-top: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--text-body-3);
   line-height: var(--text-body-3--line-height);
   font-weight: var(--font-weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: 0.04em;
 }
 
 .description {

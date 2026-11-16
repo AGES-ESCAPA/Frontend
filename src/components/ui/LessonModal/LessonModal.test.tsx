@@ -1,9 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import type { Lesson } from '@/types/lesson';
+import { getVimeoVideoDuration } from '@services/vimeoService';
 import { LessonModal } from './LessonModal';
 import type { LessonModalProps } from './LessonModal';
+
+vi.mock('@services/vimeoService', () => ({
+  getVimeoVideoDuration: vi.fn(),
+}));
+
+const getVimeoVideoDurationMock = vi.mocked(getVimeoVideoDuration);
 
 const existingLesson: Lesson = {
   id: 'lesson-1',
@@ -41,6 +48,10 @@ const renderModal = (props: Partial<LessonModalProps> = {}) => {
 };
 
 describe('LessonModal', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   // ── Cabeçalho e modo de uso ──────────────────────────────────────
   it('should show the target module in the header when creating a lesson', () => {
     renderModal();
@@ -55,7 +66,7 @@ describe('LessonModal', () => {
     expect(screen.getByRole('dialog', { name: /editar aula/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/título da aula/i)).toHaveValue(existingLesson.title);
     expect(screen.getByLabelText(/url do vídeo/i)).toHaveValue(existingLesson.videoUrl);
-    expect(screen.getByLabelText(/duração/i)).toHaveValue('012:40');
+    expect(screen.getByLabelText(/duração/i)).toHaveValue('12:40');
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByLabelText(/título do material 1/i)).toHaveValue('Artigo MDN');
   });
@@ -86,6 +97,36 @@ describe('LessonModal', () => {
 
     expect(screen.getByLabelText(/selecionar arquivo 1/i)).toHaveAttribute('type', 'file');
     expect(screen.queryByLabelText(/url do arquivo/i)).not.toBeInTheDocument();
+  });
+
+  // ── Duração automática do Vimeo ──────────────────────────────────
+  it('should fill the duration from Vimeo when a Vimeo URL is typed', async () => {
+    getVimeoVideoDurationMock.mockResolvedValue(32);
+    renderModal();
+
+    await userEvent.type(screen.getByLabelText(/url do vídeo/i), 'https://vimeo.com/123456789');
+
+    await waitFor(() => expect(screen.getByLabelText(/duração \(min:seg\)/i)).toHaveValue('00:32'));
+    expect(screen.getByText('Duração preenchida a partir do Vimeo.')).toBeInTheDocument();
+  });
+
+  it('should show the hours when the Vimeo video passes one hour', async () => {
+    getVimeoVideoDurationMock.mockResolvedValue(3930);
+    renderModal();
+
+    await userEvent.type(screen.getByLabelText(/url do vídeo/i), 'https://vimeo.com/123456789');
+
+    await waitFor(() =>
+      expect(screen.getByLabelText(/duração \(h:min:seg\)/i)).toHaveValue('1:05:30'),
+    );
+  });
+
+  it('should keep the saved duration when editing a lesson with the same Vimeo URL', async () => {
+    renderModal({ lesson: { ...existingLesson, videoUrl: 'https://vimeo.com/123456789' } });
+
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    expect(getVimeoVideoDurationMock).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(/duração/i)).toHaveValue('12:40');
   });
 
   // ── Validação ────────────────────────────────────────────────────

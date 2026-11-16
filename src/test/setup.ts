@@ -27,3 +27,24 @@ if (jsdom) {
 if (!HTMLElement.prototype.hasPointerCapture) {
   HTMLElement.prototype.hasPointerCapture = () => false;
 }
+
+// O ResponsiveContainer do recharts so desenha depois de receber a medida do conteiner.
+// O JSDOM nao mede elementos nem implementa o ResizeObserver: informamos uma largura fixa.
+if (!globalThis.ResizeObserver) {
+  globalThis.ResizeObserver = class implements ResizeObserver {
+    private readonly callback: ResizeObserverCallback;
+
+    constructor(callback: ResizeObserverCallback) {
+      this.callback = callback;
+    }
+
+    observe(target: Element) {
+      const contentRect = { width: 800, height: 400 } as DOMRectReadOnly;
+      this.callback([{ target, contentRect } as ResizeObserverEntry], this);
+    }
+
+    unobserve() {}
+
+    disconnect() {}
+  };
+}

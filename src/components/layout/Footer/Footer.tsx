@@ -52,7 +52,7 @@ export const Footer = ({
   categories = defaultCategories,
   year = getCurrentYear(),
 }: FooterProps) => {
-  const copyright = `© ${year} Escapa! Cursos. Todos os direitos reservados.`;
+  const copyright = `© ${year} Escapa! Academy. Todos os direitos reservados.`;
 
   if (variant === 'compact') {
     return (
@@ -69,8 +69,9 @@ export const Footer = ({
     <footer className={`${styles.footer} ${styles.full}`} aria-label="Rodapé institucional">
       <div className={styles.fullContent}>
         <section className={styles.brandSection} aria-label="Sobre a Escapa">
-          <img src={escapaLogo} alt="escapa!" className={styles.logo} />
-          <p className={styles.brandKicker}>Aprenda</p>
+          <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
+          <p className={styles.brandName}>ESCAPA Academy</p>
+          <p className={styles.brandKicker}>Da Pesquisa à Prática</p>
           <p className={styles.description}>
             Plataforma de educação premium para profissionais e empresas do turismo e da
             hospitalidade. Marketing, IA, inovação e muito mais.

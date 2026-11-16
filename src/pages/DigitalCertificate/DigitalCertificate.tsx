@@ -135,7 +135,7 @@ export const DigitalCertificate = () => {
   };
 
   const content = (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${showAuthenticatedLayout ? styles.pageAuthenticated : ''}`}>
       {status === 'loading' && (
         <p className={styles.loading} role="status">
           Carregando certificado...
@@ -154,13 +154,15 @@ export const DigitalCertificate = () => {
       {status === 'success' && certificate && (
         <div className={styles.layout}>
           <div className={styles.mainColumn}>
-            <CertificateCard
-              studentName={certificate.student.name}
-              courseTitle={certificate.course.title}
-              workload={formatWorkload(certificate.certificate.workload)}
-              conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
-              verificationCode={certificate.certificate.verificationCode}
-            />
+            <div className={styles.certificateSlot}>
+              <CertificateCard
+                studentName={certificate.student.name}
+                courseTitle={certificate.course.title}
+                workload={formatWorkload(certificate.certificate.workload)}
+                conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
+                verificationCode={certificate.certificate.verificationCode}
+              />
+            </div>
 
             <p className={styles.disclaimer}>
               O certificado acima atesta que {certificate.student.name} concluiu com êxito o curso{' '}
@@ -172,53 +174,55 @@ export const DigitalCertificate = () => {
           </div>
 
           <aside className={styles.sidebar}>
-            <AboutUser
-              name={certificate.student.name}
-              avatarUrl={certificate.student.avatarUrl ?? undefined}
-              conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
-              workload={formatWorkload(certificate.certificate.workload)}
-              course={certificate.course.title}
-              isVerified={certificate.student.isVerified}
-            />
-
-            <div className={styles.courseSummary}>
-              <h2 className={styles.courseSummaryTitle}>Sobre o curso:</h2>
-              <CourseCard
-                id={certificate.course.id}
-                imageUrl={certificate.course.thumbnailUrl ?? ''}
-                category={mapCourseCategory(certificate.course.category)}
-                level={mapCourseLevel(certificate.course.level)}
-                title={certificate.course.title}
-                description={certificate.course.description}
-                rating={certificate.course.rating ?? undefined}
-                reviewsCount={certificate.course.reviewsCount}
-                duration={formatWorkload(certificate.course.durationTime)}
-                lessonsCount={certificate.course.lessonsCount}
-                instructor={certificate.course.instructor}
-                price={formatCurrency(certificate.course.price)}
-                onClick={(id) => navigate(`/cursos/${id}`)}
+            <div className={styles.sidebarInner}>
+              <AboutUser
+                name={certificate.student.name}
+                avatarUrl={certificate.student.avatarUrl ?? undefined}
+                conclusionDate={formatLongDate(certificate.certificate.conclusionDate)}
+                workload={formatWorkload(certificate.certificate.workload)}
+                course={certificate.course.title}
               />
-            </div>
 
-            {isOwner && (
-              <div className={styles.actions}>
-                <Button
-                  ref={downloadButtonRef}
-                  label={isDownloading ? 'Baixando…' : 'Baixar'}
-                  variant="primary"
-                  icon={<Download size={18} />}
-                  isLoading={isDownloading}
-                  onClick={handleDownload}
-                />
-                <Button
-                  label="Compartilhar"
-                  variant="primary"
-                  icon={<Share2 size={18} />}
-                  onClick={handleShare}
+              <div className={styles.courseSummary}>
+                <h2 className={styles.courseSummaryTitle}>Sobre o curso:</h2>
+                <CourseCard
+                  id={certificate.course.id}
+                  imageUrl={certificate.course.thumbnailUrl ?? ''}
+                  category={mapCourseCategory(certificate.course.category)}
+                  level={mapCourseLevel(certificate.course.level)}
+                  title={certificate.course.title}
+                  description={certificate.course.description}
+                  rating={certificate.course.rating ?? undefined}
+                  reviewsCount={certificate.course.reviewsCount}
+                  duration={formatWorkload(certificate.course.durationTime)}
+                  lessonsCount={certificate.course.lessonsCount}
+                  instructor={certificate.course.instructor}
+                  price={formatCurrency(certificate.course.price)}
+                  variant="certificate"
+                  onClick={(id) => navigate(`/cursos/${id}`)}
                 />
               </div>
-            )}
+            </div>
           </aside>
+
+          {isOwner && (
+            <div className={styles.actions}>
+              <Button
+                ref={downloadButtonRef}
+                label={isDownloading ? 'Baixando…' : 'Baixar'}
+                variant="primary"
+                icon={<Download size={18} />}
+                isLoading={isDownloading}
+                onClick={handleDownload}
+              />
+              <Button
+                label="Compartilhar"
+                variant="primary"
+                icon={<Share2 size={18} />}
+                onClick={handleShare}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -251,6 +255,7 @@ export const DigitalCertificate = () => {
         }}
         items={SIDEBAR_MENU_PRESETS[layoutRole].map((item) => ({ ...item, active: false }))}
         notificationsCount={0}
+        expanded
       >
         {content}
         {toastNode}
@@ -261,7 +266,7 @@ export const DigitalCertificate = () => {
   return (
     <div className={styles.publicShell}>
       <Navbar state="noAuth" />
-      <main>{content}</main>
+      <main className={styles.publicMain}>{content}</main>
       {toastNode}
     </div>
   );

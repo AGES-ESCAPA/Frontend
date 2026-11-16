@@ -1,7 +1,12 @@
 import { authenticatedFetch, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
-import type { AdminOrderDetails, AdminOrderFilters, AdminOrderPage } from '@/types/order';
+import type {
+  AdminOrderDetails,
+  AdminOrderFilters,
+  AdminOrderPage,
+  AdminOrderStats,
+} from '@/types/order';
 
 const API_BASE_URL = getApiBaseUrl();
 const ADMIN_ORDERS_URL = `${API_BASE_URL}/admin/orders`;
@@ -21,17 +26,28 @@ export class AdminOrderServiceError extends Error {
 const NETWORK_ERROR_MESSAGE =
   'Não foi possível carregar os pedidos. Verifique sua conexão e tente novamente.';
 
-const buildListUrl = (filters: AdminOrderFilters, page: number, size: number): string => {
+const toFilterParams = (filters: AdminOrderFilters): URLSearchParams => {
   const params = new URLSearchParams();
   if (filters.type) params.set('type', filters.type);
   if (filters.courseId) params.set('courseId', filters.courseId);
   if (filters.from) params.set('from', filters.from);
   if (filters.to) params.set('to', filters.to);
   if (filters.status) params.set('status', filters.status);
+  if (filters.search) params.set('search', filters.search);
+  return params;
+};
+
+const buildListUrl = (filters: AdminOrderFilters, page: number, size: number): string => {
+  const params = toFilterParams(filters);
   params.set('page', String(page));
   params.set('size', String(size));
 
   return `${ADMIN_ORDERS_URL}?${params.toString()}`;
+};
+
+const buildStatsUrl = (filters: AdminOrderFilters): string => {
+  const query = toFilterParams(filters).toString();
+  return query ? `${ADMIN_ORDERS_URL}/stats?${query}` : `${ADMIN_ORDERS_URL}/stats`;
 };
 
 export const adminOrderService = {
@@ -56,6 +72,25 @@ export const adminOrderService = {
     }
 
     const json: ApiResponse<AdminOrderPage> = await response.json();
+    return json.data;
+  },
+
+  async stats(filters: AdminOrderFilters = {}, signal?: AbortSignal): Promise<AdminOrderStats> {
+    let response: Response;
+    try {
+      response = await authenticatedFetch(buildStatsUrl(filters), { signal });
+    } catch {
+      throw new AdminOrderServiceError(0, NETWORK_ERROR_MESSAGE);
+    }
+
+    if (!response.ok) {
+      throw new AdminOrderServiceError(
+        response.status,
+        (await readApiErrorMessage(response)) ?? 'Não foi possível carregar o resumo dos pedidos.',
+      );
+    }
+
+    const json: ApiResponse<AdminOrderStats> = await response.json();
     return json.data;
   },
 

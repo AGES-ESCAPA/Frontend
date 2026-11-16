@@ -1,7 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { CircleAlert } from 'lucide-react';
+import { useVimeoDuration } from '@hooks/useVimeoDuration';
+import type { VimeoDurationStatus } from '@hooks/useVimeoDuration';
 import type { Lesson, LessonPayload, LessonResourceType } from '@/types/lesson';
+import { durationSecondsToDigitBuffer, getDurationMaskUnits } from '@utils/formatters';
 import { Button } from '../Button';
 import { Modal } from '../Modal';
 import { Switch } from '../Switch';
@@ -23,6 +26,12 @@ import { getLessonTypeIcon } from './lessonTypeOptions';
 import styles from './LessonModal.module.css';
 
 const GENERIC_SUBMIT_ERROR = 'Não foi possível salvar a aula. Tente novamente.';
+
+const DURATION_HINTS: Partial<Record<VimeoDurationStatus, string>> = {
+  loading: 'Buscando a duração no Vimeo...',
+  success: 'Duração preenchida a partir do Vimeo.',
+  error: 'Não foi possível obter a duração no Vimeo. Preencha manualmente.',
+};
 
 export interface LessonModalProps {
   open: boolean;
@@ -100,6 +109,14 @@ export const LessonModal = ({
   const updateForm = (patch: Partial<LessonFormState>) => {
     setForm((previous) => ({ ...previous, ...patch }));
   };
+
+  // Na edição, a URL já salva mantém a duração cadastrada; só um vídeo novo
+  // dispara a busca.
+  const durationStatus = useVimeoDuration(
+    form.videoUrl,
+    open && form.type === 'video' && form.videoUrl.trim() !== (lesson?.videoUrl ?? ''),
+    (seconds) => updateForm({ duration: durationSecondsToDigitBuffer(seconds) }),
+  );
 
   const handleAddResource = (type: LessonResourceType) => {
     setForm((previous) => ({
@@ -211,7 +228,7 @@ export const LessonModal = ({
               id={videoUrlId}
               type="url"
               className={inputClassName(errors.videoUrl)}
-              placeholder="https://youtube.com..."
+              placeholder="https://vimeo.com/..."
               value={form.videoUrl}
               onChange={(event) => updateForm({ videoUrl: event.target.value })}
               aria-required="true"
@@ -220,7 +237,13 @@ export const LessonModal = ({
             />
           </FormField>
 
-          <FormField id={durationId} label="Duração" required error={errors.duration}>
+          <FormField
+            id={durationId}
+            label={`Duração (${getDurationMaskUnits(form.duration)})`}
+            required
+            error={errors.duration}
+            hint={DURATION_HINTS[durationStatus]}
+          >
             <DurationInput
               id={durationId}
               className={inputClassName(errors.duration)}

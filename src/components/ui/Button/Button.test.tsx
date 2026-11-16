@@ -100,6 +100,19 @@ describe('Button component', () => {
     expect(button.className).not.toMatch(/fullWidth/);
   });
 
+  // ── size ─────────────────────────────────────────────────────────
+  it('should apply the small size class when size is sm', () => {
+    render(<Button label="Small" variant="primary" size="sm" />);
+
+    expect(screen.getByRole('button', { name: /small/i }).className).toMatch(/sizeSm/);
+  });
+
+  it('should keep the default size when size is omitted', () => {
+    render(<Button label="Default" variant="primary" />);
+
+    expect(screen.getByRole('button', { name: /default/i }).className).not.toMatch(/sizeSm/);
+  });
+
   // ── asChild (Radix Slot) ─────────────────────────────────────────
   it('should render as a child element via Radix Slot when asChild is true', () => {
     render(

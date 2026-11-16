@@ -4,12 +4,12 @@ import {
   formatDuration,
   formatCurrency,
   durationSecondsToDigitBuffer,
+  extractDurationMaskDigits,
   formatDurationMaskFromDigits,
-  formatSecondsToDurationMask,
+  getDurationMaskUnits,
   formatSecondsToTimecode,
   formatTime,
   parseDurationDigitBuffer,
-  parseDurationMask,
   parseTimecodeToSeconds,
   formatWorkload,
   formatLongDate,
@@ -19,6 +19,8 @@ import {
   truncate,
   toCourseCode,
   formatCourseVersion,
+  formatCompactEnrollmentCount,
+  formatMostAccessedCourseSubtitle,
 } from './formatters';
 
 describe('formatDuration', () => {
@@ -59,49 +61,66 @@ describe('parseTimecodeToSeconds', () => {
   });
 });
 
-describe('formatDurationMaskFromDigits', () => {
-  it('should pad partial minutes as 000:00', () => {
-    expect(formatDurationMaskFromDigits('12')).toBe('012:00');
+describe('extractDurationMaskDigits', () => {
+  it('should drop separators and leading zeros', () => {
+    expect(extractDurationMaskDigits('00:32')).toBe('32');
   });
 
-  it('should split the last two digits as seconds', () => {
-    expect(formatDurationMaskFromDigits('1240')).toBe('012:40');
+  it('should keep at most six digits', () => {
+    expect(extractDurationMaskDigits('1234567')).toBe('123456');
   });
 });
 
-describe('formatSecondsToDurationMask', () => {
-  it('should format seconds into 000:00', () => {
-    expect(formatSecondsToDurationMask(760)).toBe('012:40');
+describe('formatDurationMaskFromDigits', () => {
+  it('should fill seconds first, like a timer', () => {
+    expect(formatDurationMaskFromDigits('3')).toBe('00:03');
+    expect(formatDurationMaskFromDigits('32')).toBe('00:32');
+    expect(formatDurationMaskFromDigits('125')).toBe('01:25');
+  });
+
+  it('should show minutes and seconds up to four digits', () => {
+    expect(formatDurationMaskFromDigits('1240')).toBe('12:40');
+  });
+
+  it('should add the hours beyond four digits', () => {
+    expect(formatDurationMaskFromDigits('10530')).toBe('1:05:30');
+    expect(formatDurationMaskFromDigits('123456')).toBe('12:34:56');
+  });
+});
+
+describe('getDurationMaskUnits', () => {
+  it('should name the units shown by the mask', () => {
+    expect(getDurationMaskUnits('1240')).toBe('min:seg');
+    expect(getDurationMaskUnits('10530')).toBe('h:min:seg');
   });
 });
 
 describe('durationSecondsToDigitBuffer', () => {
   it('should rebuild the digit buffer from seconds', () => {
+    expect(durationSecondsToDigitBuffer(32)).toBe('32');
     expect(durationSecondsToDigitBuffer(760)).toBe('1240');
+    expect(durationSecondsToDigitBuffer(3930)).toBe('10530');
+  });
+
+  it('should cap the duration at 99:59:59', () => {
+    expect(durationSecondsToDigitBuffer(1_000_000)).toBe('995959');
   });
 });
 
 describe('parseDurationDigitBuffer', () => {
   it('should convert the digit buffer into seconds', () => {
+    expect(parseDurationDigitBuffer('32')).toBe(32);
     expect(parseDurationDigitBuffer('1240')).toBe(760);
+    expect(parseDurationDigitBuffer('10530')).toBe(3930);
   });
 
-  it('should reject buffers that produce invalid seconds', () => {
+  it('should reject minutes or seconds above 59', () => {
     expect(parseDurationDigitBuffer('1299')).toBeNull();
-  });
-});
-
-describe('parseDurationMask', () => {
-  it('should convert 000:00 into seconds', () => {
-    expect(parseDurationMask('012:40')).toBe(760);
+    expect(parseDurationDigitBuffer('7500')).toBeNull();
   });
 
-  it('should reject seconds above 59', () => {
-    expect(parseDurationMask('012:60')).toBeNull();
-  });
-
-  it('should reject incomplete masks', () => {
-    expect(parseDurationMask('12:40')).toBeNull();
+  it('should reject an empty buffer', () => {
+    expect(parseDurationDigitBuffer('')).toBeNull();
   });
 });
 
@@ -266,5 +285,54 @@ describe('formatDateTime', () => {
   it('should return an empty string for an invalid value', () => {
     expect(formatDateTime('not a date')).toBe('');
     expect(formatDateTime('')).toBe('');
+  });
+});
+
+describe('formatCompactEnrollmentCount', () => {
+  it('keeps counts below 1000 as full integers', () => {
+    expect(formatCompactEnrollmentCount(0)).toBe('0');
+    expect(formatCompactEnrollmentCount(1)).toBe('1');
+    expect(formatCompactEnrollmentCount(42)).toBe('42');
+    expect(formatCompactEnrollmentCount(999)).toBe('999');
+  });
+
+  it('formats counts from 1000 onwards using pt-BR compact notation without non-breaking spaces', () => {
+    expect(formatCompactEnrollmentCount(1000)).toBe('1 mil');
+    expect(formatCompactEnrollmentCount(4820)).toBe('4,8 mil');
+    expect(formatCompactEnrollmentCount(12500)).toBe('12,5 mil');
+  });
+
+  it('rounds down so the compact count never exceeds the real one', () => {
+    expect(formatCompactEnrollmentCount(4850)).toBe('4,8 mil');
+    expect(formatCompactEnrollmentCount(4960)).toBe('4,9 mil');
+    expect(formatCompactEnrollmentCount(999999)).toBe('999,9 mil');
+    expect(formatCompactEnrollmentCount(1250000)).toBe('1,2 mi');
+  });
+
+  it('clamps negative, fractional or non-finite values safely to zero or integer', () => {
+    expect(formatCompactEnrollmentCount(-25)).toBe('0');
+    expect(formatCompactEnrollmentCount(Number.NaN)).toBe('0');
+    expect(formatCompactEnrollmentCount(Number.POSITIVE_INFINITY)).toBe('0');
+    expect(formatCompactEnrollmentCount(850.9)).toBe('850');
+  });
+});
+
+describe('formatMostAccessedCourseSubtitle', () => {
+  it('says "Mais de" when the compact notation hides part of the count', () => {
+    expect(formatMostAccessedCourseSubtitle(4820)).toBe('Mais de 4,8 mil matrículas');
+    expect(formatMostAccessedCourseSubtitle(4960)).toBe('Mais de 4,9 mil matrículas');
+    expect(formatMostAccessedCourseSubtitle(999999)).toBe('Mais de 999,9 mil matrículas');
+  });
+
+  it('shows the exact count when the compact notation is exact', () => {
+    expect(formatMostAccessedCourseSubtitle(1000)).toBe('1 mil matrículas');
+    expect(formatMostAccessedCourseSubtitle(4800)).toBe('4,8 mil matrículas');
+  });
+
+  it('shows the exact count with singular and plural below 1000', () => {
+    expect(formatMostAccessedCourseSubtitle(1)).toBe('1 matrícula');
+    expect(formatMostAccessedCourseSubtitle(420)).toBe('420 matrículas');
+    expect(formatMostAccessedCourseSubtitle(0)).toBe('0 matrículas');
+    expect(formatMostAccessedCourseSubtitle(Number.NaN)).toBe('0 matrículas');
   });
 });

@@ -17,6 +17,13 @@ describe('Avatar', () => {
     expect(initials.closest('[data-size]')).toHaveAttribute('data-size', 'sm');
   });
 
+  it('uses the medium size in the profile header', async () => {
+    render(<Avatar name="Maria Silva" size="md" />);
+
+    const initials = await screen.findByText('MS');
+    expect(initials.closest('[data-size]')).toHaveAttribute('data-size', 'md');
+  });
+
   it('uses the large size for the profile photo', async () => {
     render(<Avatar name="Maria Silva" size="lg" />);
 

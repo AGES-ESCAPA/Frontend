@@ -14,6 +14,7 @@ import { courseModulesApi } from '@services/courseModules';
 import {
   createLesson as persistLessonRequest,
   getAdminLesson,
+  reorderModuleLessons,
   updateLesson as updateLessonRequest,
 } from '@services/lessonService';
 import type { Lesson, LessonPayload } from '@/types/lesson';
@@ -32,6 +33,13 @@ export interface CourseModulesBuilderProps {
   createLesson?: (payload: LessonPayload) => Promise<Lesson>;
   getLesson?: (moduleId: string, lessonId: string) => Promise<Lesson>;
   updateLesson?: (lessonId: string, payload: LessonPayload) => Promise<Lesson>;
+  /** Devolve as aulas do módulo já na nova ordem. */
+  reorderLessons?: (moduleId: string, contentIds: string[]) => Promise<AdminModuleContent[]>;
+  /**
+   * Curso já no ar: criar, editar, excluir e reordenar fica no rascunho.
+   * O aluno só vê a mudança depois de Publicar.
+   */
+  coursePublished?: boolean;
 }
 
 type BuilderStatus = 'idle' | 'saving' | 'success' | 'error';
@@ -50,6 +58,57 @@ const reindexModules = (modules: AdminCourseModule[]) =>
     order: index + 1,
   }));
 
+const reindexLessons = (lessons: AdminModuleContent[]) =>
+  lessons.map((lesson, index) => ({
+    ...lesson,
+    order: index + 1,
+  }));
+
+/**
+ * O item arrastado assume a posição do alvo: para cima ele entra antes do alvo,
+ * para baixo entra depois. Retorna `null` quando a ordem não muda.
+ */
+const moveItemToTarget = <T extends { id: string }>(
+  items: T[],
+  draggedId: string,
+  targetId: string,
+): T[] | null => {
+  const fromIndex = items.findIndex((item) => item.id === draggedId);
+  const toIndex = items.findIndex((item) => item.id === targetId);
+
+  if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+    return null;
+  }
+
+  const nextItems = [...items];
+  const [draggedItem] = nextItems.splice(fromIndex, 1);
+  nextItems.splice(toIndex, 0, draggedItem);
+  return nextItems;
+};
+
+/**
+ * Tipo próprio para que o id da aula não seja aceito como texto por inputs
+ * (ex.: o título do módulo) quando a aula é solta fora da lista.
+ */
+const LESSON_DRAG_MIME_TYPE = 'application/x-escapa-lesson';
+
+const MODULE_CARD_SELECTOR = '[data-module-card]';
+
+/**
+ * O card do módulo também é arrastável. Sem desligá-lo no pointerdown, o
+ * navegador inicia o drag no ancestral e a aula nunca chega a ser a origem.
+ */
+const setModuleCardDraggable = (element: Element, enabled: boolean) => {
+  const card = element.closest(MODULE_CARD_SELECTOR);
+
+  if (card instanceof HTMLElement) {
+    card.draggable = enabled;
+  }
+};
+
+const isInteractiveDragTarget = (target: EventTarget | null) =>
+  target instanceof Element && Boolean(target.closest('button, input, textarea, select, a'));
+
 const formatModuleDuration = (totalMinutes: number) => {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -58,6 +117,11 @@ const formatModuleDuration = (totalMinutes: number) => {
 };
 
 const formatContentsCount = (total: number) => (total === 1 ? '1 aula' : `${total} aulas`);
+
+const visibleAfterPublish = (message: string, coursePublished: boolean) =>
+  coursePublished
+    ? `${message} Os alunos veem essa alteração quando você publicar o curso.`
+    : message;
 
 const mapLessonToModuleContent = (lesson: Lesson, fallbackOrder: number): AdminModuleContent => ({
   id: lesson.id,
@@ -103,11 +167,17 @@ export const CourseModulesBuilder = ({
   createLesson = persistLessonRequest,
   getLesson = getAdminLesson,
   updateLesson = updateLessonRequest,
+  reorderLessons = reorderModuleLessons,
+  coursePublished = false,
 }: CourseModulesBuilderProps) => {
   const [modules, setModules] = useState(() => sortModulesByOrder(initialModules));
   const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(() => new Set());
   const [draggingModuleId, setDraggingModuleId] = useState<string | null>(null);
   const [dragOverModuleId, setDragOverModuleId] = useState<string | null>(null);
+  const [draggingLessonId, setDraggingLessonId] = useState<string | null>(null);
+  const [dragOverLessonId, setDragOverLessonId] = useState<string | null>(null);
+  const [moduleDragLocked, setModuleDragLocked] = useState(false);
+  const draggingLessonRef = useRef<{ moduleId: string; lessonId: string } | null>(null);
   const [lessonTarget, setLessonTarget] = useState<{
     moduleId: string;
     moduleName: string;
@@ -207,7 +277,7 @@ export const CourseModulesBuilder = ({
         ),
       );
       savedTitlesRef.current.set(moduleId, updatedModule.title);
-      setFeedback('success', 'Título atualizado.');
+      setFeedback('success', visibleAfterPublish('Título atualizado.', coursePublished));
     } catch (error) {
       setModules((currentModules) =>
         currentModules.map((module) =>
@@ -238,7 +308,7 @@ export const CourseModulesBuilder = ({
       const reorderedModules = await client.reorderModules(courseId, moduleIds);
 
       setModules(sortModulesByOrder(reorderedModules));
-      setFeedback('success', 'Ordem dos módulos salva.');
+      setFeedback('success', visibleAfterPublish('Ordem dos módulos salva.', coursePublished));
     } catch (error) {
       // Em 400 nada foi alterado no servidor: voltamos à ordem anterior.
       setModules(previousModules);
@@ -250,10 +320,23 @@ export const CourseModulesBuilder = ({
   };
 
   const handleDragStart = (moduleId: string) => {
+    draggingLessonRef.current = null;
+    setDraggingLessonId(null);
     setDraggingModuleId(moduleId);
   };
 
+  const clearLessonDrag = () => {
+    draggingLessonRef.current = null;
+    setDraggingLessonId(null);
+    setDragOverLessonId(null);
+    setModuleDragLocked(false);
+  };
+
   const handleDrop = async (targetModuleId: string) => {
+    if (draggingLessonRef.current) {
+      return;
+    }
+
     if (draggingModuleId === null || draggingModuleId === targetModuleId) {
       setDraggingModuleId(null);
       setDragOverModuleId(null);
@@ -261,22 +344,74 @@ export const CourseModulesBuilder = ({
     }
 
     const previousModules = orderedModules;
-    const draggingModule = orderedModules.find((module) => module.id === draggingModuleId);
+    const nextModules = moveItemToTarget(orderedModules, draggingModuleId, targetModuleId);
 
-    if (!draggingModule) {
-      setDraggingModuleId(null);
-      setDragOverModuleId(null);
+    setDraggingModuleId(null);
+    setDragOverModuleId(null);
+
+    if (!nextModules) {
       return;
     }
 
-    const modulesWithoutDragged = orderedModules.filter((module) => module.id !== draggingModuleId);
-    const targetIndex = modulesWithoutDragged.findIndex((module) => module.id === targetModuleId);
-    const nextModules = [...modulesWithoutDragged];
-
-    nextModules.splice(targetIndex, 0, draggingModule);
-    setDraggingModuleId(null);
-    setDragOverModuleId(null);
     await persistModuleOrder(nextModules, previousModules);
+  };
+
+  const persistLessonOrder = async (
+    moduleId: string,
+    nextLessons: AdminModuleContent[],
+    previousModules: AdminCourseModule[],
+  ) => {
+    // Mesma regra do módulo: a lista precisa conter cada aula exatamente uma vez.
+    const contentIds = nextLessons.map((lesson) => lesson.id);
+
+    setModules((currentModules) =>
+      currentModules.map((module) =>
+        module.id === moduleId ? { ...module, contents: reindexLessons(nextLessons) } : module,
+      ),
+    );
+    setFeedback('saving', 'Salvando nova ordem das aulas...');
+
+    try {
+      const reorderedLessons = await reorderLessons(moduleId, contentIds);
+
+      setModules((currentModules) =>
+        currentModules.map((module) =>
+          module.id === moduleId ? { ...module, contents: reorderedLessons } : module,
+        ),
+      );
+      setFeedback('success', visibleAfterPublish('Ordem das aulas salva.', coursePublished));
+    } catch (error) {
+      setModules(previousModules);
+      setFeedback(
+        'error',
+        error instanceof Error ? error.message : 'Não foi possível salvar a ordem das aulas.',
+      );
+    }
+  };
+
+  const handleLessonDrop = async (moduleId: string, targetLessonId: string) => {
+    const draggingLesson = draggingLessonRef.current;
+
+    if (
+      !draggingLesson ||
+      draggingLesson.moduleId !== moduleId ||
+      draggingLesson.lessonId === targetLessonId
+    ) {
+      return;
+    }
+
+    const previousModules = orderedModules;
+    const module = previousModules.find((current) => current.id === moduleId);
+    const lessons = module
+      ? [...module.contents].sort((current, next) => current.order - next.order)
+      : [];
+    const nextLessons = moveItemToTarget(lessons, draggingLesson.lessonId, targetLessonId);
+
+    if (!module || !nextLessons) {
+      return;
+    }
+
+    await persistLessonOrder(moduleId, nextLessons, previousModules);
   };
 
   const requestDeleteModule = (moduleId: string) => {
@@ -316,7 +451,7 @@ export const CourseModulesBuilder = ({
       });
       savedTitlesRef.current.delete(moduleId);
       setModuleToDelete(null);
-      setFeedback('success', 'Módulo excluído.');
+      setFeedback('success', visibleAfterPublish('Módulo excluído.', coursePublished));
     } catch (error) {
       // Fecha o diálogo para a mensagem de erro ficar visível na tela.
       setModuleToDelete(null);
@@ -340,7 +475,7 @@ export const CourseModulesBuilder = ({
           module.id === payload.moduleId ? appendLessonToModule(module, createdLesson) : module,
         ),
       );
-      setFeedback('success', 'Aula adicionada.');
+      setFeedback('success', visibleAfterPublish('Aula adicionada.', coursePublished));
     } catch (error) {
       setFeedback(
         'error',
@@ -389,7 +524,9 @@ export const CourseModulesBuilder = ({
       );
       setFeedback(
         'success',
-        'Aula atualizada. Os alunos que já a concluíram serão notificados para refazê-la.',
+        coursePublished
+          ? 'Aula atualizada. Os alunos continuam na versão publicada até você publicar o curso.'
+          : 'Aula atualizada. Os alunos que já a concluíram serão notificados para refazê-la.',
       );
     } catch (error) {
       setFeedback(
@@ -401,9 +538,11 @@ export const CourseModulesBuilder = ({
   };
 
   const deleteDescription = moduleToDelete
-    ? `Esta ação excluirá o módulo “${moduleToDelete.title}” e ${formatContentsCount(
-        moduleToDelete.totalContents,
-      )} vinculada${moduleToDelete.totalContents === 1 ? '' : 's'} a ele. Não é possível desfazer.`
+    ? coursePublished
+      ? `O módulo “${moduleToDelete.title}” sai do construtor agora. Os alunos continuam vendo ele e as aulas publicadas até você publicar o curso.`
+      : `Esta ação excluirá o módulo “${moduleToDelete.title}” e ${formatContentsCount(
+          moduleToDelete.totalContents,
+        )} vinculada${moduleToDelete.totalContents === 1 ? '' : 's'} a ele. Não é possível desfazer.`
     : '';
 
   return (
@@ -433,19 +572,39 @@ export const CourseModulesBuilder = ({
                 dragOverModuleId === module.id ? styles.dragOver : ''
               } ${draggingModuleId === module.id ? styles.dragging : ''}`}
               key={module.id}
-              draggable={status !== 'saving'}
-              onDragStart={() => handleDragStart(module.id)}
+              data-module-card
+              draggable={status !== 'saving' && !moduleDragLocked}
+              onDragStart={(event) => {
+                if (
+                  draggingLessonRef.current ||
+                  (event.target instanceof Element && event.target.closest('[data-lesson-item]'))
+                ) {
+                  event.stopPropagation();
+                  return;
+                }
+
+                handleDragStart(module.id);
+              }}
               onDragEnd={() => {
                 setDraggingModuleId(null);
                 setDragOverModuleId(null);
               }}
               onDragOver={(event) => {
+                if (draggingLessonRef.current) {
+                  return;
+                }
+
                 event.preventDefault();
                 setDragOverModuleId(module.id);
               }}
               onDragLeave={() => setDragOverModuleId(null)}
               onDrop={(event) => {
                 event.preventDefault();
+
+                if (draggingLessonRef.current) {
+                  return;
+                }
+
                 void handleDrop(module.id);
               }}
             >
@@ -531,10 +690,103 @@ export const CourseModulesBuilder = ({
                 {isExpanded ? (
                   <div className={styles.lessonPanel} id={`module-${module.id}-lessons`}>
                     {lessons.length > 0 ? (
-                      <ul className={styles.lessonList}>
+                      <ul
+                        className={styles.lessonList}
+                        aria-label={`Aulas do Módulo ${moduleNumber}`}
+                      >
                         {lessons.map((lesson) => (
-                          <li key={lesson.id} className={styles.lessonItem}>
-                            <GripVertical size={18} aria-hidden="true" />
+                          <li
+                            key={lesson.id}
+                            data-lesson-item
+                            className={`${styles.lessonItem} ${
+                              dragOverLessonId === lesson.id ? styles.lessonDragOver : ''
+                            } ${draggingLessonId === lesson.id ? styles.lessonDragging : ''}`}
+                            draggable={status !== 'saving'}
+                            onPointerDown={(event) => {
+                              if (isInteractiveDragTarget(event.target)) {
+                                return;
+                              }
+
+                              event.stopPropagation();
+                              setModuleCardDraggable(event.currentTarget, false);
+                            }}
+                            onPointerUp={(event) => {
+                              if (draggingLessonRef.current?.lessonId === lesson.id) {
+                                return;
+                              }
+
+                              setModuleCardDraggable(event.currentTarget, status !== 'saving');
+                            }}
+                            onPointerCancel={(event) => {
+                              if (draggingLessonRef.current?.lessonId === lesson.id) {
+                                return;
+                              }
+
+                              setModuleCardDraggable(event.currentTarget, status !== 'saving');
+                            }}
+                            onDragStart={(event) => {
+                              event.stopPropagation();
+                              if (event.dataTransfer) {
+                                event.dataTransfer.effectAllowed = 'move';
+                                event.dataTransfer.setData(LESSON_DRAG_MIME_TYPE, lesson.id);
+                              }
+                              draggingLessonRef.current = {
+                                moduleId: module.id,
+                                lessonId: lesson.id,
+                              };
+                              setDraggingLessonId(lesson.id);
+                              setDraggingModuleId(null);
+                              setDragOverModuleId(null);
+                              setModuleDragLocked(true);
+                            }}
+                            onDragEnd={(event) => {
+                              event.stopPropagation();
+                              clearLessonDrag();
+                              setModuleCardDraggable(event.currentTarget, status !== 'saving');
+                            }}
+                            onDragOver={(event) => {
+                              const draggingLesson = draggingLessonRef.current;
+
+                              if (!draggingLesson || draggingLesson.moduleId !== module.id) {
+                                return;
+                              }
+
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setDragOverLessonId((currentId) =>
+                                currentId === lesson.id ? currentId : lesson.id,
+                              );
+                            }}
+                            onDragLeave={(event) => {
+                              const nextTarget = event.relatedTarget;
+
+                              if (
+                                nextTarget instanceof Node &&
+                                event.currentTarget.contains(nextTarget)
+                              ) {
+                                return;
+                              }
+
+                              setDragOverLessonId((currentId) =>
+                                currentId === lesson.id ? null : currentId,
+                              );
+                            }}
+                            onDrop={(event) => {
+                              if (!draggingLessonRef.current) {
+                                return;
+                              }
+
+                              event.preventDefault();
+                              event.stopPropagation();
+                              void handleLessonDrop(module.id, lesson.id);
+                            }}
+                          >
+                            <span
+                              className={styles.lessonDragHandle}
+                              aria-label={`Arrastar aula ${lesson.title}`}
+                            >
+                              <GripVertical size={18} aria-hidden="true" />
+                            </span>
                             {lesson.type === 'VIDEO' ? (
                               <CirclePlay size={18} aria-hidden="true" />
                             ) : (

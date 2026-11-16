@@ -2,6 +2,7 @@ import { getApiBaseUrl } from '@services/runtimeEnv';
 import { readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import type { CompanyRegistrationPayload, DuplicateRegistrationField } from '@/types/auth';
+import type { AccountInvite } from '@/types/auth';
 import type {
   AuthUser,
   UserRole,
@@ -252,5 +253,35 @@ export const authService = {
     }
 
     return { token, user: mapAuthUser(data.user) };
+  },
+
+  async getInvite(inviteToken: string, signal?: AbortSignal): Promise<AccountInvite> {
+    const response = await fetch(
+      `${API_BASE_URL}/auth/invites/${encodeURIComponent(inviteToken)}`,
+      { signal },
+    );
+
+    return getResponseData<AccountInvite>(response, 'Não foi possível carregar o convite.');
+  },
+
+  async createInvitePassword(
+    inviteToken: string,
+    password: string,
+  ): Promise<{ token: string; user: AuthUser; expiresIn: number }> {
+    const response = await fetch(
+      `${API_BASE_URL}/auth/invites/${encodeURIComponent(inviteToken)}/password`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      },
+    );
+    const data = await getResponseData<LoginResponse>(response, 'Não foi possível criar a senha.');
+
+    if (!data.accessToken) {
+      throw new AuthServiceError(500, 'A resposta do convite não contém um token.');
+    }
+
+    return { token: data.accessToken, user: mapAuthUser(data.user), expiresIn: data.expiresIn };
   },
 };

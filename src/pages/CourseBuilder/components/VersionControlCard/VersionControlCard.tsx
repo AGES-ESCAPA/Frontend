@@ -19,19 +19,26 @@ export const VersionControlCard = ({
   onNotifyStudentsOnPublishChange,
 }: VersionControlCardProps) => (
   <Panel
+    className={styles.panel}
     title="Controle de Versão"
     icon={<History size={22} />}
     actions={<span className={styles.versionTag}>{versionLabel}</span>}
   >
-    <ol className={styles.timeline}>
-      {entries.map((entry, index) => (
-        <li key={entry.id} className={styles.entry} data-latest={index === 0}>
-          <p className={styles.timestamp}>{entry.timestampLabel}</p>
-          <p className={styles.description}>{entry.description}</p>
-          <p className={styles.author}>Por: {entry.author}</p>
-        </li>
-      ))}
-    </ol>
+    {entries.length === 0 ? (
+      <p className={styles.empty}>Nenhuma alteração registrada.</p>
+    ) : (
+      <div className={styles.history}>
+        <ol className={styles.timeline}>
+          {entries.map((entry, index) => (
+            <li key={entry.id} className={styles.entry} data-latest={index === 0}>
+              <p className={styles.timestamp}>{entry.timestampLabel}</p>
+              <p className={styles.description}>{entry.description}</p>
+              <p className={styles.author}>Por: {entry.author}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    )}
 
     <div className={styles.notifyRow}>
       <Checkbox

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { KeyboardEvent, MouseEvent } from 'react';
+import * as Tooltip from '@radix-ui/react-tooltip';
 import { Badge } from '../Badge/Badge';
 import type { BadgeCategory } from '../Badge/Badge';
 import { Button } from '../Button/Button';
@@ -22,10 +23,22 @@ export interface CourseCardProps {
   price: string;
   /** Curso já comprado pelo aluno: capa em preto e branco, tag e acesso. */
   acquired?: boolean;
+  /**
+   * Resumo do certificado: mantém nota, duração e aulas, coloca o instrutor
+   * à direita e omite o preço.
+   */
+  variant?: 'default' | 'certificate';
   onClick: (id: string) => void;
   /** Abre o curso adquirido. Se omitido, o botão Acessar reutiliza `onClick`. */
   onAccess?: (id: string) => void;
+  /** Mostra o botão Acessar no curso adquirido (padrão: sim). A empresa não assiste aos cursos. */
+  showAccess?: boolean;
+  /** Colaboradores com acesso ao curso (visão da empresa): ocupa o lugar do preço e do Acessar. */
+  employeesWithAccess?: number;
 }
+
+const formatEmployeesWithAccess = (count: number): string =>
+  count === 1 ? '1 colaborador com acesso' : `${count} colaboradores com acesso`;
 
 export const CourseCard = ({
   id,
@@ -41,8 +54,11 @@ export const CourseCard = ({
   instructor,
   price,
   acquired = false,
+  variant = 'default',
   onClick,
   onAccess,
+  showAccess = true,
+  employeesWithAccess,
 }: CourseCardProps) => {
   const [imageError, setImageError] = useState(false);
   const showPlaceholder = imageError || !imageUrl;
@@ -69,9 +85,35 @@ export const CourseCard = ({
     }
   };
 
-  return (
+  // O que ocupa o fim do rodapé: contagem da empresa, preço ou acesso ao curso adquirido.
+  const renderFooterEnd = () => {
+    if (employeesWithAccess !== undefined) {
+      return (
+        <span className={styles.employees}>{formatEmployeesWithAccess(employeesWithAccess)}</span>
+      );
+    }
+    if (!acquired) {
+      return <span className={styles.price}>{price}</span>;
+    }
+    if (!showAccess) {
+      return null;
+    }
+    return (
+      <Button
+        type="button"
+        label="Acessar"
+        variant="ghost-dark"
+        className={styles.accessButton}
+        aria-label={`Acessar o curso ${title}`}
+        onClick={handleAccessClick}
+        onKeyDown={handleAccessKeyDown}
+      />
+    );
+  };
+
+  const card = (
     <div
-      className={styles.card}
+      className={variant === 'certificate' ? `${styles.card} ${styles.certificate}` : styles.card}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       role="button"
@@ -126,25 +168,31 @@ export const CourseCard = ({
           <span className={styles.metaItem}>{duration}</span>
           <span className={styles.metaDot}>•</span>
           <span className={styles.metaItem}>{lessonsCount} aulas</span>
+          {variant === 'certificate' && <span className={styles.instructorEnd}>{instructor}</span>}
         </div>
 
-        <div className={styles.footer}>
-          <span className={styles.instructor}>{instructor}</span>
-          {acquired ? (
-            <Button
-              type="button"
-              label="Acessar"
-              variant="ghost-dark"
-              className={styles.accessButton}
-              aria-label={`Acessar o curso ${title}`}
-              onClick={handleAccessClick}
-              onKeyDown={handleAccessKeyDown}
-            />
-          ) : (
-            <span className={styles.price}>{price}</span>
-          )}
-        </div>
+        {variant !== 'certificate' && (
+          <div className={styles.footer}>
+            <span className={styles.instructor}>{instructor}</span>
+            {renderFooterEnd()}
+          </div>
+        )}
       </div>
     </div>
+  );
+
+  if (variant !== 'certificate') return card;
+
+  return (
+    <Tooltip.Provider delayDuration={0}>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>{card}</Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content className={styles.tooltip} side="top" sideOffset={8}>
+            Clique para saber mais sobre esse curso
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   );
 };

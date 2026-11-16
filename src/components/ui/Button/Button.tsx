@@ -7,6 +7,8 @@ import styles from './Button.module.css';
 export type ButtonVariant =
   'primary' | 'secondary' | 'outlined' | 'ghost' | 'ghost-dark' | 'active' | 'danger';
 
+export type ButtonSize = 'md' | 'sm';
+
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Text displayed on the button (required). */
   label: string;
@@ -14,6 +16,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode;
   /** Visual appearance of the button (required). */
   variant: ButtonVariant;
+  /** `md` (default) or `sm`: 14px text and 40px height, for toolbars and forms. */
+  size?: ButtonSize;
   /** If true, the button occupies 100% of the parent container width. */
   fullWidth?: boolean;
   /** If true, replaces label and icon with a centered spinner and blocks interaction. */
@@ -31,6 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       label,
       icon,
       variant,
+      size = 'md',
       fullWidth = false,
       isLoading = false,
       asChild = false,
@@ -47,6 +52,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const classNames = [
       styles.button,
       styles[`variant-${variant}`],
+      size === 'sm' && styles.sizeSm,
       icon && styles.hasIcon,
       fullWidth && styles.fullWidth,
       isDisabled && !isLoading && styles.disabled,

@@ -35,7 +35,7 @@
 
 /* Player estreito (celular ou coluna apertada): a altura livre acima dos controles
    é pequena, então o texto diminui e os botões ficam lado a lado, sem quebrar linha. */
-@container lesson-player (width < 32rem) {
+@container video-player (width < 32rem) {
   .message {
     gap: var(--space-2);
     padding: 0 var(--space-3);
@@ -60,7 +60,7 @@
 
 /* Player muito estreito (celulares de ~320px): sobra pouca altura acima dos
    controles, então o texto fica numa linha por frase e os botões encolhem mais. */
-@container lesson-player (width < 20rem) {
+@container video-player (width < 20rem) {
   .message {
     gap: var(--space-1);
   }

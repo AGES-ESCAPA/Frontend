@@ -28,6 +28,8 @@ export interface CourseFormValues {
   durationTime: string;
   deadline: string;
   price: string;
+  /** URL pública da capa. Vazio enquanto nenhuma imagem foi enviada. */
+  thumbnailUrl: string;
 }
 
 export type CourseFormField = keyof CourseFormValues;
@@ -44,6 +46,8 @@ export interface CoursePayload {
   level: CourseDifficulty | null;
   description: string | null;
   shortDescription: string | null;
+  /** String vazia remove a capa na atualização. */
+  thumbnailUrl: string;
   teaserVideoUrl: string | null;
   durationTime: number | null;
   deadline: number | null;
@@ -60,6 +64,7 @@ export interface CourseDetail {
   level: string | null;
   description: string | null;
   shortDescription: string | null;
+  thumbnailUrl: string | null;
   teaserVideoUrl: string | null;
   durationTime: number | null;
   deadline: number | null;
@@ -124,21 +129,53 @@ export interface CourseModule {
 
 /**
  * Regras de progresso do curso, exibidas na aba "Regras & Pré Requisitos".
- * O backend ainda não tem um endpoint para persistir isso (ver TSK-05-BACK);
- * por enquanto o Construtor de Curso mantém esse estado só localmente.
+ * `blockAccessAfterDeadline` corresponde a `enforceDeadlineBlock` na API.
  */
 export interface CourseProgressRules {
   requireSequentialProgress: boolean;
   blockAccessAfterDeadline: boolean;
 }
 
-/** Curso já concluído que passa a ser exigido como pré-requisito. */
+/** Curso que pode ser exigido como pré-requisito. */
 export interface CoursePrerequisiteOption {
   id: string;
   title: string;
 }
 
-/** Entrada do histórico de versões do curso. */
+/** Pré-requisito já vinculado, como devolvido por GET /rules. */
+export interface CourseRulesPrerequisite {
+  courseId: string;
+  courseTitle: string;
+}
+
+/** Entrada bruta do histórico de alterações (GET /rules). */
+export interface CourseChangeLogEntry {
+  id: string;
+  description: string;
+  changedBy: string | null;
+  createdAt: string | null;
+}
+
+/**
+ * Regras, pré-requisitos e histórico recente.
+ * GET /api/v1/admin/courses/:id/rules e PUT /progress-rules devolvem este corpo
+ * sem o envelope `{ data }`.
+ */
+export interface CourseRules {
+  requireSequentialProgress: boolean;
+  enforceDeadlineBlock: boolean;
+  version: string;
+  prerequisites: CourseRulesPrerequisite[];
+  changeLog: CourseChangeLogEntry[];
+}
+
+/** Curso encontrado em GET /prerequisites/search. */
+export interface CoursePrerequisiteSearchHit {
+  id: string;
+  title: string;
+}
+
+/** Entrada do histórico de versões já pronta para a tela. */
 export interface CourseVersionLogEntry {
   id: string;
   timestampLabel: string;
@@ -259,4 +296,23 @@ export interface CourseSummary {
   teaserUrl: string;
   materials: CourseMaterial[];
   modules: CourseModule[];
+}
+
+/** Curso comprado pela empresa, retornado por GET /api/v1/company/courses. */
+export interface CompanyCourse {
+  id: string;
+  title: string;
+  shortDescription: string | null;
+  thumbnailUrl: string | null;
+  category: string | null;
+  level: string | null;
+  /** Carga horária em minutos. */
+  durationTime: number | null;
+  lessonsCount: number | null;
+  instructorName: string | null;
+  rating: number | null;
+  /** Data da compra (yyyy-MM-dd). */
+  acquiredAt: string;
+  /** Quantidade de colaboradores com acesso ao curso. */
+  employeesWithAccess: number;
 }

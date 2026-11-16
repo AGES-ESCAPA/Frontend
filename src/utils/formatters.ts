@@ -18,80 +18,73 @@ export const formatDuration = (totalSeconds: number): string => {
 };
 
 const TIMECODE_PATTERN = /^(\d{1,2}:)?[0-5]?\d:[0-5]\d$/;
-const DURATION_MASK_PATTERN = /^\d{3}:\d{2}$/;
 
-/** Extrai até 5 dígitos usados pela máscara de duração `000:00`. */
-export const extractDurationMaskDigits = (value: string): string =>
-  value.replace(/\D/g, '').slice(0, 5);
+/** Buffer `hhmmss`: a máscara de duração vai até 99:59:59. */
+const DURATION_MASK_MAX_DIGITS = 6;
+const DURATION_MASK_MAX_SECONDS = 99 * 3600 + 59 * 60 + 59;
 
 /**
- * Formata dígitos crus no padrão `000:00` (mmm:ss).
- * Os dois últimos dígitos são sempre segundos quando há 4 ou mais.
- * @example formatDurationMaskFromDigits('1240') // → '012:40'
+ * Extrai os dígitos da máscara de duração, sem zeros à esquerda e com no máximo 6.
+ * @example extractDurationMaskDigits('00:32') // → '32'
+ */
+export const extractDurationMaskDigits = (value: string): string =>
+  value.replace(/\D/g, '').replace(/^0+/, '').slice(0, DURATION_MASK_MAX_DIGITS);
+
+/**
+ * Formata o buffer da direita para a esquerda, como um cronômetro: os dois
+ * últimos dígitos são segundos, os dois anteriores minutos e o resto horas.
+ * @example formatDurationMaskFromDigits('32') // → '00:32'
+ * @example formatDurationMaskFromDigits('1240') // → '12:40'
+ * @example formatDurationMaskFromDigits('10530') // → '1:05:30'
  */
 export const formatDurationMaskFromDigits = (digits: string): string => {
   const clean = extractDurationMaskDigits(digits);
   if (!clean) return '';
 
-  if (clean.length <= 3) {
-    return `${clean.padStart(3, '0')}:00`;
-  }
+  const padded = clean.padStart(4, '0');
+  const seconds = padded.slice(-2);
+  const minutes = padded.slice(-4, -2);
+  const hours = padded.slice(0, -4);
 
-  const seconds = clean.slice(-2);
-  const minutes = clean.slice(0, -2).padStart(3, '0');
-  return `${minutes}:${seconds}`;
+  return hours ? `${hours}:${minutes}:${seconds}` : `${minutes}:${seconds}`;
 };
 
-/**
- * Converte segundos para a máscara `000:00`.
- * @example formatSecondsToDurationMask(760) // → '012:40'
- */
-export const formatSecondsToDurationMask = (totalSeconds: number): string => {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const minutes = Math.floor(safeSeconds / 60);
-  const seconds = safeSeconds % 60;
-
-  return `${String(minutes).padStart(3, '0')}:${String(seconds).padStart(2, '0')}`;
-};
+/** Unidades exibidas pela máscara: `h:min:seg` a partir de uma hora, senão `min:seg`. */
+export const getDurationMaskUnits = (digits: string): string =>
+  extractDurationMaskDigits(digits).length > 4 ? 'h:min:seg' : 'min:seg';
 
 /**
- * Converte segundos no buffer numérico usado pela máscara (até 5 dígitos).
- * @example durationSecondsToDigitBuffer(760) // → '1240'
+ * Converte segundos no buffer da máscara, limitado a 99:59:59.
+ * @example durationSecondsToDigitBuffer(32) // → '32'
+ * @example durationSecondsToDigitBuffer(3930) // → '10530'
  */
 export const durationSecondsToDigitBuffer = (totalSeconds: number): string => {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const minutes = Math.floor(safeSeconds / 60);
+  const safeSeconds = Math.min(Math.max(0, Math.floor(totalSeconds)), DURATION_MASK_MAX_SECONDS);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
   const seconds = safeSeconds % 60;
 
-  return `${minutes}${String(seconds).padStart(2, '0')}`;
+  return extractDurationMaskDigits(
+    `${hours}${String(minutes).padStart(2, '0')}${String(seconds).padStart(2, '0')}`,
+  );
 };
 
 /**
- * Converte o buffer numérico da máscara em segundos.
- * Retorna `null` quando os segundos calculados passam de 59.
+ * Converte o buffer da máscara em segundos.
+ * Retorna `null` quando está vazio ou quando minutos ou segundos passam de 59.
  */
 export const parseDurationDigitBuffer = (digits: string): number | null => {
   const clean = extractDurationMaskDigits(digits);
   if (!clean) return null;
 
-  return parseDurationMask(formatDurationMaskFromDigits(clean));
-};
+  const padded = clean.padStart(DURATION_MASK_MAX_DIGITS, '0');
+  const hours = Number(padded.slice(0, 2));
+  const minutes = Number(padded.slice(2, 4));
+  const seconds = Number(padded.slice(4));
 
-/**
- * Converte a máscara `000:00` em segundos.
- * Retorna `null` quando o formato é inválido ou os segundos passam de 59.
- */
-export const parseDurationMask = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (!DURATION_MASK_PATTERN.test(trimmed)) return null;
+  if (minutes > 59 || seconds > 59) return null;
 
-  const [minutesPart, secondsPart] = trimmed.split(':');
-  const minutes = Number(minutesPart);
-  const seconds = Number(secondsPart);
-
-  if (seconds > 59) return null;
-
-  return minutes * 60 + seconds;
+  return hours * 3600 + minutes * 60 + seconds;
 };
 
 /**
@@ -282,4 +275,53 @@ export const formatDateTime = (localDateTime: string): string => {
   if (Number.isNaN(date.getTime())) return '';
 
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(date);
+};
+
+const COMPACT_PT_BR_FORMATTER = new Intl.NumberFormat('pt-BR', {
+  notation: 'compact',
+  compactDisplay: 'short',
+  maximumFractionDigits: 1,
+});
+
+const toSafeCount = (count: number): number =>
+  Number.isFinite(count) ? Math.max(0, Math.trunc(count)) : 0;
+
+/**
+ * Arredonda para baixo na casa decimal que a notação compacta mostra (4.860 -> 4.800, "4,8 mil"):
+ * o Intl arredonda para o mais próximo e faria 4.960 virar "5 mil", mais do que o real.
+ */
+const floorToCompactPrecision = (count: number): number => {
+  const step = 10 ** (Math.floor(Math.log10(count) / 3) * 3 - 1);
+  return Math.floor(count / step) * step;
+};
+
+/**
+ * Formata contagens inteiras de matrículas:
+ * - Abaixo de 1.000: número integral (ex: 850 -> "850")
+ * - A partir de 1.000: notação compacta pt-BR, sempre arredondada para baixo (ex: 4960 -> "4,9 mil")
+ */
+export const formatCompactEnrollmentCount = (count: number): string => {
+  const safeCount = toSafeCount(count);
+
+  if (safeCount < 1000) {
+    return safeCount.toLocaleString('pt-BR');
+  }
+
+  // Remove espaço não-quebrável (\u00a0) gerado pelo Intl em alguns ambientes (Node/jsdom)
+  // para garantir comparação consistente em tela e testes ("4,8 mil").
+  return COMPACT_PT_BR_FORMATTER.format(floorToCompactPrecision(safeCount)).replace(/\u00a0/g, ' ');
+};
+
+/**
+ * Gera a linha de apoio do card "Curso Mais Acessado". O "Mais de" só aparece quando a notação
+ * compacta esconde parte do número; nos demais casos a contagem é exata.
+ * Ex: 4820 -> "Mais de 4,8 mil matrículas" | 4800 -> "4,8 mil matrículas" | 1 -> "1 matrícula"
+ */
+export const formatMostAccessedCourseSubtitle = (enrollments: number): string => {
+  const safeCount = toSafeCount(enrollments);
+  const formatted = formatCompactEnrollmentCount(safeCount);
+  const noun = safeCount === 1 ? 'matrícula' : 'matrículas';
+  const isApproximate = safeCount >= 1000 && floorToCompactPrecision(safeCount) < safeCount;
+
+  return isApproximate ? `Mais de ${formatted} ${noun}` : `${formatted} ${noun}`;
 };

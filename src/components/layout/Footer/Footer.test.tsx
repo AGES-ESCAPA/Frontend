@@ -8,7 +8,9 @@ describe('Footer', () => {
     );
 
     expect(screen.getByRole('contentinfo', { name: /rodapé institucional/i })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /escapa!/i })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /ESCAPA Academy/i })).toBeInTheDocument();
+    expect(screen.getByText('ESCAPA Academy')).toBeInTheDocument();
+    expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
     expect(screen.getByText(/plataforma de educação premium/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /plataforma/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /empresa/i })).toBeInTheDocument();
@@ -18,7 +20,7 @@ describe('Footer', () => {
       'https://www.escapa.com.br/#nossa-historia',
     );
     expect(
-      screen.getByText('© 2026 Escapa! Cursos. Todos os direitos reservados.'),
+      screen.getByText('© 2026 Escapa! Academy. Todos os direitos reservados.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Turismo · Hospitalidade · Inovação')).toBeInTheDocument();
   });
@@ -28,7 +30,7 @@ describe('Footer', () => {
 
     expect(screen.getByRole('contentinfo', { name: /rodapé compacto/i })).toBeInTheDocument();
     expect(
-      screen.getByText('© 2026 Escapa! Cursos. Todos os direitos reservados.'),
+      screen.getByText('© 2026 Escapa! Academy. Todos os direitos reservados.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /política de privacidade/i })).toHaveAttribute(
       'href',
@@ -50,7 +52,7 @@ describe('Footer', () => {
     render(<Footer variant="compact" />);
 
     expect(
-      screen.getByText(`© ${currentYear} Escapa! Cursos. Todos os direitos reservados.`),
+      screen.getByText(`© ${currentYear} Escapa! Academy. Todos os direitos reservados.`),
     ).toBeInTheDocument();
   });
 });

@@ -4,10 +4,15 @@ import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
 import { Button, CourseCard, CourseCardSkeleton, FilterTabs, SearchBar } from '@components/ui';
 import { useCourseFilters } from '@hooks/useCourseFilters';
+import { useCompanyCourses } from '@hooks/useCompanyCourses';
 import { usePublicCourses } from '@hooks/usePublicCourses';
-import type { PublicCourseCard } from '@/types/course';
+import type { CompanyCourse, PublicCourseCard } from '@/types/course';
 import { getCourseAccessPath } from '@utils/courseAccess';
-import { mapPublicCourseToCardProps, toDisplayLevel } from '@utils/mapPublicCourse';
+import {
+  mapCompanyCourseToCardProps,
+  mapPublicCourseToCardProps,
+  toDisplayLevel,
+} from '@utils/mapPublicCourse';
 import { loadCompanyOwnedCourseIds, loadOwnedCourseIds } from '@utils/ownedCourses';
 import styles from './Courses.module.css';
 
@@ -78,6 +83,13 @@ export const Courses = () => {
     category: toOptionalFilter(category),
     level: toOptionalFilter(level),
   });
+  const {
+    courses: companyCourses,
+    status: companyCoursesStatus,
+    reload: reloadCompanyCourses,
+  } = useCompanyCourses(isCompany);
+  // A empresa abre a página com "Cursos Adquiridos" como título principal.
+  const FeaturedTitle = isCompany ? 'h2' : 'h1';
   const [ownedCourseIds, setOwnedCourseIds] = useState<ReadonlySet<string>>(() => new Set());
   const [enrollmentsReady, setEnrollmentsReady] = useState(!tracksOwnership);
 
@@ -142,10 +154,18 @@ export const Courses = () => {
           acquired ? (id) => void handleAccess(id) : handleCourseClick,
         )}
         acquired={acquired}
+        showAccess={!isCompany}
         onAccess={acquired ? handleAccess : undefined}
       />
     );
   };
+
+  const renderCompanyCourseCard = (companyCourse: CompanyCourse) => (
+    <CourseCard
+      key={companyCourse.id}
+      {...mapCompanyCourseToCardProps(companyCourse, handleCourseClick)}
+    />
+  );
 
   return (
     <AuthenticatedLayout
@@ -173,11 +193,54 @@ export const Courses = () => {
         </section>
       ) : (
         <>
+          {isCompany ? (
+            <section className={styles.section} aria-labelledby="acquired-heading">
+              <p className={styles.catalogEyebrow}>Sua empresa</p>
+              <h1 id="acquired-heading" className={styles.heading}>
+                Cursos Adquiridos
+              </h1>
+
+              {companyCoursesStatus === 'loading' && (
+                <div
+                  className={styles.grid}
+                  role="status"
+                  aria-label="Carregando cursos adquiridos"
+                >
+                  {Array.from({ length: FEATURED_SKELETONS }, (_, index) => (
+                    <CourseCardSkeleton key={`acquired-skeleton-${index}`} />
+                  ))}
+                </div>
+              )}
+
+              {companyCoursesStatus === 'error' && (
+                <div className={styles.inlineError} role="alert">
+                  <p>Não foi possível carregar os cursos adquiridos.</p>
+                  <Button
+                    variant="outlined"
+                    label="Tentar Novamente"
+                    onClick={reloadCompanyCourses}
+                  />
+                </div>
+              )}
+
+              {companyCoursesStatus === 'success' && companyCourses.length === 0 && (
+                <p className={styles.emptyState}>
+                  Sua empresa ainda não adquiriu cursos. Conheça o catálogo abaixo e libere o acesso
+                  para a equipe.
+                </p>
+              )}
+
+              {companyCoursesStatus === 'success' && companyCourses.length > 0 && (
+                <div className={styles.grid}>{companyCourses.map(renderCompanyCourseCard)}</div>
+              )}
+            </section>
+          ) : null}
+
           <section className={styles.section} aria-labelledby="featured-heading">
             <p className={styles.catalogEyebrow}>Catálogo</p>
-            <h1 id="featured-heading" className={styles.heading}>
+            <FeaturedTitle id="featured-heading" className={styles.heading}>
               Cursos em Destaque
-            </h1>
+            </FeaturedTitle>
 
             {(featuredStatus === 'loading' ||
               (featuredStatus === 'success' && !ownedStateReady)) && (

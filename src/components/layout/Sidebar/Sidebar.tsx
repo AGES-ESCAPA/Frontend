@@ -216,11 +216,12 @@ export const Sidebar = ({
         <header className={styles.header}>
           <div className={styles.headerContent}>
             <div className={styles.brand}>
-              <img src={escapaLogo} alt="escapa!" className={styles.logo} />
+              <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
               <img src={escapaIcone} alt="" aria-hidden="true" className={styles.logoIcon} />
               <span className={styles.brandDivider} aria-hidden="true" />
-              <span className={styles.brandSuffix}>Cursos</span>
+              <span className={styles.brandSuffix}>Academy</span>
             </div>
+            <p className={styles.brandTagline}>Da Pesquisa à Prática</p>
             <p className={styles.roleLabel}>{roleLabel}</p>
           </div>
         </header>

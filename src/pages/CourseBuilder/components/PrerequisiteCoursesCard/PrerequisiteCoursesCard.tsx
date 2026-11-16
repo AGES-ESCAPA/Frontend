@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react';
 import { Search, Workflow, X } from 'lucide-react';
 import { Panel } from '@components/ui';
 import type { CoursePrerequisiteOption } from '@/types/course';
@@ -6,38 +5,29 @@ import styles from './PrerequisiteCoursesCard.module.css';
 
 export interface PrerequisiteCoursesCardProps {
   selected: CoursePrerequisiteOption[];
-  /** Catálogo disponível para busca — mockado até existir um endpoint de cursos publicados. */
-  options: CoursePrerequisiteOption[];
+  /** Resultados da busca na API, já sem o próprio curso. */
+  suggestions: CoursePrerequisiteOption[];
+  query: string;
+  /** Mensagem de busca em andamento, lista vazia ou falha. Omitida quando há sugestões. */
+  searchStatus?: string | null;
   disabled?: boolean;
+  onQueryChange: (query: string) => void;
   onAdd: (course: CoursePrerequisiteOption) => void;
   onRemove: (courseId: string) => void;
 }
 
 export const PrerequisiteCoursesCard = ({
   selected,
-  options,
+  suggestions,
+  query,
+  searchStatus = null,
   disabled = false,
+  onQueryChange,
   onAdd,
   onRemove,
 }: PrerequisiteCoursesCardProps) => {
-  const [query, setQuery] = useState('');
-
-  const suggestions = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return [];
-
-    const selectedIds = new Set(selected.map((course) => course.id));
-
-    return options.filter(
-      (course) =>
-        !selectedIds.has(course.id) && course.title.toLowerCase().includes(normalizedQuery),
-    );
-  }, [options, query, selected]);
-
-  const handleAdd = (course: CoursePrerequisiteOption) => {
-    onAdd(course);
-    setQuery('');
-  };
+  const selectedIds = new Set(selected.map((course) => course.id));
+  const visibleSuggestions = suggestions.filter((course) => !selectedIds.has(course.id));
 
   return (
     <Panel title="Cursos Pré-requisitos" icon={<Workflow size={22} />}>
@@ -74,15 +64,21 @@ export const PrerequisiteCoursesCard = ({
             value={query}
             disabled={disabled}
             aria-label="Buscar cursos para adicionar como pré-requisito"
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => onQueryChange(event.target.value)}
           />
         </div>
 
-        {suggestions.length > 0 ? (
+        {searchStatus && visibleSuggestions.length === 0 ? (
+          <p className={styles.searchStatus} role="status">
+            {searchStatus}
+          </p>
+        ) : null}
+
+        {visibleSuggestions.length > 0 ? (
           <ul className={styles.suggestions} role="listbox">
-            {suggestions.map((course) => (
+            {visibleSuggestions.map((course) => (
               <li key={course.id}>
-                <button type="button" onClick={() => handleAdd(course)}>
+                <button type="button" disabled={disabled} onClick={() => onAdd(course)}>
                   {course.title}
                 </button>
               </li>

@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Check, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
-import { Button } from '@components/ui';
-import { LessonVideoPlayer } from '@components/course/LessonVideoPlayer/LessonVideoPlayer';
+import { Button, CourseRatingModal } from '@components/ui';
+import { VideoPlayer } from '@components/course/VideoPlayer/VideoPlayer';
 import { NavigationButton } from '@components/course/NavigationButton/NavigationButton';
 import { completeStudentLesson, StudentCurriculumError } from '@services/curriculumService';
+import { getStudentEnrollments } from '@services/enrollmentService';
 import { findLessonNeighbors } from '@/utils/lessonNavigation';
+import {
+  clearCourseRatingSkipped,
+  markCourseRatingSkipped,
+  wasCourseRatingSkipped,
+} from '@/utils/courseRatingPrompt';
 import { AuthenticatedLayout } from '@components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '@components/layout/Sidebar/sidebarMenuPresets';
 import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
@@ -30,10 +36,39 @@ export const CoursePlayer = () => {
   const [completeError, setCompleteError] = useState<string | null>(null);
   // Conclusões desta sessão, para o overlay não esperar o refetch da grade ao voltar.
   const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(() => new Set());
+  const [isRatingOpen, setIsRatingOpen] = useState(false);
+  const [courseTitle, setCourseTitle] = useState('');
+  const [certificateCode, setCertificateCode] = useState<string | null>(null);
 
   useEffect(() => {
     setCompleteError(null);
   }, [lessonId]);
+
+  useEffect(() => {
+    if (!courseId) return;
+
+    let cancelled = false;
+
+    const loadEnrollmentMeta = async () => {
+      try {
+        const result = await getStudentEnrollments({ size: 100 });
+        if (cancelled) return;
+        const card = result.content.find((item) => item.courseId === courseId);
+        if (card) {
+          setCourseTitle(card.title);
+          setCertificateCode(card.certificateCode ?? null);
+        }
+      } catch {
+        // Título e certificado são opcionais para o fluxo de avaliação.
+      }
+    };
+
+    void loadEnrollmentMeta();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId]);
 
   const courseDetailsPath = `/cursos/${courseId}`;
 
@@ -44,17 +79,46 @@ export const CoursePlayer = () => {
   const previousLesson = neighbors.previous;
   // Antes de concluir a aula atual, a próxima pode vir bloqueada pela progressão sequencial.
   const navigableNext = neighbors.next?.status === 'LOCKED' ? null : neighbors.next;
+  const isLastLesson = neighbors.current != null && neighbors.next === null;
 
   const goToLesson = (targetLessonId: string) => navigate(buildLessonHref(targetLessonId));
+
+  const promptCourseRating = useCallback(async () => {
+    if (!courseId || wasCourseRatingSkipped(courseId)) return;
+
+    try {
+      const result = await getStudentEnrollments({ status: 'COMPLETED', size: 100 });
+      const card = result.content.find((item) => item.courseId === courseId);
+      if (card?.title) setCourseTitle(card.title);
+      if (card?.certificateCode) setCertificateCode(card.certificateCode);
+      if (card?.myRating != null) return;
+    } catch {
+      // Sem matrículas, ainda abrimos o modal; a API rejeita se não concluído.
+    }
+
+    setIsRatingOpen(true);
+  }, [courseId]);
 
   const handleCompleteLesson = async () => {
     setIsCompleting(true);
     setCompleteError(null);
 
+    const alreadyCompletedInCurriculum = neighbors.current?.status === 'COMPLETED';
+    const totalLessons = curriculum.data?.totalLessons ?? 0;
+    const completedBefore = curriculum.data?.completedLessons ?? 0;
+    const completedAfter = completedBefore + (alreadyCompletedInCurriculum ? 0 : 1);
+    const courseJustCompleted = totalLessons > 0 && completedAfter >= totalLessons;
+
     try {
       await completeStudentLesson(courseId, lessonId);
       setCompletedLessonIds((current) => new Set(current).add(lessonId));
       curriculum.refetch();
+
+      if (courseJustCompleted) {
+        await promptCourseRating();
+        return;
+      }
+
       if (neighbors.next) {
         goToLesson(neighbors.next.id);
       }
@@ -67,6 +131,23 @@ export const CoursePlayer = () => {
     } finally {
       setIsCompleting(false);
     }
+  };
+
+  const handleVideoEnded = () => {
+    if (!isLastLesson) return;
+    void (async () => {
+      const alreadyCompleted =
+        neighbors.current?.status === 'COMPLETED' ||
+        completedLessonIds.has(lessonId) ||
+        (lesson != null && completedLessonIds.has(lesson.id));
+
+      if (!alreadyCompleted) {
+        await handleCompleteLesson();
+        return;
+      }
+
+      await promptCourseRating();
+    })();
   };
 
   // US-13: fica na mesma posição do layout enquanto a aula carrega e depois de
@@ -202,12 +283,23 @@ export const CoursePlayer = () => {
         <div className={`${styles.layout} ${isReadingLesson ? styles.layoutReading : ''}`}>
           {lesson.type === 'video' ? (
             <div className={styles.playerContainer}>
-              <LessonVideoPlayer
+              <VideoPlayer
                 key={lessonId}
                 src={lesson.videoUrl ?? ''}
                 title={lesson.title}
                 lessonId={lesson.id}
                 isCompleted={isLessonCompleted}
+                courseTitle={courseTitle || lesson.title}
+                isLastLesson={isLastLesson}
+                onEnded={handleVideoEnded}
+                onViewOtherCourses={() => navigate('/aluno/cursos')}
+                onViewCertificate={() => {
+                  if (certificateCode) {
+                    navigate(`/certificados/${certificateCode}`);
+                    return;
+                  }
+                  navigate('/meus-cursos');
+                }}
                 previousAction={
                   usesNativePlayer && (
                     <NavigationButton
@@ -323,6 +415,18 @@ export const CoursePlayer = () => {
   return (
     <AuthenticatedLayout role="student" user={mockUser} items={SIDEBAR_MENU_PRESETS.student} wide>
       <div className={styles.page}>{renderContent()}</div>
+      <CourseRatingModal
+        open={isRatingOpen}
+        onOpenChange={setIsRatingOpen}
+        courseId={courseId}
+        courseTitle={courseTitle || undefined}
+        onRated={() => {
+          clearCourseRatingSkipped(courseId);
+        }}
+        onSkip={() => {
+          markCourseRatingSkipped(courseId);
+        }}
+      />
     </AuthenticatedLayout>
   );
 };
