@@ -67,9 +67,24 @@ describe('StudentCourseCard', () => {
     expect(screen.getByText('Concluído')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
     expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Avaliar curso/i })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Visualizar Certificado' }));
     expect(onAction).toHaveBeenCalledWith(baseProps.courseId, 'COMPLETED');
+  });
+
+  it('shows the saved rating on completed courses that were already rated', () => {
+    render(
+      <StudentCourseCard
+        {...baseProps}
+        enrollmentStatus="COMPLETED"
+        progressPercentage={100}
+        myRating={4}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'Sua avaliação: 4 de 5' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Avaliar curso/i })).not.toBeInTheDocument();
   });
 
   it('visually blocks pending courses and prevents any action', async () => {
