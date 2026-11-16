@@ -1,21 +1,25 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAdminCourses } from '@hooks/useAdminCourses';
 import { useAdminOrderDetails } from '@hooks/useAdminOrderDetails';
+import { useAdminOrderStats } from '@hooks/useAdminOrderStats';
 import { useAdminOrders } from '@hooks/useAdminOrders';
 import type { UseAdminOrdersResult } from '@hooks/useAdminOrders';
 import type { UseAdminOrderDetailsResult } from '@hooks/useAdminOrderDetails';
+import type { UseAdminOrderStatsResult } from '@hooks/useAdminOrderStats';
 import type { AdminOrderDetails, AdminOrderSummary } from '@/types/order';
 import { Ordermanagement } from './OrderManagement';
 
 vi.mock('@hooks/useAdminOrders', () => ({ useAdminOrders: vi.fn() }));
 vi.mock('@hooks/useAdminOrderDetails', () => ({ useAdminOrderDetails: vi.fn() }));
+vi.mock('@hooks/useAdminOrderStats', () => ({ useAdminOrderStats: vi.fn() }));
 vi.mock('@hooks/useAdminCourses', () => ({ useAdminCourses: vi.fn() }));
 
 const useAdminOrdersMock = vi.mocked(useAdminOrders);
 const useAdminOrderDetailsMock = vi.mocked(useAdminOrderDetails);
+const useAdminOrderStatsMock = vi.mocked(useAdminOrderStats);
 const useAdminCoursesMock = vi.mocked(useAdminCourses);
 
 const order: AdminOrderSummary = {
@@ -72,6 +76,12 @@ const defaultOrdersResult: UseAdminOrdersResult = {
   reload: vi.fn(),
 };
 
+const defaultStatsResult: UseAdminOrderStatsResult = {
+  stats: { approvedCount: 18, approvedRevenue: 5346, cancelledOrRefundedCount: 3 },
+  status: 'success',
+  reload: vi.fn(),
+};
+
 const defaultDetailsResult: UseAdminOrderDetailsResult = {
   order: null,
   status: 'loading',
@@ -89,6 +99,7 @@ describe('OrderManagement', () => {
   beforeEach(() => {
     useAdminOrdersMock.mockReturnValue({ ...defaultOrdersResult });
     useAdminOrderDetailsMock.mockReturnValue({ ...defaultDetailsResult });
+    useAdminOrderStatsMock.mockReturnValue({ ...defaultStatsResult });
     useAdminCoursesMock.mockReturnValue({
       courses: [],
       status: 'success',
@@ -111,6 +122,36 @@ describe('OrderManagement', () => {
     const pedidos = screen.getByRole('link', { name: 'Pedidos' });
     expect(pedidos).toHaveAttribute('href', '/admin/pedidos');
     expect(pedidos).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('shows the totals from useAdminOrderStats instead of summing the current page', () => {
+    renderPage();
+
+    const summary = within(screen.getByRole('region', { name: 'Resumo dos pedidos' }));
+    expect(summary.getByText(/5\.346,00/)).toBeInTheDocument();
+    expect(summary.getByText('18 pedidos ativos')).toBeInTheDocument();
+    expect(summary.getByText('18')).toBeInTheDocument();
+    expect(summary.getByText('3')).toBeInTheDocument();
+  });
+
+  it('keeps the totals bound to the filters, not to the page', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const [initialFilters] = useAdminOrderStatsMock.mock.lastCall ?? [];
+
+    await user.click(screen.getByRole('button', { name: 'Próxima' }));
+
+    expect(useAdminOrderStatsMock).toHaveBeenLastCalledWith(initialFilters);
+  });
+
+  it('shows placeholders in the totals while they load', () => {
+    useAdminOrderStatsMock.mockReturnValue({ stats: null, status: 'loading', reload: vi.fn() });
+
+    renderPage();
+
+    const summary = within(screen.getByRole('region', { name: 'Resumo dos pedidos' }));
+    expect(summary.getByText('— pedidos ativos')).toBeInTheDocument();
+    expect(summary.queryByText(/5\.346,00/)).not.toBeInTheDocument();
   });
 
   it('shows a loading indicator while fetching the orders', () => {
@@ -148,11 +189,15 @@ describe('OrderManagement', () => {
       reload,
     });
 
+    const reloadStats = vi.fn();
+    useAdminOrderStatsMock.mockReturnValue({ ...defaultStatsResult, reload: reloadStats });
+
     renderPage();
 
     expect(screen.getByRole('alert')).toHaveTextContent('Falha ao carregar pedidos.');
     await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
     expect(reload).toHaveBeenCalledOnce();
+    expect(reloadStats).toHaveBeenCalledOnce();
   });
 
   it('paginates forward with the Próxima button', async () => {
@@ -179,6 +224,37 @@ describe('OrderManagement', () => {
       expect.objectContaining({ status: 'APPROVED' }),
       0,
     );
+  });
+
+  it('sends the search to the API and goes back to the first page', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Próxima' }));
+    await user.type(screen.getByRole('textbox', { name: 'Buscar pedido' }), '  vista mar ');
+
+    await waitFor(() =>
+      expect(useAdminOrdersMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: 'vista mar' }),
+        0,
+      ),
+    );
+    expect(useAdminOrderStatsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ search: 'vista mar' }),
+    );
+  });
+
+  it('shows every order returned by the API without filtering them locally', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Buscar pedido' }),
+      'termo sem match local',
+    );
+
+    expect(screen.getByText('Ana Paula Ferreira')).toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1 de 21 pedidos')).toBeInTheDocument();
   });
 
   it('opens the detail modal with the data from useAdminOrderDetails', async () => {

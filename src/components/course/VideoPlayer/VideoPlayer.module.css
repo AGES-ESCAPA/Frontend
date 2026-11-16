@@ -14,7 +14,7 @@
 
   /* Deixa o conteúdo do overlay (ex.: CourseCompletionMessage) se adaptar à
      largura do player, e não à da tela. */
-  container: lesson-player / inline-size;
+  container: video-player / inline-size;
   overflow: hidden;
   border-radius: 8px;
   background: #10161d;

@@ -7,7 +7,7 @@ import { toVimeoEmbedUrl } from '@utils/vimeo';
 import { resolveLessonPlaybackPosition, writeLessonPlayback } from '@utils/lessonPlayback';
 import { CourseCompletionMessage } from '../CourseCompletionMessage/CourseCompletionMessage';
 import { PlayerControls } from '../PlayerControls/PlayerControls';
-import styles from './LessonVideoPlayer.module.css';
+import styles from './VideoPlayer.module.css';
 
 type WebkitDocument = Document & {
   webkitFullscreenElement?: Element | null;
@@ -31,7 +31,7 @@ const exitPlayerFullscreen = () => {
   return (document as WebkitDocument).webkitExitFullscreen?.();
 };
 
-export interface LessonVideoPlayerProps {
+export interface VideoPlayerProps {
   /** URL do vídeo (MP4 ou Vimeo). Vazia, exibe "Vídeo indisponível". */
   src: string;
   title: string;
@@ -55,9 +55,13 @@ export interface LessonVideoPlayerProps {
    * barra não aparece (carregando ou vídeo indisponível), fica no canto inferior direito.
    */
   controlsAction?: ReactNode;
+  /** Rótulo acessível do player. Padrão: "Player da aula {title}". */
+  ariaLabel?: string;
+  /** Texto quando não há vídeo ou o carregamento falha. */
+  unavailableMessage?: string;
 }
 
-export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
+export const VideoPlayer: FC<VideoPlayerProps> = ({
   src,
   title,
   lessonId,
@@ -70,6 +74,8 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
   previousAction,
   nextAction,
   controlsAction,
+  ariaLabel,
+  unavailableMessage = 'Vídeo indisponível',
 }) => {
   const playerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -493,7 +499,7 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
       className={styles.player}
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      aria-label={`Player da aula ${title}`}
+      aria-label={ariaLabel ?? `Player da aula ${title}`}
     >
       {previousAction && (
         <div className={`${styles.sideAction} ${styles.sideActionStart}`}>{previousAction}</div>
@@ -509,7 +515,7 @@ export const LessonVideoPlayer: FC<LessonVideoPlayerProps> = ({
 
       {isUnavailable ? (
         <p className={styles.unavailable} role="status">
-          Vídeo indisponível
+          {unavailableMessage}
         </p>
       ) : (
         <>

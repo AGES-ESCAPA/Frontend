@@ -23,8 +23,18 @@ vi.mock('@services/curriculumService', async (importOriginal) => ({
   completeStudentLesson: vi.fn(),
 }));
 
-vi.mock('@components/course/LessonVideoPlayer/LessonVideoPlayer', () => ({
-  LessonVideoPlayer: ({
+vi.mock('@services/enrollmentService', () => ({
+  getStudentEnrollments: vi.fn().mockResolvedValue({
+    content: [],
+    pageNumber: 0,
+    pageSize: 100,
+    totalElements: 0,
+    totalPages: 0,
+  }),
+}));
+
+vi.mock('@components/course/VideoPlayer/VideoPlayer', () => ({
+  VideoPlayer: ({
     src,
     title,
     isCompleted,
@@ -771,6 +781,48 @@ describe('CoursePlayer', () => {
       expect(
         screen.queryByRole('button', { name: 'Marcar como concluída' }),
       ).not.toBeInTheDocument();
+    });
+
+    it('should open the rating modal after completing the last lesson of the course', async () => {
+      const user = userEvent.setup();
+      const almostDone: StudentCurriculum = {
+        courseId: COURSE_ID,
+        completedLessons: 2,
+        totalLessons: 3,
+        modules: [
+          {
+            ...curriculum.modules[0],
+            completedLessons: 2,
+            lessons: [
+              { ...curriculum.modules[0].lessons[0], status: 'COMPLETED' },
+              { ...curriculum.modules[0].lessons[1], status: 'COMPLETED' },
+            ],
+          },
+          {
+            ...curriculum.modules[1],
+            locked: false,
+            completedLessons: 0,
+            lessons: [{ ...curriculum.modules[1].lessons[0], status: 'AVAILABLE' }],
+          },
+        ],
+      };
+
+      getStudentCurriculumMock.mockResolvedValue(almostDone);
+      completeStudentLessonMock.mockResolvedValue();
+      mockSuccessfulLesson({
+        ...lesson,
+        id: LOCKED_LESSON_ID,
+        title: 'Parcerias locais',
+        type: 'text',
+        videoUrl: null,
+      });
+
+      renderAt(LOCKED_LESSON_ID);
+
+      await user.click(await screen.findByRole('button', { name: 'Marcar como concluída' }));
+
+      expect(await screen.findByRole('dialog', { name: 'Avalie o curso' })).toBeInTheDocument();
+      expect(completeStudentLessonMock).toHaveBeenCalledWith(COURSE_ID, LOCKED_LESSON_ID);
     });
 
     it('should keep the buttons in the player for a Vimeo video', async () => {

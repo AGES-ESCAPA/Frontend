@@ -47,8 +47,11 @@ describe('Login', () => {
     renderLogin();
 
     expect(screen.getByRole('heading', { name: 'Painel de login' })).toBeInTheDocument();
-    expect(screen.getByAltText('escapa!')).toBeInTheDocument();
-    expect(screen.getByText('academy')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /ESCAPA Academy, página inicial/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Academy')).toBeInTheDocument();
+    expect(screen.getAllByText('Da Pesquisa à Prática').length).toBeGreaterThan(0);
     expect(screen.getByLabelText(/E-mail/)).toHaveAttribute('autocomplete', 'email');
     expect(screen.getByLabelText(/E-mail/)).toHaveAttribute('placeholder', 'email@escapa.com.br');
     expect(screen.getByLabelText(/Senha/)).toHaveAttribute('type', 'password');

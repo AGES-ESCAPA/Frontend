@@ -5,7 +5,7 @@ import { CourseHeader } from '@components/course/CourseHeader/CourseHeader';
 import { CourseInstructor } from '@components/course/CourseInstructor/CourseInstructor';
 import { CourseMaterials } from '@components/course/CourseMaterials/CourseMaterials';
 import { CurriculumAccordion } from '@components/course/CurriculumAccordion/CurriculumAccordion';
-import { TeaserPlayer } from '@components/course/TeaserPlayer/TeaserPlayer';
+import { VideoPlayer } from '@components/course/VideoPlayer/VideoPlayer';
 import { usePublicCourseDetails } from '@hooks/usePublicCourseDetails';
 import { Home } from '@pages/Home/Home';
 import styles from './CourseDetails.module.css';
@@ -59,7 +59,15 @@ export const CourseDetails = () => {
         {status === 'success' && course && (
           <>
             <CourseHeader course={course} onViewFreeLessons={handleViewFreeLessons} />
-            <TeaserPlayer src={course.teaserUrl} title={course.title} />
+            <section className={styles.teaser} aria-labelledby="teaser-title">
+              <h2 id="teaser-title">Conheça o curso</h2>
+              <VideoPlayer
+                src={course.teaserUrl}
+                title={course.title}
+                ariaLabel={`Teaser do curso ${course.title}`}
+                unavailableMessage="Vídeo não disponível para esse curso"
+              />
+            </section>
             {course.modules.length > 0 ? (
               <section
                 ref={curriculumRef}

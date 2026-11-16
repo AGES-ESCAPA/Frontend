@@ -24,7 +24,7 @@ export interface LessonFormState {
   description: string;
   type: LessonType;
   videoUrl: string;
-  /** Buffer numérico da máscara 000:00 (até 5 dígitos, ex.: "1240" → 012:40). */
+  /** Buffer numérico da máscara de duração (até 6 dígitos, ex.: "1240" → 12:40, "10530" → 1:05:30). */
   duration: string;
   textContent: string;
   fileUrl: string;
@@ -105,7 +105,7 @@ export const validateLessonForm = (state: LessonFormState): LessonFormErrors => 
     if (!state.duration.trim()) {
       errors.duration = 'Informe a duração do vídeo.';
     } else if (parseDurationDigitBuffer(state.duration) === null) {
-      errors.duration = 'Use o formato 000:00 (ex.: 012:40).';
+      errors.duration = 'Minutos e segundos vão até 59 (ex.: 12:40 ou 1:05:30).';
     }
   }
 

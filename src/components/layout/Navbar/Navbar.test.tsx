@@ -10,8 +10,11 @@ describe('Navbar', () => {
   it('renders the noAuth variant with both actions', () => {
     renderNavbar(<Navbar state="noAuth" />);
 
-    expect(screen.getByAltText('escapa!')).toBeInTheDocument();
-    expect(screen.getByText('academy')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /ESCAPA Academy, página inicial/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Academy')).toBeInTheDocument();
+    expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /acessar a plataforma/i })).toHaveAttribute(
       'href',
       '/login',
@@ -25,7 +28,8 @@ describe('Navbar', () => {
   it('renders the register variant without right-side actions', () => {
     renderNavbar(<Navbar state="register" />);
 
-    expect(screen.getByText('academy')).toBeInTheDocument();
+    expect(screen.getByText('Academy')).toBeInTheDocument();
+    expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Começar Agora' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument();
   });

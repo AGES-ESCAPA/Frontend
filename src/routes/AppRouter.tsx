@@ -104,6 +104,12 @@ const OrderManagement = lazy(() =>
   })),
 );
 
+const UserManagement = lazy(() =>
+  import('@pages/UserManagement/UserManagement').then((m) => ({
+    default: m.UserManagement,
+  })),
+);
+
 const CompanyDashboard = lazy(() =>
   import('@pages/CompanyDashboard/CompanyDashboard').then((m) => ({
     default: m.CompanyDashboard,
@@ -294,6 +300,14 @@ export const AppRouter = () => {
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
                   <OrderManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/usuarios"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <UserManagement />
                 </ProtectedRoute>
               }
             />

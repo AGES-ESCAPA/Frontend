@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { authService } from '@services/authService';
 import { adminMetricsService } from '@services/adminMetricsService';
 import type * as AdminMetricsServiceModule from '@services/adminMetricsService';
@@ -90,7 +90,8 @@ describe('AppRouter — /admin/metricas', () => {
     expect(screen.queryByRole('heading', { name: 'Página em construção' })).not.toBeInTheDocument();
     expect(authService.getCurrentUser).toHaveBeenCalledWith('test-token');
     expect(screen.getByRole('region', { name: 'Evolução de Alunos Ativos' })).toBeInTheDocument();
-    expect(await screen.findByText('0%')).toBeInTheDocument();
+    const completionRegion = screen.getByRole('region', { name: 'Taxa Média de Conclusão' });
+    expect(await within(completionRegion).findByText('0%')).toBeInTheDocument();
     expect(adminMetricsService.getOverview).toHaveBeenCalledWith(expect.any(AbortSignal));
   });
 

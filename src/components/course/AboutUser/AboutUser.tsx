@@ -8,12 +8,10 @@ export interface AboutUserProps {
   avatarUrl?: string;
   /** Data de conclusão já formatada para exibição. */
   conclusionDate: string;
-  /** Carga horária já formatada para exibição (ex.: "16 horas"). */
+  /** Carga horária já formatada para exibição (ex.: "12h"). */
   workload: string;
   /** Nome do curso concluído. */
   course: string;
-  /** Se a conta do aluno é verificada. Assume verificada por padrão. */
-  isVerified?: boolean;
 }
 
 /**
@@ -26,7 +24,6 @@ export const AboutUser: FC<AboutUserProps> = ({
   conclusionDate,
   workload,
   course,
-  isVerified = true,
 }) => {
   return (
     <section className={styles.card} aria-labelledby="about-user-title">
@@ -40,9 +37,8 @@ export const AboutUser: FC<AboutUserProps> = ({
       </div>
 
       <p className={styles.summary}>
-        {workload} (aproximadamente)
-        <br />A conta de {name} {isVerified ? 'é verificada' : 'ainda não é verificada'}.
-        <br />O Escapa! certifica a conclusão com sucesso de {course} pelo aluno.
+        A Escapa! certifica a conclusão com sucesso do curso de {course} pelo aluno, com carga
+        horária aproximada de {workload}.
       </p>
     </section>
   );

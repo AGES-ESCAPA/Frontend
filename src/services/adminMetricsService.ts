@@ -48,6 +48,17 @@ const isCount = (value: unknown): value is number =>
 const isPercentage = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
 
+/** Variação mensal: número finito, inclusive negativo ou acima de 100. */
+const isChange = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const isEngagedCompany = (value: unknown): boolean =>
+  isRecord(value) &&
+  typeof value.companyId === 'string' &&
+  value.companyId.trim() !== '' &&
+  typeof value.name === 'string' &&
+  isCount(value.enrollments);
+
 const isMonth = (value: unknown): boolean =>
   typeof value === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 
@@ -63,7 +74,11 @@ const isOverview = (data: Record<string, unknown>): boolean =>
   isCount(data.activeStudents) &&
   isCount(data.partnerCompanies) &&
   isPercentage(data.averageCompletionRate) &&
-  isMonthlySeries(data.activeStudentsByMonth);
+  isMonthlySeries(data.activeStudentsByMonth) &&
+  isChange(data.activeStudentsChange) &&
+  isChange(data.partnerCompaniesChange) &&
+  Array.isArray(data.topEngagedCompanies) &&
+  data.topEngagedCompanies.every(isEngagedCompany);
 
 const isRankedCourse = (value: unknown): boolean =>
   isRecord(value) &&

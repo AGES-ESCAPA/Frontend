@@ -1,0 +1,66 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-warning-300);
+}
+
+.sm {
+  --star-size: 1rem;
+}
+
+.md {
+  --star-size: 1.5rem;
+}
+
+.star {
+  width: var(--star-size);
+  height: var(--star-size);
+  flex-shrink: 0;
+}
+
+.filled {
+  color: var(--color-warning-300);
+}
+
+.empty {
+  color: var(--color-text-muted);
+  opacity: 0.55;
+}
+
+.interactive {
+  gap: 0;
+}
+
+.starButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.starButton svg {
+  width: var(--star-size);
+  height: var(--star-size);
+}
+
+.starButton:focus-visible {
+  outline: 2px solid var(--color-warning-300);
+  outline-offset: 2px;
+}
+
+.starButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.starButton:hover:not(:disabled),
+.starButton:focus-visible:not(:disabled) {
+  color: var(--color-warning-200);
+}

@@ -139,4 +139,17 @@ describe('ModuleNavSection', () => {
 
     expect(screen.queryByLabelText('Módulo bloqueado')).not.toBeInTheDocument();
   });
+
+  it('should show the green completed check when every lesson is done', () => {
+    renderSection({ completedLessons: 4, totalLessons: 4 });
+
+    expect(screen.getByLabelText('Módulo concluído')).toBeInTheDocument();
+    expect(getTrigger()).toHaveTextContent('4/4 concluídas');
+  });
+
+  it('should hide the completed check while the module still has pending lessons', () => {
+    renderSection();
+
+    expect(screen.queryByLabelText('Módulo concluído')).not.toBeInTheDocument();
+  });
 });

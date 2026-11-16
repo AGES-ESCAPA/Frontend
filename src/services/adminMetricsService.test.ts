@@ -176,6 +176,17 @@ describe('adminMetricsService.getOverview', () => {
         ],
       },
     ],
+    ['infinite student change', { activeStudentsChange: Number.POSITIVE_INFINITY }],
+    ['string company change', { partnerCompaniesChange: '7' }],
+    ['missing company ranking', { topEngagedCompanies: null }],
+    [
+      'company without a name',
+      { topEngagedCompanies: [{ companyId: 'company-1', enrollments: 1 }] },
+    ],
+    [
+      'negative company enrollments',
+      { topEngagedCompanies: [{ companyId: 'company-1', name: 'Euro Trip', enrollments: -1 }] },
+    ],
   ])('rejects a payload with %s', async (_name, overrides) => {
     fetchMock.mockResolvedValue(
       jsonResponse({ success: true, data: { ...adminMetricsOverview, ...overrides } }),

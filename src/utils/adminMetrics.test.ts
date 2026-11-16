@@ -18,11 +18,20 @@ describe('admin metrics formatters', () => {
 
   it.each([
     [0, '0%'],
+    [0.5, '0%'],
+    [0.51, '1%'],
+    [49.5, '49%'],
+    [49.51, '50%'],
+    [49.99, '50%'],
+    [50, '50%'],
+    [50.5, '50%'],
+    [50.51, '51%'],
+    [66.5, '66%'],
+    [66.67, '67%'],
     [68, '68%'],
-    [68.5, '68,5%'],
-    [66.67, '66,67%'],
+    [68.5, '68%'],
     [100, '100%'],
-  ])('formats the rate %s as %s', (value, expected) => {
+  ])('formats the rate %s as the integer %s', (value, expected) => {
     expect(formatAdminMetricsCompletionRate(value)).toBe(expected);
   });
 

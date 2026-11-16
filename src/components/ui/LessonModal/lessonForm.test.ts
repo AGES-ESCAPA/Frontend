@@ -58,7 +58,9 @@ describe('validateLessonForm', () => {
   it('should reject a malformed duration', () => {
     const state = { ...createLessonFormState(videoLesson), duration: '1299' };
 
-    expect(validateLessonForm(state).duration).toBe('Use o formato 000:00 (ex.: 012:40).');
+    expect(validateLessonForm(state).duration).toBe(
+      'Minutos e segundos vão até 59 (ex.: 12:40 ou 1:05:30).',
+    );
   });
 
   it('should reject a video URL that is not http(s)', () => {

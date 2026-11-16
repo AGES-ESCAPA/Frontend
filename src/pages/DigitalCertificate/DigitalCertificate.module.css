@@ -1,10 +1,48 @@
 .publicShell {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
   background-color: var(--color-surface);
 }
 
+.publicMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Para evitar rolagem, a largura do layout é limitada pela altura da tela: o
+   certificado (939 × 725) mais navbar, respiros e até 4 linhas do aviso cabem
+   em 100dvh. O piso de 33rem de certificado é a altura que a coluna lateral
+   (posicionada em absoluto sobre ele) precisa; abaixo disso a página rola. */
 .page {
-  padding: var(--space-8) var(--space-6);
+  --certificate-reserved-height: calc(
+    var(--header-height) + var(--space-3) * 2 + var(--space-6) + 4 * var(--text-body-4) *
+      var(--text-body-4--line-height)
+  );
+  --certificate-fit-width: calc(
+    max(33rem, 100dvh - var(--certificate-reserved-height)) * 939 / 725 * 3.25 / 2.25 +
+      var(--space-20)
+  );
+
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-3) var(--space-4);
+  container-type: inline-size;
+}
+
+/* Na casca autenticada o respiro externo já fica no main; aqui só um fio no topo. */
+.pageAuthenticated {
+  --certificate-reserved-height: calc(
+    var(--header-height) + var(--space-2) + var(--space-6) + 4 * var(--text-body-4) *
+      var(--text-body-4--line-height)
+  );
+
+  padding-top: var(--space-2);
+  padding-bottom: 0;
 }
 
 .loading {
@@ -15,27 +53,47 @@
 }
 
 /* Proporção do protótipo: certificado com 939px e coluna lateral com 413px. */
+/* `100cqi` é a largura útil do `.page`; com a sidebar aberta ela diminui e o
+   layout encolhe junto. */
 .layout {
+  --certificate-layout-width: min(100cqi, 92rem, var(--certificate-fit-width));
+  /* Mesmo recuo da moldura do certificado (`inset: 1.4cqi` na largura da coluna). */
+  --certificate-frame-inset: calc(
+    (var(--certificate-layout-width) - var(--space-20)) * 2.25 / 3.25 * 0.014
+  );
+
   display: grid;
+  flex: 1;
   grid-template-columns: minmax(0, 2.25fr) minmax(0, 1fr);
-  gap: var(--space-12);
-  max-width: var(--container-7xl);
+  gap: var(--space-6) var(--space-20);
+  align-content: start;
+  align-items: start;
+  width: var(--certificate-layout-width);
+  min-height: 0;
   margin: 0 auto;
+  container-type: inline-size;
 }
 
 @media (width < 64rem) {
   .layout {
+    --certificate-layout-width: min(100cqi, 92rem);
+
     grid-template-columns: 1fr;
   }
 }
 
 .mainColumn {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  display: contents;
+}
+
+.certificateSlot {
+  grid-area: 1 / 1;
+  align-self: start;
+  min-width: 0;
 }
 
 .disclaimer {
+  grid-area: 2 / 1;
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--text-body-4);
@@ -43,14 +101,27 @@
 }
 
 .sidebar {
+  position: relative;
+  grid-area: 1 / 2;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* A coluna acompanha a altura do certificado, sem alongar a linha da grade. */
+.sidebarInner {
+  position: absolute;
+  inset: var(--certificate-frame-inset) 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  min-height: 0;
 }
 
 .actions {
   display: flex;
+  grid-area: 2 / 2;
   flex-wrap: wrap;
+  align-self: start;
   justify-content: center;
   gap: var(--space-3);
 }
@@ -59,12 +130,33 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  margin-top: auto;
+  min-height: 0;
 }
 
 .courseSummaryTitle {
-  margin: 0;
+  margin: var(--space-6) 0 0;
   color: var(--color-text-primary);
-  font-size: var(--text-body-2);
-  line-height: var(--text-body-2--line-height);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
   font-weight: var(--font-weight-semibold);
+}
+
+@media (width < 64rem) {
+  .certificateSlot,
+  .disclaimer,
+  .sidebar,
+  .actions {
+    grid-area: auto;
+    grid-column: 1;
+  }
+
+  .sidebarInner {
+    position: static;
+    inset: auto;
+  }
+
+  .courseSummary {
+    margin-top: 0;
+  }
 }

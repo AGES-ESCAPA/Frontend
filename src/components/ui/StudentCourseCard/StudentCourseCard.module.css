@@ -91,6 +91,40 @@
   font-weight: var(--font-weight-bold);
 }
 
+.ratingSection {
+  display: flex;
+  align-items: center;
+  min-height: 1.5rem;
+}
+
+.ratePrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.ratePrompt:hover,
+.ratePrompt:focus-visible {
+  color: var(--color-warning-200);
+}
+
+.ratePrompt:focus-visible {
+  outline: 2px solid var(--color-warning-300);
+  outline-offset: 2px;
+}
+
+.ratePromptLabel {
+  font-size: var(--text-body-4);
+  font-weight: var(--font-weight-bold);
+}
+
 .footer {
   display: flex;
   flex-wrap: wrap;

@@ -105,6 +105,14 @@ export const MyCourses = () => {
     }
   };
 
+  const handleCourseRated = (courseId: string, rating: number) => {
+    setCourses((prev) =>
+      prev.map((course) =>
+        course.courseId === courseId ? { ...course, myRating: rating } : course,
+      ),
+    );
+  };
+
   const renderCourseGrid = (courseList: StudentCourseCardResponse[]) => (
     <div className={styles.courseGrid}>
       {courseList.map((course) => (
@@ -118,7 +126,9 @@ export const MyCourses = () => {
           lessonsCount={course.lessonsCount}
           progressPercentage={course.progressPercentage ?? 0}
           enrollmentStatus={course.enrollmentStatus}
+          myRating={course.myRating}
           onAction={handleCourseAction}
+          onRated={handleCourseRated}
         />
       ))}
     </div>

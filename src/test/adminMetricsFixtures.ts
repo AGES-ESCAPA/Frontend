@@ -12,6 +12,20 @@ export const adminMetricsOverview: AdminMetricsOverview = {
     { month: '2026-10', activeStudents: 12700 },
     { month: '2026-11', activeStudents: 13001 },
   ],
+  activeStudentsChange: 12.5,
+  partnerCompaniesChange: -3,
+  topEngagedCompanies: [
+    {
+      companyId: 'c0000000-0000-4000-8000-000000000001',
+      name: 'Euro Trip',
+      enrollments: 259,
+    },
+    {
+      companyId: 'c0000000-0000-4000-8000-000000000002',
+      name: 'Ibis',
+      enrollments: 206,
+    },
+  ],
 };
 
 export const zeroAdminMetricsOverview: AdminMetricsOverview = {
@@ -22,4 +36,7 @@ export const zeroAdminMetricsOverview: AdminMetricsOverview = {
     month,
     activeStudents: 0,
   })),
+  activeStudentsChange: 0,
+  partnerCompaniesChange: 0,
+  topEngagedCompanies: [],
 };
