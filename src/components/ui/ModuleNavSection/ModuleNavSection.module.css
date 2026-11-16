@@ -51,6 +51,19 @@
   flex-shrink: 0;
 }
 
+/* Mesmo selo verde das aulas concluídas no LessonNavItem. */
+.completedCheck {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-full);
+  color: var(--color-white);
+  background-color: var(--color-success-400);
+}
+
 .counter {
   font-family: var(--font-mono);
   font-size: var(--text-body-4);
