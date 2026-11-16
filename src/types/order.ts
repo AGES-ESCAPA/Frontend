@@ -51,6 +51,8 @@ export interface AdminOrderFilters {
   from?: string;
   to?: string;
   status?: AdminOrderStatus;
+  /** Trecho do código do pedido, do solicitante ou do título do curso. */
+  search?: string;
 }
 
 /** Item da listagem de `GET /api/v1/admin/orders` (resumo, sem os dados do comprador). */
@@ -75,6 +77,13 @@ export interface AdminOrderPage {
   pageSize: number;
   totalElements: number;
   totalPages: number;
+}
+
+/** Totais de `GET /api/v1/admin/orders/stats`: todos os pedidos dos filtros, não só a página. */
+export interface AdminOrderStats {
+  approvedCount: number;
+  approvedRevenue: number;
+  cancelledOrRefundedCount: number;
 }
 
 export interface AdminOrderStatusChange {

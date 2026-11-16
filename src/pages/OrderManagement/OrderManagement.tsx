@@ -26,6 +26,7 @@ import {
 import type { OrderFiltersValue, OrderRow, TableColumn } from '@components/ui';
 import { useAdminCourses } from '@hooks/useAdminCourses';
 import { useAdminOrderDetails } from '@hooks/useAdminOrderDetails';
+import { useAdminOrderStats } from '@hooks/useAdminOrderStats';
 import { useAdminOrders } from '@hooks/useAdminOrders';
 import { useToast } from '@hooks/useToast';
 import {
@@ -50,22 +51,14 @@ const formatShortDate = (value: string): string => {
   return `${day}/${month}/${year}`;
 };
 
-const toAdminOrderFilters = (filters: OrderFiltersValue): AdminOrderFilters => ({
+const toAdminOrderFilters = (filters: OrderFiltersValue, search: string): AdminOrderFilters => ({
   ...(filters.type ? { type: filters.type } : {}),
   ...(filters.courseId ? { courseId: filters.courseId } : {}),
   ...(filters.startDate ? { from: filters.startDate } : {}),
   ...(filters.endDate ? { to: filters.endDate } : {}),
   ...(filters.status ? { status: filters.status } : {}),
+  ...(search ? { search } : {}),
 });
-
-const matchesSearch = (order: AdminOrderSummary, term: string): boolean => {
-  const value = term.trim().toLocaleLowerCase('pt-BR');
-  if (!value) return true;
-
-  return [toOrderCode(order.id), order.requester, order.courseTitle ?? ''].some((field) =>
-    field.toLocaleLowerCase('pt-BR').includes(value),
-  );
-};
 
 const menuItems = SIDEBAR_MENU_PRESETS.admin.map((item) => ({
   ...item,
@@ -74,6 +67,7 @@ const menuItems = SIDEBAR_MENU_PRESETS.admin.map((item) => ({
 
 export const Ordermanagement = () => {
   const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<OrderFiltersValue>(EMPTY_FILTERS);
   const [page, setPage] = useState(0);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -81,12 +75,16 @@ export const Ordermanagement = () => {
   const [pendingAction, setPendingAction] = useState(false);
   const { toast, isOpen, showToast, dismissToast } = useToast();
 
-  const adminFilters = useMemo(() => toAdminOrderFilters(filters), [filters]);
+  const adminFilters = useMemo(
+    () => toAdminOrderFilters(filters, searchTerm),
+    [filters, searchTerm],
+  );
 
   const { orders, status, errorMessage, totalPages, totalElements, reload } = useAdminOrders(
     adminFilters,
     page,
   );
+  const { stats, status: statsStatus, reload: reloadStats } = useAdminOrderStats(adminFilters);
 
   const { courses: adminCourses } = useAdminCourses();
   const filterCourses = useMemo(
@@ -119,14 +117,20 @@ export const Ordermanagement = () => {
     setPage(0);
   };
 
-  const filteredOrders = useMemo(
-    () => orders.filter((order) => matchesSearch(order, search)),
-    [orders, search],
-  );
+  const handleSearch = (term: string) => {
+    const trimmed = term.trim();
+    if (trimmed === searchTerm) return;
+    setSearchTerm(trimmed);
+    setPage(0);
+  };
 
-  const approvedOrders = orders.filter((order) => order.status === 'APPROVED');
-  const approvedRevenue = approvedOrders.reduce((sum, order) => sum + order.amount, 0);
-  const canceledOrRefundedCount = orders.length - approvedOrders.length;
+  const statsReady = statsStatus === 'success' && stats !== null;
+
+  const handleReload = () => {
+    reload();
+    reloadStats();
+  };
+
   const closeDetails = () => setSelectedOrderId(null);
 
   const handleOrderAction = async (action: OrderManagementAction): Promise<void> => {
@@ -300,22 +304,22 @@ export const Ordermanagement = () => {
         </div>
       </section>
 
-      <section className={styles.stats} aria-label="Resumo dos pedidos nesta página">
+      <section className={styles.stats} aria-label="Resumo dos pedidos">
         <SumCard
           label="Receita aprovada"
-          value={status === 'loading' ? '—' : formatCurrency(approvedRevenue)}
-          description={`${approvedOrders.length} pedidos ativos`}
+          value={statsReady ? formatCurrency(stats.approvedRevenue) : '—'}
+          description={`${statsReady ? stats.approvedCount : '—'} pedidos ativos`}
         />
 
         <SumCard
           label="Pedidos Aprovados"
-          value={status === 'loading' ? '—' : approvedOrders.length}
+          value={statsReady ? stats.approvedCount : '—'}
           description="Acesso liberado automaticamente"
         />
 
         <SumCard
           label="Cancelados / reembolsados"
-          value={status === 'loading' ? '—' : canceledOrRefundedCount}
+          value={statsReady ? stats.cancelledOrRefundedCount : '—'}
           description="Acesso revogado"
         />
       </section>
@@ -338,6 +342,7 @@ export const Ordermanagement = () => {
               <SearchBar
                 value={search}
                 onChange={setSearch}
+                onSearch={handleSearch}
                 placeholder="Buscar pedido"
                 aria-label="Buscar pedido"
               />
@@ -351,7 +356,7 @@ export const Ordermanagement = () => {
             <p className={styles.errorDescription}>
               {errorMessage ?? 'Verifique sua conexão e tente novamente em instantes.'}
             </p>
-            <Button variant="primary" label="Tentar novamente" onClick={reload} />
+            <Button variant="primary" label="Tentar novamente" onClick={handleReload} />
           </div>
         ) : status === 'loading' ? (
           <p className={styles.loading} role="status">
@@ -361,7 +366,7 @@ export const Ordermanagement = () => {
           <>
             <Table
               columns={columns}
-              data={filteredOrders}
+              data={orders}
               getRowId={(order) => order.id}
               caption="Pedidos da plataforma"
               emptyMessage="Nenhum pedido encontrado para os filtros selecionados."
@@ -369,7 +374,7 @@ export const Ordermanagement = () => {
               footer={
                 <div className={styles.tableFooter}>
                   <p className={styles.footerText}>
-                    Mostrando {filteredOrders.length} de {orders.length} pedidos
+                    Mostrando {orders.length} de {totalElements} pedidos
                   </p>
                   <div className={styles.pagination}>
                     <button
