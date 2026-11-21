@@ -138,6 +138,18 @@ const CreatePassword = lazy(() =>
     default: m.CreatePassword,
   })),
 );
+
+const ForgotPassword = lazy(() =>
+  import('@pages/ForgotPassword/ForgotPassword').then((m) => ({
+    default: m.ForgotPassword,
+  })),
+);
+
+const ResetPassword = lazy(() =>
+  import('@pages/ResetPassword/ResetPassword').then((m) => ({
+    default: m.ResetPassword,
+  })),
+);
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -182,6 +194,8 @@ export const AppRouter = () => {
             <Route path="/cadastro/empresa" element={<RegisterCompany />} />
             <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
             <Route path="/criar-senha" element={<CreatePassword />} />
+            <Route path="/esqueci-minha-senha" element={<ForgotPassword />} />
+            <Route path="/redefinir-senha" element={<ResetPassword />} />
             <Route
               path="/meus-cursos"
               element={
