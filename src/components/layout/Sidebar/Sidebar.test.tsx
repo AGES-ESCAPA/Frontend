@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import type { ReactElement } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
@@ -25,8 +25,13 @@ const renderStudent = (props: Partial<Omit<SidebarProps, 'role' | 'items' | 'use
   );
 
 describe('Sidebar', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
+    sessionStorage.clear();
   });
 
   // ── Estrutura base ───────────────────────────────────────────────
@@ -200,6 +205,20 @@ describe('Sidebar', () => {
 
     await userEvent.unhover(sidebar);
     expect(sidebar).toHaveAttribute('data-collapsed', 'false');
+  });
+
+  it('should keep the pinned state after remounting (e.g. course detail backdrop)', async () => {
+    const first = renderStudent();
+    const sidebar = screen.getByRole('complementary');
+
+    await userEvent.dblClick(sidebar.querySelector('header') as HTMLElement);
+    expect(sidebar).toHaveAttribute('data-pinned', 'true');
+    first.unmount();
+
+    renderStudent();
+    const remounted = screen.getByRole('complementary');
+    expect(remounted).toHaveAttribute('data-pinned', 'true');
+    expect(remounted).toHaveAttribute('data-collapsed', 'false');
   });
 
   it('should restore the hover behavior on a second double click', async () => {

@@ -50,10 +50,18 @@ const getRoleFromPathname = (pathname: string): SidebarRole => {
   return 'student';
 };
 
-export const Courses = () => {
+export interface CoursesProps {
+  /**
+   * Força o perfil do catálogo. Usado quando a página é montada como fundo do
+   * detalhe do curso (`/cursos/:id`), onde o pathname não indica aluno/empresa.
+   */
+  layoutRole?: SidebarRole;
+}
+
+export const Courses = ({ layoutRole }: CoursesProps = {}) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const role = getRoleFromPathname(pathname);
+  const role = layoutRole ?? getRoleFromPathname(pathname);
   const isStudent = role === 'student';
   const isCompany = role === 'company';
   const tracksOwnership = isStudent || isCompany;

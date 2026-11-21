@@ -9,6 +9,10 @@
   user-select: none;
 }
 
+.authenticatedBackdrop {
+  min-height: 60dvh;
+}
+
 .teaser {
   display: grid;
   gap: var(--space-3);
