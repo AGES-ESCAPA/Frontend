@@ -80,10 +80,6 @@ export const AdminCourses = () => {
     [courses, search],
   );
 
-  const handleLogout = useCallback(() => {
-    window.location.assign('/');
-  }, []);
-
   const requestDelete = useCallback((course: AdminCourseRow) => {
     setCourseToDelete(course);
   }, []);
@@ -178,13 +174,7 @@ export const AdminCourses = () => {
 
   return (
     <>
-      <AuthenticatedLayout
-        role="admin"
-        items={menuItems}
-        user={ADMIN_USER}
-        notificationsCount={2}
-        onLogout={handleLogout}
-      >
+      <AuthenticatedLayout role="admin" items={menuItems} user={ADMIN_USER} notificationsCount={2}>
         {status === 'error' ? (
           <section className={styles.errorState} role="alert">
             <h1 className={styles.errorTitle}>Não foi possível carregar os cursos</h1>

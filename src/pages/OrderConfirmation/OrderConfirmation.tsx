@@ -66,10 +66,6 @@ export const OrderConfirmation = () => {
   const { role, menuItems, user, catalogPath } = useCheckoutLayout();
   const [isOpeningCourse, setIsOpeningCourse] = useState(false);
 
-  const handleLogout = () => {
-    window.location.assign('/');
-  };
-
   if (!isConfirmationState(state)) {
     return <Navigate to={role === 'company' ? catalogPath : STUDENT_COURSES_PATH} replace />;
   }
@@ -116,13 +112,7 @@ export const OrderConfirmation = () => {
   };
 
   return (
-    <AuthenticatedLayout
-      role={role}
-      items={menuItems}
-      user={user}
-      notificationsCount={2}
-      onLogout={handleLogout}
-    >
+    <AuthenticatedLayout role={role} items={menuItems} user={user} notificationsCount={2}>
       <header className={styles.header}>
         <p className={styles.eyebrow}>Pagamento</p>
         <h1 className={styles.title}>Compra aprovada!</h1>

@@ -564,10 +564,6 @@ export const CourseBuilder = () => {
     ],
   );
 
-  const handleLogout = useCallback(() => {
-    window.location.assign('/');
-  }, []);
-
   const availablePrerequisiteSuggestions = prerequisiteSuggestions.filter(
     (course) => !selectedPrerequisites.some((item) => item.id === course.id),
   );
@@ -586,7 +582,7 @@ export const CourseBuilder = () => {
 
   return (
     <>
-      <AuthenticatedLayout role="admin" items={menuItems} user={ADMIN_USER} onLogout={handleLogout}>
+      <AuthenticatedLayout role="admin" items={menuItems} user={ADMIN_USER}>
         <Link to={COURSES_ROUTE} className={styles.backLink}>
           <ArrowLeft size={16} aria-hidden="true" />
           Voltar para Cursos
