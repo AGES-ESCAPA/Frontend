@@ -7,6 +7,7 @@ import { NavigationButton } from '@components/course/NavigationButton/Navigation
 import { completeStudentLesson, StudentCurriculumError } from '@services/curriculumService';
 import { getStudentEnrollments } from '@services/enrollmentService';
 import { findLessonNeighbors } from '@/utils/lessonNavigation';
+import { getCourseAccessPath, getFirstAccessibleLessonId } from '@/utils/courseAccess';
 import {
   clearCourseRatingSkipped,
   markCourseRatingSkipped,
@@ -39,9 +40,11 @@ export const CoursePlayer = () => {
   const [isRatingOpen, setIsRatingOpen] = useState(false);
   const [courseTitle, setCourseTitle] = useState('');
   const [certificateCode, setCertificateCode] = useState<string | null>(null);
+  const [isRedirectingLocked, setIsRedirectingLocked] = useState(false);
 
   useEffect(() => {
     setCompleteError(null);
+    setIsRedirectingLocked(false);
   }, [lessonId]);
 
   useEffect(() => {
@@ -76,12 +79,53 @@ export const CoursePlayer = () => {
     `/aluno/cursos/${courseId}/aulas/${targetLessonId}`;
 
   const neighbors = findLessonNeighbors(curriculum.data, lessonId);
+  const currentLessonStatus = neighbors.current?.status;
   const previousLesson = neighbors.previous;
   // Antes de concluir a aula atual, a próxima pode vir bloqueada pela progressão sequencial.
   const navigableNext = neighbors.next?.status === 'LOCKED' ? null : neighbors.next;
   const isLastLesson = neighbors.current != null && neighbors.next === null;
 
   const goToLesson = (targetLessonId: string) => navigate(buildLessonHref(targetLessonId));
+
+  // URL colada de aula LOCKED: manda para a primeira liberada (mesma regra de entrada no curso).
+  useEffect(() => {
+    if (!courseId || !lessonId || !curriculum.data || curriculum.isLoading) return;
+    if (currentLessonStatus !== 'LOCKED') return;
+
+    const accessibleId = getFirstAccessibleLessonId(curriculum.data);
+    if (!accessibleId || accessibleId === lessonId) return;
+
+    setIsRedirectingLocked(true);
+    navigate(`/aluno/cursos/${courseId}/aulas/${accessibleId}`, { replace: true });
+  }, [courseId, lessonId, curriculum.data, curriculum.isLoading, currentLessonStatus, navigate]);
+
+  // 403 do servidor (ex.: progressão sequencial): tenta a primeira aula liberada.
+  useEffect(() => {
+    if (!courseId || status !== 'error' || errorStatus !== 403) return;
+
+    let cancelled = false;
+    const currentLessonPath = `/aluno/cursos/${courseId}/aulas/${lessonId}`;
+
+    const redirectFromForbidden = async () => {
+      setIsRedirectingLocked(true);
+      const path = await getCourseAccessPath(courseId);
+      if (cancelled) return;
+
+      const lessonPathPrefix = `/aluno/cursos/${courseId}/aulas/`;
+      if (path.startsWith(lessonPathPrefix) && path !== currentLessonPath) {
+        navigate(path, { replace: true });
+        return;
+      }
+
+      setIsRedirectingLocked(false);
+    };
+
+    void redirectFromForbidden();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, lessonId, status, errorStatus, navigate]);
 
   const promptCourseRating = useCallback(async () => {
     if (!courseId || wasCourseRatingSkipped(courseId)) return;
@@ -166,29 +210,35 @@ export const CoursePlayer = () => {
     </aside>
   );
 
+  const renderLoadingLesson = () => (
+    <section className={styles.lesson}>
+      <div className={styles.layout}>
+        <div className={styles.playerContainer}>
+          <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
+        </div>
+
+        <div className={styles.mainColumn} aria-busy="true" aria-label="Carregando aula">
+          <header className={styles.header}>
+            <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
+            <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
+          </header>
+
+          <LessonContent isLoading />
+          <LessonReferences isLoading />
+        </div>
+
+        {lessonMenu}
+      </div>
+    </section>
+  );
+
   const renderContent = () => {
+    if (isRedirectingLocked || currentLessonStatus === 'LOCKED') {
+      return renderLoadingLesson();
+    }
+
     if (status === 'loading') {
-      return (
-        <section className={styles.lesson}>
-          <div className={styles.layout}>
-            <div className={styles.playerContainer}>
-              <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
-            </div>
-
-            <div className={styles.mainColumn} aria-busy="true" aria-label="Carregando aula">
-              <header className={styles.header}>
-                <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
-                <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
-              </header>
-
-              <LessonContent isLoading />
-              <LessonReferences isLoading />
-            </div>
-
-            {lessonMenu}
-          </div>
-        </section>
-      );
+      return renderLoadingLesson();
     }
 
     if (status === 'error' && errorStatus === 403) {

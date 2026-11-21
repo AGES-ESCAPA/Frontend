@@ -319,6 +319,7 @@ describe('CoursePlayer', () => {
   it('should render the access denied state and link to the course details', async () => {
     const user = userEvent.setup();
 
+    getStudentCurriculumMock.mockRejectedValue(new Error('Forbidden'));
     useStudentLessonMock.mockReturnValue({
       lesson: null,
       status: 'error',
@@ -330,7 +331,7 @@ describe('CoursePlayer', () => {
     renderCoursePlayer();
 
     expect(
-      screen.getByRole('heading', {
+      await screen.findByRole('heading', {
         name: 'Acesso à aula indisponível',
       }),
     ).toBeInTheDocument();
@@ -672,8 +673,44 @@ describe('CoursePlayer', () => {
       expect(completeStudentLessonMock).not.toHaveBeenCalled();
     });
 
-    it('should offer the previous lesson and only complete on the last lesson of the course', async () => {
+    const unlockedLastLessonCurriculum: StudentCurriculum = {
+      courseId: COURSE_ID,
+      completedLessons: 2,
+      totalLessons: 3,
+      modules: [
+        {
+          ...curriculum.modules[0],
+          completedLessons: 2,
+          lessons: [
+            { ...curriculum.modules[0].lessons[0], status: 'COMPLETED' },
+            { ...curriculum.modules[0].lessons[1], status: 'COMPLETED' },
+          ],
+        },
+        {
+          ...curriculum.modules[1],
+          locked: false,
+          completedLessons: 0,
+          lessons: [{ ...curriculum.modules[1].lessons[0], status: 'AVAILABLE' }],
+        },
+      ],
+    };
+
+    it('should redirect a locked lesson URL to the first available lesson', async () => {
       getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson({ ...lesson, id: LOCKED_LESSON_ID, title: 'Parcerias locais' });
+
+      renderAt(LOCKED_LESSON_ID);
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Mapeando a jornada do hóspede/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+    });
+
+    it('should offer the previous lesson and only complete on the last lesson of the course', async () => {
+      getStudentCurriculumMock.mockResolvedValue(unlockedLastLessonCurriculum);
       mockSuccessfulLesson({ ...lesson, id: LOCKED_LESSON_ID, title: 'Parcerias locais' });
 
       renderAt(LOCKED_LESSON_ID);
@@ -692,7 +729,7 @@ describe('CoursePlayer', () => {
     it('should show the buttons in the bottom navigation for a non-video lesson', async () => {
       const user = userEvent.setup();
 
-      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      getStudentCurriculumMock.mockResolvedValue(unlockedLastLessonCurriculum);
       completeStudentLessonMock.mockResolvedValue();
       mockSuccessfulLesson({
         ...lesson,
