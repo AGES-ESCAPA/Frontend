@@ -68,7 +68,7 @@ export const MyCourses = () => {
   }, [activeTab, debouncedSearchTerm]);
 
   const fetchCourses = useCallback(
-    async (silent = false, isMounted = () => true) => {
+    async (silent = false, isMounted: () => boolean = () => true) => {
       const statusParam = activeTab !== 'Todos' ? statusByTab[activeTab] : undefined;
       const params = {
         query: debouncedSearchTerm || undefined,

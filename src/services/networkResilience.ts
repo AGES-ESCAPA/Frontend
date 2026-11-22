@@ -7,7 +7,7 @@
 /** Status HTTP em que vale a pena repetir um GET/HEAD. */
 export const RETRYABLE_HTTP_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 
-export const isAbortError = (error: unknown, signal?: AbortSignal): boolean =>
+export const isAbortError = (error: unknown, signal?: AbortSignal | null): boolean =>
   Boolean(signal?.aborted) || (error instanceof DOMException && error.name === 'AbortError');
 
 export const isNetworkError = (error: unknown): boolean => {
@@ -27,7 +27,7 @@ export const isTransientServiceError = (error: unknown): boolean => {
   return false;
 };
 
-export const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
+export const sleep = (ms: number, signal?: AbortSignal | null): Promise<void> =>
   new Promise((resolve, reject) => {
     if (signal?.aborted) {
       reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
