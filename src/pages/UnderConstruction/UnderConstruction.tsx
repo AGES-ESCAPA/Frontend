@@ -2,7 +2,7 @@ import { Construction } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
-import { Button } from '@components/ui';
+import { Button, PageHeader } from '@components/ui';
 import styles from './UnderConstruction.module.css';
 
 const usersByRole: Record<SidebarRole, SidebarUser> = {
@@ -35,11 +35,12 @@ const ConstructionMessage = () => (
     <div className={styles.iconWrap} aria-hidden="true">
       <Construction size={36} />
     </div>
-    <p className={styles.eyebrow}>Em breve</p>
-    <h1 className={styles.title}>Página em construção</h1>
-    <p className={styles.description}>
-      Estamos preparando esta área. Enquanto isso, continue explorando os cursos da plataforma.
-    </p>
+    <PageHeader
+      eyebrow="Em breve"
+      title="Página em construção"
+      subtitle="Estamos preparando esta área. Enquanto isso, continue explorando os cursos da plataforma."
+      className={styles.pageHeader}
+    />
     <span className={styles.stripe} aria-hidden="true" />
   </section>
 );

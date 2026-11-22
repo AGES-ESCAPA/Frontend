@@ -119,6 +119,7 @@ describe('OrderManagement', () => {
       errorMessage: null,
       reload: vi.fn(),
       archiveCourse: vi.fn(),
+      unarchiveCourse: vi.fn(),
     });
   });
 

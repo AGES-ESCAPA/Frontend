@@ -16,6 +16,7 @@ import {
   OrderDetailModal,
   OrderCancellationAndRefund,
   OrderFilters,
+  PageHeader,
   PAYMENT_ICONS,
   PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
@@ -61,7 +62,7 @@ const ADMIN_USER: SidebarUser = {
   email: 'admin@email.com',
 };
 
-const ROW_ICON_SIZE = 14;
+const ACTION_ICON_SIZE = 16;
 
 const formatShortDate = (value: string): string => {
   const [year, month, day] = value.slice(0, 10).split('-');
@@ -247,7 +248,7 @@ export const Ordermanagement = () => {
           <span
             className={`${styles.typeBadge} ${isCorporate ? styles.corporateBadge : styles.individualBadge}`}
           >
-            <TypeIcon size={ROW_ICON_SIZE} aria-hidden="true" />
+            <TypeIcon size={ACTION_ICON_SIZE} aria-hidden="true" />
             {ORDER_TYPE_LABELS[order.type]}
           </span>
         );
@@ -275,7 +276,7 @@ export const Ordermanagement = () => {
 
         return (
           <span className={styles.paymentMethod}>
-            <PaymentIcon size={ROW_ICON_SIZE} aria-hidden="true" />
+            <PaymentIcon size={ACTION_ICON_SIZE} aria-hidden="true" />
             {PAYMENT_METHOD_LABELS[order.paymentMethod]}
           </span>
         );
@@ -315,7 +316,7 @@ export const Ordermanagement = () => {
               aria-label={`Ver pedido ${orderCode}`}
               onClick={() => setSelectedOrderId(order.id)}
             >
-              <Eye size={ROW_ICON_SIZE} aria-hidden="true" />
+              <Eye size={ACTION_ICON_SIZE} aria-hidden="true" />
             </button>
             {canRefund ? (
               <button
@@ -326,19 +327,19 @@ export const Ordermanagement = () => {
                 disabled={pendingAction}
                 onClick={() => setPendingTableAction({ orderId: order.id, action: 'refund' })}
               >
-                <RotateCcw size={ROW_ICON_SIZE} aria-hidden="true" />
+                <RotateCcw size={ACTION_ICON_SIZE} aria-hidden="true" />
               </button>
             ) : null}
             {canCancel ? (
               <button
                 type="button"
-                className={styles.iconButton}
+                className={`${styles.iconButton} ${styles.dangerButton}`}
                 aria-label={`Cancelar pedido ${orderCode}`}
                 title="Cancelar pedido"
                 disabled={pendingAction}
                 onClick={() => setPendingTableAction({ orderId: order.id, action: 'cancel' })}
               >
-                <CircleX size={ROW_ICON_SIZE} aria-hidden="true" />
+                <CircleX size={ACTION_ICON_SIZE} aria-hidden="true" />
               </button>
             ) : null}
           </div>
@@ -349,17 +350,11 @@ export const Ordermanagement = () => {
 
   return (
     <AuthenticatedLayout role="admin" items={menuItems} user={ADMIN_USER}>
-      <section className={styles.catalog}>
-        <div className={styles.toolbar}>
-          <div>
-            <p className={styles.eyebrow}>Administração</p>
-            <h1 className={styles.heading}>Gestão de Pedidos</h1>
-            <p className={styles.description}>
-              Consulte e gerencie as compras realizadas na plataforma.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Painel administrativo • Pedidos"
+        title="Gestão de Pedidos"
+        subtitle="Consulte e gerencie as compras realizadas na plataforma."
+      />
 
       <section className={styles.stats} aria-label="Resumo dos pedidos">
         <SumCard
@@ -387,9 +382,9 @@ export const Ordermanagement = () => {
         />
       </section>
 
-      <section className={styles.ordersPanel} aria-label="Listagem de pedidos">
-        <header className={styles.panelHeader}>
-          <div className={styles.panelControls}>
+      <section className={styles.catalog} aria-label="Pedidos">
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarActions}>
             <OrderFilters
               value={filters}
               onChange={handleFiltersChange}
@@ -407,7 +402,7 @@ export const Ordermanagement = () => {
               />
             </div>
           </div>
-        </header>
+        </div>
 
         {status === 'error' ? (
           <div className={styles.errorState} role="alert">
@@ -422,49 +417,43 @@ export const Ordermanagement = () => {
             Carregando pedidos…
           </p>
         ) : (
-          <>
-            <Table
-              columns={columns}
-              data={orders}
-              getRowId={(order) => order.id}
-              caption="Pedidos da plataforma"
-              emptyMessage="Nenhum pedido encontrado para os filtros selecionados."
-              className={styles.ordersTable}
-              footer={
-                <div className={styles.tableFooter}>
-                  <p className={styles.footerText}>
-                    Mostrando {orders.length} de {totalElements} pedidos
-                  </p>
-                  <div className={styles.pagination}>
-                    <button
-                      type="button"
-                      className={styles.pageArrow}
-                      aria-label="Anterior"
-                      onClick={() => setPage((current) => Math.max(current - 1, 0))}
-                      disabled={page === 0}
-                    >
-                      <ArrowLeft size={ROW_ICON_SIZE} aria-hidden="true" />
-                    </button>
-                    <span className={styles.pageIndicator}>
-                      Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.pageArrow}
-                      aria-label="Próxima"
-                      onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
-                      disabled={page + 1 >= totalPages}
-                    >
-                      <ArrowRight size={ROW_ICON_SIZE} aria-hidden="true" />
-                    </button>
-                  </div>
-                  <p className={`${styles.footerText} ${styles.panelNote}`}>
-                    Liberação de acesso automática via checkout
-                  </p>
+          <Table
+            columns={columns}
+            data={orders}
+            getRowId={(order) => order.id}
+            caption="Pedidos da plataforma"
+            emptyMessage="Nenhum pedido encontrado para os filtros selecionados."
+            footer={
+              <div className={styles.tableFooter}>
+                <p className={styles.footerText}>
+                  Mostrando {orders.length} de {totalElements} pedidos
+                </p>
+                <div className={styles.pagination}>
+                  <button
+                    type="button"
+                    className={styles.pageArrow}
+                    aria-label="Anterior"
+                    onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                    disabled={page === 0}
+                  >
+                    <ArrowLeft size={ACTION_ICON_SIZE} aria-hidden="true" />
+                  </button>
+                  <span className={styles.pageIndicator}>
+                    Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.pageArrow}
+                    aria-label="Próxima"
+                    onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
+                    disabled={page + 1 >= totalPages}
+                  >
+                    <ArrowRight size={ACTION_ICON_SIZE} aria-hidden="true" />
+                  </button>
                 </div>
-              }
-            />
-          </>
+              </div>
+            }
+          />
         )}
       </section>
 

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
-import { Button, Toast } from '@components/ui';
+import { Button, PageHeader, Toast } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useProfile } from '@hooks/useProfile';
 import { useToast } from '@hooks/useToast';
@@ -18,10 +18,22 @@ const PROFILE_ROUTES: Record<SidebarRole, string> = {
   admin: '/admin/perfil',
 };
 
-const PAGE_COPY: Record<SidebarRole, { eyebrow: string; title: string }> = {
-  student: { eyebrow: 'Área do Aluno • Configurações', title: 'Meu Perfil' },
-  company: { eyebrow: 'Área da Empresa • Configurações', title: 'Perfil da Empresa' },
-  admin: { eyebrow: 'Área do Admin • Configurações', title: 'Meu Perfil' },
+const PAGE_COPY: Record<SidebarRole, { eyebrow?: string; title: string; subtitle: string }> = {
+  student: {
+    eyebrow: 'Área do Aluno • Meu Perfil',
+    title: 'Meu Perfil',
+    subtitle: 'Gerencie seus dados cadastrais e segurança',
+  },
+  company: {
+    eyebrow: 'Painel corporativo • Meu Perfil',
+    title: 'Perfil da Empresa',
+    subtitle: 'Gerencie seus dados cadastrais e segurança',
+  },
+  admin: {
+    eyebrow: 'Painel administrativo • Meu Perfil',
+    title: 'Meu Perfil',
+    subtitle: 'Gerencie seus dados cadastrais e segurança',
+  },
 };
 
 /** Usado só até a sessão carregar; depois a casca mostra o usuário logado. */
@@ -59,11 +71,12 @@ export const Profile = () => {
 
   return (
     <AuthenticatedLayout role={sidebarRole} items={menuItems} user={FALLBACK_USER}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>{copy.eyebrow}</p>
-        <h1 className={styles.title}>{copy.title}</h1>
-        <p className={styles.subtitle}>Gerencie seus dados cadastrais e segurança</p>
-      </header>
+      <PageHeader
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        subtitle={copy.subtitle}
+        className={styles.header}
+      />
 
       {status === 'loading' ? (
         <p className={styles.status} role="status">

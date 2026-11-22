@@ -17,6 +17,7 @@ import {
   Badge,
   Button,
   ConfirmDialog,
+  PageHeader,
   SearchBar,
   SumCard,
   Table,
@@ -40,7 +41,7 @@ import styles from './UserManagement.module.css';
 const FALLBACK_USER: SidebarUser = { name: '', role: '', email: '' };
 
 const PAGE_SIZE = 10;
-const ROW_ICON_SIZE = 14;
+const ACTION_ICON_SIZE = 16;
 
 const USER_TYPE_OPTIONS: readonly SelectInputOption[] = [
   { value: '', label: 'Todos' },
@@ -89,10 +90,10 @@ const userTypeLabel = (userType: string): string =>
 
 const TypeIcon = ({ userType }: { userType: string }) => {
   const key = userTypeKey(userType);
-  if (key === 'COMPANY') return <Building2 size={ROW_ICON_SIZE} aria-hidden="true" />;
-  if (key === 'ADMIN') return <Shield size={ROW_ICON_SIZE} aria-hidden="true" />;
-  if (key === 'EMPLOYEE') return <Briefcase size={ROW_ICON_SIZE} aria-hidden="true" />;
-  return <UserRound size={ROW_ICON_SIZE} aria-hidden="true" />;
+  if (key === 'COMPANY') return <Building2 size={ACTION_ICON_SIZE} aria-hidden="true" />;
+  if (key === 'ADMIN') return <Shield size={ACTION_ICON_SIZE} aria-hidden="true" />;
+  if (key === 'EMPLOYEE') return <Briefcase size={ACTION_ICON_SIZE} aria-hidden="true" />;
+  return <UserRound size={ACTION_ICON_SIZE} aria-hidden="true" />;
 };
 
 const matchesSearch = (user: AdminUser, term: string): boolean => {
@@ -298,7 +299,7 @@ export const UserManagement = () => {
               title="Ver usuário"
               onClick={() => openUserModal(user.id, 'view')}
             >
-              <Eye size={ROW_ICON_SIZE} aria-hidden="true" />
+              <Eye size={ACTION_ICON_SIZE} aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -307,7 +308,7 @@ export const UserManagement = () => {
               title="Editar usuário"
               onClick={() => openUserModal(user.id, 'edit')}
             >
-              <SquarePen size={ROW_ICON_SIZE} aria-hidden="true" />
+              <SquarePen size={ACTION_ICON_SIZE} aria-hidden="true" />
             </button>
             {!isInactive && !isSelf ? (
               <button
@@ -320,7 +321,7 @@ export const UserManagement = () => {
                   setUserToBlock(user);
                 }}
               >
-                <Ban size={ROW_ICON_SIZE} aria-hidden="true" />
+                <Ban size={ACTION_ICON_SIZE} aria-hidden="true" />
               </button>
             ) : null}
           </div>
@@ -331,15 +332,11 @@ export const UserManagement = () => {
 
   return (
     <AuthenticatedLayout role="admin" items={menuItems} user={sidebarUser}>
-      <section className={styles.catalog}>
-        <div className={styles.toolbar}>
-          <div>
-            <p className={styles.eyebrow}>Administração</p>
-            <h1 className={styles.heading}>Gestão de Usuários</h1>
-            <p className={styles.description}>Consulte as contas cadastradas na plataforma.</p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Painel administrativo • Usuários"
+        title="Gestão de Usuários"
+        subtitle="Consulte as contas cadastradas na plataforma."
+      />
 
       <section className={styles.stats} aria-label="Resumo dos usuários">
         <SumCard
@@ -369,9 +366,9 @@ export const UserManagement = () => {
         />
       </section>
 
-      <section className={styles.usersPanel} aria-label="Listagem de usuários">
-        <header className={styles.panelHeader}>
-          <div className={styles.panelControls}>
+      <section className={styles.catalog} aria-label="Usuários">
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarActions}>
             <TableFilter
               selects={filterSelects}
               showClearButton={false}
@@ -387,7 +384,7 @@ export const UserManagement = () => {
               />
             </div>
           </div>
-        </header>
+        </div>
 
         {status === 'error' ? (
           <div className={styles.errorState} role="alert">
@@ -408,7 +405,6 @@ export const UserManagement = () => {
             getRowId={(user) => user.id}
             caption="Usuários da plataforma"
             emptyMessage="Nenhum usuário encontrado para os filtros selecionados."
-            className={styles.usersTable}
             footer={
               <div className={styles.tableFooter}>
                 <p className={styles.footerText}>
@@ -422,7 +418,7 @@ export const UserManagement = () => {
                     onClick={() => setPage((current) => Math.max(current - 1, 0))}
                     disabled={page === 0}
                   >
-                    <ArrowLeft size={ROW_ICON_SIZE} aria-hidden="true" />
+                    <ArrowLeft size={ACTION_ICON_SIZE} aria-hidden="true" />
                   </button>
                   <span className={styles.pageIndicator}>
                     Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
@@ -434,12 +430,9 @@ export const UserManagement = () => {
                     onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
                     disabled={page + 1 >= totalPages}
                   >
-                    <ArrowRight size={ROW_ICON_SIZE} aria-hidden="true" />
+                    <ArrowRight size={ACTION_ICON_SIZE} aria-hidden="true" />
                   </button>
                 </div>
-                <p className={`${styles.footerText} ${styles.panelNote}`}>
-                  Listagem de contas da plataforma
-                </p>
               </div>
             }
           />

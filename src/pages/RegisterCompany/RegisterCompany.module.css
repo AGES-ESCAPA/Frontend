@@ -44,16 +44,10 @@
   border-radius: var(--radius-sm);
 }
 
-.title {
-  margin: 0;
-  padding-inline: var(--space-2);
-  color: var(--color-text-primary);
-  font-size: var(--text-body-3);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--text-body-3--line-height);
-  letter-spacing: 0.12em;
+.pageHeader {
+  min-width: 0;
+  align-items: center;
   text-align: center;
-  text-transform: uppercase;
 }
 
 .card {

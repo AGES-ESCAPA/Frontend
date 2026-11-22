@@ -3,7 +3,15 @@ import type { FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, IdCard, Landmark, Mail, Phone, User } from 'lucide-react';
 import { Footer, Navbar } from '@components/layout';
-import { Button, FormField, MaskedInput, PasswordInput, TextInput, Toast } from '@components/ui';
+import {
+  Button,
+  FormField,
+  MaskedInput,
+  PageHeader,
+  PasswordInput,
+  TextInput,
+  Toast,
+} from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useToast } from '@hooks/useToast';
 import { AuthServiceError, DuplicateRegistrationError, authService } from '@services/authService';
@@ -101,7 +109,7 @@ export const RegisterCompany = () => {
             <Link to={authPath('/cadastro', returnTo)} className={styles.back} aria-label="Voltar">
               <ArrowLeft size={FIELD_ICON_SIZE} aria-hidden="true" />
             </Link>
-            <h1 className={styles.title}>Cadastro - Empresa</h1>
+            <PageHeader title="Cadastro - Empresa" className={styles.pageHeader} />
           </div>
 
           <form className={styles.card} onSubmit={handleSubmit} noValidate>
