@@ -50,10 +50,18 @@ const getRoleFromPathname = (pathname: string): SidebarRole => {
   return 'student';
 };
 
-export const Courses = () => {
+export interface CoursesProps {
+  /**
+   * Força o perfil do catálogo. Usado quando a página é montada como fundo do
+   * detalhe do curso (`/cursos/:id`), onde o pathname não indica aluno/empresa.
+   */
+  layoutRole?: SidebarRole;
+}
+
+export const Courses = ({ layoutRole }: CoursesProps = {}) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const role = getRoleFromPathname(pathname);
+  const role = layoutRole ?? getRoleFromPathname(pathname);
   const isStudent = role === 'student';
   const isCompany = role === 'company';
   const tracksOwnership = isStudent || isCompany;
@@ -121,10 +129,6 @@ export const Courses = () => {
     };
   }, [tracksOwnership, isCompany]);
 
-  const handleLogout = () => {
-    window.location.assign('/');
-  };
-
   // A página do curso é pública: guarda de onde veio para o "fechar" voltar ao catálogo logado.
   const handleCourseClick = (courseId: string) => {
     navigate(`/cursos/${courseId}`, { state: { from: pathname } });
@@ -168,13 +172,7 @@ export const Courses = () => {
   );
 
   return (
-    <AuthenticatedLayout
-      role={role}
-      items={courseItems}
-      user={currentUser}
-      notificationsCount={2}
-      onLogout={handleLogout}
-    >
+    <AuthenticatedLayout role={role} items={courseItems} user={currentUser} notificationsCount={2}>
       {role === 'admin' ? (
         <div className={styles.adminActions}>
           <Button asChild variant="secondary" label="Novo Curso">

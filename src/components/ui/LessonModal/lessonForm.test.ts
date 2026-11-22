@@ -18,6 +18,7 @@ const videoLesson: Lesson = {
   durationInSeconds: 760,
   textContent: null,
   fileUrl: null,
+  quizQuestions: [],
   isFreeSample: true,
   resources: [
     { id: 'resource-1', type: 'link', title: 'Artigo MDN', url: 'https://developer.mozilla.org' },

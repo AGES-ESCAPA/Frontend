@@ -13,6 +13,10 @@ export interface UserProfile {
   companyName: string | null;
   cnpj: string | null;
   avatarUrl: string | null;
+  /** Título do instrutor nos cursos (ADMIN). */
+  headline: string | null;
+  /** Biografia do instrutor nos cursos (ADMIN). */
+  bio: string | null;
 }
 
 /** Campos editáveis enviados em `PUT /api/v1/me/profile`. */
@@ -22,4 +26,8 @@ export interface ProfileUpdate {
   phone: string;
   /** Obrigatório para empresa, ignorado para aluno. */
   companyName?: string;
+  /** Título do instrutor nos cursos (ADMIN). */
+  headline?: string;
+  /** Biografia do instrutor nos cursos (ADMIN). */
+  bio?: string;
 }

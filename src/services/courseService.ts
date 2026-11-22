@@ -158,6 +158,7 @@ const ensureOk = async (response: Response, fallback: string): Promise<void> => 
 const normalizeCourseRules = (rules: Partial<CourseRules> | null | undefined): CourseRules => ({
   requireSequentialProgress: rules?.requireSequentialProgress ?? true,
   enforceDeadlineBlock: rules?.enforceDeadlineBlock ?? false,
+  minQuizPassPercentage: rules?.minQuizPassPercentage ?? 70,
   version: rules?.version?.trim() || '0.0',
   prerequisites: rules?.prerequisites ?? [],
   changeLog: rules?.changeLog ?? [],
@@ -252,13 +253,17 @@ export const getCourseRules = async (courseId: string): Promise<CourseRules> => 
 
 export const updateProgressRules = async (
   courseId: string,
-  rules: Pick<CourseRules, 'requireSequentialProgress' | 'enforceDeadlineBlock'>,
+  rules: Pick<
+    CourseRules,
+    'requireSequentialProgress' | 'enforceDeadlineBlock' | 'minQuizPassPercentage'
+  >,
 ): Promise<CourseRules> => {
   const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${courseId}/progress-rules`, {
     method: 'PUT',
     body: JSON.stringify({
       requireSequentialProgress: rules.requireSequentialProgress,
       enforceDeadlineBlock: rules.enforceDeadlineBlock,
+      minQuizPassPercentage: rules.minQuizPassPercentage,
     }),
   });
   const saved = await readUnwrapped<CourseRules>(

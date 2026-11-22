@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getStudentCurriculum } from '@services/curriculumService';
 import type { StudentCurriculum } from '@/types/curriculum';
-import { getCourseAccessPath } from './courseAccess';
+import { getCourseAccessPath, getFirstAccessibleLessonId } from './courseAccess';
 
 vi.mock('@services/curriculumService', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -74,5 +74,30 @@ describe('getCourseAccessPath', () => {
     getStudentCurriculumMock.mockRejectedValue(new Error('Network error'));
 
     expect(await getCourseAccessPath(COURSE_ID)).toBe(`/cursos/${COURSE_ID}`);
+  });
+});
+
+describe('getFirstAccessibleLessonId', () => {
+  it('should prefer the first available lesson', () => {
+    expect(
+      getFirstAccessibleLessonId(
+        buildCurriculum([
+          { id: 'lesson-1', status: 'COMPLETED' },
+          { id: 'lesson-2', status: 'AVAILABLE' },
+          { id: 'lesson-3', status: 'LOCKED' },
+        ]),
+      ),
+    ).toBe('lesson-2');
+  });
+
+  it('should fall back to the first lesson when none is available', () => {
+    expect(
+      getFirstAccessibleLessonId(
+        buildCurriculum([
+          { id: 'lesson-1', status: 'COMPLETED' },
+          { id: 'lesson-2', status: 'COMPLETED' },
+        ]),
+      ),
+    ).toBe('lesson-1');
   });
 });

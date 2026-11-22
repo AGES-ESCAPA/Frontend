@@ -7,6 +7,7 @@ import { NavigationButton } from '@components/course/NavigationButton/Navigation
 import { completeStudentLesson, StudentCurriculumError } from '@services/curriculumService';
 import { getStudentEnrollments } from '@services/enrollmentService';
 import { findLessonNeighbors } from '@/utils/lessonNavigation';
+import { getCourseAccessPath, getFirstAccessibleLessonId } from '@/utils/courseAccess';
 import {
   clearCourseRatingSkipped,
   markCourseRatingSkipped,
@@ -18,6 +19,7 @@ import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
 import { useStudentLesson } from '@/hooks/useStudentLesson';
 import { mockUser } from '@pages/MyCourses/mockCourses';
 import { LessonMenu } from './components/LessonMenu';
+import { LessonQuizPlayer } from './components/LessonQuizPlayer';
 import styles from './CoursePlayer.module.css';
 import { LessonContent } from '@components/ui/LessonContent/LessonContent';
 import { LessonReferences } from '@components/ui/ReferenceAndExternalLinks/ReferenceAndExternalLinks';
@@ -39,15 +41,20 @@ export const CoursePlayer = () => {
   const [isRatingOpen, setIsRatingOpen] = useState(false);
   const [courseTitle, setCourseTitle] = useState('');
   const [certificateCode, setCertificateCode] = useState<string | null>(null);
+  const [isRedirectingLocked, setIsRedirectingLocked] = useState(false);
+  /** null enquanto a matrícula não carrega — evita flash do CTA de compra. */
+  const [ownsCourse, setOwnsCourse] = useState<boolean | null>(null);
 
   useEffect(() => {
     setCompleteError(null);
+    setIsRedirectingLocked(false);
   }, [lessonId]);
 
   useEffect(() => {
     if (!courseId) return;
 
     let cancelled = false;
+    setOwnsCourse(null);
 
     const loadEnrollmentMeta = async () => {
       try {
@@ -55,10 +62,14 @@ export const CoursePlayer = () => {
         if (cancelled) return;
         const card = result.content.find((item) => item.courseId === courseId);
         if (card) {
+          setOwnsCourse(true);
           setCourseTitle(card.title);
           setCertificateCode(card.certificateCode ?? null);
+        } else {
+          setOwnsCourse(false);
         }
       } catch {
+        if (!cancelled) setOwnsCourse(false);
         // Título e certificado são opcionais para o fluxo de avaliação.
       }
     };
@@ -76,12 +87,53 @@ export const CoursePlayer = () => {
     `/aluno/cursos/${courseId}/aulas/${targetLessonId}`;
 
   const neighbors = findLessonNeighbors(curriculum.data, lessonId);
+  const currentLessonStatus = neighbors.current?.status;
   const previousLesson = neighbors.previous;
   // Antes de concluir a aula atual, a próxima pode vir bloqueada pela progressão sequencial.
   const navigableNext = neighbors.next?.status === 'LOCKED' ? null : neighbors.next;
   const isLastLesson = neighbors.current != null && neighbors.next === null;
 
   const goToLesson = (targetLessonId: string) => navigate(buildLessonHref(targetLessonId));
+
+  // URL colada de aula LOCKED: manda para a primeira liberada (mesma regra de entrada no curso).
+  useEffect(() => {
+    if (!courseId || !lessonId || !curriculum.data || curriculum.isLoading) return;
+    if (currentLessonStatus !== 'LOCKED') return;
+
+    const accessibleId = getFirstAccessibleLessonId(curriculum.data);
+    if (!accessibleId || accessibleId === lessonId) return;
+
+    setIsRedirectingLocked(true);
+    navigate(`/aluno/cursos/${courseId}/aulas/${accessibleId}`, { replace: true });
+  }, [courseId, lessonId, curriculum.data, curriculum.isLoading, currentLessonStatus, navigate]);
+
+  // 403 do servidor (ex.: progressão sequencial): tenta a primeira aula liberada.
+  useEffect(() => {
+    if (!courseId || status !== 'error' || errorStatus !== 403) return;
+
+    let cancelled = false;
+    const currentLessonPath = `/aluno/cursos/${courseId}/aulas/${lessonId}`;
+
+    const redirectFromForbidden = async () => {
+      setIsRedirectingLocked(true);
+      const path = await getCourseAccessPath(courseId);
+      if (cancelled) return;
+
+      const lessonPathPrefix = `/aluno/cursos/${courseId}/aulas/`;
+      if (path.startsWith(lessonPathPrefix) && path !== currentLessonPath) {
+        navigate(path, { replace: true });
+        return;
+      }
+
+      setIsRedirectingLocked(false);
+    };
+
+    void redirectFromForbidden();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, lessonId, status, errorStatus, navigate]);
 
   const promptCourseRating = useCallback(async () => {
     if (!courseId || wasCourseRatingSkipped(courseId)) return;
@@ -113,6 +165,11 @@ export const CoursePlayer = () => {
       await completeStudentLesson(courseId, lessonId);
       setCompletedLessonIds((current) => new Set(current).add(lessonId));
       curriculum.refetch();
+
+      // Aula grátis sem compra confirmada: fica na aula para o CTA de compra.
+      if (lesson?.isFreeSample && ownsCourse !== true) {
+        return;
+      }
 
       if (courseJustCompleted) {
         await promptCourseRating();
@@ -166,29 +223,35 @@ export const CoursePlayer = () => {
     </aside>
   );
 
+  const renderLoadingLesson = () => (
+    <section className={styles.lesson}>
+      <div className={styles.layout}>
+        <div className={styles.playerContainer}>
+          <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
+        </div>
+
+        <div className={styles.mainColumn} aria-busy="true" aria-label="Carregando aula">
+          <header className={styles.header}>
+            <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
+            <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
+          </header>
+
+          <LessonContent isLoading />
+          <LessonReferences isLoading />
+        </div>
+
+        {lessonMenu}
+      </div>
+    </section>
+  );
+
   const renderContent = () => {
+    if (isRedirectingLocked || currentLessonStatus === 'LOCKED') {
+      return renderLoadingLesson();
+    }
+
     if (status === 'loading') {
-      return (
-        <section className={styles.lesson}>
-          <div className={styles.layout}>
-            <div className={styles.playerContainer}>
-              <div className={`${styles.skeleton} ${styles.playerSkeleton}`} aria-hidden="true" />
-            </div>
-
-            <div className={styles.mainColumn} aria-busy="true" aria-label="Carregando aula">
-              <header className={styles.header}>
-                <div className={`${styles.skeleton} ${styles.skeletonBreadcrumb}`} />
-                <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
-              </header>
-
-              <LessonContent isLoading />
-              <LessonReferences isLoading />
-            </div>
-
-            {lessonMenu}
-          </div>
-        </section>
-      );
+      return renderLoadingLesson();
     }
 
     if (status === 'error' && errorStatus === 403) {
@@ -248,8 +311,9 @@ export const CoursePlayer = () => {
       .filter(Boolean)
       .join(' · ');
 
+    const isQuizLesson = lesson.type === 'quiz';
     // Aulas de texto e de arquivo não têm player: o conteúdo é o texto da aula.
-    const isReadingLesson = lesson.type !== 'video';
+    const isReadingLesson = lesson.type !== 'video' && !isQuizLesson;
     const readingText = lesson.type === 'text' ? lesson.textContent : lesson.description;
     // Parágrafos separados por linha em branco; quebras simples são mantidas no CSS.
     const textParagraphs = (readingText ?? '')
@@ -265,9 +329,10 @@ export const CoursePlayer = () => {
       completedLessonIds.has(lessonId) ||
       completedLessonIds.has(lesson.id);
 
-    // Some quando a aula já está concluída. A navegação para a próxima fica nos
-    // botões de aula anterior e próxima.
-    const completeButton = !isLessonCompleted && (
+    const showPurchaseUpsell = lesson.isFreeSample && ownsCourse === false && isLessonCompleted;
+
+    // Quiz conclui só via submit; sem botão "Marcar como concluída".
+    const completeButton = !isLessonCompleted && !isQuizLesson && (
       <Button
         label="Marcar como concluída"
         variant="primary"
@@ -278,11 +343,29 @@ export const CoursePlayer = () => {
       />
     );
 
+    const purchaseUpsell = showPurchaseUpsell ? (
+      <aside className={styles.purchaseUpsell} aria-label="Garantir curso completo">
+        <p className={styles.purchaseUpsellText}>Gostou da aula? Garanta o curso completo agora</p>
+        <Button
+          label="Comprar curso"
+          variant="primary"
+          className={styles.compactButton}
+          onClick={() => navigate(`/checkout/${courseId}`)}
+        />
+      </aside>
+    ) : null;
+
+    const handleQuizPassed = () => {
+      setCompletedLessonIds((current) => new Set(current).add(lessonId));
+      curriculum.refetch();
+    };
+
     return (
       <section className={styles.lesson}>
         <div className={`${styles.layout} ${isReadingLesson ? styles.layoutReading : ''}`}>
           {lesson.type === 'video' ? (
             <div className={styles.playerContainer}>
+              {purchaseUpsell}
               <VideoPlayer
                 key={lessonId}
                 src={lesson.videoUrl ?? ''}
@@ -326,6 +409,8 @@ export const CoursePlayer = () => {
           ) : null}
 
           <div className={styles.mainColumn}>
+            {lesson.type !== 'video' ? purchaseUpsell : null}
+
             <header className={styles.header}>
               {lessonMetadata && <span className={styles.breadcrumb}>{lessonMetadata}</span>}
 
@@ -352,9 +437,21 @@ export const CoursePlayer = () => {
               </article>
             )}
 
+            {isQuizLesson ? (
+              <LessonQuizPlayer
+                key={lessonId}
+                courseId={courseId}
+                lessonId={lessonId}
+                questions={lesson.studentQuizQuestions ?? []}
+                minPassPercentage={lesson.minQuizPassPercentage ?? 70}
+                alreadyCompleted={isLessonCompleted}
+                onPassed={handleQuizPassed}
+              />
+            ) : null}
+
             {/* US-12: conteúdo textual da aula; sem player, o texto já aparece acima */}
             <LessonContent
-              description={isReadingLesson ? null : lesson.description}
+              description={isReadingLesson || isQuizLesson ? null : lesson.description}
               concepts={lesson.concepts}
             />
             <LessonReferences references={lesson.references} />

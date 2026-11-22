@@ -26,6 +26,8 @@ const student: UserProfile = {
   companyName: null,
   cnpj: null,
   avatarUrl: null,
+  headline: null,
+  bio: null,
 };
 
 const employee: UserProfile = {
@@ -38,6 +40,20 @@ const employee: UserProfile = {
   companyName: 'Pousada Vista Mar LTDA',
 };
 
+const admin: UserProfile = {
+  profile: 'ADMIN',
+  editable: true,
+  name: 'Barbara Diogo',
+  email: 'barbara@escapa.com.br',
+  cpf: null,
+  phone: null,
+  companyName: null,
+  cnpj: null,
+  avatarUrl: null,
+  headline: 'Pesquisadora em Gestão de Turismo & IA — ESCAPA!',
+  bio: 'Formada em Gestão de Turismo, com MBA em Marketing Estratégico.',
+};
+
 const company: UserProfile = {
   profile: 'COMPANY',
   editable: true,
@@ -48,6 +64,8 @@ const company: UserProfile = {
   companyName: 'Pousada Vista Mar LTDA',
   cnpj: '12345678000191',
   avatarUrl: null,
+  headline: null,
+  bio: null,
 };
 
 const photo = new File(['img'], 'foto.png', { type: 'image/png' });
@@ -238,5 +256,43 @@ describe('ProfileDataCard', () => {
       }),
     );
     expect(updateProfileMock).not.toHaveBeenCalled();
+  });
+
+  it('shows admin instructor fields and updates name, title and description', async () => {
+    updateProfileMock.mockResolvedValue({
+      ...admin,
+      name: 'Barbara Admin',
+      headline: 'Especialista em Turismo',
+      bio: 'Nova descrição do instrutor.',
+    });
+    renderCard(admin);
+
+    expect(screen.getByLabelText(/Nome Completo/)).toHaveValue('Barbara Diogo');
+    expect(screen.getByText('barbara@escapa.com.br')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Título nos cursos/)).toHaveValue(admin.headline!);
+    expect(screen.getByLabelText(/Descrição nos cursos/)).toHaveValue(admin.bio!);
+    expect(screen.queryByLabelText(/Telefone/)).not.toBeInTheDocument();
+    expect(screen.queryByText('CPF')).not.toBeInTheDocument();
+    expect(screen.queryByText('CNPJ')).not.toBeInTheDocument();
+
+    const name = screen.getByLabelText(/Nome Completo/);
+    await userEvent.clear(name);
+    await userEvent.type(name, 'Barbara Admin');
+    const headline = screen.getByLabelText(/Título nos cursos/);
+    await userEvent.clear(headline);
+    await userEvent.type(headline, 'Especialista em Turismo');
+    const bio = screen.getByLabelText(/Descrição nos cursos/);
+    await userEvent.clear(bio);
+    await userEvent.type(bio, 'Nova descrição do instrutor.');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Alterações' }));
+
+    await waitFor(() =>
+      expect(updateProfileMock).toHaveBeenCalledWith({
+        name: 'Barbara Admin',
+        phone: '',
+        headline: 'Especialista em Turismo',
+        bio: 'Nova descrição do instrutor.',
+      }),
+    );
   });
 });

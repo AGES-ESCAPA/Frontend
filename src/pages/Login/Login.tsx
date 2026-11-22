@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Mail } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -19,7 +19,15 @@ export const Login = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
+  const [successToastOpen, setSuccessToastOpen] = useState(false);
   const hasStartedLogin = useRef(false);
+
+  useEffect(() => {
+    const state = location.state as { passwordReset?: boolean } | null;
+    if (!state?.passwordReset) return;
+    setSuccessToastOpen(true);
+    navigate(location.pathname + location.search, { replace: true, state: null });
+  }, [location.pathname, location.search, location.state, navigate]);
 
   if (isRestoring)
     return <div className={styles.page} role="status" aria-label="Restaurando sessão" />;
@@ -130,6 +138,13 @@ export const Login = () => {
         description="Verifique sua conexão e tente novamente."
         actionLabel="Tentar novamente"
         onAction={() => void submitLogin()}
+      />
+      <Toast
+        open={successToastOpen}
+        onOpenChange={setSuccessToastOpen}
+        variant="success"
+        title="Senha redefinida"
+        description="Entre com a nova senha para continuar."
       />
     </div>
   );

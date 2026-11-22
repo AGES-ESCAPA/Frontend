@@ -71,12 +71,50 @@ describe('EmployeeFormModal', () => {
     });
 
     expect(screen.getByRole('dialog', { name: 'Editar Colaborador' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Dados' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Cursos liberados' })).toBeInTheDocument();
     expect(screen.getByLabelText(/^Nome completo/)).toHaveValue('Bruna Costa');
     expect(screen.getByLabelText(/^E-mail corporativo/)).toHaveValue('bruna@empresa.com.br');
     expect(screen.getByLabelText(/^Cargo/)).toHaveValue('Coordenadora');
     expect(screen.getByLabelText(/^Status do acesso/)).toHaveValue('active');
     expect(screen.getByRole('option', { name: 'Ativo' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Inativo' })).toBeInTheDocument();
+  });
+
+  it('lists company courses and toggles assignment in the courses tab', async () => {
+    const onToggleCourse = vi.fn();
+    renderModal({
+      mode: 'edit',
+      initialValues: {
+        name: 'Bruna Costa',
+        email: 'bruna@empresa.com.br',
+        role: 'Coordenadora',
+        accessStatus: 'active',
+      },
+      courses: [
+        {
+          courseId: 'course-1',
+          title: 'Hospitalidade',
+          category: 'Turismo',
+          assigned: true,
+        },
+        {
+          courseId: 'course-2',
+          title: 'Revenue',
+          category: 'Marketing',
+          assigned: false,
+        },
+      ],
+      onToggleCourse,
+    });
+
+    await user.click(screen.getByRole('tab', { name: 'Cursos liberados' }));
+
+    expect(screen.getByRole('checkbox', { name: /Hospitalidade/i })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Revenue/i })).not.toBeChecked();
+
+    await user.click(screen.getByRole('checkbox', { name: /Revenue/i }));
+    expect(onToggleCourse).toHaveBeenCalledWith('course-2', true);
   });
 
   it('blocks empty required fields and invalid email with field-level errors', async () => {

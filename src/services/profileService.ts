@@ -29,6 +29,8 @@ interface ProfileResponse {
   companyName?: string | null;
   cnpj?: string | null;
   avatarUrl?: string | null;
+  headline?: string | null;
+  bio?: string | null;
 }
 
 const isProfileType = (value: string): value is ProfileType =>
@@ -49,6 +51,8 @@ const mapProfile = (data: ProfileResponse): UserProfile => {
     companyName: data.companyName ?? null,
     cnpj: data.cnpj ?? null,
     avatarUrl: data.avatarUrl ?? null,
+    headline: data.headline ?? null,
+    bio: data.bio ?? null,
   };
 };
 

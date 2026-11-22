@@ -65,6 +65,7 @@ describe('AuthenticatedLayout', () => {
 
     expect(await screen.findByText('/login|sem returnTo')).toBeInTheDocument();
     expect(localStorage.getItem('access_token')).toBeNull();
+    // Com AuthProvider, o layout encerra a sessão sozinho e não delega ao onLogout da página.
     expect(onLogout).not.toHaveBeenCalled();
   });
 

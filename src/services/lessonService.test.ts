@@ -20,6 +20,7 @@ const payload: LessonPayload = {
   durationInSeconds: 760,
   textContent: null,
   fileUrl: null,
+  quizQuestions: [],
   isFreeSample: true,
   resources: [],
   uploads: [],
@@ -74,6 +75,7 @@ describe('lessonService', () => {
             description: payload.description,
             isFree: true,
             resources: [],
+            quizQuestions: [],
           }),
         }),
       );
@@ -131,6 +133,7 @@ describe('lessonService', () => {
         videoUrl: null,
         durationInSeconds: null,
         fileUrl: null,
+        quizQuestions: [],
         uploads: [{ file }],
       });
 
@@ -350,6 +353,9 @@ describe('lessonService', () => {
         durationInSeconds: 600,
         textContent: null,
         fileUrl: null,
+        quizQuestions: [],
+        studentQuizQuestions: [],
+        minQuizPassPercentage: 70,
         isFreeSample: false,
         resources: [],
         order: 2,

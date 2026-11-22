@@ -78,6 +78,7 @@ const LOGGED_ADMIN_ID = 'a1b2c3d4-0000-4000-8000-000000000099';
 const EMPTY_RULES: CourseRules = {
   requireSequentialProgress: true,
   enforceDeadlineBlock: false,
+  minQuizPassPercentage: 70,
   version: '0.0',
   prerequisites: [],
   changeLog: [],
@@ -481,6 +482,7 @@ describe('CourseBuilder', () => {
     vi.mocked(getCourseRules).mockResolvedValue({
       requireSequentialProgress: false,
       enforceDeadlineBlock: true,
+      minQuizPassPercentage: 70,
       version: '1.4',
       prerequisites: [{ courseId: 'pre-1', courseTitle: 'Segurança da Informação' }],
       changeLog: [
@@ -614,6 +616,7 @@ describe('CourseBuilder', () => {
       expect(updateProgressRules).toHaveBeenCalledWith(SAVED_COURSE.id, {
         requireSequentialProgress: false,
         enforceDeadlineBlock: false,
+        minQuizPassPercentage: 70,
       });
     });
     expect(await screen.findByText('V 0.1')).toBeInTheDocument();

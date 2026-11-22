@@ -20,6 +20,8 @@ const student: UserProfile = {
   companyName: null,
   cnpj: null,
   avatarUrl: null,
+  headline: null,
+  bio: null,
 };
 
 describe('useProfile', () => {

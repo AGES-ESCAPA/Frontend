@@ -1,10 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { CurriculumAccordion } from './CurriculumAccordion';
 import { featuredCourse } from '@/data/courses';
 
+const renderAccordion = () =>
+  render(
+    <MemoryRouter>
+      <CurriculumAccordion courseId={featuredCourse.id} modules={featuredCourse.modules} />
+    </MemoryRouter>,
+  );
+
 describe('CurriculumAccordion', () => {
   it('keeps all modules open by default and toggles lessons', () => {
-    render(<CurriculumAccordion modules={featuredCourse.modules} />);
+    renderAccordion();
 
     expect(screen.getByText('O que é Inteligência Artificial?')).toBeInTheDocument();
     expect(screen.getByText('Prompts para Experiências Turísticas')).toBeInTheDocument();
@@ -16,7 +24,7 @@ describe('CurriculumAccordion', () => {
   });
 
   it('renders lessons of every module while they remain open', () => {
-    render(<CurriculumAccordion modules={featuredCourse.modules} />);
+    renderAccordion();
 
     expect(screen.getByText('Prompts para Experiências Turísticas')).toBeInTheDocument();
     expect(screen.getByText('Mapeando Processos Repetitivos')).toBeInTheDocument();

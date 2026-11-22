@@ -5,12 +5,53 @@
   width: 100%;
 }
 
+.tabs {
+  margin-bottom: var(--space-4);
+}
+
 .accessStatus label {
   color: var(--color-text-secondary);
   font-size: var(--text-body-5);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
+}
+
+.courses {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.coursesHint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+  line-height: 1.45;
+}
+
+.coursesStatus {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-3);
+}
+
+.coursesError {
+  margin: 0;
+  color: var(--color-error-300);
+  font-size: var(--text-body-3);
+}
+
+.courseList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 18rem;
+  overflow-y: auto;
 }
 
 .submitError {

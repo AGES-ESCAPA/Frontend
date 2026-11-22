@@ -8,7 +8,7 @@ const baseProps: StudentCourseCardProps = {
   title: 'Marketing Digital para Hospitalidade',
   thumbnailUrl: '/course-cover.jpg',
   instructor: 'Paulo Henrique',
-  durationTime: 16,
+  durationTime: 960,
   lessonsCount: 44,
   progressPercentage: 45,
   enrollmentStatus: 'IN_PROGRESS',

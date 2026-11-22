@@ -187,7 +187,7 @@ export const CreditCardForm = ({
             id={ids.holderName}
             icon={<User size={16} />}
             value={holderName}
-            placeholder="JORGE AMADO"
+            placeholder={PLACEHOLDER_HOLDER}
             autoComplete="cc-name"
             invalid={errorFor('holderName') !== undefined}
             aria-describedby={describedBy('holderName')}

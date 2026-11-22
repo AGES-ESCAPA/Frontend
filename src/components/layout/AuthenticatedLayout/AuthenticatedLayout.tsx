@@ -69,14 +69,18 @@ export const AuthenticatedLayout = ({
         avatarUrl: sessionUser.avatarUrl ?? undefined,
       }
     : user;
-  // Sair vai direto para o login: sem isso, o ProtectedRoute guarda a página atual em
-  // `returnTo` e o próximo login (até de outra pessoa) voltaria para ela.
-  const resolvedLogout = sessionUser
-    ? () => {
-        auth.logout();
-        navigate('/login', { replace: true });
-      }
-    : onLogout;
+  // Sempre encerra a sessão e vai ao login — sidebar e menu do avatar usam o mesmo
+  // caminho. Ignora `onLogout` das páginas quando há (ou pode haver) sessão: várias
+  // só faziam `location.assign('/')` e mantinham o token. `onLogout` só vale como
+  // fallback fora do AuthProvider (testes/story).
+  const resolvedLogout = () => {
+    if (auth) {
+      auth.logout();
+      navigate('/login', { replace: true });
+      return;
+    }
+    onLogout?.();
+  };
 
   return (
     <div className={styles.layout}>
@@ -106,8 +110,13 @@ export const AuthenticatedLayout = ({
           }
           collapsible={role !== 'student'}
           onLogout={resolvedLogout}
-          profileHref={role === 'company' ? '/empresa/perfil' : '/meu-perfil'}
-          showProfileLink={role !== 'admin'}
+          profileHref={
+            role === 'company'
+              ? '/empresa/perfil'
+              : role === 'admin'
+                ? '/admin/perfil'
+                : '/meu-perfil'
+          }
         />
 
         <main

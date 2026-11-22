@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { CirclePlay, FileText, Link2 } from 'lucide-react';
+import { CircleHelp, CirclePlay, FileText } from 'lucide-react';
 import type { LessonType } from '@/types/lesson';
 
 export interface LessonTypeOption {
@@ -8,11 +8,13 @@ export interface LessonTypeOption {
   icon: LucideIcon;
 }
 
+/** Tipos oferecidos na criação/edição. `file` ficou de fora de propósito. */
 export const LESSON_TYPE_OPTIONS: LessonTypeOption[] = [
   { value: 'video', label: 'Vídeo', icon: CirclePlay },
   { value: 'text', label: 'Texto', icon: FileText },
-  { value: 'file', label: 'Arquivo', icon: Link2 },
+  { value: 'quiz', label: 'Quiz', icon: CircleHelp },
 ];
 
 export const getLessonTypeIcon = (type: LessonType): LucideIcon =>
-  LESSON_TYPE_OPTIONS.find((option) => option.value === type)?.icon ?? CirclePlay;
+  LESSON_TYPE_OPTIONS.find((option) => option.value === type)?.icon ??
+  (type === 'file' ? FileText : CirclePlay);

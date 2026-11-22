@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useOptionalAuth } from '@contexts/useAuth';
 import { courseService } from '@services/courseService';
 import type { PublicCourseDetails, PublicCoursesPage } from '@/types/course';
 import { CourseDetails } from './CourseDetails';
@@ -14,9 +15,34 @@ vi.mock('@services/courseService', () => ({
   },
 }));
 
+vi.mock('@contexts/useAuth', () => ({
+  useOptionalAuth: vi.fn(() => null),
+  useAuth: vi.fn(),
+}));
+
+vi.mock('@hooks/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    isLoading: false,
+    error: null,
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
+  }),
+}));
+
+vi.mock('@pages/Courses/Courses', () => ({
+  Courses: ({ layoutRole }: { layoutRole?: string }) => (
+    <div data-testid="authenticated-catalog-backdrop" data-role={layoutRole ?? 'student'}>
+      Catálogo autenticado
+    </div>
+  ),
+}));
+
 const getCoursesMock = vi.mocked(courseService.getCourses);
 const getFiltersMock = vi.mocked(courseService.getCourseFilters);
 const getPublicCourseByIdMock = vi.mocked(courseService.getPublicCourseById);
+const useOptionalAuthMock = vi.mocked(useOptionalAuth);
 
 const emptyPage: PublicCoursesPage = {
   content: [],
@@ -74,6 +100,7 @@ describe('CourseDetails', () => {
     getCoursesMock.mockReset().mockResolvedValue(emptyPage);
     getFiltersMock.mockReset().mockResolvedValue({ categories: [], levels: [] });
     getPublicCourseByIdMock.mockReset();
+    useOptionalAuthMock.mockReset().mockReturnValue(null);
   });
 
   it('should open the course details from the public API', async () => {
@@ -131,5 +158,69 @@ describe('CourseDetails', () => {
     await waitFor(() => {
       expect(screen.getByText('Vitrine')).toBeInTheDocument();
     });
+  });
+
+  it('should keep the authenticated chrome behind the modal for a logged-in student', async () => {
+    useOptionalAuthMock.mockReturnValue({
+      user: {
+        id: 'u1',
+        name: 'Jorge Amado',
+        email: 'aluno@email.com',
+        role: 'STUDENT',
+      },
+      isAuthenticated: true,
+      isRestoring: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+    getPublicCourseByIdMock.mockResolvedValue(details);
+
+    renderDetails();
+
+    await screen.findByRole('dialog');
+
+    expect(screen.queryByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Começar Agora/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId('authenticated-catalog-backdrop')).toHaveAttribute(
+      'data-role',
+      'student',
+    );
+  });
+
+  it('should close without from and return to the catalog of the logged-in profile', async () => {
+    const user = userEvent.setup();
+    useOptionalAuthMock.mockReturnValue({
+      user: {
+        id: 'u1',
+        name: 'Jorge Amado',
+        email: 'aluno@email.com',
+        role: 'STUDENT',
+      },
+      isAuthenticated: true,
+      isRestoring: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+    getPublicCourseByIdMock.mockResolvedValue(details);
+
+    render(
+      <MemoryRouter initialEntries={[`/cursos/${details.id}`]}>
+        <Routes>
+          <Route path="/" element={<p>Vitrine</p>} />
+          <Route path="/aluno/cursos" element={<p>Catálogo do aluno</p>} />
+          <Route path="/cursos/:courseId" element={<CourseDetails />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole('dialog');
+    await user.click(screen.getByRole('button', { name: /^fechar$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Catálogo do aluno')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Vitrine')).not.toBeInTheDocument();
   });
 });

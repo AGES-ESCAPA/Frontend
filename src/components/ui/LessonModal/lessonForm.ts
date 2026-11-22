@@ -11,6 +11,7 @@ import type {
   LessonResource,
   LessonResourceType,
   LessonType,
+  QuizQuestion,
 } from '@/types/lesson';
 import { durationSecondsToDigitBuffer, parseDurationDigitBuffer } from '@utils/formatters';
 
@@ -18,6 +19,35 @@ import { durationSecondsToDigitBuffer, parseDurationDigitBuffer } from '@utils/f
 export interface LessonResourceDraft extends LessonResource {
   file: File | null;
 }
+
+export interface LessonQuizOptionDraft {
+  id: string;
+  text: string;
+  correct: boolean;
+}
+
+export interface LessonQuizQuestionDraft {
+  id: string;
+  prompt: string;
+  options: LessonQuizOptionDraft[];
+}
+
+const createQuizId = (): string =>
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+export const createQuizOption = (correct = false): LessonQuizOptionDraft => ({
+  id: createQuizId(),
+  text: '',
+  correct,
+});
+
+export const createQuizQuestion = (): LessonQuizQuestionDraft => ({
+  id: createQuizId(),
+  prompt: '',
+  options: [createQuizOption(true), createQuizOption(false)],
+});
 
 export interface LessonFormState {
   title: string;
@@ -29,6 +59,7 @@ export interface LessonFormState {
   textContent: string;
   fileUrl: string;
   file: File | null;
+  quizQuestions: LessonQuizQuestionDraft[];
   isFreeSample: boolean;
   resources: LessonResourceDraft[];
 }
@@ -44,6 +75,7 @@ export interface LessonFormErrors {
   duration?: string;
   textContent?: string;
   fileUrl?: string;
+  quizQuestions?: string;
   /** Erros por material complementar, indexados pelo `id` do rascunho. */
   resources: Record<string, LessonResourceErrors>;
 }
@@ -72,20 +104,42 @@ export const createResourceDraft = (type: LessonResourceType): LessonResourceDra
   file: null,
 });
 
+const toQuizDrafts = (questions: QuizQuestion[] | undefined): LessonQuizQuestionDraft[] =>
+  (questions ?? []).map((question) => ({
+    id: question.id,
+    prompt: question.prompt,
+    options: question.options.map((option) => ({
+      id: option.id,
+      text: option.text,
+      correct: Boolean(option.correct),
+    })),
+  }));
+
 /** Monta o estado inicial: vazio na criação, pré-preenchido na edição. */
-export const createLessonFormState = (lesson?: Lesson | null): LessonFormState => ({
-  title: lesson?.title ?? '',
-  description: lesson?.description ?? '',
-  type: lesson?.type ?? 'video',
-  videoUrl: lesson?.videoUrl ?? '',
-  duration:
-    lesson?.durationInSeconds != null ? durationSecondsToDigitBuffer(lesson.durationInSeconds) : '',
-  textContent: lesson?.textContent ?? '',
-  fileUrl: lesson?.fileUrl ?? '',
-  file: null,
-  isFreeSample: lesson?.isFreeSample ?? false,
-  resources: (lesson?.resources ?? []).map((resource) => ({ ...resource, file: null })),
-});
+export const createLessonFormState = (lesson?: Lesson | null): LessonFormState => {
+  const type = lesson?.type === 'file' ? 'text' : (lesson?.type ?? 'video');
+  return {
+    title: lesson?.title ?? '',
+    description: lesson?.description ?? '',
+    type,
+    videoUrl: lesson?.videoUrl ?? '',
+    duration:
+      lesson?.durationInSeconds != null
+        ? durationSecondsToDigitBuffer(lesson.durationInSeconds)
+        : '',
+    textContent: lesson?.textContent ?? '',
+    fileUrl: lesson?.fileUrl ?? '',
+    file: null,
+    quizQuestions:
+      type === 'quiz'
+        ? toQuizDrafts(lesson?.quizQuestions).length > 0
+          ? toQuizDrafts(lesson?.quizQuestions)
+          : [createQuizQuestion()]
+        : [],
+    isFreeSample: lesson?.isFreeSample ?? false,
+    resources: (lesson?.resources ?? []).map((resource) => ({ ...resource, file: null })),
+  };
+};
 
 export const validateLessonForm = (state: LessonFormState): LessonFormErrors => {
   const errors: LessonFormErrors = { resources: {} };
@@ -113,10 +167,25 @@ export const validateLessonForm = (state: LessonFormState): LessonFormErrors => 
     errors.textContent = 'Escreva o conteúdo da aula.';
   }
 
-  // A URL de arquivo só existe quando já foi enviada ao storage (edição); o
-  // administrador nunca a digita.
   if (state.type === 'file' && !state.file && !state.fileUrl.trim()) {
     errors.fileUrl = 'Envie o arquivo da aula.';
+  }
+
+  if (state.type === 'quiz') {
+    if (state.quizQuestions.length === 0) {
+      errors.quizQuestions = 'Adicione pelo menos uma pergunta.';
+    } else {
+      const invalid = state.quizQuestions.some((question) => {
+        if (!question.prompt.trim()) return true;
+        if (question.options.length < 2) return true;
+        if (question.options.filter((option) => option.correct).length !== 1) return true;
+        return question.options.some((option) => !option.text.trim());
+      });
+      if (invalid) {
+        errors.quizQuestions =
+          'Cada pergunta precisa de enunciado, 2+ alternativas preenchidas e exatamente uma correta.';
+      }
+    }
   }
 
   state.resources.forEach((resource) => {
@@ -152,6 +221,7 @@ export const hasLessonFormErrors = (errors: LessonFormErrors): boolean =>
     errors.duration ||
     errors.textContent ||
     errors.fileUrl ||
+    errors.quizQuestions ||
     Object.keys(errors.resources).length > 0,
   );
 
@@ -188,6 +258,18 @@ export const buildLessonPayload = (state: LessonFormState, moduleId: string): Le
     durationInSeconds: isVideo ? parseDurationDigitBuffer(state.duration) : null,
     textContent: state.type === 'text' ? state.textContent.trim() : null,
     fileUrl: state.type === 'file' ? state.fileUrl.trim() || null : null,
+    quizQuestions:
+      state.type === 'quiz'
+        ? state.quizQuestions.map((question) => ({
+            id: question.id,
+            prompt: question.prompt.trim(),
+            options: question.options.map((option) => ({
+              id: option.id,
+              text: option.text.trim(),
+              correct: option.correct,
+            })),
+          }))
+        : [],
     isFreeSample: state.isFreeSample,
     resources,
     uploads,

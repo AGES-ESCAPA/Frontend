@@ -67,6 +67,7 @@ const PREREQUISITE_SEARCH_DEBOUNCE_MS = 300;
 const DEFAULT_PROGRESS_RULES: CourseProgressRules = {
   requireSequentialProgress: true,
   blockAccessAfterDeadline: false,
+  minQuizPassPercentage: 70,
 };
 
 const toVersionLabel = (version: string): string => {
@@ -110,6 +111,7 @@ export const CourseBuilder = () => {
   const savedConfigurationRef = useRef({
     requireSequentialProgress: DEFAULT_PROGRESS_RULES.requireSequentialProgress,
     blockAccessAfterDeadline: DEFAULT_PROGRESS_RULES.blockAccessAfterDeadline,
+    minQuizPassPercentage: DEFAULT_PROGRESS_RULES.minQuizPassPercentage,
     prerequisiteIds: [] as string[],
   });
   progressRulesRef.current = progressRules;
@@ -287,6 +289,7 @@ export const CourseBuilder = () => {
     const nextRules: CourseProgressRules = {
       requireSequentialProgress: rules.requireSequentialProgress,
       blockAccessAfterDeadline: rules.enforceDeadlineBlock,
+      minQuizPassPercentage: rules.minQuizPassPercentage ?? 70,
     };
     const nextPrerequisites = rules.prerequisites.map((item) => ({
       id: item.courseId,
@@ -297,6 +300,7 @@ export const CourseBuilder = () => {
     savedConfigurationRef.current = {
       requireSequentialProgress: nextRules.requireSequentialProgress,
       blockAccessAfterDeadline: nextRules.blockAccessAfterDeadline,
+      minQuizPassPercentage: nextRules.minQuizPassPercentage,
       prerequisiteIds: nextPrerequisites.map((item) => item.id),
     };
     setProgressRules(nextRules);
@@ -315,6 +319,7 @@ export const CourseBuilder = () => {
         savedConfigurationRef.current = {
           requireSequentialProgress: DEFAULT_PROGRESS_RULES.requireSequentialProgress,
           blockAccessAfterDeadline: DEFAULT_PROGRESS_RULES.blockAccessAfterDeadline,
+          minQuizPassPercentage: DEFAULT_PROGRESS_RULES.minQuizPassPercentage,
           prerequisiteIds: [],
         };
         setProgressRules(DEFAULT_PROGRESS_RULES);
@@ -406,7 +411,7 @@ export const CourseBuilder = () => {
   }, []);
 
   const handleProgressRuleChange = useCallback(
-    (field: keyof CourseProgressRules, value: boolean) => {
+    <K extends keyof CourseProgressRules>(field: K, value: CourseProgressRules[K]) => {
       setProgressRules((current) => ({ ...current, [field]: value }));
     },
     [],
@@ -437,17 +442,20 @@ export const CourseBuilder = () => {
     const saved = savedConfigurationRef.current;
     const rulesChanged =
       rules.requireSequentialProgress !== saved.requireSequentialProgress ||
-      rules.blockAccessAfterDeadline !== saved.blockAccessAfterDeadline;
+      rules.blockAccessAfterDeadline !== saved.blockAccessAfterDeadline ||
+      rules.minQuizPassPercentage !== saved.minQuizPassPercentage;
 
     if (rulesChanged) {
       await updateProgressRules(id, {
         requireSequentialProgress: rules.requireSequentialProgress,
         enforceDeadlineBlock: rules.blockAccessAfterDeadline,
+        minQuizPassPercentage: rules.minQuizPassPercentage,
       });
       savedConfigurationRef.current = {
         ...savedConfigurationRef.current,
         requireSequentialProgress: rules.requireSequentialProgress,
         blockAccessAfterDeadline: rules.blockAccessAfterDeadline,
+        minQuizPassPercentage: rules.minQuizPassPercentage,
       };
     }
 
@@ -564,10 +572,6 @@ export const CourseBuilder = () => {
     ],
   );
 
-  const handleLogout = useCallback(() => {
-    window.location.assign('/');
-  }, []);
-
   const availablePrerequisiteSuggestions = prerequisiteSuggestions.filter(
     (course) => !selectedPrerequisites.some((item) => item.id === course.id),
   );
@@ -586,7 +590,7 @@ export const CourseBuilder = () => {
 
   return (
     <>
-      <AuthenticatedLayout role="admin" items={menuItems} user={ADMIN_USER} onLogout={handleLogout}>
+      <AuthenticatedLayout role="admin" items={menuItems} user={ADMIN_USER}>
         <Link to={COURSES_ROUTE} className={styles.backLink}>
           <ArrowLeft size={16} aria-hidden="true" />
           Voltar para Cursos

@@ -105,6 +105,28 @@ button.completeButton:hover {
   text-align: right;
 }
 
+.purchaseUpsell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: var(--border-width-thin) solid color-mix(in srgb, var(--color-info-300) 40%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-info-300) 10%, transparent);
+}
+
+.purchaseUpsellText {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-size: var(--text-body-2);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-primary);
+}
+
 .header {
   display: flex;
   flex-direction: column;
@@ -131,8 +153,11 @@ button.completeButton:hover {
 
 .playerContainer {
   grid-area: player;
+  display: flex;
   width: 100%;
   min-width: 0;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .reservedArea {

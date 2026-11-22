@@ -31,7 +31,10 @@ import {
   EMAIL_IN_USE_MESSAGE,
   NO_SEATS_AVAILABLE_MESSAGE,
 } from '@services/companyEmployeeService';
-import type { EditableEmployeeStatus } from '@services/companyEmployeeService';
+import type {
+  EditableEmployeeStatus,
+  EmployeeCourseAssignment,
+} from '@services/companyEmployeeService';
 import type { CompanyEmployee, CompanyEmployeeStatus } from '@/types/companyEmployee';
 import styles from './CompanyEmployees.module.css';
 
@@ -95,7 +98,12 @@ export const CompanyEmployees = () => {
   const [employeeToUnlink, setEmployeeToUnlink] = useState<Employee | null>(null);
   const [isUnlinking, setIsUnlinking] = useState(false);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
+  const [employeeCourses, setEmployeeCourses] = useState<EmployeeCourseAssignment[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [coursesError, setCoursesError] = useState<string | null>(null);
+  const [courseToggleId, setCourseToggleId] = useState<string | null>(null);
   const unlinkInProgress = useRef(false);
+  const coursesRequestId = useRef(0);
 
   const {
     seats,
@@ -138,6 +146,9 @@ export const CompanyEmployees = () => {
     }
 
     setEmployeeToEdit(null);
+    setEmployeeCourses([]);
+    setCoursesError(null);
+    setCoursesLoading(false);
     setEmployeeFormOpen(true);
     setEmployeeFormFieldErrors({});
   };
@@ -148,8 +159,72 @@ export const CompanyEmployees = () => {
     if (!employee) return;
 
     setEmployeeToEdit(employee);
+    setEmployeeCourses([]);
+    setCoursesError(null);
     setEmployeeFormFieldErrors({});
     setEmployeeFormOpen(true);
+  };
+
+  useEffect(() => {
+    if (!employeeFormOpen || !employeeToEdit) {
+      return;
+    }
+
+    const requestId = ++coursesRequestId.current;
+    const controller = new AbortController();
+    setCoursesLoading(true);
+    setCoursesError(null);
+
+    void companyEmployeeService
+      .listEmployeeCourses(employeeToEdit.id, controller.signal)
+      .then((courses) => {
+        if (coursesRequestId.current !== requestId) return;
+        setEmployeeCourses(courses);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        if (coursesRequestId.current !== requestId) return;
+        setCoursesError(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível carregar os cursos do colaborador.',
+        );
+      })
+      .finally(() => {
+        if (coursesRequestId.current === requestId) {
+          setCoursesLoading(false);
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [employeeFormOpen, employeeToEdit]);
+
+  const handleToggleEmployeeCourse = async (courseId: string, assigned: boolean) => {
+    if (!employeeToEdit || courseToggleId) return;
+
+    setCourseToggleId(courseId);
+    setCoursesError(null);
+
+    try {
+      if (assigned) {
+        await companyEmployeeService.assignEmployeeCourse(employeeToEdit.id, courseId);
+      } else {
+        await companyEmployeeService.revokeEmployeeCourse(employeeToEdit.id, courseId);
+      }
+
+      setEmployeeCourses((current) =>
+        current.map((course) => (course.courseId === courseId ? { ...course, assigned } : course)),
+      );
+      reloadEmployees();
+    } catch (error: unknown) {
+      setCoursesError(
+        error instanceof Error ? error.message : 'Não foi possível atualizar o acesso ao curso.',
+      );
+    } finally {
+      setCourseToggleId(null);
+    }
   };
 
   const employeeFormInitialValues = useMemo(
@@ -350,7 +425,7 @@ export const CompanyEmployees = () => {
         <header className={styles.heading}>
           <div>
             <p className={styles.eyebrow}>Painel corporativo</p>
-            <h1>Gestão de Funcionários</h1>
+            <h1>Gestão de Colaboradores</h1>
           </div>
           <Button
             type="button"
@@ -532,6 +607,11 @@ export const CompanyEmployees = () => {
           onSubmit={handleEmployeeSubmit}
           fieldErrors={employeeFormFieldErrors}
           isSubmitting={isSubmittingEmployee}
+          courses={employeeCourses}
+          coursesLoading={coursesLoading}
+          coursesError={coursesError}
+          courseToggleId={courseToggleId}
+          onToggleCourse={handleToggleEmployeeCourse}
         />
         <Modal
           open={noSeatsNoticeOpen}

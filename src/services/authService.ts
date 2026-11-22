@@ -284,4 +284,52 @@ export const authService = {
 
     return { token: data.accessToken, user: mapAuthUser(data.user), expiresIn: data.expiresIn };
   },
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/auth/password-reset/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+
+    if (!response.ok) {
+      throw new AuthServiceError(
+        response.status,
+        (await readApiErrorMessage(response)) ?? 'Não foi possível enviar o link de recuperação.',
+      );
+    }
+  },
+
+  async getPasswordResetToken(
+    resetToken: string,
+    signal?: AbortSignal,
+  ): Promise<{ email: string }> {
+    const response = await fetch(
+      `${API_BASE_URL}/auth/password-reset/${encodeURIComponent(resetToken)}`,
+      { signal },
+    );
+
+    return getResponseData<{ email: string }>(
+      response,
+      'Não foi possível validar o link de recuperação.',
+    );
+  },
+
+  async resetPassword(resetToken: string, password: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/auth/password-reset/${encodeURIComponent(resetToken)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ password }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new AuthServiceError(
+        response.status,
+        (await readApiErrorMessage(response)) ?? 'Não foi possível redefinir a senha.',
+      );
+    }
+  },
 };

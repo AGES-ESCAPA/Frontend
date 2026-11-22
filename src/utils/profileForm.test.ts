@@ -17,6 +17,8 @@ const company: UserProfile = {
   companyName: 'Pousada Vista Mar LTDA',
   cnpj: '12345678000191',
   avatarUrl: null,
+  headline: null,
+  bio: null,
 };
 
 describe('toLocalPhoneDigits', () => {
@@ -39,26 +41,36 @@ describe('toProfileFormValues', () => {
       name: 'Ana Responsável',
       phone: '51999990001',
       companyName: 'Pousada Vista Mar LTDA',
+      headline: '',
+      bio: '',
     });
   });
 });
 
 describe('validateProfileForm', () => {
   it('accepts a blank phone, because the phone is optional', () => {
-    expect(validateProfileForm({ name: 'Mariana', phone: '', companyName: '' }, 'STUDENT')).toEqual(
-      {},
-    );
+    expect(
+      validateProfileForm(
+        { name: 'Mariana', phone: '', companyName: '', headline: '', bio: '' },
+        'STUDENT',
+      ),
+    ).toEqual({});
   });
 
   it('requires the name and rejects a phone with too few digits', () => {
-    expect(validateProfileForm({ name: '  ', phone: '5199', companyName: '' }, 'STUDENT')).toEqual({
+    expect(
+      validateProfileForm(
+        { name: '  ', phone: '5199', companyName: '', headline: '', bio: '' },
+        'STUDENT',
+      ),
+    ).toEqual({
       name: 'Preenchimento obrigatório.',
       phone: 'Informe um telefone válido.',
     });
   });
 
   it('requires the legal name only for companies', () => {
-    const values = { name: 'Ana', phone: '', companyName: ' ' };
+    const values = { name: 'Ana', phone: '', companyName: ' ', headline: '', bio: '' };
 
     expect(validateProfileForm(values, 'COMPANY')).toEqual({
       companyName: 'Preenchimento obrigatório.',
