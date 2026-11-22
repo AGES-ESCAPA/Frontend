@@ -129,8 +129,10 @@ export const UserManagement = () => {
   const totalPages = Math.ceil(totalElements / PAGE_SIZE);
   const pageUsers = filteredUsers.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const statsReady = status === 'success';
+  /** Resumo global (sem filtros); a tabela usa {@link filteredUsers}. */
   const countByType = (type: string) =>
-    filteredUsers.filter((user) => userTypeKey(user.userType) === type).length;
+    users.filter((user) => userTypeKey(user.userType) === type).length;
+  const totalRegistered = users.length;
 
   const selectedUser = users.find((user) => user.id === selectedUserId) ?? null;
 
@@ -228,18 +230,28 @@ export const UserManagement = () => {
       <section className={styles.stats} aria-label="Resumo dos usuários">
         <SumCard
           label="Usuários cadastrados"
-          value={statsReady ? totalElements : '—'}
+          value={statsReady ? totalRegistered : '—'}
           description="incluindo todos os perfis"
         />
         <SumCard
           label="Alunos"
           value={statsReady ? countByType('STUDENT') : '—'}
-          description="pessoas físicas"
+          description="pessoas físicas avulsas"
+        />
+        <SumCard
+          label="Colaboradores"
+          value={statsReady ? countByType('EMPLOYEE') : '—'}
+          description="vinculados a empresas"
         />
         <SumCard
           label="Empresas"
           value={statsReady ? countByType('COMPANY') : '—'}
           description="contas corporativas"
+        />
+        <SumCard
+          label="Admins"
+          value={statsReady ? countByType('ADMIN') : '—'}
+          description="equipe da plataforma"
         />
       </section>
 

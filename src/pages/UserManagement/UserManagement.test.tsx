@@ -36,6 +36,14 @@ const users: AdminUser[] = [
     status: 'ACTIVE',
     createdAt: '2026-01-10T08:00:00',
   },
+  {
+    id: 'user-4',
+    name: 'Luciana Prado',
+    email: 'luciana.prado@vistamar.com.br',
+    userType: 'EMPLOYEE',
+    status: 'ACTIVE',
+    createdAt: '2026-03-01T10:00:00',
+  },
 ];
 
 const defaultResult: UseAdminUsersResult = {
@@ -79,9 +87,11 @@ describe('UserManagement', () => {
     renderPage();
 
     const summary = within(screen.getByRole('region', { name: 'Resumo dos usuários' }));
-    expect(summary.getByText('3')).toBeInTheDocument();
-    expect(summary.getAllByText('1')).toHaveLength(2);
+    expect(summary.getByText('4')).toBeInTheDocument();
+    expect(summary.getAllByText('1')).toHaveLength(4);
     expect(summary.getByText('incluindo todos os perfis')).toBeInTheDocument();
+    expect(summary.getByText('vinculados a empresas')).toBeInTheDocument();
+    expect(summary.getByText('equipe da plataforma')).toBeInTheDocument();
     expect(summary.getByText('contas corporativas')).toBeInTheDocument();
   });
 
@@ -96,7 +106,7 @@ describe('UserManagement', () => {
     renderPage();
 
     const summary = within(screen.getByRole('region', { name: 'Resumo dos usuários' }));
-    expect(summary.getAllByText('—')).toHaveLength(3);
+    expect(summary.getAllByText('—')).toHaveLength(5);
     expect(screen.getByRole('status')).toHaveTextContent('Carregando usuários');
   });
 
@@ -132,7 +142,7 @@ describe('UserManagement', () => {
     expect(reload).toHaveBeenCalledOnce();
   });
 
-  it('filters the list by type and updates the totals', async () => {
+  it('filters the list by type without changing the global summary cards', async () => {
     const user = userEvent.setup();
     renderPage();
 
@@ -140,10 +150,11 @@ describe('UserManagement', () => {
 
     expect(screen.getByText('Pousada Vista Mar')).toBeInTheDocument();
     expect(screen.queryByText('Ana Paula Ferreira')).not.toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1 de 1 usuários')).toBeInTheDocument();
 
     const summary = within(screen.getByRole('region', { name: 'Resumo dos usuários' }));
-    expect(summary.getAllByText('1')).toHaveLength(2);
-    expect(summary.getByText('0')).toBeInTheDocument();
+    expect(summary.getByText('4')).toBeInTheDocument();
+    expect(summary.getAllByText('1')).toHaveLength(4);
   });
 
   it('paginates the loaded users', async () => {

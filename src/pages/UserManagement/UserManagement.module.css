@@ -83,7 +83,7 @@
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-5);
 }
 
@@ -438,11 +438,11 @@
   }
 
   .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .stats > article:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
+  .stats > article:last-child:nth-child(3n + 1) {
+    grid-column: auto;
   }
 
   .panelNote {
