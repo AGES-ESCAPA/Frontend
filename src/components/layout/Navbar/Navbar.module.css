@@ -13,9 +13,11 @@
   box-sizing: border-box;
 }
 
+/* Logado: a sidebar já ocupa a faixa do logo; o padding esquerdo vira o gap
+   pós-travessão da marca deslogada, para Academy alinhar no mesmo eixo. */
 .navbar[data-state='user'],
 .navbar[data-state='company'] {
-  justify-content: flex-end;
+  padding-left: var(--space-3);
 }
 
 .leftGroup,
@@ -38,8 +40,10 @@
 }
 
 .brand img {
-  width: auto;
-  height: var(--space-8);
+  width: var(--navbar-brand-logo-width);
+  height: var(--navbar-brand-logo-height);
+  object-fit: contain;
+  object-position: left center;
 }
 
 .brandText {
@@ -53,12 +57,13 @@
 .divider {
   flex-shrink: 0;
   width: 1px;
-  height: var(--space-8);
+  height: var(--navbar-brand-logo-height);
   background-color: var(--color-text-muted);
 }
 
 .context {
-  color: var(--color-text-muted);
+  /* Mesma cor dos itens não selecionados da sidebar (`ghost-dark`). */
+  color: var(--color-white);
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-medium);
   letter-spacing: var(--tracking-wide);
@@ -67,11 +72,11 @@
 }
 
 .tagline {
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   font-size: var(--text-body-5);
   font-weight: var(--font-weight-regular);
-  letter-spacing: 0.04em;
-  line-height: 1.2;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
   white-space: nowrap;
 }
 

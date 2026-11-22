@@ -42,7 +42,8 @@ describe('Sidebar', () => {
     expect(sidebar).toBeInTheDocument();
 
     expect(screen.getByRole('img', { name: /ESCAPA Academy/i })).toBeInTheDocument();
-    expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
+    expect(screen.queryByText('Da Pesquisa à Prática')).not.toBeInTheDocument();
+    expect(screen.queryByText('Academy')).not.toBeInTheDocument();
     expect(
       screen.getByRole('navigation', { name: /navegação do perfil aluno/i }),
     ).toBeInTheDocument();
@@ -50,12 +51,6 @@ describe('Sidebar', () => {
     const footer = within(sidebar.querySelector('footer') as HTMLElement);
     expect(footer.getByText('Jorge Amado')).toBeInTheDocument();
     expect(footer.getByText('Aluno')).toBeInTheDocument();
-  });
-
-  it('should render the user initials in the avatar when no avatarUrl is provided', async () => {
-    renderStudent();
-
-    expect(await screen.findByText('JA')).toBeInTheDocument();
   });
 
   // ── Presets por perfil ───────────────────────────────────────────
@@ -72,8 +67,8 @@ describe('Sidebar', () => {
     },
     {
       role: 'admin',
-      roleLabel: 'Admin',
-      expectedLabels: ['Gestão de Cursos', 'Pedidos', 'Usuários', 'Métricas', 'Meu Perfil'],
+      roleLabel: 'Administrador',
+      expectedLabels: ['Cursos', 'Pedidos', 'Usuários', 'Métricas', 'Meu Perfil'],
     },
   ];
 
@@ -95,11 +90,10 @@ describe('Sidebar', () => {
 
       expect(within(nav).getAllByRole('link')).toHaveLength(expectedLabels.length);
 
-      // Rótulo do perfil no topo, abaixo do logo.
       const sidebar = screen.getByRole('complementary');
       expect(
-        within(sidebar.querySelector('header') as HTMLElement).getByText(roleLabel),
-      ).toBeInTheDocument();
+        within(sidebar.querySelector('header') as HTMLElement).queryByText(roleLabel),
+      ).not.toBeInTheDocument();
     });
   });
 

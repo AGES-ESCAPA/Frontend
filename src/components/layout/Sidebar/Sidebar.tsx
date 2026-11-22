@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { LogOut, Menu, X } from 'lucide-react';
 import escapaIcone from '@assets/escapa_icone.png';
 import escapaLogo from '@assets/escapa_logo.png';
-import { Avatar, Button } from '@components/ui';
+import { Button } from '@components/ui';
 import { SIDEBAR_ICON_SIZE, SIDEBAR_ROLE_LABELS } from './sidebarMenuPresets';
 import styles from './Sidebar.module.css';
 
@@ -77,6 +77,11 @@ export interface SidebarProps {
   items: SidebarMenuItem[];
   /** Dados do usuário exibidos no rodapé. */
   user: SidebarUser;
+  /**
+   * Rótulo exibido sob o logo (ex.: Colaborador). Sem isso, usa o padrão do
+   * perfil (`SIDEBAR_ROLE_LABELS`).
+   */
+  roleLabel?: string;
   /** Versão recolhida: apenas ícones, sem labels e sem os textos do rodapé. */
   collapsed?: boolean;
   /** Quando fornecido, exibe o botão de sair no rodapé. */
@@ -92,9 +97,8 @@ export interface SidebarProps {
 /**
  * Sidebar — menu lateral fixo das telas internas (pós-login).
  *
- * Utiliza `Button` (variantes `ghost-dark` e `active`) para os itens de menu e
- * `Avatar` para a identificação do usuário no rodapé — não reimplementa
- * nenhum dos dois, seguindo o mesmo princípio da `Navbar`.
+ * Utiliza `Button` (variantes `ghost-dark` e `active`) para os itens de menu.
+ * O rodapé mostra nome/e-mail do usuário e o botão de sair.
  *
  * Cada item de menu é um link de navegação client-side (`Link` do
  * react-router-dom por padrão, substituível via `linkComponent`) renderizado
@@ -114,11 +118,12 @@ export const Sidebar = ({
   role,
   items,
   user,
+  roleLabel: roleLabelProp,
   collapsed,
   onLogout,
   linkComponent: LinkComponent = Link,
 }: SidebarProps) => {
-  const roleLabel = SIDEBAR_ROLE_LABELS[role];
+  const roleLabel = roleLabelProp ?? SIDEBAR_ROLE_LABELS[role];
   const isAutoResponsive = collapsed === undefined;
   const sidebarId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -242,15 +247,10 @@ export const Sidebar = ({
         onBlur={handleBlur}
       >
         <header className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.brand}>
-              <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
-              <img src={escapaIcone} alt="" aria-hidden="true" className={styles.logoIcon} />
-              <span className={styles.brandDivider} aria-hidden="true" />
-              <span className={styles.brandSuffix}>Academy</span>
-            </div>
-            <p className={styles.brandTagline}>Da Pesquisa à Prática</p>
-            <p className={styles.roleLabel}>{roleLabel}</p>
+          <div className={styles.brand}>
+            <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
+            <img src={escapaIcone} alt="" aria-hidden="true" className={styles.logoIcon} />
+            <span className={styles.brandDivider} aria-hidden="true" />
           </div>
         </header>
 
@@ -284,10 +284,11 @@ export const Sidebar = ({
 
         <footer className={styles.footer}>
           <div className={styles.userInfo}>
-            <Avatar name={user.name} imageUrl={user.avatarUrl} theme="dark" />
             <div className={styles.userText}>
               <span className={styles.userName}>{user.name}</span>
-              <span className={styles.userRole}>{user.email ?? user.role}</span>
+              <span className={styles.userRole} title={user.email ?? user.role}>
+                {user.email ?? user.role}
+              </span>
             </div>
           </div>
 
