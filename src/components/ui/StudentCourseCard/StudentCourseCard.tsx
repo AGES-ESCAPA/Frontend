@@ -5,6 +5,7 @@ import { Button } from '@components/ui/Button';
 import { ProgressBar } from '@components/ui/ProgressBar';
 import { CourseRatingModal } from '@components/ui/CourseRatingModal';
 import { StarRating } from '@components/ui/StarRating';
+import { formatWorkload } from '@utils/formatters';
 import styles from './StudentCourseCard.module.css';
 
 export type EnrollmentStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'EXPIRED';
@@ -14,6 +15,7 @@ export interface StudentCourseCardProps {
   title: string;
   thumbnailUrl: string;
   instructor: string;
+  /** Carga horária em minutos (mesmo contrato da API). */
   durationTime: number;
   lessonsCount: number;
   progressPercentage: number;
@@ -126,7 +128,7 @@ export const StudentCourseCard = ({
 
         <footer className={styles.footer}>
           <span className={styles.metaInfo}>
-            {durationTime}h · {lessonsCount} aulas
+            {formatWorkload(durationTime)} · {lessonsCount} aulas
           </span>
           <Button
             type="button"
