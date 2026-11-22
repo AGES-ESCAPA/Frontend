@@ -352,4 +352,19 @@ describe('courseService', () => {
     expect(url).toContain('/admin/courses/e0000000-0000-4000-e000-000000000003');
     expect(init.method).toBe('DELETE');
   });
+
+  it('should call POST /api/v1/admin/courses/:id/unarchive to restore a course', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve({ success: true, data: null }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await courseService.unarchiveCourse('e0000000-0000-4000-e000-000000000003');
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses/e0000000-0000-4000-e000-000000000003/unarchive');
+    expect(init.method).toBe('POST');
+  });
 });

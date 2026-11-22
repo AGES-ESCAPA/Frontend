@@ -2,6 +2,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-5);
+  margin-top: var(--space-6);
 }
 
 .catalog {
@@ -11,17 +12,9 @@
 .toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: var(--space-4);
-}
-
-.heading {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-h5);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--text-h5--line-height);
 }
 
 .toolbarActions {
@@ -31,6 +24,16 @@
   flex: 1 1 var(--container-sm);
   gap: var(--space-4);
   min-width: 0;
+}
+
+.inlineFilters {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 28rem;
+}
+
+.inlineFilters > div:first-child {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .search {
@@ -89,36 +92,52 @@
   width: var(--space-8);
   height: var(--space-8);
   color: var(--color-info-300);
+  background: transparent;
+  border: 0;
   border-radius: var(--radius-lg);
+  cursor: pointer;
   transition:
     background-color var(--transition-fast),
     color var(--transition-fast);
 }
 
-.iconButton:hover {
-  background-color: var(--color-overlay-hover-on-dark);
+.iconButton:hover,
+.iconButton:focus-visible {
+  background-color: var(--color-primary-700);
   color: var(--color-info-200);
 }
 
 .iconButton:focus-visible {
-  background-color: var(--color-overlay-hover-on-dark);
-  color: var(--color-info-200);
   outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
-.iconButton.deleteButton {
+.iconButton.archiveButton {
   color: var(--color-error-300);
 }
 
-.iconButton.deleteButton:hover,
-.iconButton.deleteButton:focus-visible {
+.iconButton.archiveButton:hover,
+.iconButton.archiveButton:focus-visible {
   background-color: color-mix(in srgb, var(--color-error-300) 16%, transparent);
   color: var(--color-error-200);
 }
 
-.iconButton.deleteButton:focus-visible {
+.iconButton.archiveButton:focus-visible {
   outline-color: var(--color-error-300);
+}
+
+.iconButton.unarchiveButton {
+  color: var(--color-success-300);
+}
+
+.iconButton.unarchiveButton:hover,
+.iconButton.unarchiveButton:focus-visible {
+  background-color: color-mix(in srgb, var(--color-success-300) 16%, transparent);
+  color: var(--color-success-200);
+}
+
+.iconButton.unarchiveButton:focus-visible {
+  outline-color: var(--color-success-300);
 }
 
 @media (width < 64rem) {
@@ -138,8 +157,13 @@
     flex-basis: 100%;
   }
 
+  .inlineFilters,
   .search {
     max-width: none;
+  }
+
+  .inlineFilters > div:first-child {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .progressRow {

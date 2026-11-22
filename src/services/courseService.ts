@@ -26,6 +26,7 @@ const buildPublicCoursesUrl = (query: PublicCoursesQuery = {}): string => {
   if (query.title) params.set('title', query.title);
   if (query.category) params.set('category', query.category);
   if (query.level) params.set('level', toApiLevel(query.level));
+  if (query.featured !== undefined) params.set('featured', String(query.featured));
   if (query.page !== undefined) params.set('page', String(query.page));
   if (query.size !== undefined) params.set('size', String(query.size));
 
@@ -91,7 +92,7 @@ const getCourses = async (
   query: PublicCoursesQuery = {},
   signal?: AbortSignal,
 ): Promise<PublicCoursesPage> => {
-  const response = await fetch(buildPublicCoursesUrl(query), { signal });
+  const response = await fetch(buildPublicCoursesUrl(query), { signal, cache: 'no-store' });
 
   if (!response.ok || !isJsonResponse(response)) {
     throw new Error('Falha ao buscar os cursos publicados');
@@ -335,6 +336,16 @@ const archiveCourse = async (id: string): Promise<void> => {
   }
 };
 
+const unarchiveCourse = async (id: string): Promise<void> => {
+  const response = await authenticatedFetch(`${ADMIN_COURSES_URL}/${id}/unarchive`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(await extractErrorMessage(response, 'Não foi possível desarquivar o curso.'));
+  }
+};
+
 export const courseService = {
   getCourses,
   getCourseFilters,
@@ -352,4 +363,5 @@ export const courseService = {
   uploadCourseThumbnail,
   listAdminCourses,
   archiveCourse,
+  unarchiveCourse,
 };

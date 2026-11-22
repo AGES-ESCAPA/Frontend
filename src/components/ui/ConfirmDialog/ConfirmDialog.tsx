@@ -1,7 +1,9 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '../Button';
 import styles from './ConfirmDialog.module.css';
+
+export type ConfirmDialogVariant = 'danger' | 'success';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -11,6 +13,8 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   isConfirming?: boolean;
   errorMessage?: string | null;
+  /** Aparência do ícone e do botão de confirmação. Padrão: `danger`. */
+  variant?: ConfirmDialogVariant;
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
 }
@@ -23,6 +27,7 @@ export const ConfirmDialog = ({
   cancelLabel = 'Cancelar',
   isConfirming = false,
   errorMessage,
+  variant = 'danger',
   onConfirm,
   onOpenChange,
 }: ConfirmDialogProps) => {
@@ -31,13 +36,19 @@ export const ConfirmDialog = ({
     onOpenChange(nextOpen);
   };
 
+  const isSuccess = variant === 'success';
+  const Icon = isSuccess ? CheckCircle2 : AlertTriangle;
+
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
         <Dialog.Content className={styles.content}>
-          <span className={styles.icon} aria-hidden="true">
-            <AlertTriangle size={20} />
+          <span
+            className={`${styles.icon} ${isSuccess ? styles.iconSuccess : styles.iconDanger}`}
+            aria-hidden="true"
+          >
+            <Icon size={20} />
           </span>
 
           <Dialog.Title className={styles.title}>{title}</Dialog.Title>
@@ -63,10 +74,10 @@ export const ConfirmDialog = ({
 
             <Button
               type="button"
-              variant="danger"
+              variant={isSuccess ? 'primary' : 'danger'}
               label={confirmLabel}
               fullWidth
-              className={styles.confirmButton}
+              className={`${styles.confirmButton} ${isSuccess ? styles.confirmSuccess : styles.confirmDanger}`}
               isLoading={isConfirming}
               onClick={onConfirm}
             />
