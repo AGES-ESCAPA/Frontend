@@ -420,6 +420,107 @@
   border-radius: var(--radius-lg);
 }
 
+/* ── Quiz ──────────────────────────────────────────────────────────── */
+.quizEditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.quizHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.quizTitle {
+  margin: 0;
+  font-weight: 600;
+}
+
+.quizHint,
+.quizEmpty {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.quizAddButton,
+.quizAddOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px dashed var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-text-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.quizQuestion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.quizQuestionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quizQuestionHeader h4 {
+  margin: 0;
+}
+
+.quizOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.quizOptionRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.quizCorrect {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.quizRemoveButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--space-2);
+}
+
+.quizRemoveButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fieldError {
+  margin: 0;
+  color: var(--color-error-200);
+  font-size: var(--font-size-sm);
+}
+
 /* ── Responsividade ────────────────────────────────────────────────── */
 @media (width <= 640px) {
   .row,

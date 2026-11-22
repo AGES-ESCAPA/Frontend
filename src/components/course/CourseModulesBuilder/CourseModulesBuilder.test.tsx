@@ -559,6 +559,7 @@ describe('CourseModulesBuilder', () => {
       durationInSeconds: null,
       textContent: 'Artigo sobre a jornada',
       fileUrl: null,
+      quizQuestions: [],
       isFreeSample: false,
       resources: [],
       order: 2,

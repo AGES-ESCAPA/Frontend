@@ -22,6 +22,7 @@ const existingLesson: Lesson = {
   durationInSeconds: 760,
   textContent: null,
   fileUrl: null,
+  quizQuestions: [],
   isFreeSample: true,
   resources: [
     { id: 'resource-1', type: 'link', title: 'Artigo MDN', url: 'https://developer.mozilla.org' },
@@ -82,12 +83,11 @@ describe('LessonModal', () => {
     expect(screen.queryByLabelText(/url do vídeo/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/conteúdo da aula/i)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('radio', { name: 'Arquivo' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Quiz' }));
 
     expect(screen.queryByLabelText(/conteúdo da aula/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/arquivo da aula/i)).toHaveAttribute('type', 'file');
-    expect(screen.getByText('Envie um PDF ou planilha')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('https://.../material.pdf')).not.toBeInTheDocument();
+    expect(screen.getByText(/perguntas do quiz/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /adicionar pergunta/i })).toBeInTheDocument();
   });
 
   it('should only offer the upload for a complementary file, without a URL field', async () => {

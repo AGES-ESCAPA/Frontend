@@ -8,7 +8,7 @@
  * página pública de detalhes do curso.
  */
 
-export type AdminModuleContentType = 'VIDEO' | 'TEXT' | 'FILE';
+export type AdminModuleContentType = 'VIDEO' | 'TEXT' | 'FILE' | 'QUIZ';
 
 /** Recorte de um conteúdo tal como vem na listagem de módulos. */
 export interface AdminModuleContent {

@@ -131,6 +131,7 @@ const lesson: Lesson = {
   durationInSeconds: 600,
   textContent: null,
   fileUrl: null,
+  quizQuestions: [],
   isFreeSample: false,
   resources: [],
   order: 2,

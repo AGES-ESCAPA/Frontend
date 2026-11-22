@@ -19,6 +19,7 @@ import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
 import { useStudentLesson } from '@/hooks/useStudentLesson';
 import { mockUser } from '@pages/MyCourses/mockCourses';
 import { LessonMenu } from './components/LessonMenu';
+import { LessonQuizPlayer } from './components/LessonQuizPlayer';
 import styles from './CoursePlayer.module.css';
 import { LessonContent } from '@components/ui/LessonContent/LessonContent';
 import { LessonReferences } from '@components/ui/ReferenceAndExternalLinks/ReferenceAndExternalLinks';
@@ -298,8 +299,9 @@ export const CoursePlayer = () => {
       .filter(Boolean)
       .join(' · ');
 
+    const isQuizLesson = lesson.type === 'quiz';
     // Aulas de texto e de arquivo não têm player: o conteúdo é o texto da aula.
-    const isReadingLesson = lesson.type !== 'video';
+    const isReadingLesson = lesson.type !== 'video' && !isQuizLesson;
     const readingText = lesson.type === 'text' ? lesson.textContent : lesson.description;
     // Parágrafos separados por linha em branco; quebras simples são mantidas no CSS.
     const textParagraphs = (readingText ?? '')
@@ -315,9 +317,8 @@ export const CoursePlayer = () => {
       completedLessonIds.has(lessonId) ||
       completedLessonIds.has(lesson.id);
 
-    // Some quando a aula já está concluída. A navegação para a próxima fica nos
-    // botões de aula anterior e próxima.
-    const completeButton = !isLessonCompleted && (
+    // Quiz conclui só via submit; sem botão "Marcar como concluída".
+    const completeButton = !isLessonCompleted && !isQuizLesson && (
       <Button
         label="Marcar como concluída"
         variant="primary"
@@ -327,6 +328,11 @@ export const CoursePlayer = () => {
         onClick={() => void handleCompleteLesson()}
       />
     );
+
+    const handleQuizPassed = () => {
+      setCompletedLessonIds((current) => new Set(current).add(lessonId));
+      curriculum.refetch();
+    };
 
     return (
       <section className={styles.lesson}>
@@ -402,9 +408,21 @@ export const CoursePlayer = () => {
               </article>
             )}
 
+            {isQuizLesson ? (
+              <LessonQuizPlayer
+                key={lessonId}
+                courseId={courseId}
+                lessonId={lessonId}
+                questions={lesson.studentQuizQuestions ?? []}
+                minPassPercentage={lesson.minQuizPassPercentage ?? 70}
+                alreadyCompleted={isLessonCompleted}
+                onPassed={handleQuizPassed}
+              />
+            ) : null}
+
             {/* US-12: conteúdo textual da aula; sem player, o texto já aparece acima */}
             <LessonContent
-              description={isReadingLesson ? null : lesson.description}
+              description={isReadingLesson || isQuizLesson ? null : lesson.description}
               concepts={lesson.concepts}
             />
             <LessonReferences references={lesson.references} />

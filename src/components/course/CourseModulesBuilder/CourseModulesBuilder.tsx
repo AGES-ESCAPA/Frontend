@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronDown,
   CirclePlus,
+  CircleHelp,
   CirclePlay,
   FileText,
   GripVertical,
@@ -789,6 +790,8 @@ export const CourseModulesBuilder = ({
                             </span>
                             {lesson.type === 'VIDEO' ? (
                               <CirclePlay size={18} aria-hidden="true" />
+                            ) : lesson.type === 'QUIZ' ? (
+                              <CircleHelp size={18} aria-hidden="true" />
                             ) : (
                               <FileText size={18} aria-hidden="true" />
                             )}
