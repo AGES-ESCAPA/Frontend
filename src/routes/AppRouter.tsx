@@ -156,6 +156,12 @@ const ResetPassword = lazy(() =>
     default: m.ResetPassword,
   })),
 );
+
+const ConfirmEmailChange = lazy(() =>
+  import('@pages/ConfirmEmailChange/ConfirmEmailChange').then((m) => ({
+    default: m.ConfirmEmailChange,
+  })),
+);
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
 
 const PageLoader = () => (
@@ -202,6 +208,7 @@ export const AppRouter = () => {
             <Route path="/criar-senha" element={<CreatePassword />} />
             <Route path="/esqueci-minha-senha" element={<ForgotPassword />} />
             <Route path="/redefinir-senha" element={<ResetPassword />} />
+            <Route path="/confirmar-email" element={<ConfirmEmailChange />} />
             <Route
               path="/meus-cursos"
               element={

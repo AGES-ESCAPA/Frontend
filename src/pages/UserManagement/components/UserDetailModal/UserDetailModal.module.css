@@ -1,0 +1,147 @@
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+  margin: 0;
+}
+
+.detailRow {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.details dt,
+.metaRow dt {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+}
+
+.details dd,
+.metaRow dd {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  overflow-wrap: anywhere;
+}
+
+.editForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+}
+
+.lockedField {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.lockedLabel {
+  color: var(--color-text-muted);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+}
+
+.lockedValue {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+  overflow-wrap: anywhere;
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.footerActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.pendingBanner,
+.emailHint {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+}
+
+.pendingBanner {
+  color: var(--color-warning-100);
+  background-color: color-mix(in srgb, var(--color-warning-400) 18%, transparent);
+}
+
+.emailHint {
+  color: var(--color-text-muted);
+  background-color: var(--color-primary-700);
+}
+
+.titleEditButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  color: var(--color-info-200);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.titleEditButton:hover,
+.titleEditButton:focus-visible {
+  color: var(--color-info-100);
+  background-color: var(--color-primary-700);
+}
+
+.titleEditButton:focus-visible {
+  outline: var(--border-width-thin) solid var(--color-border-focus);
+  outline-offset: var(--space-1);
+}
+
+.titleEditButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading,
+.error {
+  margin: 0;
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
+.loading {
+  color: var(--color-text-muted);
+}
+
+.error {
+  grid-column: 1 / -1;
+  color: var(--color-text-primary);
+}
+
+@media (width <= 480px) {
+  .details,
+  .editForm,
+  .metaRow {
+    grid-template-columns: 1fr;
+  }
+}

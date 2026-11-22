@@ -68,6 +68,13 @@ export type {
 } from './LineChart';
 export { Table } from './Table';
 export type { TableAlign, TableColumn, TableProps } from './Table';
+export { TableFilter } from './TableFilter';
+export type {
+  TableFilterPeriodField,
+  TableFilterPeriodValue,
+  TableFilterProps,
+  TableFilterSelectField,
+} from './TableFilter';
 export { TextArea } from './TextArea';
 export type { TextAreaProps } from './TextArea';
 export { TextInput } from './TextInput';

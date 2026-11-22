@@ -332,4 +332,36 @@ export const authService = {
       );
     }
   },
+
+  async getEmailChangeToken(
+    changeToken: string,
+    signal?: AbortSignal,
+  ): Promise<{ name: string; currentEmail: string; newEmail: string }> {
+    const response = await fetch(
+      `${API_BASE_URL}/auth/email-change/${encodeURIComponent(changeToken)}`,
+      { signal },
+    );
+
+    return getResponseData<{ name: string; currentEmail: string; newEmail: string }>(
+      response,
+      'Não foi possível validar o link de confirmação de e-mail.',
+    );
+  },
+
+  async confirmEmailChange(changeToken: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/auth/email-change/${encodeURIComponent(changeToken)}/confirm`,
+      {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+      },
+    );
+
+    if (!response.ok) {
+      throw new AuthServiceError(
+        response.status,
+        (await readApiErrorMessage(response)) ?? 'Não foi possível confirmar o novo e-mail.',
+      );
+    }
+  },
 };

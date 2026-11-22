@@ -67,3 +67,75 @@ describe('adminUserService.list', () => {
     expect((error as AdminUserServiceError).message).toContain('conexão');
   });
 });
+
+describe('adminUserService.getById', () => {
+  beforeEach(() => {
+    authenticatedFetchMock.mockReset();
+  });
+
+  it('should fetch the user detail with registration fields', async () => {
+    const detail = {
+      ...users[0],
+      cpf: '39011122233',
+      phone: '51991203344',
+    };
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: detail }));
+
+    const result = await adminUserService.getById('user-1');
+
+    expect(result).toEqual(detail);
+    const [url] = authenticatedFetchMock.mock.calls[0];
+    expect(new URL(String(url)).pathname).toMatch(/\/users\/user-1$/);
+  });
+
+  it('should throw with the API message when the response is not ok', async () => {
+    authenticatedFetchMock.mockResolvedValue(
+      jsonResponse({ status: 404, error: 'Not Found', message: 'User not found' }, 404),
+    );
+
+    const error = await adminUserService.getById('missing').catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AdminUserServiceError);
+    expect((error as AdminUserServiceError).status).toBe(404);
+    expect((error as AdminUserServiceError).message).toBe('User not found');
+  });
+});
+
+describe('adminUserService.update', () => {
+  beforeEach(() => {
+    authenticatedFetchMock.mockReset();
+  });
+
+  it('should put the editable registration fields', async () => {
+    const detail = { ...users[0], phone: '51988887777' };
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: detail }));
+
+    const result = await adminUserService.update('user-1', {
+      name: 'Ana Atualizada',
+      phone: '51988887777',
+    });
+
+    expect(result).toEqual(detail);
+    const [url, init] = authenticatedFetchMock.mock.calls[0];
+    expect(new URL(String(url)).pathname).toMatch(/\/users\/user-1$/);
+    expect(init).toMatchObject({ method: 'PUT' });
+  });
+});
+
+describe('adminUserService.deactivate', () => {
+  beforeEach(() => {
+    authenticatedFetchMock.mockReset();
+  });
+
+  it('should post the deactivate action', async () => {
+    const detail = { ...users[0], status: 'INACTIVE' };
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: detail }));
+
+    const result = await adminUserService.deactivate('user-1');
+
+    expect(result.status).toBe('INACTIVE');
+    const [url, init] = authenticatedFetchMock.mock.calls[0];
+    expect(new URL(String(url)).pathname).toMatch(/\/users\/user-1\/deactivate$/);
+    expect(init).toMatchObject({ method: 'POST' });
+  });
+});
