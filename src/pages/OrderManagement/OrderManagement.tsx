@@ -312,6 +312,12 @@ export const Ordermanagement = () => {
         />
 
         <SumCard
+          label="Pedidos Realizados"
+          value={statsReady ? stats.approvedCount + stats.cancelledOrRefundedCount : '—'}
+          description="Total de pedidos feitos"
+        />
+
+        <SumCard
           label="Pedidos Aprovados"
           value={statsReady ? stats.approvedCount : '—'}
           description="Acesso liberado automaticamente"

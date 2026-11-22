@@ -130,6 +130,8 @@ describe('OrderManagement', () => {
     const summary = within(screen.getByRole('region', { name: 'Resumo dos pedidos' }));
     expect(summary.getByText(/5\.346,00/)).toBeInTheDocument();
     expect(summary.getByText('18 pedidos ativos')).toBeInTheDocument();
+    expect(summary.getByText('Pedidos Realizados')).toBeInTheDocument();
+    expect(summary.getByText('21')).toBeInTheDocument();
     expect(summary.getByText('18')).toBeInTheDocument();
     expect(summary.getByText('3')).toBeInTheDocument();
   });
