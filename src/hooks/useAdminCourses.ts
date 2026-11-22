@@ -19,6 +19,7 @@ const toRow = (item: AdminCourseListItem): AdminCourseRow => ({
   id: item.id,
   code: toCourseCode(item.title),
   title: item.title,
+  category: item.category,
   price: item.price ?? 0,
   status: item.status,
   version: formatCourseVersion(item.majorVersion, item.minorVersion),

@@ -18,6 +18,7 @@ const COURSES: AdminCourseRow[] = [
     id: 'e0000000-0000-4000-e000-000000000001',
     code: 'AE',
     title: 'Atendimento de Excelencia em Hospedagem',
+    category: 'Hospitalidade',
     price: 249.9,
     status: 'PUBLISHED',
     version: 'v1.2',
@@ -26,6 +27,7 @@ const COURSES: AdminCourseRow[] = [
     id: 'e0000000-0000-4000-e000-000000000002',
     code: 'GR',
     title: 'Gestao de Reservas e Overbooking',
+    category: 'Gestão',
     price: 329.9,
     status: 'PUBLISHED',
     version: 'v2.0',
@@ -34,6 +36,7 @@ const COURSES: AdminCourseRow[] = [
     id: 'e0000000-0000-4000-e000-000000000003',
     code: 'IR',
     title: 'Ingles para Recepcao',
+    category: 'Idiomas',
     price: 189.9,
     status: 'DRAFT',
     version: 'v0.1',
@@ -86,9 +89,15 @@ describe('AdminCourses', () => {
     renderPage();
 
     expect(screen.getByRole('table', { name: 'Cursos cadastrados' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Curso' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Categoria' })).toBeInTheDocument();
     expect(screen.getByText('Atendimento de Excelencia em Hospedagem')).toBeInTheDocument();
     expect(screen.getByText('Gestao de Reservas e Overbooking')).toBeInTheDocument();
     expect(screen.getByText('Ingles para Recepcao')).toBeInTheDocument();
+    expect(screen.getByText('Hospitalidade')).toBeInTheDocument();
+    expect(screen.getByText('Gestão')).toBeInTheDocument();
+    expect(screen.getByText('Idiomas')).toBeInTheDocument();
+    expect(screen.queryByText('AE')).not.toBeInTheDocument();
     expect(screen.getAllByText('Publicado')).toHaveLength(2);
     expect(screen.getByText('Rascunho')).toBeInTheDocument();
     expect(screen.getByText('Mostrando 3 de 3 cursos')).toBeInTheDocument();

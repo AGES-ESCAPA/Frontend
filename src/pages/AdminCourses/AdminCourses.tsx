@@ -53,7 +53,8 @@ const matchesSearch = (course: AdminCourseRow, term: string): boolean => {
 
   return (
     course.title.toLowerCase().includes(normalized) ||
-    course.code.toLowerCase().includes(normalized)
+    course.code.toLowerCase().includes(normalized) ||
+    (course.category?.toLowerCase().includes(normalized) ?? false)
   );
 };
 
@@ -115,14 +116,15 @@ export const AdminCourses = () => {
   const columns = useMemo<TableColumn<AdminCourseRow>[]>(
     () => [
       {
-        id: 'code',
+        id: 'title',
         header: 'Curso',
-        render: (course) => <span className={styles.code}>{course.code}</span>,
+        render: (course) => course.title,
       },
       {
-        id: 'title',
+        id: 'category',
         header: 'Categoria',
-        render: (course) => course.title,
+        render: (course) =>
+          course.category ? <Badge category={course.category} mini={true} /> : '—',
       },
       {
         id: 'price',

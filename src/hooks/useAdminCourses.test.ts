@@ -42,6 +42,7 @@ describe('useAdminCourses', () => {
         id: apiItem.id,
         code: 'AE',
         title: apiItem.title,
+        category: 'Hospitalidade',
         price: 249.9,
         status: 'PUBLISHED',
         version: 'v1.2',

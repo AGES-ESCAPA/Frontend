@@ -88,6 +88,7 @@ export interface AdminCourseRow {
   id: string;
   code: string;
   title: string;
+  category: string | null;
   price: number;
   status: CourseStatus;
   version: string;
