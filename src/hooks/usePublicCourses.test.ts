@@ -100,4 +100,31 @@ describe('usePublicCourses', () => {
     await waitFor(() => expect(result.current.catalogStatus).toBe('success'));
     expect(result.current.featuredStatus).toBe('success');
   });
+
+  it('should refresh catalog silently when the tab becomes visible again', async () => {
+    const updated = { ...course, title: 'IA Atualizada' };
+    getCoursesMock.mockResolvedValue(page);
+
+    const { result } = renderHook(() => usePublicCourses({}));
+    await waitFor(() => expect(result.current.catalogStatus).toBe('success'));
+
+    getCoursesMock.mockResolvedValue({
+      ...page,
+      content: [updated],
+      totalElements: 1,
+    });
+    getCoursesMock.mockClear();
+
+    await act(async () => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'visible',
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    await waitFor(() => expect(result.current.catalog[0]?.title).toBe('IA Atualizada'));
+    expect(result.current.catalogStatus).toBe('success');
+    expect(getCoursesMock).toHaveBeenCalled();
+  });
 });

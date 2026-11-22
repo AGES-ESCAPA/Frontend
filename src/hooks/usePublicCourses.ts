@@ -23,6 +23,8 @@ export interface UsePublicCoursesResult {
 
 const FEATURED_SIZE = 3;
 const CATALOG_SIZE = 100;
+/** Mantém destaques e catálogo alinhados a publicações/arquivamentos sem F5. */
+const CATALOG_POLL_INTERVAL_MS = 60_000;
 
 const isAbortError = (error: unknown, signal?: AbortSignal): boolean =>
   Boolean(signal?.aborted) || (error instanceof DOMException && error.name === 'AbortError');
@@ -34,22 +36,26 @@ export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResul
   const [totalElements, setTotalElements] = useState(0);
   const [catalogStatus, setCatalogStatus] = useState<LoadStatus>('loading');
 
-  const loadFeatured = useCallback(async (signal?: AbortSignal) => {
-    setFeaturedStatus('loading');
+  const loadFeatured = useCallback(async (signal?: AbortSignal, silent = false) => {
+    if (!silent) setFeaturedStatus('loading');
 
     try {
-      const page = await courseService.getCourses({ page: 0, size: FEATURED_SIZE }, signal);
+      const page = await courseService.getCourses(
+        { featured: true, page: 0, size: FEATURED_SIZE },
+        signal,
+      );
+      if (signal?.aborted) return;
       setFeatured(page.content);
       setFeaturedStatus('success');
     } catch (error: unknown) {
       if (isAbortError(error, signal)) return;
-      setFeaturedStatus('error');
+      if (!silent) setFeaturedStatus('error');
     }
   }, []);
 
   const loadCatalog = useCallback(
-    async (signal?: AbortSignal) => {
-      setCatalogStatus('loading');
+    async (signal?: AbortSignal, silent = false) => {
+      if (!silent) setCatalogStatus('loading');
 
       const query: PublicCoursesQuery = {
         title: filters.title,
@@ -61,12 +67,13 @@ export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResul
 
       try {
         const page = await courseService.getCourses(query, signal);
+        if (signal?.aborted) return;
         setCatalog(page.content);
         setTotalElements(page.totalElements);
         setCatalogStatus('success');
       } catch (error: unknown) {
         if (isAbortError(error, signal)) return;
-        setCatalogStatus('error');
+        if (!silent) setCatalogStatus('error');
       }
     },
     [filters.category, filters.level, filters.title],
@@ -83,6 +90,28 @@ export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResul
     void loadCatalog(controller.signal);
     return () => controller.abort();
   }, [loadCatalog]);
+
+  // Atualiza em segundo plano para qualquer visitante com a página aberta.
+  useEffect(() => {
+    const refreshInBackground = () => {
+      void loadFeatured(undefined, true);
+      void loadCatalog(undefined, true);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshInBackground();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshInBackground();
+    }, CATALOG_POLL_INTERVAL_MS);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.clearInterval(intervalId);
+    };
+  }, [loadCatalog, loadFeatured]);
 
   const reloadFeatured = useCallback(() => {
     void loadFeatured();
