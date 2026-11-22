@@ -11,13 +11,20 @@ describe('Footer', () => {
     expect(screen.getByRole('img', { name: /ESCAPA Academy/i })).toBeInTheDocument();
     expect(screen.getByText('ESCAPA Academy')).toBeInTheDocument();
     expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
-    expect(screen.getByText(/plataforma de educação premium/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /plataforma/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /empresa/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /minha conta/i })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('link', { name: /^suporte$/i })).toHaveAttribute(
+      'href',
+      'https://wa.me/555181046948',
+    );
     expect(screen.getByRole('link', { name: /sobre a escapa!/i })).toHaveAttribute(
       'href',
       'https://www.escapa.com.br/#nossa-historia',
+    );
+    expect(screen.getByRole('link', { name: /contato/i })).toHaveAttribute(
+      'href',
+      'https://wa.me/555181046948',
     );
     expect(
       screen.getByText('© 2026 Escapa! Academy. Todos os direitos reservados.'),
