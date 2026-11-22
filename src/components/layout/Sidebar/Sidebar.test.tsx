@@ -42,7 +42,8 @@ describe('Sidebar', () => {
     expect(sidebar).toBeInTheDocument();
 
     expect(screen.getByRole('img', { name: /ESCAPA Academy/i })).toBeInTheDocument();
-    expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
+    expect(screen.queryByText('Da Pesquisa à Prática')).not.toBeInTheDocument();
+    expect(screen.queryByText('Academy')).not.toBeInTheDocument();
     expect(
       screen.getByRole('navigation', { name: /navegação do perfil aluno/i }),
     ).toBeInTheDocument();
@@ -50,12 +51,6 @@ describe('Sidebar', () => {
     const footer = within(sidebar.querySelector('footer') as HTMLElement);
     expect(footer.getByText('Jorge Amado')).toBeInTheDocument();
     expect(footer.getByText('Aluno')).toBeInTheDocument();
-  });
-
-  it('should render the user initials in the avatar when no avatarUrl is provided', async () => {
-    renderStudent();
-
-    expect(await screen.findByText('JA')).toBeInTheDocument();
   });
 
   // ── Presets por perfil ───────────────────────────────────────────
@@ -72,8 +67,8 @@ describe('Sidebar', () => {
     },
     {
       role: 'admin',
-      roleLabel: 'Admin',
-      expectedLabels: ['Gestão de Cursos', 'Pedidos', 'Usuários', 'Métricas', 'Meu Perfil'],
+      roleLabel: 'Administrador',
+      expectedLabels: ['Cursos', 'Pedidos', 'Usuários', 'Métricas', 'Meu Perfil'],
     },
   ];
 
@@ -95,11 +90,10 @@ describe('Sidebar', () => {
 
       expect(within(nav).getAllByRole('link')).toHaveLength(expectedLabels.length);
 
-      // Rótulo do perfil no topo, abaixo do logo.
       const sidebar = screen.getByRole('complementary');
       expect(
-        within(sidebar.querySelector('header') as HTMLElement).getByText(roleLabel),
-      ).toBeInTheDocument();
+        within(sidebar.querySelector('header') as HTMLElement).queryByText(roleLabel),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -297,22 +291,33 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: 'Meus Cursos' })).toBeInTheDocument();
   });
 
-  // ── Mobile do aluno ──────────────────────────────────────────────
-  const stubMatchMedia = (matches: boolean) => {
-    vi.stubGlobal('matchMedia', (query: string) => ({
-      matches,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
+  // ── Drawer mobile (< 768px) — todos os perfis ────────────────────
+  const stubMatchMedia = (options: { drawer?: boolean; desktop?: boolean }) => {
+    const drawer = options.drawer ?? false;
+    const desktop = options.desktop ?? false;
+
+    vi.stubGlobal('matchMedia', (query: string) => {
+      const matches = query.includes('47.999rem')
+        ? drawer
+        : query.includes('64rem')
+          ? desktop
+          : false;
+
+      return {
+        matches,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      };
+    });
   };
 
   it('should open the student sidebar from the hamburger on mobile', async () => {
-    stubMatchMedia(true);
+    stubMatchMedia({ drawer: true });
     renderStudent();
 
     const sidebar = screen.getByRole('complementary', { hidden: true });
@@ -335,7 +340,7 @@ describe('Sidebar', () => {
   });
 
   it('should close the student drawer on Escape and when a link is chosen', async () => {
-    stubMatchMedia(true);
+    stubMatchMedia({ drawer: true });
     renderStudent();
 
     await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
@@ -357,14 +362,14 @@ describe('Sidebar', () => {
   });
 
   it('should hide the logout button while the student drawer is closed', () => {
-    stubMatchMedia(true);
+    stubMatchMedia({ drawer: true });
     renderStudent({ onLogout: vi.fn() });
 
     expect(screen.queryByRole('button', { name: /sair da conta/i })).not.toBeInTheDocument();
   });
 
   it('should keep the logout icon inside the student drawer', async () => {
-    stubMatchMedia(true);
+    stubMatchMedia({ drawer: true });
     const handleLogout = vi.fn();
     renderStudent({ onLogout: handleLogout });
 
@@ -377,8 +382,8 @@ describe('Sidebar', () => {
     expect(handleLogout).toHaveBeenCalledOnce();
   });
 
-  it('should not render the hamburger for other roles on mobile', () => {
-    stubMatchMedia(true);
+  it('should open the company sidebar from the hamburger on mobile', async () => {
+    stubMatchMedia({ drawer: true });
     renderSidebar(
       <Sidebar
         role="company"
@@ -387,8 +392,53 @@ describe('Sidebar', () => {
       />,
     );
 
-    expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('complementary')).not.toHaveAttribute('data-mobile-open');
+    expect(screen.getByRole('complementary', { hidden: true })).toHaveAttribute(
+      'data-mobile-open',
+      'false',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
+
+    expect(screen.getByRole('complementary')).toHaveAttribute('data-mobile-open', 'true');
+    expect(
+      within(screen.getByRole('complementary')).getByRole('link', { name: 'Colaboradores' }),
+    ).toBeInTheDocument();
+  });
+
+  it('should keep admin and company rails collapsed on tablet with tooltips', () => {
+    stubMatchMedia({ drawer: false, desktop: false });
+    renderSidebar(
+      <Sidebar
+        role="admin"
+        items={SIDEBAR_MENU_PRESETS.admin}
+        user={{ name: 'Barbara', role: 'Administrador' }}
+      />,
+    );
+
+    const sidebar = screen.getByRole('complementary');
+    expect(sidebar).toHaveAttribute('data-collapsed', 'true');
+    expect(screen.getByRole('link', { name: 'Pedidos' })).toHaveAttribute('title', 'Pedidos');
+    expect(
+      screen.queryByRole('button', { name: /recolher menu lateral/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('should expand admin sidebar by default on desktop and allow collapsing', async () => {
+    stubMatchMedia({ drawer: false, desktop: true });
+    renderSidebar(
+      <Sidebar
+        role="admin"
+        items={SIDEBAR_MENU_PRESETS.admin}
+        user={{ name: 'Barbara', role: 'Administrador' }}
+      />,
+    );
+
+    const sidebar = screen.getByRole('complementary');
+    expect(sidebar).toHaveAttribute('data-collapsed', 'false');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Recolher menu lateral' }));
+    expect(sidebar).toHaveAttribute('data-collapsed', 'true');
+    expect(screen.getByRole('button', { name: 'Expandir menu lateral' })).toBeInTheDocument();
   });
 
   // ── Logout ───────────────────────────────────────────────────────

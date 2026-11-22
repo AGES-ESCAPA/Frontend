@@ -39,10 +39,14 @@ describe('Navbar', () => {
       <Navbar state="user" user={{ name: 'Jorge Amado', role: 'Aluno' }} notificationsCount={3} />,
     );
 
+    const brand = screen.getByRole('link', { name: /ESCAPA Academy, página inicial/i });
+    expect(brand).toBeInTheDocument();
+    expect(brand.querySelector('img')).toBeNull();
+    expect(screen.getByText('Academy')).toBeInTheDocument();
+    expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
     expect(screen.getByText('Jorge Amado')).toBeInTheDocument();
     expect(screen.getByText('Aluno')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.queryByAltText('escapa!')).not.toBeInTheDocument();
   });
 
   it('caps the notification badge at 99+', () => {

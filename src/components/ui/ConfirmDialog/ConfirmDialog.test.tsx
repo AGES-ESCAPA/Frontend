@@ -97,4 +97,21 @@ describe('ConfirmDialog', () => {
 
     expect(onOpenChange).not.toHaveBeenCalled();
   });
+
+  it('should render the success confirmation style when variant is success', () => {
+    render(
+      <ConfirmDialog
+        open
+        variant="success"
+        title="Desarquivar curso?"
+        description="O curso voltará ao catálogo."
+        confirmLabel="Desarquivar curso"
+        onConfirm={vi.fn()}
+        onOpenChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Desarquivar curso?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Desarquivar curso' })).toBeInTheDocument();
+  });
 });

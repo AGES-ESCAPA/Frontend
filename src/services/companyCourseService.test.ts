@@ -54,7 +54,8 @@ describe('companyCourseService', () => {
   });
 
   it('falha quando a listagem de cursos da empresa responde erro', async () => {
-    fetchMock.mockResolvedValueOnce(response({ success: false }, 500));
+    // Persistente: GETs autenticados reintentam 5xx antes de devolver o status.
+    fetchMock.mockResolvedValue(response({ success: false }, 500));
 
     await expect(getCompanyCourses()).rejects.toThrow('Falha ao buscar cursos da empresa');
   });
@@ -68,7 +69,8 @@ describe('companyCourseService', () => {
   });
 
   it('propaga a falha de rede', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('Failed to fetch'));
+    // Persistente: GETs autenticados reintentam falhas de rede.
+    fetchMock.mockRejectedValue(new Error('Failed to fetch'));
 
     await expect(getCompanyCourses()).rejects.toThrow('Failed to fetch');
   });
@@ -81,7 +83,8 @@ describe('companyCourseService', () => {
   });
 
   it('falha quando a lista de ids responde erro', async () => {
-    fetchMock.mockResolvedValueOnce(response({ success: false }, 500));
+    // Persistente: GETs autenticados reintentam 5xx antes de devolver o status.
+    fetchMock.mockResolvedValue(response({ success: false }, 500));
 
     await expect(getCompanyAcquiredCourseIds()).rejects.toThrow(
       'Falha ao buscar cursos da empresa',

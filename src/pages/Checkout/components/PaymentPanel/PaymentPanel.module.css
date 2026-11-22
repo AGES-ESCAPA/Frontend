@@ -8,41 +8,214 @@
 }
 
 .title {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-4);
   color: var(--color-text-primary);
   font-size: var(--text-h6);
   line-height: var(--text-h6--line-height);
   font-weight: var(--font-weight-semibold);
 }
 
-/* Forma de pagamento única: só informa o cartão, não é um seletor. */
-.method {
+.methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0 0 var(--space-8);
+}
+
+.methodOption {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  margin: 0 0 var(--space-8);
-  color: var(--color-info-300);
+  cursor: pointer;
+  color: var(--color-text-primary);
   font-size: var(--text-body-2);
   line-height: var(--text-body-2--line-height);
   font-weight: var(--font-weight-medium);
 }
 
-.methodMark {
+.methodInput {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.methodControl {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: var(--space-4);
   height: var(--space-4);
-  border: var(--border-width-thin) solid var(--color-info-300);
+  border: var(--border-width-thin) solid var(--color-neutral-400);
   border-radius: var(--radius-full);
 }
 
-.methodMark::after {
+.methodControl[data-selected='true'] {
+  border-color: var(--color-info-300);
+}
+
+.methodControl[data-selected='true']::after {
   content: '';
   width: var(--space-2);
   height: var(--space-2);
   border-radius: var(--radius-full);
   background: var(--color-info-300);
+}
+
+.methodInput:focus-visible + .methodControl {
+  outline: 2px solid var(--color-info-300);
+  outline-offset: 2px;
+}
+
+.methodLabel {
+  white-space: nowrap;
+}
+
+.altMethod {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 30rem;
+  margin: 0 auto;
+}
+
+.qrFrame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 16rem);
+  aspect-ratio: 1;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+}
+
+.qr {
+  width: 100%;
+  height: 100%;
+}
+
+.copyRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.copyRow:hover,
+.copyRow:focus-visible {
+  color: var(--color-text-primary);
+}
+
+.copyRow:focus-visible {
+  outline: 2px solid var(--color-info-300);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.copyCode {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-4--line-height);
+  word-break: break-all;
+}
+
+.boletoCard {
+  display: flex;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-primary-700) 55%, transparent);
+}
+
+.boletoIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-info-300) 18%, transparent);
+  color: var(--color-info-300);
+}
+
+.boletoInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.boletoBeneficiary {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+  overflow-wrap: anywhere;
+}
+
+.boletoAmount {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-h5);
+  line-height: var(--text-h5--line-height);
+  font-weight: var(--font-weight-bold);
+}
+
+.boletoMeta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+}
+
+.barcodeLabel {
+  align-self: flex-start;
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-5);
+  line-height: var(--text-body-5--line-height);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.barcodeFrame {
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+}
+
+.barcode {
+  display: block;
+  width: 100%;
+  height: 3.5rem;
+}
+
+.boletoHint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  text-align: center;
 }
 
 /* Mesma largura dos campos do cartão, centralizado como eles. */
@@ -77,5 +250,9 @@
 @media (width <= 768px) {
   .panel {
     padding: var(--space-4);
+  }
+
+  .methods {
+    gap: var(--space-3) var(--space-4);
   }
 }

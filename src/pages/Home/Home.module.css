@@ -25,24 +25,6 @@
   margin-top: var(--space-16);
 }
 
-.eyebrow {
-  margin: 0;
-  color: var(--color-info-200);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-.heading {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-h2);
-  line-height: var(--text-h2--line-height);
-  font-weight: var(--font-weight-bold);
-}
-
 .catalogToolbar {
   display: flex;
   flex-wrap: wrap;
@@ -135,11 +117,6 @@
 @media (width <= 640px) {
   .main {
     padding: var(--space-8) var(--space-4) var(--space-16);
-  }
-
-  .heading {
-    font-size: var(--text-h3);
-    line-height: var(--text-h3--line-height);
   }
 
   .section + .section {

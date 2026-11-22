@@ -1,15 +1,24 @@
 .controls {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: var(--space-3) var(--space-4);
   background-color: var(--color-primary-700);
 }
 
 .bar {
+  /* Progresso já está na linha de cima (.timeline). Aqui: play, tempo e ações.
+     wrap só como rede de segurança se o conteúdo ainda passar da largura. */
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .playButton {
@@ -39,15 +48,20 @@
 
 .trailing {
   display: flex;
+  flex-shrink: 1;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
   margin-left: auto;
 }
 
 .actions {
   display: flex;
+  flex-shrink: 1;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .fullscreenButton {
@@ -81,6 +95,8 @@
 }
 
 .time {
+  flex-shrink: 1;
+  min-width: 0;
   color: var(--color-text-muted);
   font-family: var(--font-mono);
   font-size: var(--text-body-3);
@@ -92,6 +108,8 @@
 /* Linha do tempo: input nativo (acessível por teclado), estilizado como a barra do Figma. */
 .timeline {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   height: var(--space-4);
 
   /* Área de clique de 16px, mas ocupando só a altura da linha (4px) no layout. */
@@ -162,7 +180,26 @@
 }
 
 @media (width <= 640px) {
+  .controls {
+    /* Progresso em largura cheia; play/tempo/ações na linha de baixo (já via grid). */
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .bar {
+    gap: var(--space-2);
+  }
+
   .playButton {
+    width: calc(var(--space-10) + var(--space-1));
+    height: calc(var(--space-10) + var(--space-1));
+  }
+
+  .trailing {
+    gap: var(--space-1);
+  }
+
+  .fullscreenButton {
     width: calc(var(--space-10) + var(--space-1));
     height: calc(var(--space-10) + var(--space-1));
   }

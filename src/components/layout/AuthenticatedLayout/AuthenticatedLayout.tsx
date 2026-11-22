@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../Navbar/Navbar';
 import { Sidebar } from '../Sidebar';
 import type { SidebarMenuItem, SidebarRole, SidebarUser } from '../Sidebar';
+import { SIDEBAR_ROLE_LABELS } from '../Sidebar/sidebarMenuPresets';
 import { useOptionalAuth } from '@contexts/useAuth';
 import { useNotifications } from '@hooks/useNotifications';
 import styles from './AuthenticatedLayout.module.css';
@@ -84,7 +85,13 @@ export const AuthenticatedLayout = ({
 
   return (
     <div className={styles.layout}>
-      <Sidebar role={role} items={items} user={resolvedUser} onLogout={resolvedLogout} />
+      <Sidebar
+        role={role}
+        items={items}
+        user={resolvedUser}
+        roleLabel={sessionUser ? getRoleLabel(sessionUser.role) : SIDEBAR_ROLE_LABELS[role]}
+        onLogout={resolvedLogout}
+      />
 
       <div className={styles.content}>
         <Navbar

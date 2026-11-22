@@ -199,12 +199,9 @@ describe('companyEmployeeService', () => {
 
   it('não transforma abortos em erros de conexão', async () => {
     const controller = new AbortController();
-    controller.abort();
-    fetchMock.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
-    await expect(companyEmployeeService.getSeats(controller.signal)).rejects.toMatchObject({
-      name: 'AbortError',
-      message: 'Aborted',
-    });
+    const abortError = new DOMException('Aborted', 'AbortError');
+    controller.abort(abortError);
+    await expect(companyEmployeeService.getSeats(controller.signal)).rejects.toBe(abortError);
   });
 
   it('recusa envelope de resposta inválido', async () => {

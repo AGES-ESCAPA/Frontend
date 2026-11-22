@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { MyCourses } from './MyCourses';
-import { vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
+import { clearResourceCache } from '@services/resourceCache';
 import * as enrollmentService from '../../services/enrollmentService';
 import * as curriculumService from '../../services/curriculumService';
 import type { StudentCourseCardResponse } from '../../services/enrollmentService';
@@ -66,6 +67,8 @@ const renderPage = () =>
 describe('MyCourses', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearResourceCache();
+    sessionStorage.clear();
     getEnrollmentsMock.mockResolvedValue(buildPage([pendingCourse, inProgressCourse]));
   });
 

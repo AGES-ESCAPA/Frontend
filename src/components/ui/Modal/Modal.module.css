@@ -77,11 +77,24 @@
   min-width: 0;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .title {
   font-size: var(--text-h5);
   line-height: var(--text-h5--line-height);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
+}
+
+.titleAction {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
 }
 
 .subtitle {

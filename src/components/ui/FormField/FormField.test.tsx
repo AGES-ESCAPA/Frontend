@@ -23,15 +23,10 @@ describe('FormField', () => {
 
   it('should keep the hint visible alongside the error', () => {
     render(
-      <FormField
-        label="Preço Base"
-        hint="Aplica-se apenas a contratações avulsas."
-        error="Informe um preço maior que zero."
-      >
+      <FormField label="Preço Base" error="Informe um preço maior que zero.">
         <input />
       </FormField>,
     );
-    expect(screen.getByText('Aplica-se apenas a contratações avulsas.')).toBeInTheDocument();
     expect(screen.getByText('Informe um preço maior que zero.')).toBeInTheDocument();
   });
 

@@ -63,6 +63,7 @@ const SAVED_COURSE: CourseDetail = {
   title: 'Fundamentos de Design de Interfaces Corporativas',
   category: 'Design & UX',
   level: 'INICIANTE',
+  featured: false,
   description: 'Descrição completa do curso.',
   shortDescription: 'Ementa resumida do curso.',
   teaserVideoUrl: 'https://youtube.com/watch?v=aaaaaaaaaaa',
@@ -178,7 +179,7 @@ describe('CourseBuilder', () => {
     renderBuilder();
 
     const sidebar = screen.getByRole('complementary', { name: /menu lateral — admin/i });
-    const currentLink = screen.getByRole('link', { name: 'Gestão de Cursos' });
+    const currentLink = screen.getByRole('link', { name: 'Cursos' });
 
     expect(sidebar).toBeInTheDocument();
     expect(currentLink).toHaveAttribute('aria-current', 'page');

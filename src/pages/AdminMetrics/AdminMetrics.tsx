@@ -1,5 +1,5 @@
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
-import { BarList, DonutChart, LineChart, Panel, SumCard } from '@components/ui';
+import { BarList, DonutChart, LineChart, PageHeader, Panel, SumCard } from '@components/ui';
 import { useAdminCourseMetrics } from '@hooks/useAdminCourseMetrics';
 import { useAdminMetricsOverview } from '@hooks/useAdminMetricsOverview';
 import {
@@ -166,10 +166,11 @@ export const AdminMetrics = () => {
   return (
     <AuthenticatedLayout role="admin" items={MENU_ITEMS} user={ADMIN_USER}>
       <div className={styles.page}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>Relatórios Gerais &amp; Métricas</h1>
-          <p className={styles.description}>Visão geral de alunos e empresas parceiras.</p>
-        </header>
+        <PageHeader
+          eyebrow="Painel administrativo • Métricas"
+          title="Relatórios Gerais & Métricas"
+          subtitle="Visão geral de alunos e empresas parceiras."
+        />
 
         <PopularCoursesSection
           status={courseMetrics.status}

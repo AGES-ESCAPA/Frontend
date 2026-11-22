@@ -33,15 +33,9 @@
   border-radius: var(--radius-2xl);
 }
 
-.title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-h5);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--text-h5--line-height);
-  letter-spacing: 0.12em;
+.pageHeader {
+  align-items: center;
   text-align: center;
-  text-transform: uppercase;
 }
 
 .card label {

@@ -155,10 +155,12 @@ export const hasCourseFormErrors = (errors: CourseFormErrors): boolean =>
 export const buildCoursePayload = (
   values: CourseFormValues,
   status: CourseStatus,
+  featured = false,
 ): CoursePayload => ({
   title: values.title.trim(),
   category: trimmedOrNull(values.category),
   level: toDifficulty(values.difficulty),
+  featured,
   description: trimmedOrNull(values.description),
   shortDescription: trimmedOrNull(values.shortDescription),
   thumbnailUrl: values.thumbnailUrl.trim(),

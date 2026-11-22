@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, CourseCard, CourseCardSkeleton, FilterTabs, SearchBar } from '@components/ui';
+import {
+  Button,
+  CourseCard,
+  CourseCardSkeleton,
+  FilterTabs,
+  PageHeader,
+  SearchBar,
+} from '@components/ui';
 import { useCourseFilters } from '@hooks/useCourseFilters';
 import { usePublicCourses } from '@hooks/usePublicCourses';
 import { mapPublicCourseToCardProps, toDisplayLevel } from '@utils/mapPublicCourse';
@@ -63,47 +70,55 @@ export const Home = () => {
           </section>
         ) : (
           <>
-            <section className={styles.section} aria-labelledby="featured-heading">
-              <p className={styles.eyebrow}>Catálogo</p>
-              <h1 id="featured-heading" className={styles.heading}>
-                Cursos em Destaque
-              </h1>
+            {featuredStatus !== 'success' || featured.length > 0 ? (
+              <section className={styles.section} aria-labelledby="featured-heading">
+                <PageHeader
+                  eyebrow="Catálogo"
+                  title="Cursos em Destaque"
+                  titleId="featured-heading"
+                />
 
-              {featuredStatus === 'loading' && (
-                <div
-                  className={styles.grid}
-                  role="status"
-                  aria-label="Carregando cursos em destaque"
-                >
-                  {Array.from({ length: FEATURED_SKELETONS }, (_, index) => (
-                    <CourseCardSkeleton key={`featured-skeleton-${index}`} />
-                  ))}
-                </div>
-              )}
+                {featuredStatus === 'loading' && (
+                  <div
+                    className={styles.grid}
+                    role="status"
+                    aria-label="Carregando cursos em destaque"
+                  >
+                    {Array.from({ length: FEATURED_SKELETONS }, (_, index) => (
+                      <CourseCardSkeleton key={`featured-skeleton-${index}`} />
+                    ))}
+                  </div>
+                )}
 
-              {featuredStatus === 'error' && (
-                <div className={styles.inlineError} role="alert">
-                  <p>Não foi possível carregar os cursos em destaque.</p>
-                  <Button variant="outlined" label="Tentar Novamente" onClick={reloadFeatured} />
-                </div>
-              )}
+                {featuredStatus === 'error' && (
+                  <div className={styles.inlineError} role="alert">
+                    <p>Não foi possível carregar os cursos em destaque.</p>
+                    <Button variant="outlined" label="Tentar Novamente" onClick={reloadFeatured} />
+                  </div>
+                )}
 
-              {featuredStatus === 'success' && featured.length > 0 && (
-                <div className={styles.grid}>
-                  {featured.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      {...mapPublicCourseToCardProps(course, handleCourseClick)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
+                {featuredStatus === 'success' && featured.length > 0 && (
+                  <div className={styles.grid}>
+                    {featured.map((course) => (
+                      <CourseCard
+                        key={course.id}
+                        {...mapPublicCourseToCardProps(course, handleCourseClick)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : null}
 
             <section className={styles.section} aria-labelledby="catalog-heading">
-              <h2 id="catalog-heading" className={styles.heading}>
-                Todos os Cursos
-              </h2>
+              <PageHeader
+                eyebrow={
+                  featuredStatus === 'success' && featured.length === 0 ? 'Catálogo' : undefined
+                }
+                title="Todos os Cursos"
+                titleId="catalog-heading"
+                titleAs={featuredStatus === 'success' && featured.length === 0 ? 'h1' : 'h2'}
+              />
 
               <div className={styles.catalogToolbar}>
                 <div className={styles.searchWrap}>

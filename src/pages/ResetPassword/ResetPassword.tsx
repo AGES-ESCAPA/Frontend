@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, FormField, PasswordInput, Toast } from '@components/ui';
+import { Button, FormField, PageHeader, PasswordInput, Toast } from '@components/ui';
 import { AuthServiceError, authService } from '@services/authService';
 import {
   INVITE_PASSWORD_INITIAL_VALUES,
@@ -214,9 +214,11 @@ export const ResetPassword = () => {
       <Navbar state="register" />
       <main className={styles.main}>
         <div className={styles.panel}>
-          <h1 className={styles.title} id="reset-password-title">
-            Redefinir senha
-          </h1>
+          <PageHeader
+            title="Redefinir senha"
+            titleId="reset-password-title"
+            className={styles.pageHeader}
+          />
           {renderContent()}
         </div>
       </main>

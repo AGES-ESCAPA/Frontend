@@ -61,11 +61,11 @@ const MetricsCardBase = ({
     <hr className={styles.divider} />
 
     <FormField
+      className={styles.priceField}
       label="Preço Base (BRL)"
       htmlFor={PRICE_ID}
       required
       error={priceError}
-      hint="Aplica-se apenas a contratações avulsas."
     >
       <TextInput
         id={PRICE_ID}

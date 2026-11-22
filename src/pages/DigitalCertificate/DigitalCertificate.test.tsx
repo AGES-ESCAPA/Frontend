@@ -269,7 +269,12 @@ describe('DigitalCertificate', () => {
     });
 
     it('restores the button after an error and allows retrying', async () => {
-      fetchMock.mockResolvedValueOnce(errorResponse(500)).mockResolvedValueOnce(pdfResponse());
+      // authenticatedFetch reintenta GET em 5xx (3 tentativas) antes de falhar.
+      fetchMock
+        .mockResolvedValueOnce(errorResponse(500))
+        .mockResolvedValueOnce(errorResponse(500))
+        .mockResolvedValueOnce(errorResponse(500))
+        .mockResolvedValueOnce(pdfResponse());
       fireEvent.click(await renderOwnerPage());
 
       expect(
@@ -281,7 +286,7 @@ describe('DigitalCertificate', () => {
       fireEvent.click(button);
 
       await waitFor(() => expect(downloadedFilenames).toEqual([HEADER_FILENAME]));
-      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenCalledTimes(4);
     });
 
     it.each([

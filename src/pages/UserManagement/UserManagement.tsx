@@ -1,23 +1,50 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Briefcase, Building2, Eye, Shield, UserRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Ban,
+  Briefcase,
+  Building2,
+  Eye,
+  Shield,
+  SquarePen,
+  UserRound,
+} from 'lucide-react';
 
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
-import { Badge, Button, Modal, SearchBar, SelectInput, SumCard, Table } from '@components/ui';
-import type { BadgeVariant, SelectInputOption, TableColumn } from '@components/ui';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  PageHeader,
+  SearchBar,
+  SumCard,
+  Table,
+  TableFilter,
+} from '@components/ui';
+import type {
+  BadgeVariant,
+  SelectInputOption,
+  TableColumn,
+  TableFilterSelectField,
+} from '@components/ui';
 import { useOptionalAuth } from '@contexts/useAuth';
 import { useAdminUsers } from '@hooks/useAdminUsers';
+import { AdminUserServiceError, adminUserService } from '@services/adminUserService';
 import type { AdminUser } from '@/types/adminUser';
+import { UserDetailModal } from './components/UserDetailModal/UserDetailModal';
+import type { UserDetailMode } from './components/UserDetailModal/UserDetailModal';
 import styles from './UserManagement.module.css';
 
 /** Usado só até a sessão carregar; a casca troca pelo usuário autenticado. */
 const FALLBACK_USER: SidebarUser = { name: '', role: '', email: '' };
 
 const PAGE_SIZE = 10;
-const ROW_ICON_SIZE = 14;
+const ACTION_ICON_SIZE = 16;
 
 const USER_TYPE_OPTIONS: readonly SelectInputOption[] = [
-  { value: '', label: 'Todos os tipos' },
+  { value: '', label: 'Todos' },
   { value: 'STUDENT', label: 'Aluno' },
   { value: 'COMPANY', label: 'Empresa' },
   { value: 'EMPLOYEE', label: 'Colaborador' },
@@ -25,7 +52,7 @@ const USER_TYPE_OPTIONS: readonly SelectInputOption[] = [
 ];
 
 const USER_STATUS_OPTIONS: readonly SelectInputOption[] = [
-  { value: '', label: 'Todos os status' },
+  { value: '', label: 'Todos' },
   { value: 'ACTIVE', label: 'Ativo' },
   { value: 'INACTIVE', label: 'Inativo' },
   { value: 'PENDING', label: 'Pendente' },
@@ -63,10 +90,10 @@ const userTypeLabel = (userType: string): string =>
 
 const TypeIcon = ({ userType }: { userType: string }) => {
   const key = userTypeKey(userType);
-  if (key === 'COMPANY') return <Building2 size={ROW_ICON_SIZE} aria-hidden="true" />;
-  if (key === 'ADMIN') return <Shield size={ROW_ICON_SIZE} aria-hidden="true" />;
-  if (key === 'EMPLOYEE') return <Briefcase size={ROW_ICON_SIZE} aria-hidden="true" />;
-  return <UserRound size={ROW_ICON_SIZE} aria-hidden="true" />;
+  if (key === 'COMPANY') return <Building2 size={ACTION_ICON_SIZE} aria-hidden="true" />;
+  if (key === 'ADMIN') return <Shield size={ACTION_ICON_SIZE} aria-hidden="true" />;
+  if (key === 'EMPLOYEE') return <Briefcase size={ACTION_ICON_SIZE} aria-hidden="true" />;
+  return <UserRound size={ACTION_ICON_SIZE} aria-hidden="true" />;
 };
 
 const matchesSearch = (user: AdminUser, term: string): boolean => {
@@ -98,14 +125,6 @@ const userStatusLabel = (status: string | null | undefined): string => {
 const userStatusVariant = (status: string | null | undefined): BadgeVariant =>
   USER_STATUS_VARIANTS[userStatusKey(status)] ?? 'neutral';
 
-const badgeVariant = (userType: string): BadgeVariant => {
-  const key = userTypeKey(userType);
-  if (key === 'COMPANY') return 'info';
-  if (key === 'ADMIN') return 'secondary';
-  if (key === 'EMPLOYEE') return 'warning';
-  return 'neutral';
-};
-
 export const UserManagement = () => {
   const sessionUser = useOptionalAuth()?.user;
   const sidebarUser: SidebarUser = sessionUser
@@ -122,8 +141,13 @@ export const UserManagement = () => {
   const [userStatus, setUserStatus] = useState('');
   const [page, setPage] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [modalMode, setModalMode] = useState<UserDetailMode>('view');
+  const [userToBlock, setUserToBlock] = useState<AdminUser | null>(null);
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [blockError, setBlockError] = useState<string | null>(null);
 
   const { users, status, errorMessage, reload } = useAdminUsers();
+  const currentUserId = sessionUser?.id;
 
   const filteredUsers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -166,6 +190,55 @@ export const UserManagement = () => {
   const handleStatusChange = (nextStatus: string) => {
     setUserStatus(nextStatus);
     setPage(0);
+  };
+
+  const filterSelects: TableFilterSelectField[] = [
+    {
+      id: 'type',
+      label: 'Tipo',
+      value: userType,
+      options: USER_TYPE_OPTIONS,
+      onChange: handleTypeChange,
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      value: userStatus,
+      options: USER_STATUS_OPTIONS,
+      onChange: handleStatusChange,
+    },
+  ];
+
+  const openUserModal = (userId: string, mode: UserDetailMode) => {
+    setModalMode(mode);
+    setSelectedUserId(userId);
+  };
+
+  const handleBlockDialogChange = (open: boolean) => {
+    if (isBlocking) return;
+    if (!open) {
+      setUserToBlock(null);
+      setBlockError(null);
+    }
+  };
+
+  const handleConfirmBlock = async () => {
+    if (!userToBlock || isBlocking) return;
+    setIsBlocking(true);
+    setBlockError(null);
+    try {
+      await adminUserService.deactivate(userToBlock.id);
+      setUserToBlock(null);
+      reload();
+    } catch (error: unknown) {
+      setBlockError(
+        error instanceof AdminUserServiceError
+          ? error.message
+          : 'Não foi possível bloquear o usuário.',
+      );
+    } finally {
+      setIsBlocking(false);
+    }
   };
 
   const columns: TableColumn<AdminUser>[] = [
@@ -214,32 +287,56 @@ export const UserManagement = () => {
     {
       id: 'actions',
       header: 'Ações',
-      render: (user) => (
-        <div className={styles.rowActions}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label={`Ver usuário ${user.name}`}
-            onClick={() => setSelectedUserId(user.id)}
-          >
-            <Eye size={ROW_ICON_SIZE} aria-hidden="true" />
-          </button>
-        </div>
-      ),
+      render: (user) => {
+        const isInactive = userStatusKey(user.status) === 'INACTIVE';
+        const isSelf = currentUserId !== undefined && user.id === currentUserId;
+        return (
+          <div className={styles.rowActions}>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label={`Ver usuário ${user.name}`}
+              title="Ver usuário"
+              onClick={() => openUserModal(user.id, 'view')}
+            >
+              <Eye size={ACTION_ICON_SIZE} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label={`Editar usuário ${user.name}`}
+              title="Editar usuário"
+              onClick={() => openUserModal(user.id, 'edit')}
+            >
+              <SquarePen size={ACTION_ICON_SIZE} aria-hidden="true" />
+            </button>
+            {!isInactive && !isSelf ? (
+              <button
+                type="button"
+                className={`${styles.iconButton} ${styles.blockButton}`}
+                aria-label={`Bloquear usuário ${user.name}`}
+                title="Bloquear usuário"
+                onClick={() => {
+                  setBlockError(null);
+                  setUserToBlock(user);
+                }}
+              >
+                <Ban size={ACTION_ICON_SIZE} aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        );
+      },
     },
   ];
 
   return (
     <AuthenticatedLayout role="admin" items={menuItems} user={sidebarUser}>
-      <section className={styles.catalog}>
-        <div className={styles.toolbar}>
-          <div>
-            <p className={styles.eyebrow}>Administração</p>
-            <h1 className={styles.heading}>Gestão de Usuários</h1>
-            <p className={styles.description}>Consulte as contas cadastradas na plataforma.</p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Painel administrativo • Usuários"
+        title="Gestão de Usuários"
+        subtitle="Consulte as contas cadastradas na plataforma."
+      />
 
       <section className={styles.stats} aria-label="Resumo dos usuários">
         <SumCard
@@ -269,42 +366,26 @@ export const UserManagement = () => {
         />
       </section>
 
-      <section className={styles.usersPanel} aria-label="Listagem de usuários">
-        <header className={styles.panelHeader}>
-          <div className={styles.panelTitle}>
-            <h2>Usuários</h2>
-            <span aria-label={statsReady ? `${totalElements} usuários` : 'Carregando usuários'}>
-              {statsReady ? totalElements : '—'}
-            </span>
-          </div>
-          <div className={styles.panelControls}>
-            <div className={styles.typeFilter}>
-              <SelectInput
-                aria-label="Tipo de usuário"
-                value={userType}
-                options={USER_TYPE_OPTIONS}
-                onChange={(event) => handleTypeChange(event.target.value)}
-              />
-            </div>
-            <div className={styles.statusFilter}>
-              <SelectInput
-                aria-label="Status do usuário"
-                value={userStatus}
-                options={USER_STATUS_OPTIONS}
-                onChange={(event) => handleStatusChange(event.target.value)}
-              />
-            </div>
+      <section className={styles.catalog} aria-label="Usuários">
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarActions}>
+            <TableFilter
+              selects={filterSelects}
+              showClearButton={false}
+              className={styles.inlineFilters}
+            />
             <div className={styles.search}>
               <SearchBar
                 value={search}
                 onChange={setSearch}
                 onSearch={handleSearch}
+                size="sm"
                 placeholder="Buscar usuário"
                 aria-label="Buscar usuário"
               />
             </div>
           </div>
-        </header>
+        </div>
 
         {status === 'error' ? (
           <div className={styles.errorState} role="alert">
@@ -325,7 +406,6 @@ export const UserManagement = () => {
             getRowId={(user) => user.id}
             caption="Usuários da plataforma"
             emptyMessage="Nenhum usuário encontrado para os filtros selecionados."
-            className={styles.usersTable}
             footer={
               <div className={styles.tableFooter}>
                 <p className={styles.footerText}>
@@ -339,7 +419,7 @@ export const UserManagement = () => {
                     onClick={() => setPage((current) => Math.max(current - 1, 0))}
                     disabled={page === 0}
                   >
-                    <ArrowLeft size={ROW_ICON_SIZE} aria-hidden="true" />
+                    <ArrowLeft size={ACTION_ICON_SIZE} aria-hidden="true" />
                   </button>
                   <span className={styles.pageIndicator}>
                     Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
@@ -351,64 +431,45 @@ export const UserManagement = () => {
                     onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
                     disabled={page + 1 >= totalPages}
                   >
-                    <ArrowRight size={ROW_ICON_SIZE} aria-hidden="true" />
+                    <ArrowRight size={ACTION_ICON_SIZE} aria-hidden="true" />
                   </button>
                 </div>
-                <p className={`${styles.footerText} ${styles.panelNote}`}>
-                  Listagem de contas da plataforma
-                </p>
               </div>
             }
           />
         )}
       </section>
 
-      {selectedUserId ? (
-        <Modal
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelectedUserId(null);
-          }}
-          title="Detalhe do usuário"
-          subtitle={selectedUser?.email}
-          size="sm"
-        >
-          {selectedUser ? (
-            <dl className={styles.details}>
-              <div className={styles.detailRow}>
-                <dt>Nome</dt>
-                <dd>{selectedUser.name}</dd>
-              </div>
-              <div className={styles.detailRow}>
-                <dt>Tipo</dt>
-                <dd>
-                  <Badge
-                    label={userTypeLabel(selectedUser.userType)}
-                    variant={badgeVariant(selectedUser.userType)}
-                    mini
-                  />
-                </dd>
-              </div>
-              <div className={styles.detailRow}>
-                <dt>Status</dt>
-                <dd>
-                  <Badge
-                    label={userStatusLabel(selectedUser.status)}
-                    variant={userStatusVariant(selectedUser.status)}
-                    mini
-                  />
-                </dd>
-              </div>
-              <div className={styles.detailRow}>
-                <dt>Cadastro</dt>
-                <dd>{formatShortDate(selectedUser.createdAt)}</dd>
-              </div>
-            </dl>
-          ) : (
-            <p role="alert">Usuário não encontrado.</p>
-          )}
-        </Modal>
-      ) : null}
+      <UserDetailModal
+        open={selectedUserId !== null}
+        initialMode={modalMode}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedUserId(null);
+            setModalMode('view');
+          }
+        }}
+        user={selectedUser}
+        onUserChanged={reload}
+      />
+
+      <ConfirmDialog
+        open={userToBlock !== null}
+        title="Bloquear acesso?"
+        description={
+          userToBlock
+            ? `Esta ação torna a conta de “${userToBlock.name}” inativa. A pessoa perde o acesso à plataforma até uma reativação futura.`
+            : ''
+        }
+        confirmLabel="Bloquear acesso"
+        cancelLabel="Cancelar"
+        isConfirming={isBlocking}
+        errorMessage={blockError}
+        onConfirm={() => {
+          void handleConfirmBlock();
+        }}
+        onOpenChange={handleBlockDialogChange}
+      />
     </AuthenticatedLayout>
   );
 };

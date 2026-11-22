@@ -4,12 +4,32 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAdminUsers } from '@hooks/useAdminUsers';
 import type { UseAdminUsersResult } from '@hooks/useAdminUsers';
-import type { AdminUser } from '@/types/adminUser';
+import { adminUserService } from '@services/adminUserService';
+import type { AdminUser, AdminUserDetail } from '@/types/adminUser';
 import { UserManagement } from './UserManagement';
 
 vi.mock('@hooks/useAdminUsers', () => ({ useAdminUsers: vi.fn() }));
+vi.mock('@services/adminUserService', () => ({
+  adminUserService: {
+    list: vi.fn(),
+    getById: vi.fn(),
+    update: vi.fn(),
+    deactivate: vi.fn(),
+  },
+  AdminUserServiceError: class AdminUserServiceError extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.name = 'AdminUserServiceError';
+      this.status = status;
+    }
+  },
+}));
 
 const useAdminUsersMock = vi.mocked(useAdminUsers);
+const getByIdMock = vi.mocked(adminUserService.getById);
+const updateMock = vi.mocked(adminUserService.update);
+const deactivateMock = vi.mocked(adminUserService.deactivate);
 
 const users: AdminUser[] = [
   {
@@ -60,9 +80,19 @@ const renderPage = () =>
     </MemoryRouter>,
   );
 
+const studentDetail: AdminUserDetail = {
+  ...users[0],
+  cpf: '39011122233',
+  phone: '51991203344',
+};
+
 describe('UserManagement', () => {
   beforeEach(() => {
     useAdminUsersMock.mockReturnValue({ ...defaultResult, reload: vi.fn() });
+    getByIdMock.mockReset();
+    updateMock.mockReset();
+    deactivateMock.mockReset();
+    getByIdMock.mockResolvedValue(studentDetail);
   });
 
   it('renders the users returned by useAdminUsers', () => {
@@ -146,7 +176,7 @@ describe('UserManagement', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.selectOptions(screen.getByLabelText('Tipo de usuário'), 'COMPANY');
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'COMPANY');
 
     expect(screen.getByText('Pousada Vista Mar')).toBeInTheDocument();
     expect(screen.queryByText('Ana Paula Ferreira')).not.toBeInTheDocument();
@@ -161,7 +191,7 @@ describe('UserManagement', () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.selectOptions(screen.getByLabelText('Status do usuário'), 'INACTIVE');
+    await user.selectOptions(screen.getByLabelText('Status'), 'INACTIVE');
 
     expect(screen.getByText('Pousada Vista Mar')).toBeInTheDocument();
     expect(screen.queryByText('Ana Paula Ferreira')).not.toBeInTheDocument();
@@ -221,15 +251,87 @@ describe('UserManagement', () => {
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 
-  it('opens the detail modal with the selected user', async () => {
+  it('opens the detail modal with the selected user registration fields', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    expect(
+      screen.getByRole('button', { name: 'Editar usuário Ana Paula Ferreira' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Bloquear usuário Ana Paula Ferreira' }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Ver usuário Ana Paula Ferreira' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Detalhe do usuário' });
+    await waitFor(() => {
+      expect(getByIdMock).toHaveBeenCalledWith('user-1', expect.any(AbortSignal));
+    });
+    expect(within(dialog).getByRole('button', { name: 'Editar usuário' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Bloquear acesso' })).toBeInTheDocument();
+    expect(within(dialog).getByText('Nome completo')).toBeInTheDocument();
+    expect(within(dialog).getByText('CPF')).toBeInTheDocument();
+    expect(within(dialog).getByText('390.111.222-33')).toBeInTheDocument();
+    expect(within(dialog).getByText('ana.ferreira@email.com')).toBeInTheDocument();
+    expect(within(dialog).getByText('(51) 99120-3344')).toBeInTheDocument();
+    expect(within(dialog).getByText('Ativo')).toBeInTheDocument();
+    expect(within(dialog).getByText('17/08/2026')).toBeInTheDocument();
+  });
+
+  it('edits registration fields from the view modal title icon and reloads the list', async () => {
+    const reload = vi.fn();
+    useAdminUsersMock.mockReturnValue({ ...defaultResult, reload });
+    updateMock.mockResolvedValue({
+      ...studentDetail,
+      name: 'Ana Atualizada',
+      phone: '51988887777',
+    });
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getByRole('button', { name: 'Ver usuário Ana Paula Ferreira' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Detalhe do usuário' });
+    await user.click(within(dialog).getByRole('button', { name: 'Editar usuário' }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Detalhe do usuário' });
-    expect(within(dialog).getByText('ana.ferreira@email.com')).toBeInTheDocument();
-    expect(within(dialog).getByText('Ativo')).toBeInTheDocument();
-    expect(within(dialog).getByText('17/08/2026')).toBeInTheDocument();
+    const editDialog = await screen.findByRole('dialog', { name: 'Editar usuário' });
+    const nameInput = within(editDialog).getByLabelText('Nome completo');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Ana Atualizada');
+    await user.click(within(editDialog).getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ name: 'Ana Atualizada' }),
+      );
+    });
+    expect(reload).toHaveBeenCalled();
+    expect(await screen.findByRole('dialog', { name: 'Detalhe do usuário' })).toBeInTheDocument();
+    expect(within(dialog).getByText('Ana Atualizada')).toBeInTheDocument();
+  });
+
+  it('blocks the user from the detail modal after destructive confirmation', async () => {
+    const reload = vi.fn();
+    useAdminUsersMock.mockReturnValue({ ...defaultResult, reload });
+    deactivateMock.mockResolvedValue({ ...studentDetail, status: 'INACTIVE' });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Ver usuário Ana Paula Ferreira' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Detalhe do usuário' });
+    await user.click(within(dialog).getByRole('button', { name: 'Bloquear acesso' }));
+
+    const confirm = await screen.findByRole('dialog', { name: 'Bloquear acesso?' });
+    await user.click(within(confirm).getByRole('button', { name: 'Bloquear acesso' }));
+
+    await waitFor(() => {
+      expect(deactivateMock).toHaveBeenCalledWith('user-1');
+    });
+    expect(reload).toHaveBeenCalled();
+    expect(within(dialog).getByText('Inativo')).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole('button', { name: 'Bloquear acesso' }),
+    ).not.toBeInTheDocument();
   });
 });

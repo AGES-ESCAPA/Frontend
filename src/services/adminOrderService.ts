@@ -2,6 +2,7 @@ import { authenticatedFetch, readApiErrorMessage } from '@services/api';
 import type { ApiResponse } from '@services/api';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 import type {
+  AdminOrderActionResult,
   AdminOrderDetails,
   AdminOrderFilters,
   AdminOrderPage,
@@ -116,4 +117,55 @@ export const adminOrderService = {
     const json: ApiResponse<AdminOrderDetails> = await response.json();
     return json.data;
   },
+
+  async cancel(id: string, reason?: string): Promise<AdminOrderActionResult> {
+    return postOrderAction(id, 'cancel', reason);
+  },
+
+  async refund(id: string, reason?: string): Promise<AdminOrderActionResult> {
+    return postOrderAction(id, 'refund', reason);
+  },
+};
+
+const postOrderAction = async (
+  id: string,
+  action: 'cancel' | 'refund',
+  reason?: string,
+): Promise<AdminOrderActionResult> => {
+  const labels =
+    action === 'cancel'
+      ? {
+          network: 'Não foi possível cancelar o pedido. Verifique sua conexão e tente novamente.',
+          failure: 'Não foi possível cancelar o pedido.',
+        }
+      : {
+          network:
+            'Não foi possível registrar o reembolso. Verifique sua conexão e tente novamente.',
+          failure: 'Não foi possível registrar o reembolso.',
+        };
+
+  let response: Response;
+  try {
+    response = await authenticatedFetch(`${ADMIN_ORDERS_URL}/${id}/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reason ? { reason } : {}),
+    });
+  } catch {
+    throw new AdminOrderServiceError(0, labels.network);
+  }
+
+  if (response.status === 404) {
+    throw new AdminOrderServiceError(404, 'Pedido não encontrado.');
+  }
+
+  if (!response.ok) {
+    throw new AdminOrderServiceError(
+      response.status,
+      (await readApiErrorMessage(response)) ?? labels.failure,
+    );
+  }
+
+  const json: ApiResponse<AdminOrderActionResult> = await response.json();
+  return json.data;
 };

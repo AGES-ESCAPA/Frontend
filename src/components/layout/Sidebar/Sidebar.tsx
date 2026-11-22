@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { AnchorHTMLAttributes, FocusEvent, MouseEvent, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import escapaIcone from '@assets/escapa_icone.png';
 import escapaLogo from '@assets/escapa_logo.png';
-import { Avatar, Button } from '@components/ui';
+import { Button } from '@components/ui';
 import { SIDEBAR_ICON_SIZE, SIDEBAR_ROLE_LABELS } from './sidebarMenuPresets';
 import styles from './Sidebar.module.css';
 
@@ -12,29 +12,35 @@ import styles from './Sidebar.module.css';
 export type SidebarRole = 'student' | 'company' | 'admin';
 
 const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, [role="button"]';
-const MOBILE_MEDIA_QUERY = '(max-width: 40rem)';
+/** Drawer abaixo de 768px — alinhado ao P0-3 e à especificação. */
+const DRAWER_MEDIA_QUERY = '(max-width: 47.999rem)';
+/** Sidebar expandida por padrão a partir de 1024px (Admin/Empresa). */
+const DESKTOP_MEDIA_QUERY = '(min-width: 64rem)';
 /** Mantém o pin ao remontar a Sidebar (ex.: fundo do detalhe do curso). */
 const SIDEBAR_PINNED_KEY_PREFIX = 'escapa.sidebar.pinned.';
 
-const isStudentMobileViewport = (role: SidebarRole) => {
-  if (role !== 'student' || typeof window.matchMedia !== 'function') return false;
-
-  return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
-};
+const matchesMedia = (query: string) =>
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(query).matches
+    : false;
 
 const readPinnedPreference = (role: SidebarRole): boolean => {
   try {
-    return sessionStorage.getItem(`${SIDEBAR_PINNED_KEY_PREFIX}${role}`) === '1';
+    const raw = sessionStorage.getItem(`${SIDEBAR_PINNED_KEY_PREFIX}${role}`);
+    if (raw === '1') return true;
+    if (raw === '0') return false;
   } catch {
-    return false;
+    // Storage indisponível: cai no padrão abaixo.
   }
+
+  // Aluno: recolhida até hover/pin. Admin/Empresa: expandida no desktop.
+  if (role === 'student') return false;
+  return matchesMedia(DESKTOP_MEDIA_QUERY);
 };
 
 const writePinnedPreference = (role: SidebarRole, pinned: boolean) => {
   try {
-    const key = `${SIDEBAR_PINNED_KEY_PREFIX}${role}`;
-    if (pinned) sessionStorage.setItem(key, '1');
-    else sessionStorage.removeItem(key);
+    sessionStorage.setItem(`${SIDEBAR_PINNED_KEY_PREFIX}${role}`, pinned ? '1' : '0');
   } catch {
     // Storage indisponível (modo privado etc.): o pin só vale nesta montagem.
   }
@@ -45,7 +51,7 @@ export type SidebarLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'hr
   to: string;
 };
 
-/** Componente usado para renderizar cada item do menu como link de navegação. */
+/** Componente usado para renderizar cada item de menu como link de navegação. */
 export type SidebarLinkComponent = (props: SidebarLinkProps) => ReactNode;
 
 export interface SidebarMenuItem {
@@ -77,6 +83,11 @@ export interface SidebarProps {
   items: SidebarMenuItem[];
   /** Dados do usuário exibidos no rodapé. */
   user: SidebarUser;
+  /**
+   * Rótulo exibido sob o logo (ex.: Colaborador). Sem isso, usa o padrão do
+   * perfil (`SIDEBAR_ROLE_LABELS`).
+   */
+  roleLabel?: string;
   /** Versão recolhida: apenas ícones, sem labels e sem os textos do rodapé. */
   collapsed?: boolean;
   /** Quando fornecido, exibe o botão de sair no rodapé. */
@@ -92,20 +103,18 @@ export interface SidebarProps {
 /**
  * Sidebar — menu lateral fixo das telas internas (pós-login).
  *
- * Utiliza `Button` (variantes `ghost-dark` e `active`) para os itens de menu e
- * `Avatar` para a identificação do usuário no rodapé — não reimplementa
- * nenhum dos dois, seguindo o mesmo princípio da `Navbar`.
+ * Utiliza `Button` (variantes `ghost-dark` e `active`) para os itens de menu.
+ * O rodapé mostra nome/e-mail do usuário e o botão de sair.
  *
  * Cada item de menu é um link de navegação client-side (`Link` do
  * react-router-dom por padrão, substituível via `linkComponent`) renderizado
  * pelo próprio `Button` com `asChild`.
  *
- * Com a prop `collapsed`, o estado vem do componente pai; sem ela, a Sidebar
- * fica recolhida em repouso, expande no hover ou no foco e trava aberta com um
- * duplo clique fora dos botões.
- *
- * No mobile do aluno (`< 640px`), a barra some e o hambúrguer abre o menu
- * como drawer. A Navbar desse perfil permanece no arranjo de tablet/desktop.
+ * Com a prop `collapsed`, o estado vem do componente pai. Sem ela:
+ * - **&lt; 768px:** drawer com hambúrguer (todos os perfis).
+ * - **Aluno (≥ 768px):** recolhida em repouso; expande no hover/foco; pin com duplo clique.
+ * - **Admin/Empresa (768–1023px):** rail de ícones com tooltip (sem depender de hover).
+ * - **Admin/Empresa (≥ 1024px):** expandida por padrão, com botão explícito de recolher.
  *
  * A largura reduzida dispara a container query do `Button`, que esconde os
  * labels e mantém só os ícones (o `aria-label` continua descrevendo cada item).
@@ -114,41 +123,67 @@ export const Sidebar = ({
   role,
   items,
   user,
+  roleLabel: roleLabelProp,
   collapsed,
   onLogout,
   linkComponent: LinkComponent = Link,
 }: SidebarProps) => {
-  const roleLabel = SIDEBAR_ROLE_LABELS[role];
+  const roleLabel = roleLabelProp ?? SIDEBAR_ROLE_LABELS[role];
   const isAutoResponsive = collapsed === undefined;
+  const usesExplicitCollapse = role !== 'student';
   const sidebarId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   const [isPinned, setIsPinned] = useState(() => readPinnedPreference(role));
   const [isPointerInside, setIsPointerInside] = useState(false);
   const [hasFocusInside, setHasFocusInside] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => isStudentMobileViewport(role));
+  const [isDrawerViewport, setIsDrawerViewport] = useState(() => matchesMedia(DRAWER_MEDIA_QUERY));
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
+    matchesMedia(DESKTOP_MEDIA_QUERY),
+  );
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isMobileStudent = role === 'student' && isMobile;
+  const isDrawerMode = isDrawerViewport;
+  const isTabletRail = usesExplicitCollapse && !isDrawerViewport && !isDesktopViewport;
 
   useEffect(() => {
     setIsPinned(readPinnedPreference(role));
   }, [role]);
 
   useEffect(() => {
-    if (role !== 'student' || typeof window.matchMedia !== 'function') return;
+    if (typeof window.matchMedia !== 'function') return;
 
-    const media = window.matchMedia(MOBILE_MEDIA_QUERY);
+    const drawerMedia = window.matchMedia(DRAWER_MEDIA_QUERY);
+    const desktopMedia = window.matchMedia(DESKTOP_MEDIA_QUERY);
+
     const sync = () => {
-      setIsMobile(media.matches);
-      if (!media.matches) setMobileOpen(false);
+      const drawer = drawerMedia.matches;
+      const desktop = desktopMedia.matches;
+      setIsDrawerViewport(drawer);
+      setIsDesktopViewport(desktop);
+      if (!drawer) setMobileOpen(false);
+
+      // Ao entrar no desktop sem preferência salva, Admin/Empresa começam expandidos.
+      if (usesExplicitCollapse && desktop) {
+        try {
+          if (sessionStorage.getItem(`${SIDEBAR_PINNED_KEY_PREFIX}${role}`) === null) {
+            setIsPinned(true);
+          }
+        } catch {
+          setIsPinned(true);
+        }
+      }
     };
 
     sync();
-    media.addEventListener('change', sync);
+    drawerMedia.addEventListener('change', sync);
+    desktopMedia.addEventListener('change', sync);
 
-    return () => media.removeEventListener('change', sync);
-  }, [role]);
+    return () => {
+      drawerMedia.removeEventListener('change', sync);
+      desktopMedia.removeEventListener('change', sync);
+    };
+  }, [role, usesExplicitCollapse]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -171,20 +206,28 @@ export const Sidebar = ({
     };
   }, [mobileOpen]);
 
-  const isOpen = isPinned || isPointerInside || hasFocusInside;
+  const hoverExpands = isAutoResponsive && role === 'student' && !isDrawerMode;
+  const isOpen = isPinned || (hoverExpands && (isPointerInside || hasFocusInside));
+
   let isCollapsed = isAutoResponsive ? !isOpen : Boolean(collapsed);
-  if (isMobileStudent) isCollapsed = false;
+  if (isDrawerMode) isCollapsed = false;
+  if (isAutoResponsive && isTabletRail) isCollapsed = true;
+
   const isPinnedOpen = isAutoResponsive ? isPinned : !collapsed;
+  const showCollapseToggle =
+    isAutoResponsive && usesExplicitCollapse && !isDrawerMode && isDesktopViewport;
+
+  const setPinned = (pinned: boolean) => {
+    setIsPinned(pinned);
+    writePinnedPreference(role, pinned);
+  };
 
   const handleDoubleClick = (event: MouseEvent<HTMLElement>) => {
-    if (!isAutoResponsive || isMobileStudent) return;
+    // Admin/Empresa usam o botão explícito; só o aluno mantém o duplo clique.
+    if (!isAutoResponsive || isDrawerMode || usesExplicitCollapse) return;
     if ((event.target as Element).closest(INTERACTIVE_SELECTOR)) return;
 
-    setIsPinned((pinned) => {
-      const next = !pinned;
-      writePinnedPreference(role, next);
-      return next;
-    });
+    setPinned(!isPinned);
   };
 
   const closeMobileMenu = () => setMobileOpen(false);
@@ -197,7 +240,7 @@ export const Sidebar = ({
 
   return (
     <>
-      {isMobileStudent ? (
+      {isDrawerMode ? (
         <button
           ref={toggleRef}
           type="button"
@@ -211,7 +254,7 @@ export const Sidebar = ({
         </button>
       ) : null}
 
-      {isMobileStudent && mobileOpen ? (
+      {isDrawerMode && mobileOpen ? (
         <button
           type="button"
           className={styles.backdrop}
@@ -228,30 +271,47 @@ export const Sidebar = ({
         data-collapsed={isCollapsed}
         data-pinned={isPinnedOpen}
         data-auto-responsive={isAutoResponsive}
-        data-mobile-open={role === 'student' ? mobileOpen : undefined}
-        aria-hidden={isMobileStudent && !mobileOpen ? true : undefined}
+        data-mobile-open={isDrawerMode ? mobileOpen : undefined}
+        aria-hidden={isDrawerMode && !mobileOpen ? true : undefined}
         aria-label={`Menu lateral — ${roleLabel}`}
         onClick={(event) => {
-          if (!isMobileStudent || !mobileOpen) return;
+          if (!isDrawerMode || !mobileOpen) return;
           if ((event.target as Element).closest('a, button')) closeMobileMenu();
         }}
         onDoubleClick={handleDoubleClick}
-        onMouseEnter={() => setIsPointerInside(true)}
-        onMouseLeave={() => setIsPointerInside(false)}
-        onFocus={() => setHasFocusInside(true)}
+        onMouseEnter={() => {
+          if (hoverExpands) setIsPointerInside(true);
+        }}
+        onMouseLeave={() => {
+          if (hoverExpands) setIsPointerInside(false);
+        }}
+        onFocus={() => {
+          if (hoverExpands) setHasFocusInside(true);
+        }}
         onBlur={handleBlur}
       >
         <header className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.brand}>
-              <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
-              <img src={escapaIcone} alt="" aria-hidden="true" className={styles.logoIcon} />
-              <span className={styles.brandDivider} aria-hidden="true" />
-              <span className={styles.brandSuffix}>Academy</span>
-            </div>
-            <p className={styles.brandTagline}>Da Pesquisa à Prática</p>
-            <p className={styles.roleLabel}>{roleLabel}</p>
+          <div className={styles.brand}>
+            <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
+            <img src={escapaIcone} alt="" aria-hidden="true" className={styles.logoIcon} />
+            <span className={styles.brandDivider} aria-hidden="true" />
           </div>
+
+          {showCollapseToggle ? (
+            <button
+              type="button"
+              className={styles.collapseToggle}
+              aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+              aria-expanded={!isCollapsed}
+              onClick={() => setPinned(isCollapsed)}
+            >
+              {isCollapsed ? (
+                <PanelLeftOpen size={18} aria-hidden="true" />
+              ) : (
+                <PanelLeftClose size={18} aria-hidden="true" />
+              )}
+            </button>
+          ) : null}
         </header>
 
         <nav className={styles.nav} aria-label={`Navegação do perfil ${roleLabel}`}>
@@ -266,6 +326,7 @@ export const Sidebar = ({
                   variant={item.active ? 'active' : 'ghost-dark'}
                   className={styles.menuButton}
                   aria-current={item.active ? 'page' : undefined}
+                  title={isCollapsed ? item.label : undefined}
                 >
                   <LinkComponent to={item.route} />
                 </Button>
@@ -274,7 +335,7 @@ export const Sidebar = ({
           </ul>
         </nav>
 
-        {isAutoResponsive && isPointerInside && !isMobileStudent ? (
+        {isAutoResponsive && hoverExpands && isPointerInside ? (
           <p className={styles.pinHint}>
             {isPinned
               ? 'Clique duas vezes para soltar a barra'
@@ -284,10 +345,11 @@ export const Sidebar = ({
 
         <footer className={styles.footer}>
           <div className={styles.userInfo}>
-            <Avatar name={user.name} imageUrl={user.avatarUrl} theme="dark" />
             <div className={styles.userText}>
               <span className={styles.userName}>{user.name}</span>
-              <span className={styles.userRole}>{user.email ?? user.role}</span>
+              <span className={styles.userRole} title={user.email ?? user.role}>
+                {user.email ?? user.role}
+              </span>
             </div>
           </div>
 
@@ -297,6 +359,7 @@ export const Sidebar = ({
               className={styles.logoutButton}
               onClick={onLogout}
               aria-label="Sair da conta"
+              title={isCollapsed ? 'Sair da conta' : undefined}
             >
               <LogOut size={SIDEBAR_ICON_SIZE} aria-hidden="true" />
             </button>

@@ -1,9 +1,19 @@
 import { getApiBaseUrl } from '@services/runtimeEnv';
+import {
+  isAbortError,
+  isIdempotentMethod,
+  RETRYABLE_HTTP_STATUS,
+  sleep,
+} from '@services/networkResilience';
 
 const API_BASE_URL = getApiBaseUrl();
 
 /** Chave única usada para persistir a sessão do usuário autenticado. */
 const ACCESS_TOKEN_KEY = 'access_token';
+
+/** Tentativas totais (1 + retries) para GET/HEAD sob instabilidade. */
+const IDEMPOTENT_MAX_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 200;
 
 let onUnauthorized: (() => void) | null = null;
 
@@ -23,19 +33,63 @@ export const authHeaders = (): Record<string, string> => {
   };
 };
 
-export const authenticatedFetch = async (
-  input: RequestInfo | URL,
-  init: RequestInit = {},
-): Promise<Response> => {
+const buildAuthenticatedInit = (init: RequestInit = {}): RequestInit => {
   const headers = new Headers(authHeaders());
   new Headers(init.headers).forEach((value, key) => headers.set(key, value));
   // Com FormData o navegador define o Content-Type com o boundary do multipart.
   if (init.body instanceof FormData) headers.delete('Content-Type');
-  const response = await fetch(input, { ...init, headers });
+  return { ...init, headers };
+};
 
-  if (response.status === 401) onUnauthorized?.();
+/**
+ * Fetch autenticado. Em GET/HEAD, reintenta falhas de rede e 5xx/429 para
+ * que micro-instabilidades não cheguem à UI.
+ */
+export const authenticatedFetch = async (
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+): Promise<Response> => {
+  const idempotent = isIdempotentMethod(init);
+  const maxAttempts = idempotent ? IDEMPOTENT_MAX_ATTEMPTS : 1;
+  let lastResponse: Response | undefined;
+  let lastError: unknown;
 
-  return response;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (init.signal?.aborted) {
+      throw init.signal.reason ?? new DOMException('Aborted', 'AbortError');
+    }
+
+    try {
+      const response = await fetch(input, buildAuthenticatedInit(init));
+
+      if (response.status === 401) {
+        onUnauthorized?.();
+        return response;
+      }
+
+      if (
+        idempotent &&
+        attempt < maxAttempts &&
+        RETRYABLE_HTTP_STATUS.has(response.status) &&
+        !init.signal?.aborted
+      ) {
+        lastResponse = response;
+        await sleep(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1), init.signal);
+        continue;
+      }
+
+      return response;
+    } catch (error: unknown) {
+      lastError = error;
+      if (!idempotent || isAbortError(error, init.signal) || attempt >= maxAttempts) {
+        throw error;
+      }
+      await sleep(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1), init.signal);
+    }
+  }
+
+  if (lastResponse) return lastResponse;
+  throw lastError;
 };
 
 /** Envelope de sucesso devolvido pela API (`{ success, data, message }`). */

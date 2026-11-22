@@ -206,9 +206,8 @@ describe('adminMetricsService.getOverview', () => {
 
   it('propagates a rejection when its signal was aborted', async () => {
     const controller = new AbortController();
-    controller.abort();
     const reason = new Error('cancelled transport');
-    fetchMock.mockRejectedValue(reason);
+    controller.abort(reason);
     await expect(adminMetricsService.getOverview(controller.signal)).rejects.toBe(reason);
   });
 

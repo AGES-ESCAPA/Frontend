@@ -29,7 +29,6 @@
 }
 
 .pageContent {
-  padding: var(--space-10);
   flex: 1;
   min-width: 0;
   max-width: 100%;
@@ -37,42 +36,17 @@
 
 .topHeader {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   margin-bottom: var(--space-12);
-  gap: var(--space-8);
-  flex-wrap: wrap;
+  gap: var(--space-6);
   width: 100%;
   min-width: 0;
   max-width: 100%;
 }
 
 .titleSection {
-  display: flex;
-  flex-direction: column;
-}
-
-.breadcrumb {
-  font-size: var(--text-body-4);
-  font-weight: 700;
-  color: var(--color-info-300);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: var(--space-2);
-}
-
-.titleSection h1 {
-  font-size: var(--text-h2);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-1);
-  margin-top: 0;
-}
-
-.titleSection p {
-  color: var(--color-text-muted);
-  margin-bottom: 0;
-  font-size: var(--text-body-2);
+  min-width: 0;
 }
 
 .controlsSection {
@@ -125,10 +99,6 @@
 @media (width <= 640px) {
   .mockSidebar {
     display: none;
-  }
-
-  .pageContent {
-    padding: var(--space-4);
   }
 
   .controlsSection {

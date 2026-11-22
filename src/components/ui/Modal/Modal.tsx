@@ -20,6 +20,8 @@ export interface ModalProps {
   subtitleAboveTitle?: boolean;
   /** Ícone exibido à esquerda do título. */
   icon?: ReactNode;
+  /** Ação auxiliar ao lado do título (ex.: ícone de editar). */
+  titleAction?: ReactNode;
   /** Conteúdo da barra inferior, normalmente os botões de ação. */
   footer?: ReactNode;
   size?: ModalSize;
@@ -40,6 +42,7 @@ export const Modal = ({
   subtitle,
   subtitleAboveTitle = false,
   icon,
+  titleAction,
   footer,
   size = 'md',
   appearance = 'default',
@@ -80,7 +83,10 @@ export const Modal = ({
               {subtitle && subtitleAboveTitle ? (
                 <Dialog.Description className={styles.subtitle}>{subtitle}</Dialog.Description>
               ) : null}
-              <Dialog.Title className={styles.title}>{title}</Dialog.Title>
+              <div className={styles.titleRow}>
+                <Dialog.Title className={styles.title}>{title}</Dialog.Title>
+                {titleAction ? <div className={styles.titleAction}>{titleAction}</div> : null}
+              </div>
               {subtitle && !subtitleAboveTitle ? (
                 <Dialog.Description className={styles.subtitle}>{subtitle}</Dialog.Description>
               ) : null}

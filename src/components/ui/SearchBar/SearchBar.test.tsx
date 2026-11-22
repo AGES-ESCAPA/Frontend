@@ -78,6 +78,24 @@ describe('SearchBar', () => {
     const input = screen.getByRole('textbox', { name: /buscar cursos/i });
     expect(input).toHaveAttribute('placeholder', 'Buscar por nome ou tema');
     expect(input.closest('div')).toHaveAttribute('data-theme', 'dark');
+    expect(input.closest('div')).toHaveAttribute('data-size', 'md');
+  });
+
+  it('should accept the sm size used next to admin select items', () => {
+    render(
+      <SearchBar
+        value=""
+        onChange={() => undefined}
+        size="sm"
+        placeholder="Buscar curso"
+        aria-label="Buscar curso"
+      />,
+    );
+
+    expect(screen.getByRole('textbox', { name: /buscar curso/i }).closest('div')).toHaveAttribute(
+      'data-size',
+      'sm',
+    );
   });
 
   it('should trigger onSearch only once on Enter, cancelling the pending debounce', async () => {

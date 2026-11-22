@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Lesson } from '@/types/lesson';
 import { getStudentLesson, StudentLessonError } from '@services/lessonService';
+import { clearResourceCache, resourceCacheKeys, setCachedResource } from '@services/resourceCache';
 import { useStudentLesson } from './useStudentLesson';
 
 vi.mock('@services/lessonService', () => ({
@@ -42,6 +43,8 @@ const lesson: Lesson = {
 describe('useStudentLesson', () => {
   beforeEach(() => {
     getStudentLessonMock.mockReset();
+    clearResourceCache();
+    sessionStorage.clear();
   });
 
   it('should load the student lesson', async () => {
@@ -123,6 +126,22 @@ describe('useStudentLesson', () => {
     expect(getStudentLessonMock).toHaveBeenCalledTimes(2);
     expect(result.current.lesson).toEqual(lesson);
     expect(result.current.errorStatus).toBeNull();
+    expect(result.current.errorMessage).toBeNull();
+  });
+
+  it('should keep the cached lesson when a network blip happens', async () => {
+    setCachedResource(resourceCacheKeys.studentLesson(COURSE_ID, LESSON_ID), lesson);
+    getStudentLessonMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const { result } = renderHook(() => useStudentLesson(COURSE_ID, LESSON_ID));
+
+    expect(result.current.lesson).toEqual(lesson);
+    expect(result.current.status).toBe('success');
+
+    await waitFor(() => expect(getStudentLessonMock).toHaveBeenCalled());
+
+    expect(result.current.lesson).toEqual(lesson);
+    expect(result.current.status).toBe('success');
     expect(result.current.errorMessage).toBeNull();
   });
 });

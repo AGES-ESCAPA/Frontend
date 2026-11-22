@@ -223,3 +223,94 @@ describe('adminOrderService.get', () => {
     expect((error as AdminOrderServiceError).status).toBe(0);
   });
 });
+
+describe('adminOrderService.cancel', () => {
+  beforeEach(() => {
+    authenticatedFetchMock.mockReset();
+  });
+
+  it('should post cancel and return the updated status', async () => {
+    const payload = {
+      id: 'order-1',
+      status: 'CANCELLED',
+      statusHistory: [
+        {
+          status: 'APPROVED',
+          changedBy: null,
+          reason: null,
+          createdAt: '2026-08-17T12:00:00',
+        },
+        {
+          status: 'CANCELLED',
+          changedBy: 'admin-1',
+          reason: null,
+          createdAt: '2026-08-18T09:00:00',
+        },
+      ],
+    };
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: payload }));
+
+    const result = await adminOrderService.cancel('order-1');
+
+    expect(result).toEqual(payload);
+    const [url, init] = authenticatedFetchMock.mock.calls[0];
+    expect(String(url)).toMatch(/\/admin\/orders\/order-1\/cancel$/);
+    expect(init).toMatchObject({ method: 'POST' });
+  });
+
+  it('should throw a conflict message when cancel is rejected', async () => {
+    authenticatedFetchMock.mockResolvedValue(
+      jsonResponse(
+        {
+          status: 409,
+          error: 'Conflict',
+          message: 'Somente pedidos aprovados podem ser cancelados.',
+        },
+        409,
+      ),
+    );
+
+    const error = await adminOrderService.cancel('order-1').catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AdminOrderServiceError);
+    expect((error as AdminOrderServiceError).status).toBe(409);
+    expect((error as AdminOrderServiceError).message).toBe(
+      'Somente pedidos aprovados podem ser cancelados.',
+    );
+  });
+});
+
+describe('adminOrderService.refund', () => {
+  beforeEach(() => {
+    authenticatedFetchMock.mockReset();
+  });
+
+  it('should post refund and return the updated status', async () => {
+    const payload = {
+      id: 'order-1',
+      status: 'REFUNDED',
+      statusHistory: [
+        {
+          status: 'CANCELLED',
+          changedBy: 'admin-1',
+          reason: null,
+          createdAt: '2026-08-18T09:00:00',
+        },
+        {
+          status: 'REFUNDED',
+          changedBy: 'admin-1',
+          reason: null,
+          createdAt: '2026-08-19T10:00:00',
+        },
+      ],
+    };
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: payload }));
+
+    const result = await adminOrderService.refund('order-1');
+
+    expect(result).toEqual(payload);
+    const [url, init] = authenticatedFetchMock.mock.calls[0];
+    expect(String(url)).toMatch(/\/admin\/orders\/order-1\/refund$/);
+    expect(init).toMatchObject({ method: 'POST' });
+  });
+});

@@ -8,6 +8,7 @@ import { mapAdminOrderDetailsToOrderRow, toOrderCode } from '@utils/mapAdminOrde
 import {
   Badge,
   Button,
+  ConfirmDialog,
   EMPTY_FILTERS,
   Modal,
   ORDER_STATUS_LABELS,
@@ -15,6 +16,7 @@ import {
   OrderDetailModal,
   OrderCancellationAndRefund,
   OrderFilters,
+  PageHeader,
   PAYMENT_ICONS,
   PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
@@ -29,13 +31,30 @@ import { useAdminOrderDetails } from '@hooks/useAdminOrderDetails';
 import { useAdminOrderStats } from '@hooks/useAdminOrderStats';
 import { useAdminOrders } from '@hooks/useAdminOrders';
 import { useToast } from '@hooks/useToast';
-import {
-  createOrderCancellationMockService,
-  OrderActionError,
-} from '@services/orderCancellationMockService';
+import { AdminOrderServiceError, adminOrderService } from '@services/adminOrderService';
 import type { OrderManagementAction } from '@services/orderCancellationMockService';
 import type { AdminOrderFilters, AdminOrderSummary } from '@/types/order';
 import styles from './OrderManagement.module.css';
+
+const ORDER_ACTION_CONFIRMATION = {
+  cancel: {
+    title: 'Confirmar cancelamento',
+    description:
+      'O cancelamento revoga o acesso ao curso. O progresso concluído pelo aluno será preservado.',
+    confirmLabel: 'Confirmar cancelamento',
+  },
+  refund: {
+    title: 'Confirmar reembolso',
+    description:
+      'O registro do reembolso não altera o progresso do aluno. O acesso continuará revogado.',
+    confirmLabel: 'Confirmar reembolso',
+  },
+} as const;
+
+type PendingTableAction = {
+  orderId: string;
+  action: OrderManagementAction;
+};
 
 const ADMIN_USER: SidebarUser = {
   name: 'Admin',
@@ -43,7 +62,7 @@ const ADMIN_USER: SidebarUser = {
   email: 'admin@email.com',
 };
 
-const ROW_ICON_SIZE = 14;
+const ACTION_ICON_SIZE = 16;
 
 const formatShortDate = (value: string): string => {
   const [year, month, day] = value.slice(0, 10).split('-');
@@ -72,6 +91,7 @@ export const Ordermanagement = () => {
   const [page, setPage] = useState(0);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [displayedOrder, setDisplayedOrder] = useState<OrderRow | null>(null);
+  const [pendingTableAction, setPendingTableAction] = useState<PendingTableAction | null>(null);
   const [pendingAction, setPendingAction] = useState(false);
   const { toast, isOpen, showToast, dismissToast } = useToast();
 
@@ -103,11 +123,6 @@ export const Ordermanagement = () => {
     [orderDetails],
   );
 
-  const orderActionService = useMemo(
-    () => (selectedOrderRow ? createOrderCancellationMockService([selectedOrderRow]) : null),
-    [selectedOrderRow],
-  );
-
   useEffect(() => {
     setDisplayedOrder(selectedOrderRow);
   }, [selectedOrderRow]);
@@ -133,22 +148,50 @@ export const Ordermanagement = () => {
 
   const closeDetails = () => setSelectedOrderId(null);
 
-  const handleOrderAction = async (action: OrderManagementAction): Promise<void> => {
-    if (!displayedOrder || !orderActionService) return;
+  const applyActionResultToDisplayedOrder = (
+    orderId: string,
+    action: OrderManagementAction,
+    statusHistory: Array<{ status: OrderRow['status']; reason: string | null; createdAt: string }>,
+  ) => {
+    setDisplayedOrder((current) => {
+      if (!current || current.id !== orderId) return current;
+      const nextStatus = action === 'cancel' ? 'CANCELLED' : 'REFUNDED';
+      return {
+        ...current,
+        status: nextStatus,
+        statusHistory: statusHistory.map((change) => ({
+          status: change.status,
+          date: change.createdAt,
+          description:
+            change.reason ??
+            (change.status === 'CANCELLED'
+              ? 'Pedido cancelado pelo administrador.'
+              : change.status === 'REFUNDED'
+                ? 'Reembolso registrado pelo administrador.'
+                : 'Pagamento aprovado.'),
+        })),
+      };
+    });
+  };
 
+  const executeOrderAction = async (
+    orderId: string,
+    action: OrderManagementAction,
+  ): Promise<void> => {
     setPendingAction(true);
     try {
-      const result = orderActionService.executeAction(
-        displayedOrder.id,
-        action,
-        displayedOrder.status,
-      );
-      setDisplayedOrder(result.order);
+      const result =
+        action === 'cancel'
+          ? await adminOrderService.cancel(orderId)
+          : await adminOrderService.refund(orderId);
+
+      applyActionResultToDisplayedOrder(orderId, action, result.statusHistory);
+
       if (action === 'cancel') {
         showToast(
           'success',
           'Pedido cancelado',
-          `Acesso revogado. Progresso do aluno preservado em ${result.enrollmentAccess.progressPercent}%.`,
+          'Acesso revogado. O progresso do aluno foi preservado.',
         );
       } else {
         showToast(
@@ -157,16 +200,28 @@ export const Ordermanagement = () => {
           'O acesso continua revogado e o progresso foi preservado.',
         );
       }
+      handleReload();
     } catch (error) {
-      if (!(error instanceof OrderActionError)) throw error;
+      if (!(error instanceof AdminOrderServiceError)) throw error;
       showToast(
         'error',
-        error.status === 409 ? 'Não foi possível concluir a ação' : 'Pedido não encontrado',
+        error.status === 404 ? 'Pedido não encontrado' : 'Não foi possível concluir a ação',
         error.message,
       );
     } finally {
       setPendingAction(false);
     }
+  };
+
+  const handleOrderAction = async (action: OrderManagementAction): Promise<void> => {
+    if (!displayedOrder) return;
+    await executeOrderAction(displayedOrder.id, action);
+  };
+
+  const confirmTableAction = async () => {
+    if (!pendingTableAction) return;
+    await executeOrderAction(pendingTableAction.orderId, pendingTableAction.action);
+    setPendingTableAction(null);
   };
 
   const columns: TableColumn<AdminOrderSummary>[] = [
@@ -193,7 +248,7 @@ export const Ordermanagement = () => {
           <span
             className={`${styles.typeBadge} ${isCorporate ? styles.corporateBadge : styles.individualBadge}`}
           >
-            <TypeIcon size={ROW_ICON_SIZE} aria-hidden="true" />
+            <TypeIcon size={ACTION_ICON_SIZE} aria-hidden="true" />
             {ORDER_TYPE_LABELS[order.type]}
           </span>
         );
@@ -221,7 +276,7 @@ export const Ordermanagement = () => {
 
         return (
           <span className={styles.paymentMethod}>
-            <PaymentIcon size={ROW_ICON_SIZE} aria-hidden="true" />
+            <PaymentIcon size={ACTION_ICON_SIZE} aria-hidden="true" />
             {PAYMENT_METHOD_LABELS[order.paymentMethod]}
           </span>
         );
@@ -250,7 +305,8 @@ export const Ordermanagement = () => {
       header: 'Ações',
       render: (order) => {
         const orderCode = toOrderCode(order.id);
-        const canManage = order.status === 'APPROVED';
+        const canCancel = order.status === 'APPROVED';
+        const canRefund = order.status === 'CANCELLED';
 
         return (
           <div className={styles.rowActions}>
@@ -260,28 +316,30 @@ export const Ordermanagement = () => {
               aria-label={`Ver pedido ${orderCode}`}
               onClick={() => setSelectedOrderId(order.id)}
             >
-              <Eye size={ROW_ICON_SIZE} aria-hidden="true" />
+              <Eye size={ACTION_ICON_SIZE} aria-hidden="true" />
             </button>
-            {canManage ? (
+            {canRefund ? (
               <button
                 type="button"
                 className={styles.iconButton}
                 aria-label={`Reembolsar pedido ${orderCode}`}
-                title="Disponível nos detalhes do pedido"
-                disabled
+                title="Reembolsar pedido"
+                disabled={pendingAction}
+                onClick={() => setPendingTableAction({ orderId: order.id, action: 'refund' })}
               >
-                <RotateCcw size={ROW_ICON_SIZE} aria-hidden="true" />
+                <RotateCcw size={ACTION_ICON_SIZE} aria-hidden="true" />
               </button>
             ) : null}
-            {canManage ? (
+            {canCancel ? (
               <button
                 type="button"
-                className={styles.iconButton}
+                className={`${styles.iconButton} ${styles.dangerButton}`}
                 aria-label={`Cancelar pedido ${orderCode}`}
-                title="Disponível nos detalhes do pedido"
-                disabled
+                title="Cancelar pedido"
+                disabled={pendingAction}
+                onClick={() => setPendingTableAction({ orderId: order.id, action: 'cancel' })}
               >
-                <CircleX size={ROW_ICON_SIZE} aria-hidden="true" />
+                <CircleX size={ACTION_ICON_SIZE} aria-hidden="true" />
               </button>
             ) : null}
           </div>
@@ -292,23 +350,23 @@ export const Ordermanagement = () => {
 
   return (
     <AuthenticatedLayout role="admin" items={menuItems} user={ADMIN_USER}>
-      <section className={styles.catalog}>
-        <div className={styles.toolbar}>
-          <div>
-            <p className={styles.eyebrow}>Administração</p>
-            <h1 className={styles.heading}>Gestão de Pedidos</h1>
-            <p className={styles.description}>
-              Consulte e gerencie as compras realizadas na plataforma.
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Painel administrativo • Pedidos"
+        title="Gestão de Pedidos"
+        subtitle="Consulte e gerencie as compras realizadas na plataforma."
+      />
 
       <section className={styles.stats} aria-label="Resumo dos pedidos">
         <SumCard
           label="Receita aprovada"
           value={statsReady ? formatCurrency(stats.approvedRevenue) : '—'}
           description={`${statsReady ? stats.approvedCount : '—'} pedidos ativos`}
+        />
+
+        <SumCard
+          label="Pedidos Realizados"
+          value={statsReady ? stats.approvedCount + stats.cancelledOrRefundedCount : '—'}
+          description="Total de pedidos feitos"
         />
 
         <SumCard
@@ -324,13 +382,9 @@ export const Ordermanagement = () => {
         />
       </section>
 
-      <section className={styles.ordersPanel} aria-label="Listagem de pedidos">
-        <header className={styles.panelHeader}>
-          <div className={styles.panelTitle}>
-            <h2>Pedidos</h2>
-            <span aria-label={`${totalElements} pedidos`}>{totalElements}</span>
-          </div>
-          <div className={styles.panelControls}>
+      <section className={styles.catalog} aria-label="Pedidos">
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarActions}>
             <OrderFilters
               value={filters}
               onChange={handleFiltersChange}
@@ -343,12 +397,13 @@ export const Ordermanagement = () => {
                 value={search}
                 onChange={setSearch}
                 onSearch={handleSearch}
+                size="sm"
                 placeholder="Buscar pedido"
                 aria-label="Buscar pedido"
               />
             </div>
           </div>
-        </header>
+        </div>
 
         {status === 'error' ? (
           <div className={styles.errorState} role="alert">
@@ -363,49 +418,43 @@ export const Ordermanagement = () => {
             Carregando pedidos…
           </p>
         ) : (
-          <>
-            <Table
-              columns={columns}
-              data={orders}
-              getRowId={(order) => order.id}
-              caption="Pedidos da plataforma"
-              emptyMessage="Nenhum pedido encontrado para os filtros selecionados."
-              className={styles.ordersTable}
-              footer={
-                <div className={styles.tableFooter}>
-                  <p className={styles.footerText}>
-                    Mostrando {orders.length} de {totalElements} pedidos
-                  </p>
-                  <div className={styles.pagination}>
-                    <button
-                      type="button"
-                      className={styles.pageArrow}
-                      aria-label="Anterior"
-                      onClick={() => setPage((current) => Math.max(current - 1, 0))}
-                      disabled={page === 0}
-                    >
-                      <ArrowLeft size={ROW_ICON_SIZE} aria-hidden="true" />
-                    </button>
-                    <span className={styles.pageIndicator}>
-                      Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.pageArrow}
-                      aria-label="Próxima"
-                      onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
-                      disabled={page + 1 >= totalPages}
-                    >
-                      <ArrowRight size={ROW_ICON_SIZE} aria-hidden="true" />
-                    </button>
-                  </div>
-                  <p className={`${styles.footerText} ${styles.panelNote}`}>
-                    Liberação de acesso automática via checkout
-                  </p>
+          <Table
+            columns={columns}
+            data={orders}
+            getRowId={(order) => order.id}
+            caption="Pedidos da plataforma"
+            emptyMessage="Nenhum pedido encontrado para os filtros selecionados."
+            footer={
+              <div className={styles.tableFooter}>
+                <p className={styles.footerText}>
+                  Mostrando {orders.length} de {totalElements} pedidos
+                </p>
+                <div className={styles.pagination}>
+                  <button
+                    type="button"
+                    className={styles.pageArrow}
+                    aria-label="Anterior"
+                    onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                    disabled={page === 0}
+                  >
+                    <ArrowLeft size={ACTION_ICON_SIZE} aria-hidden="true" />
+                  </button>
+                  <span className={styles.pageIndicator}>
+                    Página {totalPages === 0 ? 0 : page + 1} de {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.pageArrow}
+                    aria-label="Próxima"
+                    onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
+                    disabled={page + 1 >= totalPages}
+                  >
+                    <ArrowRight size={ACTION_ICON_SIZE} aria-hidden="true" />
+                  </button>
                 </div>
-              }
-            />
-          </>
+              </div>
+            }
+          />
         )}
       </section>
 
@@ -448,6 +497,19 @@ export const Ordermanagement = () => {
             }}
           />
         ) : null
+      ) : null}
+      {pendingTableAction ? (
+        <ConfirmDialog
+          open
+          title={ORDER_ACTION_CONFIRMATION[pendingTableAction.action].title}
+          description={ORDER_ACTION_CONFIRMATION[pendingTableAction.action].description}
+          confirmLabel={ORDER_ACTION_CONFIRMATION[pendingTableAction.action].confirmLabel}
+          isConfirming={pendingAction}
+          onConfirm={confirmTableAction}
+          onOpenChange={(open) => {
+            if (!open && !pendingAction) setPendingTableAction(null);
+          }}
+        />
       ) : null}
       {toast ? (
         <Toast

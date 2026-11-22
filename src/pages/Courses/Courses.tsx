@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
-import { Button, CourseCard, CourseCardSkeleton, FilterTabs, SearchBar } from '@components/ui';
+import {
+  Button,
+  CourseCard,
+  CourseCardSkeleton,
+  FilterTabs,
+  PageHeader,
+  SearchBar,
+} from '@components/ui';
 import { useCourseFilters } from '@hooks/useCourseFilters';
 import { useCompanyCourses } from '@hooks/useCompanyCourses';
 import { usePublicCourses } from '@hooks/usePublicCourses';
@@ -97,7 +104,7 @@ export const Courses = ({ layoutRole }: CoursesProps = {}) => {
     reload: reloadCompanyCourses,
   } = useCompanyCourses(isCompany);
   // A empresa abre a página com "Cursos Adquiridos" como título principal.
-  const FeaturedTitle = isCompany ? 'h2' : 'h1';
+  const featuredTitleAs = isCompany ? 'h2' : 'h1';
   const [ownedCourseIds, setOwnedCourseIds] = useState<ReadonlySet<string>>(() => new Set());
   const [enrollmentsReady, setEnrollmentsReady] = useState(!tracksOwnership);
 
@@ -193,10 +200,11 @@ export const Courses = ({ layoutRole }: CoursesProps = {}) => {
         <>
           {isCompany ? (
             <section className={styles.section} aria-labelledby="acquired-heading">
-              <p className={styles.catalogEyebrow}>Sua empresa</p>
-              <h1 id="acquired-heading" className={styles.heading}>
-                Cursos Adquiridos
-              </h1>
+              <PageHeader
+                eyebrow="Sua empresa"
+                title="Cursos Adquiridos"
+                titleId="acquired-heading"
+              />
 
               {companyCoursesStatus === 'loading' && (
                 <div
@@ -234,37 +242,52 @@ export const Courses = ({ layoutRole }: CoursesProps = {}) => {
             </section>
           ) : null}
 
-          <section className={styles.section} aria-labelledby="featured-heading">
-            <p className={styles.catalogEyebrow}>Catálogo</p>
-            <FeaturedTitle id="featured-heading" className={styles.heading}>
-              Cursos em Destaque
-            </FeaturedTitle>
+          {featuredStatus !== 'success' || featured.length > 0 ? (
+            <section className={styles.section} aria-labelledby="featured-heading">
+              <PageHeader
+                eyebrow="Catálogo"
+                title="Cursos em Destaque"
+                titleId="featured-heading"
+                titleAs={featuredTitleAs}
+              />
 
-            {(featuredStatus === 'loading' ||
-              (featuredStatus === 'success' && !ownedStateReady)) && (
-              <div className={styles.grid} role="status" aria-label="Carregando cursos em destaque">
-                {Array.from({ length: FEATURED_SKELETONS }, (_, index) => (
-                  <CourseCardSkeleton key={`featured-skeleton-${index}`} />
-                ))}
-              </div>
-            )}
+              {(featuredStatus === 'loading' ||
+                (featuredStatus === 'success' && !ownedStateReady)) && (
+                <div
+                  className={styles.grid}
+                  role="status"
+                  aria-label="Carregando cursos em destaque"
+                >
+                  {Array.from({ length: FEATURED_SKELETONS }, (_, index) => (
+                    <CourseCardSkeleton key={`featured-skeleton-${index}`} />
+                  ))}
+                </div>
+              )}
 
-            {featuredStatus === 'error' && (
-              <div className={styles.inlineError} role="alert">
-                <p>Não foi possível carregar os cursos em destaque.</p>
-                <Button variant="outlined" label="Tentar Novamente" onClick={reloadFeatured} />
-              </div>
-            )}
+              {featuredStatus === 'error' && (
+                <div className={styles.inlineError} role="alert">
+                  <p>Não foi possível carregar os cursos em destaque.</p>
+                  <Button variant="outlined" label="Tentar Novamente" onClick={reloadFeatured} />
+                </div>
+              )}
 
-            {featuredStatus === 'success' && ownedStateReady && featured.length > 0 && (
-              <div className={styles.grid}>{featured.map(renderCourseCard)}</div>
-            )}
-          </section>
+              {featuredStatus === 'success' && ownedStateReady && featured.length > 0 && (
+                <div className={styles.grid}>{featured.map(renderCourseCard)}</div>
+              )}
+            </section>
+          ) : null}
 
           <section className={styles.section} aria-labelledby="catalog-heading">
-            <h2 id="catalog-heading" className={styles.heading}>
-              Todos os Cursos
-            </h2>
+            <PageHeader
+              eyebrow={
+                featuredStatus === 'success' && featured.length === 0 ? 'Catálogo' : undefined
+              }
+              title="Todos os Cursos"
+              titleId="catalog-heading"
+              titleAs={
+                featuredStatus === 'success' && featured.length === 0 ? featuredTitleAs : 'h2'
+              }
+            />
 
             <div className={styles.catalogToolbar}>
               <div className={styles.searchWrap}>

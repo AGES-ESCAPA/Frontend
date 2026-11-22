@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, FormField, PasswordInput, Toast } from '@components/ui';
+import { Button, FormField, PageHeader, PasswordInput, Toast } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useAccountInvite } from '@hooks/useAccountInvite';
 import type { AccountInviteErrorStatus } from '@hooks/useAccountInvite';
@@ -189,9 +189,11 @@ export const CreatePassword = () => {
       <Navbar state="register" />
       <main className={styles.main}>
         <div className={styles.panel}>
-          <h1 className={styles.title} id="create-password-title">
-            Crie sua senha
-          </h1>
+          <PageHeader
+            title="Crie sua senha"
+            titleId="create-password-title"
+            className={styles.pageHeader}
+          />
           {renderContent()}
         </div>
       </main>

@@ -10,6 +10,7 @@ import {
   EmployeeTable,
   EmptyState,
   Modal,
+  PageHeader,
   ProgressBar,
   SearchBar,
   SumCard,
@@ -422,11 +423,11 @@ export const CompanyEmployees = () => {
   return (
     <AuthenticatedLayout role="company" items={menuItems} user={COMPANY_USER}>
       <div className={styles.page}>
-        <header className={styles.heading}>
-          <div>
-            <p className={styles.eyebrow}>Painel corporativo</p>
-            <h1>Gestão de Colaboradores</h1>
-          </div>
+        <div className={styles.heading}>
+          <PageHeader
+            eyebrow="Painel corporativo • Colaboradores"
+            title="Gestão de Colaboradores"
+          />
           <Button
             type="button"
             variant="secondary"
@@ -435,7 +436,7 @@ export const CompanyEmployees = () => {
             icon={<RefreshCw size={18} aria-hidden="true" />}
             onClick={reloadAll}
           />
-        </header>
+        </div>
 
         <section aria-label="Resumo das vagas" className={styles.summary}>
           {seatsStatus === 'loading' ? <SkeletonCards /> : null}
@@ -473,14 +474,8 @@ export const CompanyEmployees = () => {
           ) : null}
         </section>
 
-        <section aria-labelledby="collaborators-heading" className={styles.panel}>
+        <section aria-label="Colaboradores" className={styles.panel}>
           <div className={styles.toolbar}>
-            <div className={styles.panelTitle}>
-              <h2 id="collaborators-heading">Colaboradores</h2>
-              {employeesStatus === 'success' ? (
-                <span className={styles.count}>{totalElements}</span>
-              ) : null}
-            </div>
             <div className={styles.controls}>
               <div className={styles.search}>
                 <SearchBar
