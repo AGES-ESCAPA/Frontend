@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, FormField, TextInput, Toast } from '@components/ui';
+import { Button, FormField, PageHeader, TextInput, Toast } from '@components/ui';
 import { AuthServiceError, authService } from '@services/authService';
 import styles from './ForgotPassword.module.css';
 
@@ -62,7 +62,7 @@ export const ForgotPassword = () => {
       <Navbar state="register" />
       <main className={styles.main}>
         <div className={styles.panel}>
-          <h1 className={styles.title}>Esqueci minha senha</h1>
+          <PageHeader title="Esqueci minha senha" className={styles.pageHeader} />
 
           {submitted ? (
             <section className={styles.card} role="status">

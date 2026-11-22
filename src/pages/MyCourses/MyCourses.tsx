@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlayCircle, Clock, CheckCircle, Ban } from 'lucide-react';
-import { FilterTabs, SearchBar, StudentCourseCard, EmptyState, Button } from '@components/ui';
+import {
+  FilterTabs,
+  PageHeader,
+  SearchBar,
+  StudentCourseCard,
+  EmptyState,
+  Button,
+} from '@components/ui';
 import { AuthenticatedLayout } from '../../components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '../../components/layout/Sidebar/sidebarMenuPresets';
 import styles from './MyCourses.module.css';
@@ -146,11 +153,12 @@ export const MyCourses = () => {
     >
       <section className={styles.pageContent}>
         <header className={styles.topHeader}>
-          <div className={styles.titleSection}>
-            <span className={styles.breadcrumb}>ÁREA DO ALUNO • Meus Cursos</span>
-            <h1>Meus Cursos</h1>
-            <p>Continue de onde você parou</p>
-          </div>
+          <PageHeader
+            className={styles.titleSection}
+            eyebrow="Área do Aluno • Meus Cursos"
+            title="Meus Cursos"
+            subtitle="Continue de onde você parou"
+          />
 
           <div className={styles.controlsSection}>
             <div className={styles.searchContainer}>

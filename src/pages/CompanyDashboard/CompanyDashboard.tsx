@@ -12,6 +12,7 @@ import {
   EmptyState,
   FilterTabs,
   LineChart,
+  PageHeader,
   Panel,
   ProgressBar,
   SearchBar,
@@ -304,13 +305,11 @@ export const CompanyDashboard = () => {
   return (
     <AuthenticatedLayout role="company" items={menuItems} user={COMPANY_USER}>
       <div className={styles.page}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>Dashboard de Engajamento</h1>
-          <p className={styles.subtitle}>
-            Acompanhe o progresso das turmas, a taxa de conclusão global e os retornos da
-            capacitação corporativa.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Painel corporativo • Métricas"
+          title="Dashboard de Engajamento"
+          subtitle="Acompanhe o progresso das turmas, a taxa de conclusão global e os retornos da capacitação corporativa."
+        />
 
         {isEmptyCompany ? (
           <EmptyState

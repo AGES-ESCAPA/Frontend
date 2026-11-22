@@ -1,26 +1,5 @@
 .header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
   margin-bottom: var(--space-8);
-}
-
-.eyebrow {
-  margin: 0;
-  color: var(--color-info-200);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-.title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-h2);
-  line-height: var(--text-h2--line-height);
-  font-weight: var(--font-weight-bold);
 }
 
 .grid {
@@ -66,11 +45,6 @@
 }
 
 @media (width <= 40rem) {
-  .title {
-    font-size: var(--text-h3);
-    line-height: var(--text-h3--line-height);
-  }
-
   .header {
     margin-bottom: var(--space-6);
   }

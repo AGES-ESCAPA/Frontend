@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, Toast } from '@components/ui';
+import { Button, PageHeader, Toast } from '@components/ui';
 import { AuthServiceError, authService } from '@services/authService';
 import styles from '@pages/CreatePassword/CreatePassword.module.css';
 
@@ -147,9 +147,11 @@ export const ConfirmEmailChange = () => {
       <Navbar />
       <main className={styles.main}>
         <div className={styles.panel}>
-          <h1 className={styles.title} id="confirm-email-title">
-            Confirmar novo e-mail
-          </h1>
+          <PageHeader
+            title="Confirmar novo e-mail"
+            titleId="confirm-email-title"
+            className={styles.pageHeader}
+          />
           {content}
         </div>
       </main>

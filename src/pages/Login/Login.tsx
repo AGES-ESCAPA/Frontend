@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { Mail } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, FormField, PasswordInput, TextInput, Toast } from '@components/ui';
+import { Button, FormField, PageHeader, PasswordInput, TextInput, Toast } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { AuthServiceError, authService } from '@services/authService';
 import { getDefaultRoute, getPostLoginDestination } from '@routes/access';
@@ -71,7 +71,7 @@ export const Login = () => {
       <Navbar state="register" />
       <main className={styles.main}>
         <div className={styles.panel}>
-          <h1 className={styles.title}>Painel de login</h1>
+          <PageHeader title="Painel de login" className={styles.pageHeader} />
           <form className={styles.card} onSubmit={handleSubmit} noValidate>
             <FormField label="E-mail" htmlFor="login-email">
               <TextInput

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AuthenticatedLayout } from '@components/layout';
-import { Button, OrderSummary, Toast } from '@components/ui';
+import { Button, OrderSummary, PageHeader, Toast } from '@components/ui';
 import type { OrderBuyer, OrderItem } from '@components/ui';
 import { useCheckoutCourse } from '@hooks/useCheckoutCourse';
 import { useCheckoutLayout } from '@hooks/useCheckoutLayout';
@@ -171,10 +171,7 @@ export const Checkout = ({ kind = 'course', summary, onConfirm }: CheckoutProps)
 
   return (
     <AuthenticatedLayout role={role} items={menuItems} user={user} notificationsCount={2}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>Pagamento</p>
-        <h1 className={styles.title}>Finalizar Compra</h1>
-      </header>
+      <PageHeader eyebrow="Pagamento" title="Finalizar Compra" className={styles.header} />
 
       {status === 'loading' && (
         <div className={`${styles.grid} ${styles.withSummary}`}>
