@@ -326,10 +326,6 @@ export const Ordermanagement = () => {
 
       <section className={styles.ordersPanel} aria-label="Listagem de pedidos">
         <header className={styles.panelHeader}>
-          <div className={styles.panelTitle}>
-            <h2>Pedidos</h2>
-            <span aria-label={`${totalElements} pedidos`}>{totalElements}</span>
-          </div>
           <div className={styles.panelControls}>
             <OrderFilters
               value={filters}

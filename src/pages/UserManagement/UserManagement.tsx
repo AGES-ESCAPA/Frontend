@@ -368,12 +368,6 @@ export const UserManagement = () => {
 
       <section className={styles.usersPanel} aria-label="Listagem de usuários">
         <header className={styles.panelHeader}>
-          <div className={styles.panelTitle}>
-            <h2>Usuários</h2>
-            <span aria-label={statsReady ? `${totalElements} usuários` : 'Carregando usuários'}>
-              {statsReady ? totalElements : '—'}
-            </span>
-          </div>
           <div className={styles.panelControls}>
             <TableFilter
               selects={filterSelects}

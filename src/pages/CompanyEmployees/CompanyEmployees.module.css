@@ -62,35 +62,17 @@
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-4);
   padding: var(--space-4);
 }
 
-.panelTitle,
 .controls {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-}
-
-.panelTitle h2 {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-body-2);
-}
-
-.count {
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-full);
-  color: var(--color-info-200);
-  background: var(--color-info-500);
-  font-size: var(--text-body-5);
-}
-
-.controls {
   flex-wrap: wrap;
   min-width: 0;
 }

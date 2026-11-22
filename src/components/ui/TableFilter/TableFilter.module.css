@@ -21,8 +21,8 @@
   min-width: 0;
   min-height: var(--space-12);
   padding-inline: var(--space-3);
-  background-color: var(--color-primary-700);
-  border: var(--border-width-thin) solid transparent;
+  background-color: var(--color-surface-search-dark);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
   box-sizing: border-box;
   transition: border-color var(--transition-fast);
@@ -126,7 +126,7 @@
   max-height: calc(100vh - var(--space-8));
   padding: var(--space-3);
   box-sizing: border-box;
-  background-color: var(--color-primary-700);
+  background-color: var(--color-surface-search-dark);
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
@@ -179,8 +179,8 @@
   min-height: var(--space-12);
   padding: 0 var(--space-3);
   color: var(--color-text-primary);
-  background: var(--color-primary-700);
-  border-color: transparent;
+  background: var(--color-surface-search-dark);
+  border-color: var(--color-border-subtle);
   border-radius: var(--radius-lg);
   font-size: var(--text-body-3);
   font-weight: var(--font-weight-medium);

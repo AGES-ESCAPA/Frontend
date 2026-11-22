@@ -473,14 +473,8 @@ export const CompanyEmployees = () => {
           ) : null}
         </section>
 
-        <section aria-labelledby="collaborators-heading" className={styles.panel}>
+        <section aria-label="Colaboradores" className={styles.panel}>
           <div className={styles.toolbar}>
-            <div className={styles.panelTitle}>
-              <h2 id="collaborators-heading">Colaboradores</h2>
-              {employeesStatus === 'success' ? (
-                <span className={styles.count}>{totalElements}</span>
-              ) : null}
-            </div>
             <div className={styles.controls}>
               <div className={styles.search}>
                 <SearchBar

@@ -48,6 +48,13 @@ export const OrderFilters = ({
         }),
     },
     {
+      id: 'course',
+      label: 'Curso',
+      value: value.courseId,
+      options: courseOptions,
+      onChange: (courseId) => onChange({ ...value, courseId }),
+    },
+    {
       id: 'status',
       label: 'Status',
       value: value.status,
@@ -57,13 +64,6 @@ export const OrderFilters = ({
           ...value,
           status: status as OrderFiltersValue['status'],
         }),
-    },
-    {
-      id: 'course',
-      label: 'Curso',
-      value: value.courseId,
-      options: courseOptions,
-      onChange: (courseId) => onChange({ ...value, courseId }),
     },
   ];
 
