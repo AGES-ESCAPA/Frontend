@@ -482,6 +482,7 @@ describe('CourseBuilder', () => {
     vi.mocked(getCourseRules).mockResolvedValue({
       requireSequentialProgress: false,
       enforceDeadlineBlock: true,
+      minQuizPassPercentage: 70,
       version: '1.4',
       prerequisites: [{ courseId: 'pre-1', courseTitle: 'Segurança da Informação' }],
       changeLog: [

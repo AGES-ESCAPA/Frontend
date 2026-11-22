@@ -91,6 +91,7 @@ const createLessonMock = () =>
     durationInSeconds: payload.durationInSeconds,
     textContent: payload.textContent,
     fileUrl: payload.fileUrl,
+    quizQuestions: payload.quizQuestions ?? [],
     isFreeSample: payload.isFreeSample,
     resources: payload.resources,
     order: 3,
