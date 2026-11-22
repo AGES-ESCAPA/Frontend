@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { courseService } from '@services/courseService';
+import { clearResourceCache } from '@services/resourceCache';
 import type { PublicCourseCard, PublicCoursesPage } from '@/types/course';
 import { Home } from './Home';
 
@@ -64,6 +65,7 @@ describe('Home', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/cadastro');
   });
   beforeEach(() => {
+    clearResourceCache();
     getCoursesMock.mockReset();
     getFiltersMock.mockReset().mockResolvedValue({
       categories: ['Hospitalidade', 'Inteligência Artificial', 'Marketing'],
