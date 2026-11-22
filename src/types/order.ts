@@ -94,6 +94,18 @@ export interface AdminOrderStatusChange {
   createdAt: string;
 }
 
+/** Resposta de `POST /api/v1/admin/orders/{id}/cancel` e `/refund`. */
+export interface AdminOrderActionResult {
+  id: string;
+  status: AdminOrderStatus;
+  statusHistory: Array<{
+    status: AdminOrderStatus;
+    changedBy: string | null;
+    reason: string | null;
+    createdAt: string;
+  }>;
+}
+
 /** Detalhe de `GET /api/v1/admin/orders/{id}`. */
 export interface AdminOrderDetails {
   id: string;

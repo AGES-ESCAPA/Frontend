@@ -295,6 +295,7 @@ export const UserManagement = () => {
               type="button"
               className={styles.iconButton}
               aria-label={`Ver usuário ${user.name}`}
+              title="Ver usuário"
               onClick={() => openUserModal(user.id, 'view')}
             >
               <Eye size={ROW_ICON_SIZE} aria-hidden="true" />
@@ -303,6 +304,7 @@ export const UserManagement = () => {
               type="button"
               className={styles.iconButton}
               aria-label={`Editar usuário ${user.name}`}
+              title="Editar usuário"
               onClick={() => openUserModal(user.id, 'edit')}
             >
               <SquarePen size={ROW_ICON_SIZE} aria-hidden="true" />
@@ -312,6 +314,7 @@ export const UserManagement = () => {
                 type="button"
                 className={`${styles.iconButton} ${styles.blockButton}`}
                 aria-label={`Bloquear usuário ${user.name}`}
+                title="Bloquear usuário"
                 onClick={() => {
                   setBlockError(null);
                   setUserToBlock(user);

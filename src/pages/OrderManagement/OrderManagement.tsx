@@ -8,6 +8,7 @@ import { mapAdminOrderDetailsToOrderRow, toOrderCode } from '@utils/mapAdminOrde
 import {
   Badge,
   Button,
+  ConfirmDialog,
   EMPTY_FILTERS,
   Modal,
   ORDER_STATUS_LABELS,
@@ -29,13 +30,30 @@ import { useAdminOrderDetails } from '@hooks/useAdminOrderDetails';
 import { useAdminOrderStats } from '@hooks/useAdminOrderStats';
 import { useAdminOrders } from '@hooks/useAdminOrders';
 import { useToast } from '@hooks/useToast';
-import {
-  createOrderCancellationMockService,
-  OrderActionError,
-} from '@services/orderCancellationMockService';
+import { AdminOrderServiceError, adminOrderService } from '@services/adminOrderService';
 import type { OrderManagementAction } from '@services/orderCancellationMockService';
 import type { AdminOrderFilters, AdminOrderSummary } from '@/types/order';
 import styles from './OrderManagement.module.css';
+
+const ORDER_ACTION_CONFIRMATION = {
+  cancel: {
+    title: 'Confirmar cancelamento',
+    description:
+      'O cancelamento revoga o acesso ao curso. O progresso concluído pelo aluno será preservado.',
+    confirmLabel: 'Confirmar cancelamento',
+  },
+  refund: {
+    title: 'Confirmar reembolso',
+    description:
+      'O registro do reembolso não altera o progresso do aluno. O acesso continuará revogado.',
+    confirmLabel: 'Confirmar reembolso',
+  },
+} as const;
+
+type PendingTableAction = {
+  orderId: string;
+  action: OrderManagementAction;
+};
 
 const ADMIN_USER: SidebarUser = {
   name: 'Admin',
@@ -72,6 +90,7 @@ export const Ordermanagement = () => {
   const [page, setPage] = useState(0);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [displayedOrder, setDisplayedOrder] = useState<OrderRow | null>(null);
+  const [pendingTableAction, setPendingTableAction] = useState<PendingTableAction | null>(null);
   const [pendingAction, setPendingAction] = useState(false);
   const { toast, isOpen, showToast, dismissToast } = useToast();
 
@@ -103,11 +122,6 @@ export const Ordermanagement = () => {
     [orderDetails],
   );
 
-  const orderActionService = useMemo(
-    () => (selectedOrderRow ? createOrderCancellationMockService([selectedOrderRow]) : null),
-    [selectedOrderRow],
-  );
-
   useEffect(() => {
     setDisplayedOrder(selectedOrderRow);
   }, [selectedOrderRow]);
@@ -133,22 +147,50 @@ export const Ordermanagement = () => {
 
   const closeDetails = () => setSelectedOrderId(null);
 
-  const handleOrderAction = async (action: OrderManagementAction): Promise<void> => {
-    if (!displayedOrder || !orderActionService) return;
+  const applyActionResultToDisplayedOrder = (
+    orderId: string,
+    action: OrderManagementAction,
+    statusHistory: Array<{ status: OrderRow['status']; reason: string | null; createdAt: string }>,
+  ) => {
+    setDisplayedOrder((current) => {
+      if (!current || current.id !== orderId) return current;
+      const nextStatus = action === 'cancel' ? 'CANCELLED' : 'REFUNDED';
+      return {
+        ...current,
+        status: nextStatus,
+        statusHistory: statusHistory.map((change) => ({
+          status: change.status,
+          date: change.createdAt,
+          description:
+            change.reason ??
+            (change.status === 'CANCELLED'
+              ? 'Pedido cancelado pelo administrador.'
+              : change.status === 'REFUNDED'
+                ? 'Reembolso registrado pelo administrador.'
+                : 'Pagamento aprovado.'),
+        })),
+      };
+    });
+  };
 
+  const executeOrderAction = async (
+    orderId: string,
+    action: OrderManagementAction,
+  ): Promise<void> => {
     setPendingAction(true);
     try {
-      const result = orderActionService.executeAction(
-        displayedOrder.id,
-        action,
-        displayedOrder.status,
-      );
-      setDisplayedOrder(result.order);
+      const result =
+        action === 'cancel'
+          ? await adminOrderService.cancel(orderId)
+          : await adminOrderService.refund(orderId);
+
+      applyActionResultToDisplayedOrder(orderId, action, result.statusHistory);
+
       if (action === 'cancel') {
         showToast(
           'success',
           'Pedido cancelado',
-          `Acesso revogado. Progresso do aluno preservado em ${result.enrollmentAccess.progressPercent}%.`,
+          'Acesso revogado. O progresso do aluno foi preservado.',
         );
       } else {
         showToast(
@@ -157,16 +199,28 @@ export const Ordermanagement = () => {
           'O acesso continua revogado e o progresso foi preservado.',
         );
       }
+      handleReload();
     } catch (error) {
-      if (!(error instanceof OrderActionError)) throw error;
+      if (!(error instanceof AdminOrderServiceError)) throw error;
       showToast(
         'error',
-        error.status === 409 ? 'Não foi possível concluir a ação' : 'Pedido não encontrado',
+        error.status === 404 ? 'Pedido não encontrado' : 'Não foi possível concluir a ação',
         error.message,
       );
     } finally {
       setPendingAction(false);
     }
+  };
+
+  const handleOrderAction = async (action: OrderManagementAction): Promise<void> => {
+    if (!displayedOrder) return;
+    await executeOrderAction(displayedOrder.id, action);
+  };
+
+  const confirmTableAction = async () => {
+    if (!pendingTableAction) return;
+    await executeOrderAction(pendingTableAction.orderId, pendingTableAction.action);
+    setPendingTableAction(null);
   };
 
   const columns: TableColumn<AdminOrderSummary>[] = [
@@ -250,7 +304,8 @@ export const Ordermanagement = () => {
       header: 'Ações',
       render: (order) => {
         const orderCode = toOrderCode(order.id);
-        const canManage = order.status === 'APPROVED';
+        const canCancel = order.status === 'APPROVED';
+        const canRefund = order.status === 'CANCELLED';
 
         return (
           <div className={styles.rowActions}>
@@ -262,24 +317,26 @@ export const Ordermanagement = () => {
             >
               <Eye size={ROW_ICON_SIZE} aria-hidden="true" />
             </button>
-            {canManage ? (
+            {canRefund ? (
               <button
                 type="button"
                 className={styles.iconButton}
                 aria-label={`Reembolsar pedido ${orderCode}`}
-                title="Disponível nos detalhes do pedido"
-                disabled
+                title="Reembolsar pedido"
+                disabled={pendingAction}
+                onClick={() => setPendingTableAction({ orderId: order.id, action: 'refund' })}
               >
                 <RotateCcw size={ROW_ICON_SIZE} aria-hidden="true" />
               </button>
             ) : null}
-            {canManage ? (
+            {canCancel ? (
               <button
                 type="button"
                 className={styles.iconButton}
                 aria-label={`Cancelar pedido ${orderCode}`}
-                title="Disponível nos detalhes do pedido"
-                disabled
+                title="Cancelar pedido"
+                disabled={pendingAction}
+                onClick={() => setPendingTableAction({ orderId: order.id, action: 'cancel' })}
               >
                 <CircleX size={ROW_ICON_SIZE} aria-hidden="true" />
               </button>
@@ -450,6 +507,19 @@ export const Ordermanagement = () => {
             }}
           />
         ) : null
+      ) : null}
+      {pendingTableAction ? (
+        <ConfirmDialog
+          open
+          title={ORDER_ACTION_CONFIRMATION[pendingTableAction.action].title}
+          description={ORDER_ACTION_CONFIRMATION[pendingTableAction.action].description}
+          confirmLabel={ORDER_ACTION_CONFIRMATION[pendingTableAction.action].confirmLabel}
+          isConfirming={pendingAction}
+          onConfirm={confirmTableAction}
+          onOpenChange={(open) => {
+            if (!open && !pendingAction) setPendingTableAction(null);
+          }}
+        />
       ) : null}
       {toast ? (
         <Toast
