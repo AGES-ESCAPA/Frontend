@@ -11,6 +11,7 @@ import {
   getStudentCurriculum,
   StudentCurriculumError,
 } from '@services/curriculumService';
+import { getStudentEnrollments } from '@services/enrollmentService';
 import { CoursePlayer } from './CoursePlayer';
 
 vi.mock('@/hooks/useStudentLesson', () => ({
@@ -32,6 +33,16 @@ vi.mock('@services/enrollmentService', () => ({
     totalPages: 0,
   }),
 }));
+
+const getStudentEnrollmentsMock = vi.mocked(getStudentEnrollments);
+
+const emptyEnrollments = {
+  content: [] as never[],
+  pageNumber: 0,
+  pageSize: 100,
+  totalElements: 0,
+  totalPages: 0,
+};
 
 vi.mock('@components/course/VideoPlayer/VideoPlayer', () => ({
   VideoPlayer: ({
@@ -165,6 +176,8 @@ describe('CoursePlayer', () => {
     retryMock.mockReset();
     getStudentCurriculumMock.mockReset();
     completeStudentLessonMock.mockReset();
+    getStudentEnrollmentsMock.mockReset();
+    getStudentEnrollmentsMock.mockResolvedValue(emptyEnrollments);
     // Por padrão o menu fica carregando; os testes do menu definem a resposta.
     getStudentCurriculumMock.mockReturnValue(new Promise<StudentCurriculum>(() => {}));
   });
@@ -886,6 +899,58 @@ describe('CoursePlayer', () => {
           'button',
         ),
       ).not.toBeInTheDocument();
+    });
+
+    it('should show purchase CTA after completing a free sample without owning the course', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock.mockResolvedValue(pendingCurriculum);
+      completeStudentLessonMock.mockResolvedValue();
+      mockSuccessfulLesson({ ...lesson, isFreeSample: true });
+
+      render(
+        <MemoryRouter initialEntries={[`/aluno/cursos/${COURSE_ID}/aulas/${LESSON_ID}`]}>
+          <Routes>
+            <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
+            <Route path="/checkout/:courseId" element={<p>Checkout</p>} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      await user.click(await screen.findByRole('button', { name: 'Marcar como concluída' }));
+
+      expect(completeStudentLessonMock).toHaveBeenCalledWith(COURSE_ID, LESSON_ID);
+
+      expect(
+        await screen.findByText('Gostou da aula? Garanta o curso completo agora'),
+      ).toBeInTheDocument();
+
+      // Sem matrícula, permanece na aula em vez de ir para a próxima.
+      expect(screen.getByRole('heading', { name: lesson.title, level: 1 })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Comprar curso' }));
+
+      expect(await screen.findByText('Checkout')).toBeInTheDocument();
+    });
+
+    it('should not show purchase CTA for free sample when the student already owns the course', async () => {
+      getStudentEnrollmentsMock.mockResolvedValue({
+        ...emptyEnrollments,
+        content: [{ courseId: COURSE_ID, title: 'Curso', certificateCode: null }] as never[],
+        totalElements: 1,
+      });
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson({ ...lesson, isFreeSample: true });
+
+      renderCoursePlayer();
+
+      expect(await screen.findByTestId('lesson-video-player')).toHaveTextContent('Aula concluída');
+
+      await waitFor(() =>
+        expect(
+          screen.queryByText('Gostou da aula? Garanta o curso completo agora'),
+        ).not.toBeInTheDocument(),
+      );
     });
   });
 });

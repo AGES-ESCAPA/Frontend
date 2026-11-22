@@ -58,14 +58,29 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
     navigate(checkoutPath);
   };
 
+  const firstFreeLessonId = lessons.find((lesson) => lesson.isFree)?.id;
+
+  const handleViewFreeLessons = () => {
+    if (isLearner && firstFreeLessonId) {
+      navigate(`/aluno/cursos/${course.id}/aulas/${firstFreeLessonId}`);
+      return;
+    }
+    if (!isAuthenticated && firstFreeLessonId) {
+      const freePath = `/aluno/cursos/${course.id}/aulas/${firstFreeLessonId}`;
+      navigate(authPath('/login', freePath), { state: { returnTo: freePath } });
+      return;
+    }
+    onViewFreeLessons?.();
+  };
+
   const handleCta = () => {
-    if (isFreeOnly) {
-      onViewFreeLessons?.();
+    if (isOwned) {
+      void handleAccess();
       return;
     }
 
-    if (isOwned) {
-      void handleAccess();
+    if (isFreeOnly) {
+      handleViewFreeLessons();
       return;
     }
 
@@ -158,10 +173,10 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
                 </div>
                 <Button
                   label={
-                    isFreeOnly
-                      ? `Ver aulas grátis (${freeLessonCount})`
-                      : isOwned
-                        ? 'Acessar curso'
+                    isOwned
+                      ? 'Acessar curso'
+                      : isFreeOnly
+                        ? `Ver aulas grátis (${freeLessonCount})`
                         : isAuthenticated
                           ? 'Comprar curso'
                           : 'Cadastre-se para Comprar'

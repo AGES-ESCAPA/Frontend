@@ -55,6 +55,11 @@ export interface VideoPlayerProps {
    * barra não aparece (carregando ou vídeo indisponível), fica no canto inferior direito.
    */
   controlsAction?: ReactNode;
+  /**
+   * Substitui o recado padrão de "Aula concluída" no overlay (ex.: CTA de compra
+   * após concluir uma aula gratuita sem ter o curso).
+   */
+  completedOverlayContent?: ReactNode;
   /** Rótulo acessível do player. Padrão: "Player da aula {title}". */
   ariaLabel?: string;
   /** Texto quando não há vídeo ou o carregamento falha. */
@@ -74,6 +79,7 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
   previousAction,
   nextAction,
   controlsAction,
+  completedOverlayContent,
   ariaLabel,
   unavailableMessage = 'Vídeo indisponível',
 }) => {
@@ -561,19 +567,23 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
                 />
               ) : showLessonCompleted ? (
                 <div className={styles.completedMessage} role="status">
-                  <p className={styles.completedLabel}>
-                    <span className={styles.completedCheck} aria-hidden="true">
-                      <Check size={12} />
-                    </span>
-                    Aula concluída
-                  </p>
-                  <Button
-                    label="Assistir novamente"
-                    variant="secondary"
-                    className={styles.watchAgainButton}
-                    icon={<RotateCcw size={16} aria-hidden="true" />}
-                    onClick={() => void handleWatchAgain()}
-                  />
+                  {completedOverlayContent ?? (
+                    <>
+                      <p className={styles.completedLabel}>
+                        <span className={styles.completedCheck} aria-hidden="true">
+                          <Check size={12} />
+                        </span>
+                        Aula concluída
+                      </p>
+                      <Button
+                        label="Assistir novamente"
+                        variant="secondary"
+                        className={styles.watchAgainButton}
+                        icon={<RotateCcw size={16} aria-hidden="true" />}
+                        onClick={() => void handleWatchAgain()}
+                      />
+                    </>
+                  )}
                 </div>
               ) : (
                 <>

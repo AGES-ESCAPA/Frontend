@@ -42,6 +42,8 @@ export const CoursePlayer = () => {
   const [courseTitle, setCourseTitle] = useState('');
   const [certificateCode, setCertificateCode] = useState<string | null>(null);
   const [isRedirectingLocked, setIsRedirectingLocked] = useState(false);
+  /** null enquanto a matrícula não carrega — evita flash do CTA de compra. */
+  const [ownsCourse, setOwnsCourse] = useState<boolean | null>(null);
 
   useEffect(() => {
     setCompleteError(null);
@@ -52,6 +54,7 @@ export const CoursePlayer = () => {
     if (!courseId) return;
 
     let cancelled = false;
+    setOwnsCourse(null);
 
     const loadEnrollmentMeta = async () => {
       try {
@@ -59,10 +62,14 @@ export const CoursePlayer = () => {
         if (cancelled) return;
         const card = result.content.find((item) => item.courseId === courseId);
         if (card) {
+          setOwnsCourse(true);
           setCourseTitle(card.title);
           setCertificateCode(card.certificateCode ?? null);
+        } else {
+          setOwnsCourse(false);
         }
       } catch {
+        if (!cancelled) setOwnsCourse(false);
         // Título e certificado são opcionais para o fluxo de avaliação.
       }
     };
@@ -158,6 +165,11 @@ export const CoursePlayer = () => {
       await completeStudentLesson(courseId, lessonId);
       setCompletedLessonIds((current) => new Set(current).add(lessonId));
       curriculum.refetch();
+
+      // Aula grátis sem compra confirmada: fica na aula para o CTA de compra.
+      if (lesson?.isFreeSample && ownsCourse !== true) {
+        return;
+      }
 
       if (courseJustCompleted) {
         await promptCourseRating();
@@ -317,6 +329,8 @@ export const CoursePlayer = () => {
       completedLessonIds.has(lessonId) ||
       completedLessonIds.has(lesson.id);
 
+    const showPurchaseUpsell = lesson.isFreeSample && ownsCourse === false && isLessonCompleted;
+
     // Quiz conclui só via submit; sem botão "Marcar como concluída".
     const completeButton = !isLessonCompleted && !isQuizLesson && (
       <Button
@@ -329,6 +343,18 @@ export const CoursePlayer = () => {
       />
     );
 
+    const purchaseUpsell = showPurchaseUpsell ? (
+      <aside className={styles.purchaseUpsell} aria-label="Garantir curso completo">
+        <p className={styles.purchaseUpsellText}>Gostou da aula? Garanta o curso completo agora</p>
+        <Button
+          label="Comprar curso"
+          variant="primary"
+          className={styles.compactButton}
+          onClick={() => navigate(`/checkout/${courseId}`)}
+        />
+      </aside>
+    ) : null;
+
     const handleQuizPassed = () => {
       setCompletedLessonIds((current) => new Set(current).add(lessonId));
       curriculum.refetch();
@@ -339,6 +365,7 @@ export const CoursePlayer = () => {
         <div className={`${styles.layout} ${isReadingLesson ? styles.layoutReading : ''}`}>
           {lesson.type === 'video' ? (
             <div className={styles.playerContainer}>
+              {purchaseUpsell}
               <VideoPlayer
                 key={lessonId}
                 src={lesson.videoUrl ?? ''}
@@ -382,6 +409,8 @@ export const CoursePlayer = () => {
           ) : null}
 
           <div className={styles.mainColumn}>
+            {lesson.type !== 'video' ? purchaseUpsell : null}
+
             <header className={styles.header}>
               {lessonMetadata && <span className={styles.breadcrumb}>{lessonMetadata}</span>}
 

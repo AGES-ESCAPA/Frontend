@@ -127,7 +127,7 @@ export const CourseDetails = () => {
                 className={styles.curriculum}
               >
                 <h2 id="curriculum-title">Currículo do Curso</h2>
-                <CurriculumAccordion modules={course.modules} />
+                <CurriculumAccordion courseId={course.id} modules={course.modules} />
               </section>
             ) : null}
             {course.instructor.name ? <CourseInstructor instructor={course.instructor} /> : null}
