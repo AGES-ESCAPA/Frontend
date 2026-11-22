@@ -61,6 +61,8 @@ describe('CreditCardForm', () => {
       const { user } = setup();
       const { holder } = getFields();
 
+      expect(holder).toHaveAttribute('placeholder', 'NOME DO TITULAR');
+
       await user.type(holder, 'jorge 1amado');
 
       expect(holder).toHaveValue('JORGE AMADO');

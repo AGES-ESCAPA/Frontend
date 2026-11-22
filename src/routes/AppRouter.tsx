@@ -127,6 +127,12 @@ const UnderConstruction = lazy(() =>
     default: m.UnderConstruction,
   })),
 );
+
+const NotFound = lazy(() =>
+  import('@pages/NotFound/NotFound').then((m) => ({
+    default: m.NotFound,
+  })),
+);
 const RegisterIndividual = lazy(() =>
   import('@pages/RegisterIndividual/RegisterIndividual').then((m) => ({
     default: m.RegisterIndividual,
@@ -136,6 +142,18 @@ const RegisterIndividual = lazy(() =>
 const CreatePassword = lazy(() =>
   import('@pages/CreatePassword/CreatePassword').then((m) => ({
     default: m.CreatePassword,
+  })),
+);
+
+const ForgotPassword = lazy(() =>
+  import('@pages/ForgotPassword/ForgotPassword').then((m) => ({
+    default: m.ForgotPassword,
+  })),
+);
+
+const ResetPassword = lazy(() =>
+  import('@pages/ResetPassword/ResetPassword').then((m) => ({
+    default: m.ResetPassword,
   })),
 );
 // ─── Fallback de Carregamento ─────────────────────────────────────────────────
@@ -182,6 +200,8 @@ export const AppRouter = () => {
             <Route path="/cadastro/empresa" element={<RegisterCompany />} />
             <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
             <Route path="/criar-senha" element={<CreatePassword />} />
+            <Route path="/esqueci-minha-senha" element={<ForgotPassword />} />
+            <Route path="/redefinir-senha" element={<ResetPassword />} />
             <Route
               path="/meus-cursos"
               element={
@@ -320,6 +340,14 @@ export const AppRouter = () => {
               }
             />
             <Route
+              path="/admin/perfil"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/*"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
@@ -376,8 +404,8 @@ export const AppRouter = () => {
               }
             />
 
-            {/* Qualquer rota ainda sem página cai aqui. */}
-            <Route path="*" element={<UnderConstruction />} />
+            {/* URL inexistente: 404 (rotas futuras conhecidas usam UnderConstruction). */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </AuthProvider>

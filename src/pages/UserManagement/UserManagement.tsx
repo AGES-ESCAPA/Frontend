@@ -24,6 +24,13 @@ const USER_TYPE_OPTIONS: readonly SelectInputOption[] = [
   { value: 'ADMIN', label: 'Admin' },
 ];
 
+const USER_STATUS_OPTIONS: readonly SelectInputOption[] = [
+  { value: '', label: 'Todos os status' },
+  { value: 'ACTIVE', label: 'Ativo' },
+  { value: 'INACTIVE', label: 'Inativo' },
+  { value: 'PENDING', label: 'Pendente' },
+];
+
 const USER_TYPE_LABELS: Record<string, string> = {
   STUDENT: 'Aluno',
   COMPANY: 'Empresa',
@@ -112,6 +119,7 @@ export const UserManagement = () => {
   const [search, setSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [userType, setUserType] = useState('');
+  const [userStatus, setUserStatus] = useState('');
   const [page, setPage] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -121,16 +129,19 @@ export const UserManagement = () => {
     const term = searchTerm.trim().toLowerCase();
     return users.filter((user) => {
       const typeMatches = userType === '' || userTypeKey(user.userType) === userType;
-      return typeMatches && matchesSearch(user, term);
+      const statusMatches = userStatus === '' || userStatusKey(user.status) === userStatus;
+      return typeMatches && statusMatches && matchesSearch(user, term);
     });
-  }, [users, searchTerm, userType]);
+  }, [users, searchTerm, userType, userStatus]);
 
   const totalElements = filteredUsers.length;
   const totalPages = Math.ceil(totalElements / PAGE_SIZE);
   const pageUsers = filteredUsers.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
   const statsReady = status === 'success';
+  /** Resumo global (sem filtros); a tabela usa {@link filteredUsers}. */
   const countByType = (type: string) =>
-    filteredUsers.filter((user) => userTypeKey(user.userType) === type).length;
+    users.filter((user) => userTypeKey(user.userType) === type).length;
+  const totalRegistered = users.length;
 
   const selectedUser = users.find((user) => user.id === selectedUserId) ?? null;
 
@@ -149,6 +160,11 @@ export const UserManagement = () => {
 
   const handleTypeChange = (nextType: string) => {
     setUserType(nextType);
+    setPage(0);
+  };
+
+  const handleStatusChange = (nextStatus: string) => {
+    setUserStatus(nextStatus);
     setPage(0);
   };
 
@@ -228,18 +244,28 @@ export const UserManagement = () => {
       <section className={styles.stats} aria-label="Resumo dos usuários">
         <SumCard
           label="Usuários cadastrados"
-          value={statsReady ? totalElements : '—'}
+          value={statsReady ? totalRegistered : '—'}
           description="incluindo todos os perfis"
         />
         <SumCard
           label="Alunos"
           value={statsReady ? countByType('STUDENT') : '—'}
-          description="pessoas físicas"
+          description="pessoas físicas avulsas"
+        />
+        <SumCard
+          label="Colaboradores"
+          value={statsReady ? countByType('EMPLOYEE') : '—'}
+          description="vinculados a empresas"
         />
         <SumCard
           label="Empresas"
           value={statsReady ? countByType('COMPANY') : '—'}
           description="contas corporativas"
+        />
+        <SumCard
+          label="Admins"
+          value={statsReady ? countByType('ADMIN') : '—'}
+          description="equipe da plataforma"
         />
       </section>
 
@@ -258,6 +284,14 @@ export const UserManagement = () => {
                 value={userType}
                 options={USER_TYPE_OPTIONS}
                 onChange={(event) => handleTypeChange(event.target.value)}
+              />
+            </div>
+            <div className={styles.statusFilter}>
+              <SelectInput
+                aria-label="Status do usuário"
+                value={userStatus}
+                options={USER_STATUS_OPTIONS}
+                onChange={(event) => handleStatusChange(event.target.value)}
               />
             </div>
             <div className={styles.search}>

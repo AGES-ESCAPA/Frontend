@@ -11,6 +11,7 @@ import {
   getStudentCurriculum,
   StudentCurriculumError,
 } from '@services/curriculumService';
+import { getStudentEnrollments } from '@services/enrollmentService';
 import { CoursePlayer } from './CoursePlayer';
 
 vi.mock('@/hooks/useStudentLesson', () => ({
@@ -32,6 +33,16 @@ vi.mock('@services/enrollmentService', () => ({
     totalPages: 0,
   }),
 }));
+
+const getStudentEnrollmentsMock = vi.mocked(getStudentEnrollments);
+
+const emptyEnrollments = {
+  content: [] as never[],
+  pageNumber: 0,
+  pageSize: 100,
+  totalElements: 0,
+  totalPages: 0,
+};
 
 vi.mock('@components/course/VideoPlayer/VideoPlayer', () => ({
   VideoPlayer: ({
@@ -131,6 +142,7 @@ const lesson: Lesson = {
   durationInSeconds: 600,
   textContent: null,
   fileUrl: null,
+  quizQuestions: [],
   isFreeSample: false,
   resources: [],
   order: 2,
@@ -164,6 +176,8 @@ describe('CoursePlayer', () => {
     retryMock.mockReset();
     getStudentCurriculumMock.mockReset();
     completeStudentLessonMock.mockReset();
+    getStudentEnrollmentsMock.mockReset();
+    getStudentEnrollmentsMock.mockResolvedValue(emptyEnrollments);
     // Por padrão o menu fica carregando; os testes do menu definem a resposta.
     getStudentCurriculumMock.mockReturnValue(new Promise<StudentCurriculum>(() => {}));
   });
@@ -319,6 +333,7 @@ describe('CoursePlayer', () => {
   it('should render the access denied state and link to the course details', async () => {
     const user = userEvent.setup();
 
+    getStudentCurriculumMock.mockRejectedValue(new Error('Forbidden'));
     useStudentLessonMock.mockReturnValue({
       lesson: null,
       status: 'error',
@@ -330,7 +345,7 @@ describe('CoursePlayer', () => {
     renderCoursePlayer();
 
     expect(
-      screen.getByRole('heading', {
+      await screen.findByRole('heading', {
         name: 'Acesso à aula indisponível',
       }),
     ).toBeInTheDocument();
@@ -672,8 +687,44 @@ describe('CoursePlayer', () => {
       expect(completeStudentLessonMock).not.toHaveBeenCalled();
     });
 
-    it('should offer the previous lesson and only complete on the last lesson of the course', async () => {
+    const unlockedLastLessonCurriculum: StudentCurriculum = {
+      courseId: COURSE_ID,
+      completedLessons: 2,
+      totalLessons: 3,
+      modules: [
+        {
+          ...curriculum.modules[0],
+          completedLessons: 2,
+          lessons: [
+            { ...curriculum.modules[0].lessons[0], status: 'COMPLETED' },
+            { ...curriculum.modules[0].lessons[1], status: 'COMPLETED' },
+          ],
+        },
+        {
+          ...curriculum.modules[1],
+          locked: false,
+          completedLessons: 0,
+          lessons: [{ ...curriculum.modules[1].lessons[0], status: 'AVAILABLE' }],
+        },
+      ],
+    };
+
+    it('should redirect a locked lesson URL to the first available lesson', async () => {
       getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson({ ...lesson, id: LOCKED_LESSON_ID, title: 'Parcerias locais' });
+
+      renderAt(LOCKED_LESSON_ID);
+
+      await waitFor(() =>
+        expect(screen.getByRole('link', { name: /Mapeando a jornada do hóspede/ })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      );
+    });
+
+    it('should offer the previous lesson and only complete on the last lesson of the course', async () => {
+      getStudentCurriculumMock.mockResolvedValue(unlockedLastLessonCurriculum);
       mockSuccessfulLesson({ ...lesson, id: LOCKED_LESSON_ID, title: 'Parcerias locais' });
 
       renderAt(LOCKED_LESSON_ID);
@@ -692,7 +743,7 @@ describe('CoursePlayer', () => {
     it('should show the buttons in the bottom navigation for a non-video lesson', async () => {
       const user = userEvent.setup();
 
-      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      getStudentCurriculumMock.mockResolvedValue(unlockedLastLessonCurriculum);
       completeStudentLessonMock.mockResolvedValue();
       mockSuccessfulLesson({
         ...lesson,
@@ -848,6 +899,58 @@ describe('CoursePlayer', () => {
           'button',
         ),
       ).not.toBeInTheDocument();
+    });
+
+    it('should show purchase CTA after completing a free sample without owning the course', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock.mockResolvedValue(pendingCurriculum);
+      completeStudentLessonMock.mockResolvedValue();
+      mockSuccessfulLesson({ ...lesson, isFreeSample: true });
+
+      render(
+        <MemoryRouter initialEntries={[`/aluno/cursos/${COURSE_ID}/aulas/${LESSON_ID}`]}>
+          <Routes>
+            <Route path="/aluno/cursos/:courseId/aulas/:lessonId" element={<CoursePlayer />} />
+            <Route path="/checkout/:courseId" element={<p>Checkout</p>} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      await user.click(await screen.findByRole('button', { name: 'Marcar como concluída' }));
+
+      expect(completeStudentLessonMock).toHaveBeenCalledWith(COURSE_ID, LESSON_ID);
+
+      expect(
+        await screen.findByText('Gostou da aula? Garanta o curso completo agora'),
+      ).toBeInTheDocument();
+
+      // Sem matrícula, permanece na aula em vez de ir para a próxima.
+      expect(screen.getByRole('heading', { name: lesson.title, level: 1 })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Comprar curso' }));
+
+      expect(await screen.findByText('Checkout')).toBeInTheDocument();
+    });
+
+    it('should not show purchase CTA for free sample when the student already owns the course', async () => {
+      getStudentEnrollmentsMock.mockResolvedValue({
+        ...emptyEnrollments,
+        content: [{ courseId: COURSE_ID, title: 'Curso', certificateCode: null }] as never[],
+        totalElements: 1,
+      });
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      mockSuccessfulLesson({ ...lesson, isFreeSample: true });
+
+      renderCoursePlayer();
+
+      expect(await screen.findByTestId('lesson-video-player')).toHaveTextContent('Aula concluída');
+
+      await waitFor(() =>
+        expect(
+          screen.queryByText('Gostou da aula? Garanta o curso completo agora'),
+        ).not.toBeInTheDocument(),
+      );
     });
   });
 });

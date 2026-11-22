@@ -45,6 +45,8 @@ const studentProfile: UserProfile = {
   companyName: null,
   cnpj: null,
   avatarUrl: null,
+  headline: null,
+  bio: null,
 };
 
 const LocationProbe = () => <output>{useLocation().pathname}</output>;
@@ -64,12 +66,34 @@ const renderPage = (user: AuthUser, path = '/meu-perfil') => {
         <Routes>
           <Route path="/meu-perfil" element={<Profile />} />
           <Route path="/empresa/perfil" element={<Profile />} />
+          <Route path="/admin/perfil" element={<Profile />} />
           <Route path="/login" element={<LocationProbe />} />
         </Routes>
       </MemoryRouter>
     </AuthContext.Provider>,
   );
   return context;
+};
+
+const adminUser: AuthUser = {
+  id: 'a1',
+  name: 'Barbara Diogo',
+  email: 'barbara@escapa.com.br',
+  role: 'ADMIN',
+};
+
+const adminProfile: UserProfile = {
+  profile: 'ADMIN',
+  editable: true,
+  name: 'Barbara Diogo',
+  email: 'barbara@escapa.com.br',
+  cpf: null,
+  phone: null,
+  companyName: null,
+  cnpj: null,
+  avatarUrl: null,
+  headline: 'Pesquisadora em Gestão de Turismo & IA — ESCAPA!',
+  bio: 'Formada em Gestão de Turismo.',
 };
 
 describe('Profile', () => {
@@ -179,5 +203,24 @@ describe('Profile', () => {
 
     expect(await screen.findByText('/login')).toBeInTheDocument();
     expect(context.logout).toHaveBeenCalledOnce();
+  });
+
+  it('shows the admin profile with password change and without the danger zone', async () => {
+    getProfileMock.mockResolvedValue(adminProfile);
+    renderPage(adminUser, '/admin/perfil');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Meu Perfil' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Área do Admin • Configurações')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Meu Perfil/ })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByLabelText(/Nome Completo/)).toHaveValue('Barbara Diogo');
+    expect(screen.getByLabelText(/Título nos cursos/)).toHaveValue(adminProfile.headline!);
+    expect(screen.getByLabelText(/Descrição nos cursos/)).toHaveValue(adminProfile.bio!);
+    expect(screen.getByRole('heading', { name: 'Segurança & Senha' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Zona de Perigo' })).not.toBeInTheDocument();
   });
 });

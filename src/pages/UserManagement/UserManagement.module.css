@@ -47,6 +47,7 @@
 }
 
 .typeFilter,
+.statusFilter,
 .search {
   flex: 0 1 14rem;
   width: 14rem;
@@ -54,6 +55,7 @@
 }
 
 .typeFilter > div,
+.statusFilter > div,
 .search > div {
   min-height: var(--space-10);
   background-color: var(--color-primary-700);
@@ -66,12 +68,14 @@
 }
 
 .typeFilter select,
+.statusFilter select,
 .search input {
   min-width: 0;
   font-size: var(--text-body-4);
 }
 
-.typeFilter select {
+.typeFilter select,
+.statusFilter select {
   padding-block: var(--space-2);
 }
 
@@ -83,7 +87,7 @@
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-5);
 }
 
@@ -430,6 +434,7 @@
   }
 
   .typeFilter,
+  .statusFilter,
   .search {
     flex: 1 1 auto;
     width: 100%;
@@ -438,11 +443,11 @@
   }
 
   .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .stats > article:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
+  .stats > article:last-child:nth-child(3n + 1) {
+    grid-column: auto;
   }
 
   .panelNote {
@@ -470,6 +475,7 @@
   }
 
   .typeFilter > div,
+  .statusFilter > div,
   .search > div {
     min-height: var(--space-12);
   }

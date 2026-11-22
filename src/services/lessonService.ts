@@ -13,12 +13,14 @@ import type {
   LessonReference,
   LessonResource,
   LessonType,
+  QuizQuestion,
+  StudentQuizQuestion,
 } from '@/types/lesson';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 
 const API_BASE_URL = getApiBaseUrl();
 
-type ApiLessonType = 'VIDEO' | 'TEXT' | 'FILE';
+type ApiLessonType = 'VIDEO' | 'TEXT' | 'FILE' | 'QUIZ';
 
 interface CreateContentRequest {
   title: string;
@@ -28,6 +30,7 @@ interface CreateContentRequest {
   description: string | null;
   isFree: boolean;
   resources: LessonResource[];
+  quizQuestions: QuizQuestion[];
 }
 
 interface ContentResponse {
@@ -41,6 +44,7 @@ interface ContentResponse {
   isFree: boolean;
   order: number;
   resources: LessonResource[] | null;
+  quizQuestions: QuizQuestion[] | null;
 }
 
 interface StudentLessonResponse {
@@ -54,6 +58,8 @@ interface StudentLessonResponse {
   isFree: boolean;
   order: number;
   resources: LessonResource[] | null;
+  quizQuestions: StudentQuizQuestion[] | null;
+  minQuizPassPercentage: number | null;
   concepts: string[];
   references: LessonReference[];
   module: {
@@ -61,6 +67,18 @@ interface StudentLessonResponse {
     title: string;
     order: number;
   };
+}
+
+export interface QuizSubmitAnswer {
+  questionId: string;
+  optionId: string;
+}
+
+export interface QuizSubmitResult {
+  scorePercent: number;
+  passed: boolean;
+  correctCount: number;
+  totalQuestions: number;
 }
 
 export class StudentLessonError extends Error {
@@ -104,6 +122,7 @@ const buildCreateContentRequest = (payload: LessonPayload): CreateContentRequest
   description: resolveContentDescription(payload),
   isFree: payload.isFreeSample,
   resources: payload.resources.map(({ id, type, title, url }) => ({ id, type, title, url })),
+  quizQuestions: payload.type === 'quiz' ? payload.quizQuestions : [],
 });
 
 const parseResources = (resources: ContentResponse['resources']): LessonResource[] =>
@@ -130,6 +149,7 @@ const mapContentToLesson = (content: ContentResponse): Lesson => {
     durationInSeconds: content.durationMinutes != null ? content.durationMinutes * 60 : null,
     textContent: type === 'text' ? content.description : null,
     fileUrl: type === 'file' ? content.url : null,
+    quizQuestions: content.quizQuestions ?? [],
     isFreeSample: Boolean(content.isFree),
     resources: parseResources(content.resources),
     order: content.order,
@@ -156,6 +176,9 @@ const mapStudentLessonToLesson = (content: StudentLessonResponse): Lesson => {
     // Aula de texto guarda o artigo em `description` (ver resolveContentDescription).
     textContent: type === 'text' ? (content.description ?? '') : null,
     fileUrl: type === 'file' ? content.url : null,
+    quizQuestions: [],
+    studentQuizQuestions: content.quizQuestions ?? [],
+    minQuizPassPercentage: content.minQuizPassPercentage ?? 70,
     isFreeSample: Boolean(content.isFree),
     resources: parseResources(content.resources),
     concepts: content.concepts,
@@ -319,4 +342,30 @@ export const updateLesson = async (lessonId: string, payload: LessonPayload): Pr
   });
 
   return parseLessonResponse(response, 'Não foi possível salvar as alterações da aula.');
+};
+
+export const submitStudentQuiz = async (
+  courseId: string,
+  lessonId: string,
+  answers: QuizSubmitAnswer[],
+): Promise<QuizSubmitResult> => {
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/student/courses/${courseId}/lessons/${lessonId}/quiz/submit`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ answers }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorData: unknown = await response.json().catch(() => null);
+
+    throw new StudentLessonError(
+      response.status,
+      extractErrorMessage(errorData) ?? 'Não foi possível enviar o quiz.',
+    );
+  }
+
+  const json: ApiResponse<QuizSubmitResult> = await response.json();
+  return json.data;
 };

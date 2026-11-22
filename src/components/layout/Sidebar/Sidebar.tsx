@@ -13,11 +13,31 @@ export type SidebarRole = 'student' | 'company' | 'admin';
 
 const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, [role="button"]';
 const MOBILE_MEDIA_QUERY = '(max-width: 40rem)';
+/** Mantém o pin ao remontar a Sidebar (ex.: fundo do detalhe do curso). */
+const SIDEBAR_PINNED_KEY_PREFIX = 'escapa.sidebar.pinned.';
 
 const isStudentMobileViewport = (role: SidebarRole) => {
   if (role !== 'student' || typeof window.matchMedia !== 'function') return false;
 
   return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+};
+
+const readPinnedPreference = (role: SidebarRole): boolean => {
+  try {
+    return sessionStorage.getItem(`${SIDEBAR_PINNED_KEY_PREFIX}${role}`) === '1';
+  } catch {
+    return false;
+  }
+};
+
+const writePinnedPreference = (role: SidebarRole, pinned: boolean) => {
+  try {
+    const key = `${SIDEBAR_PINNED_KEY_PREFIX}${role}`;
+    if (pinned) sessionStorage.setItem(key, '1');
+    else sessionStorage.removeItem(key);
+  } catch {
+    // Storage indisponível (modo privado etc.): o pin só vale nesta montagem.
+  }
 };
 
 /** Props recebidas pelo componente de link dos itens de menu. */
@@ -103,13 +123,17 @@ export const Sidebar = ({
   const sidebarId = useId();
   const toggleRef = useRef<HTMLButtonElement>(null);
 
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState(() => readPinnedPreference(role));
   const [isPointerInside, setIsPointerInside] = useState(false);
   const [hasFocusInside, setHasFocusInside] = useState(false);
   const [isMobile, setIsMobile] = useState(() => isStudentMobileViewport(role));
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isMobileStudent = role === 'student' && isMobile;
+
+  useEffect(() => {
+    setIsPinned(readPinnedPreference(role));
+  }, [role]);
 
   useEffect(() => {
     if (role !== 'student' || typeof window.matchMedia !== 'function') return;
@@ -156,7 +180,11 @@ export const Sidebar = ({
     if (!isAutoResponsive || isMobileStudent) return;
     if ((event.target as Element).closest(INTERACTIVE_SELECTOR)) return;
 
-    setIsPinned((pinned) => !pinned);
+    setIsPinned((pinned) => {
+      const next = !pinned;
+      writePinnedPreference(role, next);
+      return next;
+    });
   };
 
   const closeMobileMenu = () => setMobileOpen(false);

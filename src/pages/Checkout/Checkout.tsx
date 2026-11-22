@@ -108,10 +108,6 @@ export const Checkout = ({ kind = 'course', summary, onConfirm }: CheckoutProps)
   const confirmationPath =
     role === 'company' ? '/empresa/checkout/confirmacao' : '/checkout/confirmacao';
 
-  const handleLogout = () => {
-    window.location.assign('/');
-  };
-
   const openPurchasedCourse = async () => {
     navigate(await getCourseAccessPath(courseId));
   };
@@ -174,13 +170,7 @@ export const Checkout = ({ kind = 'course', summary, onConfirm }: CheckoutProps)
   );
 
   return (
-    <AuthenticatedLayout
-      role={role}
-      items={menuItems}
-      user={user}
-      notificationsCount={2}
-      onLogout={handleLogout}
-    >
+    <AuthenticatedLayout role={role} items={menuItems} user={user} notificationsCount={2}>
       <header className={styles.header}>
         <p className={styles.eyebrow}>Pagamento</p>
         <h1 className={styles.title}>Finalizar Compra</h1>

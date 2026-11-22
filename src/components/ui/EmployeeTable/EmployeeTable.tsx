@@ -30,7 +30,7 @@ export const EmployeeTable = ({
   const columns: TableColumn<Employee>[] = [
     {
       id: 'name',
-      header: 'Nome',
+      header: 'Colaborador',
       align: 'start',
       render: (employee) => (
         <div className={styles.employee}>
@@ -65,13 +65,13 @@ export const EmployeeTable = ({
     },
     {
       id: 'status',
-      header: 'Status do acesso',
+      header: 'Status',
       align: 'center',
       render: (employee) => {
         const status = normalizeStatus(employee.status);
         const config = STATUS_CONFIG[status];
 
-        return <Badge label={config.label} variant={config.variant} />;
+        return <Badge label={config.label} variant={config.variant} mini={true} />;
       },
     },
     {

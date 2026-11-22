@@ -39,7 +39,7 @@ vi.mock('@pages/Login/Login', async () => {
 });
 vi.mock('@pages/MyCourses/MyCourses', () => ({ MyCourses: () => <h1>Meus cursos</h1> }));
 vi.mock('@pages/CompanyEmployees/CompanyEmployees', () => ({
-  CompanyEmployees: () => <h1>Gestão de Funcionários</h1>,
+  CompanyEmployees: () => <h1>Gestão de Colaboradores</h1>,
 }));
 vi.mock('@pages/AdminCourses/AdminCourses', () => ({
   AdminCourses: () => <h1>Gestão de Cursos</h1>,
@@ -119,7 +119,7 @@ describe('AppRouter — /admin/metricas', () => {
     expect(adminMetricsService.getOverview).not.toHaveBeenCalled();
     expect(
       await screen.findByRole('heading', {
-        name: role === 'COMPANY' ? 'Gestão de Funcionários' : 'Meus cursos',
+        name: role === 'COMPANY' ? 'Gestão de Colaboradores' : 'Meus cursos',
       }),
     ).toBeInTheDocument();
     expect(

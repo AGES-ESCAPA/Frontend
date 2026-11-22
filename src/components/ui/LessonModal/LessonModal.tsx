@@ -9,15 +9,21 @@ import { Button } from '../Button';
 import { Modal } from '../Modal';
 import { Switch } from '../Switch';
 import { DurationInput } from './DurationInput';
-import { FileInputButton } from './FileInputButton';
 import { FormField } from './FormField';
+import { LessonQuizEditor } from './LessonQuizEditor';
 import { LessonResources } from './LessonResources';
 import { LessonTypeSelector } from './LessonTypeSelector';
-import type { LessonFormErrors, LessonFormState, LessonResourceDraft } from './lessonForm';
+import type {
+  LessonFormErrors,
+  LessonFormState,
+  LessonQuizQuestionDraft,
+  LessonResourceDraft,
+} from './lessonForm';
 import {
   EMPTY_LESSON_FORM_ERRORS,
   buildLessonPayload,
   createLessonFormState,
+  createQuizQuestion,
   createResourceDraft,
   hasLessonFormErrors,
   validateLessonForm,
@@ -71,7 +77,6 @@ export const LessonModal = ({
   const videoUrlId = `${baseId}-video-url`;
   const durationId = `${baseId}-duration`;
   const textContentId = `${baseId}-text-content`;
-  const lessonFileId = `${baseId}-lesson-file`;
   const descriptionId = `${baseId}-description`;
   const freeSampleLabelId = `${baseId}-free-sample-label`;
   const freeSampleHintId = `${baseId}-free-sample-hint`;
@@ -217,8 +222,16 @@ export const LessonModal = ({
       <LessonTypeSelector
         name={`${baseId}-lesson-type`}
         labelId={typeLabelId}
-        value={form.type}
-        onChange={(type) => updateForm({ type })}
+        value={form.type === 'file' ? 'text' : form.type}
+        onChange={(type) =>
+          updateForm({
+            type,
+            quizQuestions:
+              type === 'quiz' && form.quizQuestions.length === 0
+                ? [createQuizQuestion()]
+                : form.quizQuestions,
+          })
+        }
       />
 
       {form.type === 'video' ? (
@@ -278,31 +291,13 @@ export const LessonModal = ({
         </FormField>
       ) : null}
 
-      {form.type === 'file' ? (
-        <FormField
-          id={lessonFileId}
-          label="Arquivo da aula"
-          required
-          error={errors.fileUrl}
-          hint="Envie um PDF ou planilha"
-        >
-          <FileInputButton
-            id={lessonFileId}
-            file={form.file}
-            label={form.fileUrl ? 'Substituir arquivo' : undefined}
-            onSelect={(file) => updateForm({ file })}
-          />
-          {form.fileUrl && !form.file ? (
-            <a
-              className={styles.currentFileLink}
-              href={form.fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Ver arquivo atual
-            </a>
-          ) : null}
-        </FormField>
+      {form.type === 'quiz' ? (
+        <LessonQuizEditor
+          idPrefix={`${baseId}-quiz`}
+          questions={form.quizQuestions}
+          error={errors.quizQuestions}
+          onChange={(quizQuestions: LessonQuizQuestionDraft[]) => updateForm({ quizQuestions })}
+        />
       ) : null}
 
       <FormField id={descriptionId} label="Descrição para os alunos" optional>

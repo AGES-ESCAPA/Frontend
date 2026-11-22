@@ -72,5 +72,10 @@ export const SIDEBAR_MENU_PRESETS: Record<SidebarRole, SidebarMenuItem[]> = {
       label: 'Métricas',
       route: '/admin/metricas',
     },
+    {
+      icon: <UserRoundPen size={SIDEBAR_ICON_SIZE} />,
+      label: 'Meu Perfil',
+      route: '/admin/perfil',
+    },
   ],
 };

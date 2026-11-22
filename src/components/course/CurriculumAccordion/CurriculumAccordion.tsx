@@ -5,10 +5,11 @@ import { LessonItem } from '@components/course/LessonItem/LessonItem';
 import styles from './CurriculumAccordion.module.css';
 
 export interface CurriculumAccordionProps {
+  courseId: string;
   modules: CourseModule[];
 }
 
-export const CurriculumAccordion: FC<CurriculumAccordionProps> = ({ modules }) => {
+export const CurriculumAccordion: FC<CurriculumAccordionProps> = ({ courseId, modules }) => {
   const [openModules, setOpenModules] = useState<Set<string>>(
     () => new Set(modules.map((courseModule) => courseModule.id)),
   );
@@ -50,7 +51,7 @@ export const CurriculumAccordion: FC<CurriculumAccordionProps> = ({ modules }) =
             {isOpen && courseModule.lessons.length > 0 && (
               <ul id={panelId} className={styles.lessons}>
                 {courseModule.lessons.map((lesson) => (
-                  <LessonItem key={lesson.id} lesson={lesson} />
+                  <LessonItem key={lesson.id} courseId={courseId} lesson={lesson} />
                 ))}
               </ul>
             )}

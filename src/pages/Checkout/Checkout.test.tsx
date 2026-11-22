@@ -54,6 +54,8 @@ const studentProfile: UserProfile = {
   companyName: null,
   cnpj: null,
   avatarUrl: null,
+  headline: null,
+  bio: null,
 };
 
 const companyProfile: UserProfile = {
@@ -66,6 +68,8 @@ const companyProfile: UserProfile = {
   companyName: 'Hostel Centro Histórico ME',
   cnpj: '44555666000124',
   avatarUrl: null,
+  headline: null,
+  bio: null,
 };
 
 const companyUser: AuthUser = {

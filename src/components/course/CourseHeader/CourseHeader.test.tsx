@@ -179,7 +179,6 @@ describe('CourseHeader', () => {
 
   it('offers free lessons when every lesson in the course is free', async () => {
     const user = userEvent.setup();
-    const onViewFreeLessons = vi.fn();
     const freeOnlyCourse: CourseSummary = {
       ...featuredCourse,
       modules: [
@@ -198,7 +197,8 @@ describe('CourseHeader', () => {
 
     render(
       <MemoryRouter>
-        <CourseHeader course={freeOnlyCourse} onViewFreeLessons={onViewFreeLessons} />
+        <LocationProbe />
+        <CourseHeader course={freeOnlyCourse} />
       </MemoryRouter>,
     );
 
@@ -210,8 +210,44 @@ describe('CourseHeader', () => {
 
     await user.click(cta);
 
-    expect(onViewFreeLessons).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      `/login?returnTo=${encodeURIComponent(`/aluno/cursos/${freeOnlyCourse.id}/aulas/aula-1`)}`,
+    );
     expect(localStorage.getItem('escapa:purchase-redirect')).toBeNull();
+  });
+
+  it('opens the first free lesson for a logged-in student without purchase', async () => {
+    const user = userEvent.setup();
+    const freeOnlyCourse: CourseSummary = {
+      ...featuredCourse,
+      modules: [
+        {
+          id: 'gratis',
+          title: 'Módulo gratuito',
+          lessonCount: 1,
+          totalMinutes: 10,
+          lessons: [
+            { id: 'aula-1', title: 'Aula 1', type: 'video', durationMinutes: 10, isFree: true },
+          ],
+        },
+      ],
+    };
+
+    render(
+      withAuth(
+        'STUDENT',
+        <MemoryRouter>
+          <LocationProbe />
+          <CourseHeader course={freeOnlyCourse} />
+        </MemoryRouter>,
+      ),
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Ver aulas grátis (1)' }));
+
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      `/aluno/cursos/${freeOnlyCourse.id}/aulas/aula-1`,
+    );
   });
 });
 

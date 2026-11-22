@@ -1,13 +1,13 @@
 import { memo } from 'react';
 import { ListChecks } from 'lucide-react';
-import { Checkbox, Panel } from '@components/ui';
+import { Checkbox, Panel, TextInput } from '@components/ui';
 import type { CourseProgressRules } from '@/types/course';
 import styles from './ProgressRulesCard.module.css';
 
 export interface ProgressRulesCardProps {
   rules: CourseProgressRules;
   disabled?: boolean;
-  onChange: (field: keyof CourseProgressRules, value: boolean) => void;
+  onChange: <K extends keyof CourseProgressRules>(field: K, value: CourseProgressRules[K]) => void;
 }
 
 const ProgressRulesCardBase = ({ rules, disabled = false, onChange }: ProgressRulesCardProps) => (
@@ -30,6 +30,34 @@ const ProgressRulesCardBase = ({ rules, disabled = false, onChange }: ProgressRu
         disabled={disabled}
         onChange={(event) => onChange('blockAccessAfterDeadline', event.target.checked)}
       />
+    </div>
+
+    <div className={styles.rule}>
+      <label className={styles.percentLabel} htmlFor="min-quiz-pass-percentage">
+        Percentual mínimo de acerto para concluir o quiz
+      </label>
+      <p className={styles.percentHint}>
+        Aulas do tipo quiz só são concluídas quando o aluno atinge este percentual.
+      </p>
+      <div className={styles.percentField}>
+        <TextInput
+          id="min-quiz-pass-percentage"
+          type="number"
+          min={0}
+          max={100}
+          step={1}
+          disabled={disabled}
+          value={rules.minQuizPassPercentage}
+          onChange={(event) => {
+            const next = Number(event.target.value);
+            onChange(
+              'minQuizPassPercentage',
+              Number.isFinite(next) ? Math.min(100, Math.max(0, Math.round(next))) : 0,
+            );
+          }}
+          rightAction={<span aria-hidden="true">%</span>}
+        />
+      </div>
     </div>
   </Panel>
 );

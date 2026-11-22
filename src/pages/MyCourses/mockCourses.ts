@@ -12,6 +12,7 @@ export interface Course {
   description: string;
   instructor: string;
   progressPercentage: number;
+  /** Carga horária em minutos. */
   durationTime: number;
   lessonsCount: number;
   enrollmentStatus: 'IN_PROGRESS' | 'PENDING' | 'COMPLETED';
@@ -27,7 +28,7 @@ export const mockCourses: Course[] = [
       'Domine as ferramentas de inteligência artificial para transformar sua operação turística',
     instructor: 'Dra. Mariana',
     progressPercentage: 72,
-    durationTime: 12,
+    durationTime: 720,
     lessonsCount: 32,
     enrollmentStatus: 'IN_PROGRESS',
     thumbnailUrl:
@@ -40,7 +41,7 @@ export const mockCourses: Course[] = [
     description: 'Estratégias de marketing digital para hotéis, pousadas e operadoras de turismo',
     instructor: 'Paulo Henrique',
     progressPercentage: 45,
-    durationTime: 16,
+    durationTime: 960,
     lessonsCount: 44,
     enrollmentStatus: 'IN_PROGRESS',
     thumbnailUrl:
@@ -54,7 +55,7 @@ export const mockCourses: Course[] = [
       'Aprenda a controlar o fluxo de caixa, precificar diárias e aumentar a margem de lucro.',
     instructor: 'Roberto Alves',
     progressPercentage: 15,
-    durationTime: 8,
+    durationTime: 480,
     lessonsCount: 20,
     enrollmentStatus: 'IN_PROGRESS',
     thumbnailUrl:
@@ -68,7 +69,7 @@ export const mockCourses: Course[] = [
       'Estratégias avançadas de precificação e gestão de receitas para meios de hospedagem',
     instructor: 'Camila Torres',
     progressPercentage: 0,
-    durationTime: 20,
+    durationTime: 1200,
     lessonsCount: 52,
     enrollmentStatus: 'PENDING',
     thumbnailUrl:
@@ -82,7 +83,7 @@ export const mockCourses: Course[] = [
       'Como criar e gerir destinos turísticos competitivos e inovadores no mercado global',
     instructor: 'Thamires Magalhães',
     progressPercentage: 0,
-    durationTime: 14,
+    durationTime: 840,
     lessonsCount: 32,
     enrollmentStatus: 'PENDING',
     thumbnailUrl:
@@ -96,7 +97,7 @@ export const mockCourses: Course[] = [
       'Desenvolva competências de liderança para o mercado premium de hospedagem e turismo',
     instructor: 'André Monteiro',
     progressPercentage: 100,
-    durationTime: 18,
+    durationTime: 1080,
     lessonsCount: 46,
     enrollmentStatus: 'COMPLETED',
     thumbnailUrl:
@@ -109,7 +110,7 @@ export const mockCourses: Course[] = [
     description: 'Técnicas e metodologias para criar experiências memoráveis em hospitalidade',
     instructor: 'Letícia Amaral',
     progressPercentage: 100,
-    durationTime: 10,
+    durationTime: 600,
     lessonsCount: 28,
     enrollmentStatus: 'COMPLETED',
     thumbnailUrl:
@@ -122,7 +123,7 @@ export const mockCourses: Course[] = [
     description: 'Técnicas avançadas de negociação com agências e operadoras corporativas',
     instructor: 'Carlos Silva',
     progressPercentage: 100,
-    durationTime: 24,
+    durationTime: 1440,
     lessonsCount: 60,
     enrollmentStatus: 'COMPLETED',
     thumbnailUrl:
@@ -136,7 +137,7 @@ export const mockCourses: Course[] = [
       'Domine as ferramentas de inteligência artificial para transformar sua operação turística',
     instructor: 'Dra. Mariana',
     progressPercentage: 72,
-    durationTime: 12,
+    durationTime: 720,
     lessonsCount: 32,
     enrollmentStatus: 'IN_PROGRESS',
     thumbnailUrl:
@@ -149,7 +150,7 @@ export const mockCourses: Course[] = [
     description: 'Estratégias de marketing digital para hotéis, pousadas e operadoras de turismo',
     instructor: 'Paulo Henrique',
     progressPercentage: 45,
-    durationTime: 16,
+    durationTime: 960,
     lessonsCount: 44,
     enrollmentStatus: 'IN_PROGRESS',
     thumbnailUrl:
@@ -163,7 +164,7 @@ export const mockCourses: Course[] = [
       'Estratégias avançadas de precificação e gestão de receitas para meios de hospedagem',
     instructor: 'Camila Torres',
     progressPercentage: 0,
-    durationTime: 20,
+    durationTime: 1200,
     lessonsCount: 52,
     enrollmentStatus: 'PENDING',
     thumbnailUrl:
@@ -177,7 +178,7 @@ export const mockCourses: Course[] = [
       'Desenvolva competências de liderança para o mercado premium de hospedagem e turismo',
     instructor: 'André Monteiro',
     progressPercentage: 100,
-    durationTime: 18,
+    durationTime: 1080,
     lessonsCount: 46,
     enrollmentStatus: 'COMPLETED',
     thumbnailUrl:

@@ -134,6 +134,8 @@ export interface CourseModule {
 export interface CourseProgressRules {
   requireSequentialProgress: boolean;
   blockAccessAfterDeadline: boolean;
+  /** Percentual mínimo de acerto nos quizzes para concluir a aula (0–100). */
+  minQuizPassPercentage: number;
 }
 
 /** Curso que pode ser exigido como pré-requisito. */
@@ -164,6 +166,7 @@ export interface CourseChangeLogEntry {
 export interface CourseRules {
   requireSequentialProgress: boolean;
   enforceDeadlineBlock: boolean;
+  minQuizPassPercentage: number;
   version: string;
   prerequisites: CourseRulesPrerequisite[];
   changeLog: CourseChangeLogEntry[];

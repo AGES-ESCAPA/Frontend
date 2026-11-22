@@ -1,0 +1,83 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse at top, var(--color-surface-overlay) 0%, transparent 55%),
+    radial-gradient(
+      ellipse at bottom right,
+      color-mix(in srgb, var(--color-secondary-500) 22%, transparent) 0%,
+      transparent 48%
+    ),
+    var(--color-surface);
+}
+
+.main {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  width: 100%;
+  padding: var(--space-8) var(--space-4);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: var(--container-md);
+  text-align: center;
+}
+
+.code {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: clamp(4.5rem, 14vw, 7.5rem);
+  font-weight: var(--font-weight-bold);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.01em;
+}
+
+.description {
+  margin: 0;
+  max-width: 36rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-1);
+  line-height: var(--text-body-1--line-height);
+}
+
+.path {
+  display: inline-block;
+  max-width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  overflow: hidden;
+  color: var(--color-secondary-100);
+  font-family: var(--font-mono);
+  font-size: var(--text-body-4);
+  line-height: var(--text-body-4--line-height);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--color-surface-raised) 80%, transparent);
+  border: var(--border-width-thin) solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}

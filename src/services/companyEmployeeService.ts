@@ -133,10 +133,18 @@ export interface ResendInviteResponse {
   inviteSent: boolean;
 }
 
+export interface EmployeeCourseAssignment {
+  courseId: string;
+  title: string;
+  category: string | null;
+  assigned: boolean;
+}
+
 async function request<T>(
   path: string,
   init: RequestInit = {},
   errorContext?: ErrorContext,
+  options?: { allowNullData?: boolean },
 ): Promise<T> {
   let response: Response;
 
@@ -164,7 +172,7 @@ async function request<T>(
     throw new CompanyEmployeeServiceError(response.status, 'Resposta inválida do servidor.');
   }
 
-  if (!body || body.success !== true || body.data == null) {
+  if (!body || body.success !== true || (body.data == null && !options?.allowNullData)) {
     throw new CompanyEmployeeServiceError(response.status, 'Resposta inválida do servidor.');
   }
 
@@ -234,6 +242,34 @@ export const companyEmployeeService = {
         method: 'POST',
       },
       'resendInvite',
+    );
+  },
+
+  listEmployeeCourses(
+    employeeId: string,
+    signal?: AbortSignal,
+  ): Promise<EmployeeCourseAssignment[]> {
+    return request<EmployeeCourseAssignment[]>(
+      `/employees/${encodeURIComponent(employeeId)}/courses`,
+      { signal },
+    );
+  },
+
+  assignEmployeeCourse(employeeId: string, courseId: string): Promise<null> {
+    return request<null>(
+      `/employees/${encodeURIComponent(employeeId)}/courses/${encodeURIComponent(courseId)}`,
+      { method: 'POST' },
+      undefined,
+      { allowNullData: true },
+    );
+  },
+
+  revokeEmployeeCourse(employeeId: string, courseId: string): Promise<null> {
+    return request<null>(
+      `/employees/${encodeURIComponent(employeeId)}/courses/${encodeURIComponent(courseId)}`,
+      { method: 'DELETE' },
+      undefined,
+      { allowNullData: true },
     );
   },
 };

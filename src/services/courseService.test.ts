@@ -286,6 +286,7 @@ describe('courseService', () => {
     await courseService.updateProgressRules('e0000000-0000-4000-e000-000000000001', {
       requireSequentialProgress: false,
       enforceDeadlineBlock: false,
+      minQuizPassPercentage: 70,
     });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -294,6 +295,7 @@ describe('courseService', () => {
     expect(JSON.parse(String(init.body))).toEqual({
       requireSequentialProgress: false,
       enforceDeadlineBlock: false,
+      minQuizPassPercentage: 70,
     });
   });
 
