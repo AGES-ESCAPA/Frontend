@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { UserRound } from 'lucide-react';
-import { AvatarUpload, Button, FormField, MaskedInput, Panel, TextInput } from '@components/ui';
+import {
+  AvatarUpload,
+  Button,
+  FormField,
+  MaskedInput,
+  Panel,
+  TextArea,
+  TextInput,
+} from '@components/ui';
 import type { ToastVariant } from '@components/ui';
 import { ProfileServiceError, profileService } from '@services/profileService';
 import { maskCnpj, maskCpf, maskPhone } from '@utils/masks';
 import {
+  PROFILE_BIO_MAX_LENGTH,
   PROFILE_TEXT_MAX_LENGTH,
   mapProfileApiError,
   toLocalPhoneDigits,
@@ -54,6 +63,7 @@ export const ProfileDataCard = ({ profile, onSaved, onNotify }: ProfileDataCardP
   const [isSaving, setIsSaving] = useState(false);
 
   const isCompany = profile.profile === 'COMPANY';
+  const isAdmin = profile.profile === 'ADMIN';
   const canSave = profile.editable || photo !== null;
 
   const changeValue = (field: ProfileFormField, value: string) => {
@@ -69,6 +79,7 @@ export const ProfileDataCard = ({ profile, onSaved, onNotify }: ProfileDataCardP
         name: values.name.trim(),
         phone: values.phone,
         ...(isCompany ? { companyName: values.companyName.trim() } : {}),
+        ...(isAdmin ? { headline: values.headline.trim(), bio: values.bio.trim() } : {}),
       });
     } catch (error: unknown) {
       const fieldErrors =
@@ -185,25 +196,65 @@ export const ProfileDataCard = ({ profile, onSaved, onNotify }: ProfileDataCardP
                 ) : null}
 
                 <LockedField id="profile-email" label="E-mail" value={profile.email} />
-                <LockedField
-                  id="profile-document"
-                  label={isCompany ? 'CNPJ' : 'CPF'}
-                  value={formatOrDash(
-                    isCompany ? profile.cnpj : profile.cpf,
-                    isCompany ? maskCnpj : displayCpf,
-                  )}
-                />
 
-                <FormField label="Telefone" htmlFor="profile-phone" error={errors.phone}>
-                  <MaskedInput
-                    id="profile-phone"
-                    mask="phone"
-                    value={values.phone}
-                    onValueChange={(value) => changeValue('phone', value)}
-                    invalid={errors.phone !== undefined}
-                    disabled={isSaving}
-                  />
-                </FormField>
+                {!isAdmin ? (
+                  <>
+                    <LockedField
+                      id="profile-document"
+                      label={isCompany ? 'CNPJ' : 'CPF'}
+                      value={formatOrDash(
+                        isCompany ? profile.cnpj : profile.cpf,
+                        isCompany ? maskCnpj : displayCpf,
+                      )}
+                    />
+
+                    <FormField label="Telefone" htmlFor="profile-phone" error={errors.phone}>
+                      <MaskedInput
+                        id="profile-phone"
+                        mask="phone"
+                        value={values.phone}
+                        onValueChange={(value) => changeValue('phone', value)}
+                        invalid={errors.phone !== undefined}
+                        disabled={isSaving}
+                      />
+                    </FormField>
+                  </>
+                ) : (
+                  <>
+                    <FormField
+                      label="Título nos cursos"
+                      htmlFor="profile-headline"
+                      error={errors.headline}
+                    >
+                      <TextInput
+                        id="profile-headline"
+                        value={values.headline}
+                        onChange={(event) => changeValue('headline', event.target.value)}
+                        maxLength={PROFILE_TEXT_MAX_LENGTH}
+                        placeholder="Ex.: Pesquisadora em Gestão de Turismo"
+                        invalid={errors.headline !== undefined}
+                        disabled={isSaving}
+                      />
+                    </FormField>
+
+                    <FormField
+                      label="Descrição nos cursos"
+                      htmlFor="profile-bio"
+                      error={errors.bio}
+                    >
+                      <TextArea
+                        id="profile-bio"
+                        value={values.bio}
+                        onChange={(event) => changeValue('bio', event.target.value)}
+                        maxLength={PROFILE_BIO_MAX_LENGTH}
+                        rows={6}
+                        placeholder="Biografia exibida na página do curso"
+                        invalid={errors.bio !== undefined}
+                        disabled={isSaving}
+                      />
+                    </FormField>
+                  </>
+                )}
               </div>
             ) : (
               <dl className={styles.readOnlyList}>

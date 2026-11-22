@@ -110,8 +110,13 @@ export const AuthenticatedLayout = ({
           }
           collapsible={role !== 'student'}
           onLogout={resolvedLogout}
-          profileHref={role === 'company' ? '/empresa/perfil' : '/meu-perfil'}
-          showProfileLink={role !== 'admin'}
+          profileHref={
+            role === 'company'
+              ? '/empresa/perfil'
+              : role === 'admin'
+                ? '/admin/perfil'
+                : '/meu-perfil'
+          }
         />
 
         <main

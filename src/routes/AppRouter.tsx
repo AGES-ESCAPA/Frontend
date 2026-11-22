@@ -340,6 +340,14 @@ export const AppRouter = () => {
               }
             />
             <Route
+              path="/admin/perfil"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/*"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>

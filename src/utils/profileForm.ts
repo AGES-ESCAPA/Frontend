@@ -6,7 +6,12 @@ export interface ProfileFormValues {
   /** Só dígitos, como o `MaskedInput` devolve. */
   phone: string;
   companyName: string;
+  headline: string;
+  bio: string;
 }
+
+/** Limite da bio do instrutor (coluna TEXT no backend). */
+export const PROFILE_BIO_MAX_LENGTH = 4000;
 
 export type ProfileFormField = keyof ProfileFormValues;
 export type ProfileFormErrors = Partial<Record<ProfileFormField, string>>;
@@ -39,6 +44,8 @@ export const toProfileFormValues = (profile: UserProfile): ProfileFormValues => 
   name: profile.name,
   phone: toLocalPhoneDigits(profile.phone),
   companyName: profile.companyName ?? '',
+  headline: profile.headline ?? '',
+  bio: profile.bio ?? '',
 });
 
 /** Mesmas regras do cadastro (US-21 e US-22): textos obrigatórios e telefone opcional de 10 ou 11 dígitos. */
@@ -50,6 +57,8 @@ export const validateProfileForm = (
 
   if (!values.name.trim()) errors.name = REQUIRED_MESSAGE;
   if (profile === 'COMPANY' && !values.companyName.trim()) errors.companyName = REQUIRED_MESSAGE;
+  if (values.headline.length > PROFILE_TEXT_MAX_LENGTH) errors.headline = TOO_LONG_MESSAGE;
+  if (values.bio.length > PROFILE_BIO_MAX_LENGTH) errors.bio = TOO_LONG_MESSAGE;
   if (
     values.phone &&
     (values.phone.length < PHONE_MIN_DIGITS || values.phone.length > PHONE_MAX_DIGITS)
@@ -69,7 +78,7 @@ export const mapProfileApiError = (message: string): ProfileFormErrors | null =>
   const isTooLong = message.includes('at most');
 
   if (field === 'phone') return { phone: isTooLong ? TOO_LONG_MESSAGE : INVALID_PHONE_MESSAGE };
-  if (field === 'name' || field === 'companyName') {
+  if (field === 'name' || field === 'companyName' || field === 'headline' || field === 'bio') {
     return { [field]: isTooLong ? TOO_LONG_MESSAGE : REQUIRED_MESSAGE };
   }
 

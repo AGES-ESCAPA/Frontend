@@ -12,18 +12,26 @@ import { DangerZone } from './components/DangerZone';
 import { ProfileDataCard } from './components/ProfileDataCard';
 import styles from './Profile.module.css';
 
-const PROFILE_ROUTES: Record<Exclude<SidebarRole, 'admin'>, string> = {
+const PROFILE_ROUTES: Record<SidebarRole, string> = {
   student: '/meu-perfil',
   company: '/empresa/perfil',
+  admin: '/admin/perfil',
 };
 
-const PAGE_COPY: Record<Exclude<SidebarRole, 'admin'>, { eyebrow: string; title: string }> = {
+const PAGE_COPY: Record<SidebarRole, { eyebrow: string; title: string }> = {
   student: { eyebrow: 'Área do Aluno • Configurações', title: 'Meu Perfil' },
   company: { eyebrow: 'Área da Empresa • Configurações', title: 'Perfil da Empresa' },
+  admin: { eyebrow: 'Área do Admin • Configurações', title: 'Meu Perfil' },
 };
 
 /** Usado só até a sessão carregar; depois a casca mostra o usuário logado. */
 const FALLBACK_USER: SidebarUser = { name: '', role: '', email: '' };
+
+const resolveProfileRole = (userRole: string | undefined): SidebarRole => {
+  if (userRole === 'COMPANY') return 'company';
+  if (userRole === 'ADMIN') return 'admin';
+  return 'student';
+};
 
 export const Profile = () => {
   const navigate = useNavigate();
@@ -31,7 +39,7 @@ export const Profile = () => {
   const { profile, status, errorMessage, reload, setProfile } = useProfile();
   const { toast, isOpen, showToast, dismissToast } = useToast();
 
-  const role = user?.role === 'COMPANY' ? 'company' : 'student';
+  const role = resolveProfileRole(user?.role);
   const sidebarRole: SidebarRole = user ? toSidebarRole(user.role) : role;
   const copy = PAGE_COPY[role];
   const menuItems = SIDEBAR_MENU_PRESETS[sidebarRole].map((item) => ({
@@ -76,7 +84,9 @@ export const Profile = () => {
             <ProfileDataCard profile={profile} onSaved={handleSaved} onNotify={showToast} />
             <ChangePasswordCard onNotify={showToast} />
           </div>
-          {profile.editable ? <DangerZone onDeactivated={handleDeactivated} /> : null}
+          {profile.editable && profile.profile !== 'ADMIN' ? (
+            <DangerZone onDeactivated={handleDeactivated} />
+          ) : null}
         </div>
       ) : null}
 

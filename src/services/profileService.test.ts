@@ -39,6 +39,8 @@ describe('profileService', () => {
       companyName: null,
       cnpj: null,
       avatarUrl: null,
+      headline: null,
+      bio: null,
     });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
