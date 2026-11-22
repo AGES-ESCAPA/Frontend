@@ -46,37 +46,41 @@
   min-width: 0;
 }
 
-.typeFilter,
-.statusFilter,
 .search {
   flex: 0 1 14rem;
   width: 14rem;
   min-width: 0;
 }
 
-.typeFilter > div,
-.statusFilter > div,
 .search > div {
   min-height: var(--space-10);
+  padding-inline: var(--space-3);
   background-color: var(--color-primary-700);
   border-color: transparent;
   border-radius: var(--radius-lg);
 }
 
-.search > div {
-  padding-inline: var(--space-3);
-}
-
-.typeFilter select,
-.statusFilter select,
 .search input {
   min-width: 0;
   font-size: var(--text-body-4);
 }
 
-.typeFilter select,
-.statusFilter select {
-  padding-block: var(--space-2);
+.inlineFilters {
+  flex: 1;
+  min-width: 0;
+  max-width: 28rem;
+}
+
+.inlineFilters > div:first-child {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.inlineFilters > div:first-child > label {
+  min-height: var(--space-10);
+}
+
+.inlineFilters select {
+  font-size: var(--text-body-4);
 }
 
 .footerText {
@@ -325,29 +329,18 @@
   outline-offset: var(--space-1);
 }
 
-.details {
-  display: grid;
-  gap: var(--space-4);
-  margin: 0;
+.iconButton.blockButton {
+  color: var(--color-error-300);
 }
 
-.detailRow {
-  display: grid;
-  gap: var(--space-1);
+.iconButton.blockButton:hover,
+.iconButton.blockButton:focus-visible {
+  background-color: color-mix(in srgb, var(--color-error-300) 16%, transparent);
+  color: var(--color-error-200);
 }
 
-.details dt {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-5);
-  line-height: var(--text-body-5--line-height);
-}
-
-.details dd {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
+.iconButton.blockButton:focus-visible {
+  outline-color: var(--color-error-300);
 }
 
 .loading {
@@ -433,8 +426,7 @@
     flex-direction: column;
   }
 
-  .typeFilter,
-  .statusFilter,
+  .inlineFilters,
   .search {
     flex: 1 1 auto;
     width: 100%;
@@ -474,8 +466,7 @@
     font-size: var(--text-h5);
   }
 
-  .typeFilter > div,
-  .statusFilter > div,
+  .inlineFilters > div:first-child > label,
   .search > div {
     min-height: var(--space-12);
   }
