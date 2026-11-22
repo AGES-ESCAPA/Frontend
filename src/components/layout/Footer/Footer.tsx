@@ -16,7 +16,6 @@ type FooterLink = {
 
 const platformLinks: FooterLink[] = [
   { label: 'Minha Conta', href: '/login' },
-  { label: 'Certificados', href: '/certificados' },
   { label: 'Suporte', href: 'https://wa.me/555181046948' },
 ];
 
@@ -72,10 +71,6 @@ export const Footer = ({
           <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
           <p className={styles.brandName}>ESCAPA Academy</p>
           <p className={styles.brandKicker}>Da Pesquisa à Prática</p>
-          <p className={styles.description}>
-            Plataforma de educação premium para profissionais e empresas do turismo e da
-            hospitalidade. Marketing, IA, inovação e muito mais.
-          </p>
         </section>
 
         <nav className={styles.navSection} aria-labelledby="footer-platform-title">
