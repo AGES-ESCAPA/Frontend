@@ -36,9 +36,36 @@
   box-sizing: content-box;
   width: 100%;
   margin-right: -1px;
-  padding: 0 0 0 var(--space-6);
+  padding: 0 var(--space-3) 0 var(--space-6);
+  gap: var(--space-2);
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-info-300);
+}
+
+.collapseToggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.collapseToggle:hover,
+.collapseToggle:focus-visible {
+  background-color: var(--color-surface-overlay);
+  color: var(--color-text-primary);
+  outline: none;
 }
 
 .brand {
@@ -199,15 +226,23 @@
 }
 
 .collapsed .header {
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  height: auto;
+  min-height: var(--header-height);
   margin-right: 0;
-  padding: 0 var(--space-2);
+  padding: var(--space-2);
+  gap: var(--space-1);
 }
 
 .collapsed .brand {
   justify-content: center;
   gap: 0;
+}
+
+.collapsed .collapseToggle {
+  margin-left: 0;
 }
 
 .collapsed .footer {
@@ -232,7 +267,7 @@
   box-shadow: var(--shadow-md);
 }
 
-/* ── Mobile do aluno: a barra vira drawer aberto pelo hambúrguer ── */
+/* ── Mobile/tablet portrait (< 768px): barra vira drawer (todos os perfis) ── */
 .mobileToggle {
   display: none;
 }
@@ -241,7 +276,7 @@
   display: none;
 }
 
-@media (width <= 40rem) {
+@media (width < 48rem) {
   .mobileToggle {
     display: inline-flex;
     align-items: center;
@@ -277,28 +312,30 @@
     cursor: pointer;
   }
 
-  .sidebar[data-role='student'] {
-    width: var(--sidebar-width);
+  .sidebar {
+    width: min(80vw, 20rem);
+    max-width: 100%;
     transform: translateX(-100%);
   }
 
-  .sidebar[data-role='student']:not([data-mobile-open='true']) {
+  .sidebar:not([data-mobile-open='true']) {
     visibility: hidden;
     pointer-events: none;
   }
 
-  .sidebar[data-role='student'][data-mobile-open='true'] {
+  .sidebar[data-mobile-open='true'] {
     transform: translateX(0);
     visibility: visible;
     pointer-events: auto;
     box-shadow: var(--shadow-md);
   }
 
-  .sidebar[data-role='student'] .header {
+  .sidebar .header {
     padding-left: calc(var(--space-12) + var(--space-3));
   }
 
-  .sidebar[data-role='student'] .pinHint {
+  .sidebar .pinHint,
+  .sidebar .collapseToggle {
     display: none;
   }
 }

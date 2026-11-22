@@ -288,6 +288,14 @@
   }
 }
 
+/* Reserva a faixa do hambúrguer do drawer da Sidebar (todos os perfis logados). */
+@media (width < 48rem) {
+  .navbar[data-state='user'],
+  .navbar[data-state='company'] {
+    padding-left: calc(var(--space-12) + var(--space-4));
+  }
+}
+
 @media (width <= 640px) {
   .brand img {
     height: var(--space-6);
@@ -301,8 +309,8 @@
     padding: 0 var(--space-3);
   }
 
-  /* Reserva a faixa do hambúrguer da Sidebar sem esconder perfil ou notificações. */
-  .navbar[data-collapsible='false'] {
+  .navbar[data-state='user'],
+  .navbar[data-state='company'] {
     padding-left: calc(var(--space-12) + var(--space-4));
   }
 
