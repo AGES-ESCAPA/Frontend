@@ -1,11 +1,15 @@
 .footer {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background-color: var(--color-surface);
   color: var(--color-text-muted);
+  overflow-x: clip;
 }
 
 .full {
   padding: var(--space-12) var(--space-12) var(--space-8);
+  box-sizing: border-box;
 }
 
 .compact {
@@ -15,21 +19,23 @@
   justify-content: space-between;
   gap: var(--space-6);
   padding: var(--space-5) var(--space-12);
+  box-sizing: border-box;
 }
 
 .fullContent {
   display: grid;
-  grid-template-columns: minmax(var(--container-sm), 1fr) repeat(
-      2,
-      minmax(var(--container-xs), 0.5fr)
-    );
+  /* Colunas fluidas: 1 → 2 → 3 conforme a largura (min 240px), sem mínimo fixo que estoure a viewport */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
   gap: var(--space-12);
-  max-width: var(--breakpoint-wide);
+  max-width: min(100%, var(--content-max-width));
+  width: 100%;
+  min-width: 0;
   margin: 0 auto;
 }
 
 .brandSection {
-  max-width: var(--container-sm);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .logo {
@@ -98,10 +104,13 @@
 
 .fullBottom {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  max-width: var(--breakpoint-wide);
+  max-width: min(100%, var(--content-max-width));
+  width: 100%;
+  min-width: 0;
   margin: var(--space-12) auto 0;
   padding-top: var(--space-6);
   border-top: 1px solid var(--color-border-subtle);
@@ -112,6 +121,8 @@
   color: var(--color-text-muted);
   font-size: var(--text-body-3);
   line-height: var(--text-body-3--line-height);
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .compactNav .linkList {
@@ -126,18 +137,31 @@
   margin-left: var(--space-2);
 }
 
+/* Tablet: padding menor e confirmação de 2 colunas entre 769px e 1023px */
+@media (width > 48rem) and (width < 64rem) {
+  .full {
+    padding: var(--space-12) var(--space-8) var(--space-8);
+  }
+
+  .fullContent {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-10);
+  }
+
+  .compact {
+    padding: var(--space-5) var(--space-8);
+  }
+}
+
+/* Celular / tablet portrait: empilha em 1 coluna */
 @media (width <= 48rem) {
   .full {
     padding: var(--space-12) var(--space-6) var(--space-8);
   }
 
   .fullContent {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-10);
-  }
-
-  .brandSection {
-    max-width: none;
   }
 
   .logo {
