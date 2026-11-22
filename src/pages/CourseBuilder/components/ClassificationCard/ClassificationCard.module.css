@@ -18,3 +18,7 @@
   font-size: var(--text-body-2);
   line-height: var(--text-body-2--line-height);
 }
+
+.featuredRule {
+  margin-top: var(--space-2);
+}

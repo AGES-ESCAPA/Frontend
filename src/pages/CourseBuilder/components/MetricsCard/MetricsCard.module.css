@@ -4,6 +4,11 @@
   gap: var(--space-5);
 }
 
+.row label,
+.priceField label {
+  white-space: nowrap;
+}
+
 .divider {
   height: 1px;
   background-color: var(--color-border-subtle);

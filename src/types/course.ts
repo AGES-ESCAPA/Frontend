@@ -44,6 +44,8 @@ export interface CoursePayload {
   title: string;
   category: string | null;
   level: CourseDifficulty | null;
+  /** Quando true, o curso publicado aparece em “Cursos em Destaque”. */
+  featured: boolean;
   description: string | null;
   shortDescription: string | null;
   /** String vazia remove a capa na atualização. */
@@ -62,6 +64,7 @@ export interface CourseDetail {
   title: string;
   category: string | null;
   level: string | null;
+  featured: boolean;
   description: string | null;
   shortDescription: string | null;
   thumbnailUrl: string | null;
@@ -224,6 +227,7 @@ export interface PublicCoursesQuery {
   title?: string;
   category?: string;
   level?: string;
+  featured?: boolean;
   page?: number;
   size?: number;
 }

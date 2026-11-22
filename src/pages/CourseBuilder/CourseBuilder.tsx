@@ -5,7 +5,7 @@ import { ArrowLeft, GitBranch, Info, Layers } from 'lucide-react';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
 import { CourseModulesBuilder } from '@components/course';
-import { Badge, Button, Toast } from '@components/ui';
+import { Badge, Button, PageHeader, Toast, type BadgeVariant } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useCourseForm } from '@hooks/useCourseForm';
 import { useToast } from '@hooks/useToast';
@@ -58,6 +58,12 @@ const STATUS_LABELS: Record<CourseStatus, string> = {
   DRAFT: 'Rascunho',
   PUBLISHED: 'Publicado',
   ARCHIVED: 'Arquivado',
+};
+
+const STATUS_VARIANTS: Record<CourseStatus, BadgeVariant> = {
+  DRAFT: 'warning',
+  PUBLISHED: 'success',
+  ARCHIVED: 'neutral',
 };
 
 const TAB_ICON_SIZE = 14;
@@ -128,6 +134,7 @@ export const CourseBuilder = () => {
   const [rulesError, setRulesError] = useState<string | null>(null);
   const [rulesReloadToken, setRulesReloadToken] = useState(0);
   const [notifyStudentsOnPublish, setNotifyStudentsOnPublish] = useState(false);
+  const [featured, setFeatured] = useState(false);
   const [activeTab, setActiveTab] = useState('basics');
   const [isCoverUploading, setIsCoverUploading] = useState(false);
   const coverUploadsRef = useRef(0);
@@ -216,6 +223,7 @@ export const CourseBuilder = () => {
         if (!isCurrent) return;
         replaceValues(courseDetailToFormValues(course));
         setStatus(course.status);
+        setFeatured(Boolean(course.featured));
       })
       .catch((error: unknown) => {
         if (!isCurrent) return;
@@ -505,7 +513,7 @@ export const CourseBuilder = () => {
       let finalCourseId: string;
 
       try {
-        const payload = buildCoursePayload(values, nextStatus);
+        const payload = buildCoursePayload(values, nextStatus, featured);
         const saved =
           courseId === undefined
             ? await createCourse({ ...payload, instructorId: user?.id })
@@ -561,6 +569,7 @@ export const CourseBuilder = () => {
     [
       applyRules,
       courseId,
+      featured,
       navigate,
       notifyStudentsOnPublish,
       persistConfiguration,
@@ -596,10 +605,22 @@ export const CourseBuilder = () => {
           Voltar para Cursos
         </Link>
 
-        <header className={styles.header}>
+        <div className={styles.header}>
           <div className={styles.titleGroup}>
-            <h1 className={styles.title}>Construtor de Curso</h1>
-            <Badge label={STATUS_LABELS[status]} variant="primary" className={styles.statusBadge} />
+            <PageHeader
+              eyebrow="Painel administrativo • Cursos"
+              title={
+                <span className={styles.titleWithBadge}>
+                  Construtor de Curso
+                  <Badge
+                    label={STATUS_LABELS[status]}
+                    variant={STATUS_VARIANTS[status]}
+                    className={styles.statusBadge}
+                  />
+                </span>
+              }
+              className={styles.pageHeader}
+            />
           </div>
 
           <div className={styles.actions}>
@@ -622,7 +643,7 @@ export const CourseBuilder = () => {
               onClick={() => void handleSave('PUBLISHED')}
             />
           </div>
-        </header>
+        </div>
 
         <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
           <Tabs.List className={styles.tabList} aria-label="Seções do construtor de curso">
@@ -688,12 +709,14 @@ export const CourseBuilder = () => {
               <ClassificationCard
                 category={values.category}
                 difficulty={values.difficulty}
+                featured={featured}
                 categoryError={errors.category}
                 difficultyError={errors.difficulty}
                 categories={categories}
                 isCategoriesLoading={isCategoriesLoading}
                 disabled={isFormDisabled}
                 onFieldChange={changeField}
+                onFeaturedChange={setFeatured}
               />
 
               <DescriptionCard
