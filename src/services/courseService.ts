@@ -1,5 +1,6 @@
 import { authenticatedFetch } from '@services/api';
 import type { ApiResponse } from '@services/api';
+import { fetchWithRetry } from '@services/networkResilience';
 import { getApiBaseUrl } from '@services/runtimeEnv';
 import { toApiLevel } from '@utils/mapPublicCourse';
 import type {
@@ -92,7 +93,10 @@ const getCourses = async (
   query: PublicCoursesQuery = {},
   signal?: AbortSignal,
 ): Promise<PublicCoursesPage> => {
-  const response = await fetch(buildPublicCoursesUrl(query), { signal, cache: 'no-store' });
+  const response = await fetchWithRetry(buildPublicCoursesUrl(query), {
+    signal,
+    cache: 'no-store',
+  });
 
   if (!response.ok || !isJsonResponse(response)) {
     throw new Error('Falha ao buscar os cursos publicados');

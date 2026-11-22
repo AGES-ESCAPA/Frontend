@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@contexts/AuthContext';
+import { ConnectivityProvider } from '@contexts/ConnectivityContext';
+import { ConnectionBanner } from '@components/layout/ConnectionBanner/ConnectionBanner';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RegistrationFeedback } from '@routes/RegistrationFeedback';
 
@@ -196,226 +198,229 @@ const PageLoader = () => (
 export const AppRouter = () => {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <RegistrationFeedback />
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Rotas Públicas */}
-            <Route path="/" element={<Home />} />
-            <Route path="/cadastro" element={<RegisterAccountType />} />
-            <Route path="/cadastro/empresa" element={<RegisterCompany />} />
-            <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
-            <Route path="/criar-senha" element={<CreatePassword />} />
-            <Route path="/esqueci-minha-senha" element={<ForgotPassword />} />
-            <Route path="/redefinir-senha" element={<ResetPassword />} />
-            <Route path="/confirmar-email" element={<ConfirmEmailChange />} />
-            <Route
-              path="/meus-cursos"
-              element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <MyCourses />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/cursos/:courseId" element={<CourseDetails />} />
-            <Route
-              path="/aluno/cursos/:courseId/aulas/:lessonId"
-              element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <CoursePlayer />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/checkout/confirmacao"
-              element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'COMPANY']}>
-                  <OrderConfirmation />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresa/checkout/confirmacao"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <OrderConfirmation />
-                </ProtectedRoute>
-              }
-            />
-            {/* Pacote de assentos: só a empresa compra; a quantidade vem em ?quantidade=N. */}
-            <Route
-              path="/checkout/assentos"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <Checkout kind="seats" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresa/checkout/assentos"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <Checkout kind="seats" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/checkout/:courseId"
-              element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'COMPANY']}>
-                  <Checkout />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresa/checkout/:courseId"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <Checkout />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/courses" element={<Courses />} />
-            <Route
-              path="/aluno/cursos"
-              element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <Courses />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresa/cursos"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <Courses />
-                </ProtectedRoute>
-              }
-            />
-            {/* Sidebar/Navbar autenticadas e os botões de Baixar/Compartilhar são
+      <ConnectivityProvider>
+        <AuthProvider>
+          <ConnectionBanner />
+          <RegistrationFeedback />
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Rotas Públicas */}
+              <Route path="/" element={<Home />} />
+              <Route path="/cadastro" element={<RegisterAccountType />} />
+              <Route path="/cadastro/empresa" element={<RegisterCompany />} />
+              <Route path="/cadastro/usuario" element={<RegisterIndividual />} />
+              <Route path="/criar-senha" element={<CreatePassword />} />
+              <Route path="/esqueci-minha-senha" element={<ForgotPassword />} />
+              <Route path="/redefinir-senha" element={<ResetPassword />} />
+              <Route path="/confirmar-email" element={<ConfirmEmailChange />} />
+              <Route
+                path="/meus-cursos"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                    <MyCourses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/cursos/:courseId" element={<CourseDetails />} />
+              <Route
+                path="/aluno/cursos/:courseId/aulas/:lessonId"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                    <CoursePlayer />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/login" element={<Login />} />
+              <Route
+                path="/checkout/confirmacao"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'COMPANY']}>
+                    <OrderConfirmation />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/empresa/checkout/confirmacao"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <OrderConfirmation />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Pacote de assentos: só a empresa compra; a quantidade vem em ?quantidade=N. */}
+              <Route
+                path="/checkout/assentos"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <Checkout kind="seats" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/empresa/checkout/assentos"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <Checkout kind="seats" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/checkout/:courseId"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'COMPANY']}>
+                    <Checkout />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/empresa/checkout/:courseId"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <Checkout />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/courses" element={<Courses />} />
+              <Route
+                path="/aluno/cursos"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                    <Courses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/empresa/cursos"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <Courses />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Sidebar/Navbar autenticadas e os botões de Baixar/Compartilhar são
               decididos pelo isOwner da API, não pela rota (ver DigitalCertificate). */}
-            <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
+              <Route path="/certificados/:verificationCode" element={<DigitalCertificate />} />
 
-            {/* Painel Administrativo */}
-            <Route
-              path="/admin/cursos"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <AdminCourses />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/cursos/novo"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <CourseBuilder />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/cursos/:id/editar"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <CourseBuilder />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/pedidos"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <OrderManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/usuarios"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <UserManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/metricas"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <AdminMetrics />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/perfil"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/*"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <UnderConstruction />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresa/perfil"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresa/colaboradores"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <CompanyEmployees />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresa/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <CompanyDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresa/*"
-              element={
-                <ProtectedRoute allowedRoles={['COMPANY']}>
-                  <UnderConstruction />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/aluno/*"
-              element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <UnderConstruction />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/meu-perfil"
-              element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
+              {/* Painel Administrativo */}
+              <Route
+                path="/admin/cursos"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminCourses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/cursos/novo"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <CourseBuilder />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/cursos/:id/editar"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <CourseBuilder />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/pedidos"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <OrderManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/usuarios"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/metricas"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminMetrics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/perfil"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/*"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <UnderConstruction />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/empresa/perfil"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/empresa/colaboradores"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <CompanyEmployees />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/empresa/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <CompanyDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/empresa/*"
+                element={
+                  <ProtectedRoute allowedRoles={['COMPANY']}>
+                    <UnderConstruction />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/aluno/*"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                    <UnderConstruction />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/meu-perfil"
+                element={
+                  <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* URL inexistente: 404 (rotas futuras conhecidas usam UnderConstruction). */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </AuthProvider>
+              {/* URL inexistente: 404 (rotas futuras conhecidas usam UnderConstruction). */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </AuthProvider>
+      </ConnectivityProvider>
     </BrowserRouter>
   );
 };

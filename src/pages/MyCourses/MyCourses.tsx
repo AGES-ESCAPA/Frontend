@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlayCircle, Clock, CheckCircle, Ban } from 'lucide-react';
 import {
@@ -11,6 +11,8 @@ import {
 } from '@components/ui';
 import { AuthenticatedLayout } from '../../components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '../../components/layout/Sidebar/sidebarMenuPresets';
+import { useNetworkRecovery } from '@contexts/useConnectivity';
+import { getCachedResource, resourceCacheKeys, setCachedResource } from '@services/resourceCache';
 import styles from './MyCourses.module.css';
 import { mockUser } from './mockCourses';
 import { getStudentEnrollments } from '../../services/enrollmentService';
@@ -39,6 +41,8 @@ export const MyCourses = () => {
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const coursesRef = useRef(courses);
+  coursesRef.current = courses;
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -49,46 +53,75 @@ export const MyCourses = () => {
 
   useEffect(() => {
     setPage(0);
-    setCourses([]);
+    const statusParam = activeTab !== 'Todos' ? statusByTab[activeTab] : undefined;
+    const cacheKey = resourceCacheKeys.studentEnrollments({
+      query: debouncedSearchTerm || undefined,
+      status: statusParam,
+      page: 0,
+      size: 10,
+    });
+    const cached = getCachedResource<{ content: StudentCourseCardResponse[]; hasMore: boolean }>(
+      cacheKey,
+    );
+    setCourses(cached?.content ?? []);
+    setHasMore(cached?.hasMore ?? false);
   }, [activeTab, debouncedSearchTerm]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchCourses = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const statusParam = activeTab !== 'Todos' ? statusByTab[activeTab] : undefined;
-        const result = await getStudentEnrollments({
-          query: debouncedSearchTerm || undefined,
-          status: statusParam,
-          page,
-          size: 10,
-        });
+  const fetchCourses = useCallback(
+    async (silent = false, isMounted = () => true) => {
+      const statusParam = activeTab !== 'Todos' ? statusByTab[activeTab] : undefined;
+      const params = {
+        query: debouncedSearchTerm || undefined,
+        status: statusParam,
+        page,
+        size: 10,
+      };
+      const cacheKey = resourceCacheKeys.studentEnrollments({ ...params, page: 0, size: 10 });
 
-        if (isMounted) {
-          if (page === 0) {
-            setCourses(result.content);
-          } else {
-            setCourses((prev) => [...prev, ...result.content]);
-          }
-          setHasMore(result.pageNumber < result.totalPages - 1);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Erro ao carregar cursos');
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
+      if (!silent && isMounted()) {
+        setIsLoading(true);
+        setError(null);
       }
-    };
 
-    fetchCourses();
+      try {
+        const result = await getStudentEnrollments(params);
+        if (!isMounted()) return;
+        if (page === 0) {
+          setCachedResource(cacheKey, {
+            content: result.content,
+            hasMore: result.pageNumber < result.totalPages - 1,
+          });
+          setCourses(result.content);
+        } else {
+          setCourses((prev) => [...prev, ...result.content]);
+        }
+        setHasMore(result.pageNumber < result.totalPages - 1);
+        setError(null);
+      } catch (err) {
+        if (!isMounted()) return;
+        if (page === 0 && coursesRef.current.length > 0) {
+          setError(null);
+          return;
+        }
+        setError(err instanceof Error ? err.message : 'Erro ao carregar cursos');
+      } finally {
+        if (isMounted()) setIsLoading(false);
+      }
+    },
+    [activeTab, debouncedSearchTerm, page],
+  );
 
+  useEffect(() => {
+    let mounted = true;
+    void fetchCourses(false, () => mounted);
     return () => {
-      isMounted = false;
+      mounted = false;
     };
-  }, [activeTab, debouncedSearchTerm, page]);
+  }, [fetchCourses]);
+
+  useNetworkRecovery(() => {
+    void fetchCourses(true);
+  });
 
   const inProgressCourses = courses.filter((c) => c.enrollmentStatus === 'IN_PROGRESS');
   const pendingCourses = courses.filter((c) => c.enrollmentStatus === 'PENDING');

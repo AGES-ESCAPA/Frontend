@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { courseService } from '@services/courseService';
 import type { PublicCourseCard, PublicCoursesQuery } from '@/types/course';
+import { isAbortError } from '@services/networkResilience';
+import { getCachedResource, resourceCacheKeys, setCachedResource } from '@services/resourceCache';
+import { useNetworkRecovery } from '@contexts/useConnectivity';
 
 export type LoadStatus = 'loading' | 'success' | 'error';
 
@@ -26,15 +29,36 @@ const CATALOG_SIZE = 100;
 /** Mantém destaques e catálogo alinhados a publicações/arquivamentos sem F5. */
 const CATALOG_POLL_INTERVAL_MS = 60_000;
 
-const isAbortError = (error: unknown, signal?: AbortSignal): boolean =>
-  Boolean(signal?.aborted) || (error instanceof DOMException && error.name === 'AbortError');
+interface CatalogCachePayload {
+  content: PublicCourseCard[];
+  totalElements: number;
+}
 
 export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResult => {
-  const [featured, setFeatured] = useState<PublicCourseCard[]>([]);
-  const [featuredStatus, setFeaturedStatus] = useState<LoadStatus>('loading');
-  const [catalog, setCatalog] = useState<PublicCourseCard[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [catalogStatus, setCatalogStatus] = useState<LoadStatus>('loading');
+  const [featured, setFeatured] = useState<PublicCourseCard[]>(
+    () => getCachedResource<PublicCourseCard[]>(resourceCacheKeys.publicFeatured()) ?? [],
+  );
+  const [featuredStatus, setFeaturedStatus] = useState<LoadStatus>(() =>
+    getCachedResource(resourceCacheKeys.publicFeatured()) ? 'success' : 'loading',
+  );
+  const [catalog, setCatalog] = useState<PublicCourseCard[]>(
+    () =>
+      getCachedResource<CatalogCachePayload>(resourceCacheKeys.publicCatalog(filters))?.content ??
+      [],
+  );
+  const [totalElements, setTotalElements] = useState(
+    () =>
+      getCachedResource<CatalogCachePayload>(resourceCacheKeys.publicCatalog(filters))
+        ?.totalElements ?? 0,
+  );
+  const [catalogStatus, setCatalogStatus] = useState<LoadStatus>(() =>
+    getCachedResource(resourceCacheKeys.publicCatalog(filters)) ? 'success' : 'loading',
+  );
+
+  const featuredRef = useRef(featured);
+  const catalogRef = useRef(catalog);
+  featuredRef.current = featured;
+  catalogRef.current = catalog;
 
   const loadFeatured = useCallback(async (signal?: AbortSignal, silent = false) => {
     if (!silent) setFeaturedStatus('loading');
@@ -45,10 +69,15 @@ export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResul
         signal,
       );
       if (signal?.aborted) return;
+      setCachedResource(resourceCacheKeys.publicFeatured(), page.content);
       setFeatured(page.content);
       setFeaturedStatus('success');
     } catch (error: unknown) {
       if (isAbortError(error, signal)) return;
+      if (featuredRef.current.length > 0) {
+        setFeaturedStatus('success');
+        return;
+      }
       if (!silent) setFeaturedStatus('error');
     }
   }, []);
@@ -57,10 +86,13 @@ export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResul
     async (signal?: AbortSignal, silent = false) => {
       if (!silent) setCatalogStatus('loading');
 
-      const query: PublicCoursesQuery = {
+      const catalogFilters = {
         title: filters.title,
         category: filters.category,
         level: filters.level,
+      };
+      const query: PublicCoursesQuery = {
+        ...catalogFilters,
         page: 0,
         size: CATALOG_SIZE,
       };
@@ -68,11 +100,19 @@ export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResul
       try {
         const page = await courseService.getCourses(query, signal);
         if (signal?.aborted) return;
+        setCachedResource(resourceCacheKeys.publicCatalog(catalogFilters), {
+          content: page.content,
+          totalElements: page.totalElements,
+        });
         setCatalog(page.content);
         setTotalElements(page.totalElements);
         setCatalogStatus('success');
       } catch (error: unknown) {
         if (isAbortError(error, signal)) return;
+        if (catalogRef.current.length > 0) {
+          setCatalogStatus('success');
+          return;
+        }
         if (!silent) setCatalogStatus('error');
       }
     },
@@ -80,18 +120,39 @@ export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResul
   );
 
   useEffect(() => {
+    const cached = getCachedResource<PublicCourseCard[]>(resourceCacheKeys.publicFeatured());
+    if (cached) {
+      setFeatured(cached);
+      setFeaturedStatus('success');
+    }
     const controller = new AbortController();
-    void loadFeatured(controller.signal);
+    void loadFeatured(controller.signal, Boolean(cached));
     return () => controller.abort();
   }, [loadFeatured]);
 
   useEffect(() => {
+    const catalogFilters = {
+      title: filters.title,
+      category: filters.category,
+      level: filters.level,
+    };
+    const cached = getCachedResource<CatalogCachePayload>(
+      resourceCacheKeys.publicCatalog(catalogFilters),
+    );
+    if (cached) {
+      setCatalog(cached.content);
+      setTotalElements(cached.totalElements);
+      setCatalogStatus('success');
+    } else {
+      setCatalog([]);
+      setTotalElements(0);
+      setCatalogStatus('loading');
+    }
     const controller = new AbortController();
-    void loadCatalog(controller.signal);
+    void loadCatalog(controller.signal, Boolean(cached));
     return () => controller.abort();
-  }, [loadCatalog]);
+  }, [loadCatalog, filters.title, filters.category, filters.level]);
 
-  // Atualiza em segundo plano para qualquer visitante com a página aberta.
   useEffect(() => {
     const refreshInBackground = () => {
       void loadFeatured(undefined, true);
@@ -112,6 +173,11 @@ export const usePublicCourses = (filters: CatalogFilters): UsePublicCoursesResul
       window.clearInterval(intervalId);
     };
   }, [loadCatalog, loadFeatured]);
+
+  useNetworkRecovery(() => {
+    void loadFeatured(undefined, true);
+    void loadCatalog(undefined, true);
+  });
 
   const reloadFeatured = useCallback(() => {
     void loadFeatured();

@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StudentCurriculum } from '@/types/curriculum';
 import { getStudentCurriculum, StudentCurriculumError } from '@services/curriculumService';
+import { clearResourceCache, resourceCacheKeys, setCachedResource } from '@services/resourceCache';
 import { useStudentCurriculum } from './useStudentCurriculum';
 
 vi.mock('@services/curriculumService', async (importOriginal) => ({
@@ -62,6 +63,8 @@ const completedCurriculum: StudentCurriculum = {
 describe('useStudentCurriculum', () => {
   beforeEach(() => {
     getStudentCurriculumMock.mockReset();
+    clearResourceCache();
+    sessionStorage.clear();
   });
 
   it('should load the curriculum of the course', async () => {
@@ -196,5 +199,20 @@ describe('useStudentCurriculum', () => {
     expect(result.current.isLoading).toBe(false);
 
     expect(getStudentCurriculumMock).not.toHaveBeenCalled();
+  });
+
+  it('should keep cached curriculum visible when a network blip happens', async () => {
+    setCachedResource(resourceCacheKeys.studentCurriculum(COURSE_ID), curriculum);
+    getStudentCurriculumMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const { result } = renderHook(() => useStudentCurriculum(COURSE_ID));
+
+    expect(result.current.data).toEqual(curriculum);
+
+    await waitFor(() => expect(getStudentCurriculumMock).toHaveBeenCalled());
+
+    expect(result.current.data).toEqual(curriculum);
+    expect(result.current.error).toBeNull();
+    expect(result.current.isLoading).toBe(false);
   });
 });

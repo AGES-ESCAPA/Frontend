@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { courseService } from '@services/courseService';
+import { clearResourceCache } from '@services/resourceCache';
 import type { PublicCourseCard, PublicCoursesPage } from '@/types/course';
 import { usePublicCourses } from './usePublicCourses';
 
@@ -38,6 +39,8 @@ const page: PublicCoursesPage = {
 describe('usePublicCourses', () => {
   beforeEach(() => {
     getCoursesMock.mockReset();
+    clearResourceCache();
+    sessionStorage.clear();
   });
 
   it('should load featured and catalog courses from the service', async () => {

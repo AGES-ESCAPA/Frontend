@@ -1,10 +1,15 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authenticatedFetch, authHeaders, setUnauthorizedHandler } from './api';
 
 describe('authenticatedFetch', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   afterEach(() => {
     localStorage.clear();
     setUnauthorizedHandler(null);
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -47,5 +52,30 @@ describe('authenticatedFetch', () => {
     await authenticatedFetch('/student/enrollments');
 
     expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it('retries a GET after a transient network failure', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({ status: 200 });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = authenticatedFetch('/student/enrollments');
+    await vi.advanceTimersByTimeAsync(200);
+    const response = await promise;
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry a POST after a network failure', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      authenticatedFetch('/student/lessons/complete', { method: 'POST', body: '{}' }),
+    ).rejects.toThrow('Failed to fetch');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
