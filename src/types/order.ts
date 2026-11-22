@@ -18,7 +18,7 @@ export interface CreateOrderPayload {
   courseId?: string;
   /** Obrigatório em compra de assentos (só empresa). */
   seatsQuantity?: number;
-  paymentMethod: 'CARD';
+  paymentMethod: PaymentMethod;
   installments: number;
 }
 

@@ -213,20 +213,15 @@ describe('Checkout', () => {
     expect(getPublicCourseByIdMock).toHaveBeenCalledWith(COURSE_ID, expect.any(AbortSignal));
   });
 
-  it('should display the credit card form without a payment method selector', async () => {
+  it('should display the payment method selector with card selected by default', async () => {
     renderCheckout();
 
     await screen.findByLabelText('Número do cartão');
 
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
-
+    expect(screen.getByRole('radio', { name: 'Cartão de Crédito' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'PIX' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Boleto' })).toBeInTheDocument();
     expect(screen.getByLabelText('Nome impresso no cartão')).toBeInTheDocument();
-
-    expect(screen.getByLabelText('Número do cartão')).toBeInTheDocument();
-
-    expect(screen.queryByText(/pix/i)).not.toBeInTheDocument();
-
-    expect(screen.queryByText(/boleto/i)).not.toBeInTheDocument();
   });
 
   it('should only enable the pay button when the card form is valid', async () => {
