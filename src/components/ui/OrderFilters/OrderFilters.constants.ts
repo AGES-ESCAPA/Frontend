@@ -19,15 +19,21 @@ export const ORDER_TYPE_LABELS: Record<OrderType, string> = {
 /** Texto exibido enquanto o filtro está sem valor. */
 export const ALL_LABEL = 'Todos';
 
-export const ORDER_TYPE_FILTER_OPTIONS = ORDER_TYPES.map((type) => ({
-  value: type,
-  label: ORDER_TYPE_LABELS[type],
-}));
+export const ORDER_TYPE_FILTER_OPTIONS = [
+  { value: '' as const, label: ALL_LABEL },
+  ...ORDER_TYPES.map((type) => ({
+    value: type,
+    label: ORDER_TYPE_LABELS[type],
+  })),
+];
 
-export const ORDER_STATUS_FILTER_OPTIONS = ORDER_STATUSES.map((status) => ({
-  value: status,
-  label: ORDER_STATUS_LABELS[status],
-}));
+export const ORDER_STATUS_FILTER_OPTIONS = [
+  { value: '' as const, label: ALL_LABEL },
+  ...ORDER_STATUSES.map((status) => ({
+    value: status,
+    label: ORDER_STATUS_LABELS[status],
+  })),
+];
 
 /** Cada filtro vazio ('') significa "sem filtro" e não é enviado ao backend. */
 export interface OrderFiltersValue {

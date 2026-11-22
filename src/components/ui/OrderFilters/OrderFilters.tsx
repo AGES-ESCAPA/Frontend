@@ -122,7 +122,10 @@ export const OrderFilters = ({
     };
   }, [isPeriodOpen]);
 
-  const courseOptions = courses.map((course) => ({ value: course.id, label: course.name }));
+  const courseOptions = [
+    { value: '', label: ALL_LABEL },
+    ...courses.map((course) => ({ value: course.id, label: course.name })),
+  ];
 
   const handleDate = (field: 'startDate' | 'endDate', date: string) => {
     const next = { ...draft, [field]: date };
@@ -154,13 +157,12 @@ export const OrderFilters = ({
             className={styles.selectControl}
             value={value.type}
             options={ORDER_TYPE_FILTER_OPTIONS}
-            placeholder={ALL_LABEL}
-            onChange={(e) => {
-              const selected = ORDER_TYPE_FILTER_OPTIONS.find(
-                (option) => option.value === e.target.value,
-              );
-              if (selected) onChange({ ...value, type: selected.value });
-            }}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                type: e.target.value as OrderFiltersValue['type'],
+              })
+            }
           />
         </label>
 
@@ -170,13 +172,12 @@ export const OrderFilters = ({
             className={styles.selectControl}
             value={value.status}
             options={ORDER_STATUS_FILTER_OPTIONS}
-            placeholder={ALL_LABEL}
-            onChange={(e) => {
-              const selected = ORDER_STATUS_FILTER_OPTIONS.find(
-                (option) => option.value === e.target.value,
-              );
-              if (selected) onChange({ ...value, status: selected.value });
-            }}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                status: e.target.value as OrderFiltersValue['status'],
+              })
+            }
           />
         </label>
 
@@ -186,7 +187,6 @@ export const OrderFilters = ({
             className={styles.selectControl}
             value={value.courseId}
             options={courseOptions}
-            placeholder={ALL_LABEL}
             onChange={(e) => onChange({ ...value, courseId: e.target.value })}
           />
         </label>
