@@ -72,7 +72,7 @@ describe('UserManagement', () => {
     expect(screen.getByText('rh@vistamar.com.br')).toBeInTheDocument();
     expect(screen.getAllByText('Empresa').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Ativo').length).toBeGreaterThan(0);
-    expect(screen.getByText('Inativo')).toBeInTheDocument();
+    expect(screen.getAllByText('Inativo').length).toBeGreaterThan(0);
   });
 
   it('marks Usuários as the menu link for this page', () => {
@@ -155,6 +155,18 @@ describe('UserManagement', () => {
     const summary = within(screen.getByRole('region', { name: 'Resumo dos usuários' }));
     expect(summary.getByText('4')).toBeInTheDocument();
     expect(summary.getAllByText('1')).toHaveLength(4);
+  });
+
+  it('filters the list by status', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.selectOptions(screen.getByLabelText('Status do usuário'), 'INACTIVE');
+
+    expect(screen.getByText('Pousada Vista Mar')).toBeInTheDocument();
+    expect(screen.queryByText('Ana Paula Ferreira')).not.toBeInTheDocument();
+    expect(screen.queryByText('Admin Escapa')).not.toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1 de 1 usuários')).toBeInTheDocument();
   });
 
   it('paginates the loaded users', async () => {

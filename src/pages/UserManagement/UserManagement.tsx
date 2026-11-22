@@ -24,6 +24,13 @@ const USER_TYPE_OPTIONS: readonly SelectInputOption[] = [
   { value: 'ADMIN', label: 'Admin' },
 ];
 
+const USER_STATUS_OPTIONS: readonly SelectInputOption[] = [
+  { value: '', label: 'Todos os status' },
+  { value: 'ACTIVE', label: 'Ativo' },
+  { value: 'INACTIVE', label: 'Inativo' },
+  { value: 'PENDING', label: 'Pendente' },
+];
+
 const USER_TYPE_LABELS: Record<string, string> = {
   STUDENT: 'Aluno',
   COMPANY: 'Empresa',
@@ -112,6 +119,7 @@ export const UserManagement = () => {
   const [search, setSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [userType, setUserType] = useState('');
+  const [userStatus, setUserStatus] = useState('');
   const [page, setPage] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
@@ -121,9 +129,10 @@ export const UserManagement = () => {
     const term = searchTerm.trim().toLowerCase();
     return users.filter((user) => {
       const typeMatches = userType === '' || userTypeKey(user.userType) === userType;
-      return typeMatches && matchesSearch(user, term);
+      const statusMatches = userStatus === '' || userStatusKey(user.status) === userStatus;
+      return typeMatches && statusMatches && matchesSearch(user, term);
     });
-  }, [users, searchTerm, userType]);
+  }, [users, searchTerm, userType, userStatus]);
 
   const totalElements = filteredUsers.length;
   const totalPages = Math.ceil(totalElements / PAGE_SIZE);
@@ -151,6 +160,11 @@ export const UserManagement = () => {
 
   const handleTypeChange = (nextType: string) => {
     setUserType(nextType);
+    setPage(0);
+  };
+
+  const handleStatusChange = (nextStatus: string) => {
+    setUserStatus(nextStatus);
     setPage(0);
   };
 
@@ -270,6 +284,14 @@ export const UserManagement = () => {
                 value={userType}
                 options={USER_TYPE_OPTIONS}
                 onChange={(event) => handleTypeChange(event.target.value)}
+              />
+            </div>
+            <div className={styles.statusFilter}>
+              <SelectInput
+                aria-label="Status do usuário"
+                value={userStatus}
+                options={USER_STATUS_OPTIONS}
+                onChange={(event) => handleStatusChange(event.target.value)}
               />
             </div>
             <div className={styles.search}>
