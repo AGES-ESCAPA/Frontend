@@ -144,7 +144,7 @@ export const ConfirmEmailChange = () => {
 
   return (
     <div className={styles.page}>
-      <Navbar />
+      <Navbar state="register" />
       <main className={styles.main}>
         <div className={styles.panel}>
           <PageHeader
@@ -155,7 +155,7 @@ export const ConfirmEmailChange = () => {
           {content}
         </div>
       </main>
-      <Footer />
+      <Footer variant="compact" />
 
       <Toast
         open={toastOpen}
