@@ -350,7 +350,7 @@ export const CompanyEmployees = () => {
         <header className={styles.heading}>
           <div>
             <p className={styles.eyebrow}>Painel corporativo</p>
-            <h1>Gestão de Funcionários</h1>
+            <h1>Gestão de Colaboradores</h1>
           </div>
           <Button
             type="button"

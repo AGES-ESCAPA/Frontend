@@ -72,10 +72,10 @@ describe('EmployeeTable', () => {
 
       expect(headers).toHaveLength(5);
       expect(headers.map((header) => header.textContent)).toEqual([
-        'Nome',
+        'Colaborador',
         'E-mail',
         'Cursos atribuídos',
-        'Status do acesso',
+        'Status',
         'Ações',
       ]);
     });
