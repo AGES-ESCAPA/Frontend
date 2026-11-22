@@ -379,6 +379,7 @@ export const UserManagement = () => {
                 value={search}
                 onChange={setSearch}
                 onSearch={handleSearch}
+                size="sm"
                 placeholder="Buscar usuário"
                 aria-label="Buscar usuário"
               />

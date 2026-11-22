@@ -84,6 +84,7 @@ export interface AdminCourseListItem {
   status: CourseStatus;
   majorVersion: number;
   minorVersion: number;
+  instructorName: string | null;
 }
 
 /** Linha pronta para a tabela da Gestão de Cursos. */
@@ -95,6 +96,7 @@ export interface AdminCourseRow {
   price: number;
   status: CourseStatus;
   version: string;
+  instructorName: string | null;
 }
 
 export type LessonType = 'video' | 'text' | 'quiz';

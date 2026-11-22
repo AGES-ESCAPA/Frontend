@@ -67,6 +67,12 @@
   color: var(--color-neutral-500);
 }
 
+.searchBar.sm .input,
+.searchBar.sm .input::placeholder {
+  font-size: var(--text-body-3);
+  line-height: var(--text-body-3--line-height);
+}
+
 .searchBar.light .input::placeholder {
   color: var(--color-neutral-600);
 }

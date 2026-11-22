@@ -78,7 +78,8 @@ const matchesSearch = (course: AdminCourseRow, term: string): boolean => {
   return (
     course.title.toLowerCase().includes(normalized) ||
     course.code.toLowerCase().includes(normalized) ||
-    (course.category?.toLowerCase().includes(normalized) ?? false)
+    (course.category?.toLowerCase().includes(normalized) ?? false) ||
+    (course.instructorName?.toLowerCase().includes(normalized) ?? false)
   );
 };
 
@@ -88,6 +89,7 @@ export const AdminCourses = () => {
   const { toast, isOpen, showToast, dismissToast } = useToast();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [instructorFilter, setInstructorFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [pendingAction, setPendingAction] = useState<PendingCourseAction | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -115,7 +117,26 @@ export const AdminCourses = () => {
     return [ALL_OPTION, ...unique.map((category) => ({ value: category, label: category }))];
   }, [courses]);
 
+  const instructorOptions = useMemo<readonly SelectInputOption[]>(() => {
+    const unique = Array.from(
+      new Set(
+        courses
+          .map((course) => course.instructorName?.trim())
+          .filter((instructor): instructor is string => Boolean(instructor)),
+      ),
+    ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    return [ALL_OPTION, ...unique.map((instructor) => ({ value: instructor, label: instructor }))];
+  }, [courses]);
+
   const filterSelects: TableFilterSelectField[] = [
+    {
+      id: 'instructor',
+      label: 'Instrutor',
+      value: instructorFilter,
+      options: instructorOptions,
+      onChange: setInstructorFilter,
+    },
     {
       id: 'category',
       label: 'Categoria',
@@ -136,10 +157,14 @@ export const AdminCourses = () => {
     () =>
       courses.filter((course) => {
         const matchesCategory = categoryFilter === '' || course.category?.trim() === categoryFilter;
+        const matchesInstructor =
+          instructorFilter === '' || course.instructorName?.trim() === instructorFilter;
         const matchesStatus = statusFilter === '' || course.status === statusFilter;
-        return matchesCategory && matchesStatus && matchesSearch(course, search);
+        return (
+          matchesCategory && matchesInstructor && matchesStatus && matchesSearch(course, search)
+        );
       }),
-    [courses, search, categoryFilter, statusFilter],
+    [courses, search, categoryFilter, instructorFilter, statusFilter],
   );
 
   const requestStatusAction = useCallback((course: AdminCourseRow, type: CourseStatusAction) => {
@@ -204,6 +229,11 @@ export const AdminCourses = () => {
         id: 'title',
         header: 'Curso',
         render: (course) => course.title,
+      },
+      {
+        id: 'instructor',
+        header: 'Instrutor',
+        render: (course) => course.instructorName ?? '—',
       },
       {
         id: 'category',
@@ -325,6 +355,7 @@ export const AdminCourses = () => {
                     <SearchBar
                       value={search}
                       onChange={setSearch}
+                      size="sm"
                       placeholder="Buscar curso"
                       aria-label="Buscar curso"
                     />

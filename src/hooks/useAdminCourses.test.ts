@@ -24,6 +24,7 @@ const apiItem: AdminCourseListItem = {
   status: 'PUBLISHED',
   majorVersion: 1,
   minorVersion: 2,
+  instructorName: 'Dra. Mariana',
 };
 
 describe('useAdminCourses', () => {
@@ -49,6 +50,7 @@ describe('useAdminCourses', () => {
         price: 249.9,
         status: 'PUBLISHED',
         version: 'v1.2',
+        instructorName: 'Dra. Mariana',
       },
     ]);
   });

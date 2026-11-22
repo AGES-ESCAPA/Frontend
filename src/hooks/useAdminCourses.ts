@@ -24,6 +24,7 @@ const toRow = (item: AdminCourseListItem): AdminCourseRow => ({
   price: item.price ?? 0,
   status: item.status,
   version: formatCourseVersion(item.majorVersion, item.minorVersion),
+  instructorName: item.instructorName?.trim() || null,
 });
 
 export const useAdminCourses = (): UseAdminCoursesResult => {

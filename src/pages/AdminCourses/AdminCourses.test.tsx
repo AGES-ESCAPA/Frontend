@@ -22,6 +22,7 @@ const COURSES: AdminCourseRow[] = [
     price: 249.9,
     status: 'PUBLISHED',
     version: 'v1.2',
+    instructorName: 'Dra. Mariana',
   },
   {
     id: 'e0000000-0000-4000-e000-000000000002',
@@ -31,6 +32,7 @@ const COURSES: AdminCourseRow[] = [
     price: 329.9,
     status: 'PUBLISHED',
     version: 'v2.0',
+    instructorName: 'Paulo Henrique',
   },
   {
     id: 'e0000000-0000-4000-e000-000000000003',
@@ -40,6 +42,7 @@ const COURSES: AdminCourseRow[] = [
     price: 189.9,
     status: 'DRAFT',
     version: 'v0.1',
+    instructorName: 'Dra. Mariana',
   },
 ];
 
@@ -92,10 +95,13 @@ describe('AdminCourses', () => {
     const table = screen.getByRole('table', { name: 'Cursos cadastrados' });
     expect(table).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Curso' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Instrutor' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Categoria' })).toBeInTheDocument();
     expect(within(table).getByText('Atendimento de Excelencia em Hospedagem')).toBeInTheDocument();
     expect(within(table).getByText('Gestao de Reservas e Overbooking')).toBeInTheDocument();
     expect(within(table).getByText('Ingles para Recepcao')).toBeInTheDocument();
+    expect(within(table).getAllByText('Dra. Mariana')).toHaveLength(2);
+    expect(within(table).getByText('Paulo Henrique')).toBeInTheDocument();
     expect(within(table).getByText('Hospitalidade')).toBeInTheDocument();
     expect(within(table).getByText('Gestão')).toBeInTheDocument();
     expect(within(table).getByText('Idiomas')).toBeInTheDocument();
@@ -134,6 +140,18 @@ describe('AdminCourses', () => {
     expect(screen.getByText('Ingles para Recepcao')).toBeInTheDocument();
     expect(screen.queryByText('Atendimento de Excelencia em Hospedagem')).not.toBeInTheDocument();
     expect(screen.queryByText('Gestao de Reservas e Overbooking')).not.toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1 de 3 cursos')).toBeInTheDocument();
+  });
+
+  it('should filter the table by instructor', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.selectOptions(screen.getByLabelText('Instrutor'), 'Paulo Henrique');
+
+    expect(screen.getByText('Gestao de Reservas e Overbooking')).toBeInTheDocument();
+    expect(screen.queryByText('Atendimento de Excelencia em Hospedagem')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ingles para Recepcao')).not.toBeInTheDocument();
     expect(screen.getByText('Mostrando 1 de 3 cursos')).toBeInTheDocument();
   });
 

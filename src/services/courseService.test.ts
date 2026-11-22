@@ -149,6 +149,7 @@ describe('courseService', () => {
               status: 'PUBLISHED',
               majorVersion: 1,
               minorVersion: 2,
+              instructorName: 'Dra. Mariana',
             },
           ],
         }),

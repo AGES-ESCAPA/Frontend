@@ -397,6 +397,7 @@ export const Ordermanagement = () => {
                 value={search}
                 onChange={setSearch}
                 onSearch={handleSearch}
+                size="sm"
                 placeholder="Buscar pedido"
                 aria-label="Buscar pedido"
               />
