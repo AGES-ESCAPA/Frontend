@@ -112,6 +112,19 @@ describe('OrderFilters', () => {
       await userEvent.selectOptions(screen.getByLabelText('Status'), 'REFUNDED');
       expect(onChange).toHaveBeenCalledWith({ ...FILLED, status: 'REFUNDED' });
     });
+
+    it('permite voltar Tipo, Status e Curso para Todos após filtrar', async () => {
+      const { onChange } = setup(FILLED);
+
+      await userEvent.selectOptions(screen.getByLabelText('Tipo'), '');
+      expect(onChange).toHaveBeenLastCalledWith({ ...FILLED, type: '' });
+
+      await userEvent.selectOptions(screen.getByLabelText('Status'), '');
+      expect(onChange).toHaveBeenLastCalledWith({ ...FILLED, status: '' });
+
+      await userEvent.selectOptions(screen.getByLabelText('Curso'), '');
+      expect(onChange).toHaveBeenLastCalledWith({ ...FILLED, courseId: '' });
+    });
   });
 
   /*Teste 6*/

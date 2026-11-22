@@ -10,6 +10,7 @@ export interface UseAdminCoursesResult {
   errorMessage: string | null;
   reload: () => void;
   archiveCourse: (courseId: string) => Promise<void>;
+  unarchiveCourse: (courseId: string) => Promise<void>;
 }
 
 const isAbortError = (error: unknown, signal?: AbortSignal): boolean =>
@@ -19,9 +20,11 @@ const toRow = (item: AdminCourseListItem): AdminCourseRow => ({
   id: item.id,
   code: toCourseCode(item.title),
   title: item.title,
+  category: item.category,
   price: item.price ?? 0,
   status: item.status,
   version: formatCourseVersion(item.majorVersion, item.minorVersion),
+  instructorName: item.instructorName?.trim() || null,
 });
 
 export const useAdminCourses = (): UseAdminCoursesResult => {
@@ -59,8 +62,21 @@ export const useAdminCourses = (): UseAdminCoursesResult => {
 
   const archiveCourse = useCallback(async (courseId: string) => {
     await courseService.archiveCourse(courseId);
-    setCourses((current) => current.filter((course) => course.id !== courseId));
+    setCourses((current) =>
+      current.map((course) =>
+        course.id === courseId ? { ...course, status: 'ARCHIVED' } : course,
+      ),
+    );
   }, []);
 
-  return { courses, status, errorMessage, reload, archiveCourse };
+  const unarchiveCourse = useCallback(async (courseId: string) => {
+    await courseService.unarchiveCourse(courseId);
+    setCourses((current) =>
+      current.map((course) =>
+        course.id === courseId ? { ...course, status: 'PUBLISHED' } : course,
+      ),
+    );
+  }, []);
+
+  return { courses, status, errorMessage, reload, archiveCourse, unarchiveCourse };
 };

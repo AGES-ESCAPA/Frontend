@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AuthenticatedLayout } from '@components/layout';
-import { Button, OrderSummary, Toast } from '@components/ui';
+import { Button, OrderSummary, PageHeader, Toast } from '@components/ui';
 import type { OrderBuyer, OrderItem } from '@components/ui';
 import { useCheckoutCourse } from '@hooks/useCheckoutCourse';
 import { useCheckoutLayout } from '@hooks/useCheckoutLayout';
@@ -15,8 +15,8 @@ import type { CreateOrderPayload, OrderConfirmationState } from '@/types/order';
 import type { UserProfile } from '@/types/profile';
 import { getCourseAccessPath } from '@utils/courseAccess';
 import { formatWorkload } from '@utils/formatters';
-import { PaymentPanel } from './components/PaymentPanel';
-import type { PaymentSelection } from './components/PaymentPanel';
+import { PAYMENT_METHOD_SUMMARY_LABELS, PaymentPanel } from './components/PaymentPanel';
+import type { CheckoutPaymentMethod, PaymentSelection } from './components/PaymentPanel';
 import styles from './Checkout.module.css';
 
 export interface CheckoutProps {
@@ -107,9 +107,14 @@ export const Checkout = ({ kind = 'course', summary, onConfirm }: CheckoutProps)
 
   const confirmationPath =
     role === 'company' ? '/empresa/checkout/confirmacao' : '/checkout/confirmacao';
+  const [paymentMethodLabel, setPaymentMethodLabel] = useState(PAYMENT_METHOD_SUMMARY_LABELS.CARD);
 
   const openPurchasedCourse = async () => {
     navigate(await getCourseAccessPath(courseId));
+  };
+
+  const handlePaymentMethodChange = (method: CheckoutPaymentMethod) => {
+    setPaymentMethodLabel(PAYMENT_METHOD_SUMMARY_LABELS[method]);
   };
 
   /**
@@ -171,10 +176,7 @@ export const Checkout = ({ kind = 'course', summary, onConfirm }: CheckoutProps)
 
   return (
     <AuthenticatedLayout role={role} items={menuItems} user={user} notificationsCount={2}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>Pagamento</p>
-        <h1 className={styles.title}>Finalizar Compra</h1>
-      </header>
+      <PageHeader eyebrow="Pagamento" title="Finalizar Compra" className={styles.header} />
 
       {status === 'loading' && (
         <div className={`${styles.grid} ${styles.withSummary}`}>
@@ -216,6 +218,7 @@ export const Checkout = ({ kind = 'course', summary, onConfirm }: CheckoutProps)
             isSubmitting={isSubmitting}
             errorMessage={submitError}
             errorAction={alreadyActiveAction}
+            onPaymentMethodChange={handlePaymentMethodChange}
             onConfirm={(selection) => void handleConfirm(selection)}
           />
           <aside className={styles.summary} aria-label="Resumo do pedido">
@@ -223,7 +226,7 @@ export const Checkout = ({ kind = 'course', summary, onConfirm }: CheckoutProps)
               <OrderSummary
                 item={item}
                 buyer={toBuyer(profile, role)}
-                paymentMethod="Cartão de Crédito"
+                paymentMethod={paymentMethodLabel}
               />
             )}
           </aside>

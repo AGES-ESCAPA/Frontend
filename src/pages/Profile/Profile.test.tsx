@@ -212,7 +212,8 @@ describe('Profile', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Meu Perfil' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Área do Admin • Configurações')).toBeInTheDocument();
+    expect(screen.getByText('Gerencie seus dados cadastrais e segurança')).toBeInTheDocument();
+    expect(screen.getByText(/Painel administrativo • Meu Perfil/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Meu Perfil/ })).toHaveAttribute(
       'aria-current',
       'page',

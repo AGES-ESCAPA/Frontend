@@ -12,6 +12,7 @@ import {
   StudentCurriculumError,
 } from '@services/curriculumService';
 import { getStudentEnrollments } from '@services/enrollmentService';
+import { clearResourceCache } from '@services/resourceCache';
 import { CoursePlayer } from './CoursePlayer';
 
 vi.mock('@/hooks/useStudentLesson', () => ({
@@ -172,6 +173,7 @@ const mockSuccessfulLesson = (currentLesson: Lesson = lesson) => {
 
 describe('CoursePlayer', () => {
   beforeEach(() => {
+    clearResourceCache();
     useStudentLessonMock.mockReset();
     retryMock.mockReset();
     getStudentCurriculumMock.mockReset();

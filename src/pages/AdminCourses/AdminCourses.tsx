@@ -1,19 +1,27 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SquarePen, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, SquarePen } from 'lucide-react';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
 import {
   Badge,
   Button,
   ConfirmDialog,
+  PageHeader,
   ProgressBar,
   SearchBar,
   SumCard,
   Table,
+  TableFilter,
   Toast,
 } from '@components/ui';
-import type { BadgeVariant, TableColumn } from '@components/ui';
+import type {
+  BadgeVariant,
+  ConfirmDialogVariant,
+  SelectInputOption,
+  TableColumn,
+  TableFilterSelectField,
+} from '@components/ui';
 import { useAdminCourses } from '@hooks/useAdminCourses';
 import { useToast } from '@hooks/useToast';
 import { formatCurrency } from '@utils/formatters';
@@ -24,6 +32,13 @@ const ADMIN_USER: SidebarUser = {
   name: 'Admin',
   role: 'Administrador',
   email: 'admin@email.com',
+};
+
+type CourseStatusAction = 'archive' | 'unarchive';
+
+type PendingCourseAction = {
+  course: AdminCourseRow;
+  type: CourseStatusAction;
 };
 
 const STATUS_LABELS: Record<CourseStatus, string> = {
@@ -37,6 +52,15 @@ const STATUS_VARIANTS: Record<CourseStatus, BadgeVariant> = {
   PUBLISHED: 'success',
   ARCHIVED: 'neutral',
 };
+
+const ALL_OPTION: SelectInputOption = { value: '', label: 'Todos' };
+
+const STATUS_FILTER_OPTIONS: readonly SelectInputOption[] = [
+  ALL_OPTION,
+  { value: 'DRAFT', label: STATUS_LABELS.DRAFT },
+  { value: 'PUBLISHED', label: STATUS_LABELS.PUBLISHED },
+  { value: 'ARCHIVED', label: STATUS_LABELS.ARCHIVED },
+];
 
 const ACTION_ICON_SIZE = 16;
 
@@ -53,16 +77,22 @@ const matchesSearch = (course: AdminCourseRow, term: string): boolean => {
 
   return (
     course.title.toLowerCase().includes(normalized) ||
-    course.code.toLowerCase().includes(normalized)
+    course.code.toLowerCase().includes(normalized) ||
+    (course.category?.toLowerCase().includes(normalized) ?? false) ||
+    (course.instructorName?.toLowerCase().includes(normalized) ?? false)
   );
 };
 
 export const AdminCourses = () => {
-  const { courses, status, errorMessage, reload, archiveCourse } = useAdminCourses();
+  const { courses, status, errorMessage, reload, archiveCourse, unarchiveCourse } =
+    useAdminCourses();
   const { toast, isOpen, showToast, dismissToast } = useToast();
   const [search, setSearch] = useState('');
-  const [courseToDelete, setCourseToDelete] = useState<AdminCourseRow | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [instructorFilter, setInstructorFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [pendingAction, setPendingAction] = useState<PendingCourseAction | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const menuItems = useMemo(
     () => SIDEBAR_MENU_PRESETS.admin.map((item, index) => ({ ...item, active: index === 0 })),
@@ -75,54 +105,141 @@ export const AdminCourses = () => {
   const averagePrice =
     totalCount === 0 ? 0 : courses.reduce((sum, course) => sum + course.price, 0) / totalCount;
 
+  const categoryOptions = useMemo<readonly SelectInputOption[]>(() => {
+    const unique = Array.from(
+      new Set(
+        courses
+          .map((course) => course.category?.trim())
+          .filter((category): category is string => Boolean(category)),
+      ),
+    ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    return [ALL_OPTION, ...unique.map((category) => ({ value: category, label: category }))];
+  }, [courses]);
+
+  const instructorOptions = useMemo<readonly SelectInputOption[]>(() => {
+    const unique = Array.from(
+      new Set(
+        courses
+          .map((course) => course.instructorName?.trim())
+          .filter((instructor): instructor is string => Boolean(instructor)),
+      ),
+    ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    return [ALL_OPTION, ...unique.map((instructor) => ({ value: instructor, label: instructor }))];
+  }, [courses]);
+
+  const filterSelects: TableFilterSelectField[] = [
+    {
+      id: 'instructor',
+      label: 'Instrutor',
+      value: instructorFilter,
+      options: instructorOptions,
+      onChange: setInstructorFilter,
+    },
+    {
+      id: 'category',
+      label: 'Categoria',
+      value: categoryFilter,
+      options: categoryOptions,
+      onChange: setCategoryFilter,
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      value: statusFilter,
+      options: STATUS_FILTER_OPTIONS,
+      onChange: setStatusFilter,
+    },
+  ];
+
   const visibleCourses = useMemo(
-    () => courses.filter((course) => matchesSearch(course, search)),
-    [courses, search],
+    () =>
+      courses.filter((course) => {
+        const matchesCategory = categoryFilter === '' || course.category?.trim() === categoryFilter;
+        const matchesInstructor =
+          instructorFilter === '' || course.instructorName?.trim() === instructorFilter;
+        const matchesStatus = statusFilter === '' || course.status === statusFilter;
+        return (
+          matchesCategory && matchesInstructor && matchesStatus && matchesSearch(course, search)
+        );
+      }),
+    [courses, search, categoryFilter, instructorFilter, statusFilter],
   );
 
-  const requestDelete = useCallback((course: AdminCourseRow) => {
-    setCourseToDelete(course);
+  const requestStatusAction = useCallback((course: AdminCourseRow, type: CourseStatusAction) => {
+    setPendingAction({ course, type });
   }, []);
 
-  const handleDeleteDialogChange = useCallback(
+  const handleConfirmDialogChange = useCallback(
     (open: boolean) => {
-      if (!open && !isDeleting) {
-        setCourseToDelete(null);
+      if (!open && !isConfirming) {
+        setPendingAction(null);
       }
     },
-    [isDeleting],
+    [isConfirming],
   );
 
-  const handleConfirmDelete = useCallback(async () => {
-    if (!courseToDelete) return;
+  const handleConfirmStatusAction = useCallback(async () => {
+    if (!pendingAction) return;
 
-    setIsDeleting(true);
+    const { course, type } = pendingAction;
+    setIsConfirming(true);
     try {
-      await archiveCourse(courseToDelete.id);
-      showToast('success', 'Curso arquivado', `${courseToDelete.title} saiu do catálogo ativo.`);
-      setCourseToDelete(null);
+      if (type === 'archive') {
+        await archiveCourse(course.id);
+        showToast('success', 'Curso arquivado', `${course.title} saiu do catálogo ativo.`);
+      } else {
+        await unarchiveCourse(course.id);
+        showToast(
+          'success',
+          'Curso desarquivado',
+          `${course.title} voltou ao catálogo como publicado.`,
+        );
+      }
+      setPendingAction(null);
     } catch (error: unknown) {
       showToast(
         'error',
-        'Não foi possível arquivar o curso',
+        type === 'archive'
+          ? 'Não foi possível arquivar o curso'
+          : 'Não foi possível desarquivar o curso',
         error instanceof Error ? error.message : undefined,
       );
     } finally {
-      setIsDeleting(false);
+      setIsConfirming(false);
     }
-  }, [archiveCourse, courseToDelete, showToast]);
+  }, [archiveCourse, pendingAction, showToast, unarchiveCourse]);
+
+  const confirmDialogVariant: ConfirmDialogVariant =
+    pendingAction?.type === 'unarchive' ? 'success' : 'danger';
+  const confirmDialogTitle =
+    pendingAction?.type === 'unarchive' ? 'Desarquivar curso?' : 'Arquivar curso?';
+  const confirmDialogLabel =
+    pendingAction?.type === 'unarchive' ? 'Desarquivar curso' : 'Arquivar curso';
+  const confirmDialogDescription = pendingAction
+    ? pendingAction.type === 'unarchive'
+      ? `Esta ação desarquivará o curso “${pendingAction.course.title}” e o publicará novamente no catálogo.`
+      : `Esta ação arquivará o curso “${pendingAction.course.title}”. Ele sairá do catálogo ativo e poderá ser consultado no filtro Arquivado.`
+    : '';
 
   const columns = useMemo<TableColumn<AdminCourseRow>[]>(
     () => [
       {
-        id: 'code',
+        id: 'title',
         header: 'Curso',
-        render: (course) => <span className={styles.code}>{course.code}</span>,
+        render: (course) => course.title,
       },
       {
-        id: 'title',
+        id: 'instructor',
+        header: 'Instrutor',
+        render: (course) => course.instructorName ?? '—',
+      },
+      {
+        id: 'category',
         header: 'Categoria',
-        render: (course) => course.title,
+        render: (course) =>
+          course.category ? <Badge category={course.category} mini={true} /> : '—',
       },
       {
         id: 'price',
@@ -148,28 +265,45 @@ export const AdminCourses = () => {
       {
         id: 'actions',
         header: 'Ações',
-        render: (course) => (
-          <div className={styles.rowActions}>
-            <Link
-              to={`/admin/cursos/${course.id}/editar`}
-              className={styles.iconButton}
-              aria-label={`Editar ${course.title}`}
-            >
-              <SquarePen size={ACTION_ICON_SIZE} aria-hidden="true" />
-            </Link>
-            <button
-              type="button"
-              className={`${styles.iconButton} ${styles.deleteButton}`}
-              aria-label={`Excluir ${course.title}`}
-              onClick={() => requestDelete(course)}
-            >
-              <Trash2 size={ACTION_ICON_SIZE} aria-hidden="true" />
-            </button>
-          </div>
-        ),
+        render: (course) => {
+          const isArchived = course.status === 'ARCHIVED';
+          return (
+            <div className={styles.rowActions}>
+              <Link
+                to={`/admin/cursos/${course.id}/editar`}
+                className={styles.iconButton}
+                aria-label={`Editar ${course.title}`}
+                title="Editar curso"
+              >
+                <SquarePen size={ACTION_ICON_SIZE} aria-hidden="true" />
+              </Link>
+              {isArchived ? (
+                <button
+                  type="button"
+                  className={`${styles.iconButton} ${styles.unarchiveButton}`}
+                  aria-label={`Desarquivar ${course.title}`}
+                  title="Desarquivar curso"
+                  onClick={() => requestStatusAction(course, 'unarchive')}
+                >
+                  <ArchiveRestore size={ACTION_ICON_SIZE} aria-hidden="true" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={`${styles.iconButton} ${styles.archiveButton}`}
+                  aria-label={`Arquivar ${course.title}`}
+                  title="Arquivar curso"
+                  onClick={() => requestStatusAction(course, 'archive')}
+                >
+                  <Archive size={ACTION_ICON_SIZE} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          );
+        },
       },
     ],
-    [requestDelete],
+    [requestStatusAction],
   );
 
   return (
@@ -185,6 +319,12 @@ export const AdminCourses = () => {
           </section>
         ) : (
           <>
+            <PageHeader
+              eyebrow="Painel administrativo • Cursos"
+              title="Gestão de Cursos"
+              subtitle="Gerencie o catálogo de cursos da plataforma."
+            />
+
             <section className={styles.stats} aria-label="Resumo do catálogo">
               <SumCard
                 label="Total de Cursos"
@@ -203,17 +343,19 @@ export const AdminCourses = () => {
               />
             </section>
 
-            <section className={styles.catalog} aria-labelledby="catalog-heading">
+            <section className={styles.catalog} aria-label="Cursos">
               <div className={styles.toolbar}>
-                <h2 id="catalog-heading" className={styles.heading}>
-                  Cursos
-                </h2>
-
                 <div className={styles.toolbarActions}>
+                  <TableFilter
+                    selects={filterSelects}
+                    showClearButton={false}
+                    className={styles.inlineFilters}
+                  />
                   <div className={styles.search}>
                     <SearchBar
                       value={search}
                       onChange={setSearch}
+                      size="sm"
                       placeholder="Buscar curso"
                       aria-label="Buscar curso"
                     />
@@ -263,19 +405,16 @@ export const AdminCourses = () => {
       </AuthenticatedLayout>
 
       <ConfirmDialog
-        open={courseToDelete !== null}
-        title="Excluir curso?"
-        description={
-          courseToDelete
-            ? `Esta ação deletara o curso “${courseToDelete.title}”. Não é possível desfazer pelo painel após a confirmação.`
-            : ''
-        }
-        confirmLabel="Excluir curso"
-        isConfirming={isDeleting}
+        open={pendingAction !== null}
+        variant={confirmDialogVariant}
+        title={confirmDialogTitle}
+        description={confirmDialogDescription}
+        confirmLabel={confirmDialogLabel}
+        isConfirming={isConfirming}
         onConfirm={() => {
-          void handleConfirmDelete();
+          void handleConfirmStatusAction();
         }}
-        onOpenChange={handleDeleteDialogChange}
+        onOpenChange={handleConfirmDialogChange}
       />
 
       {toast ? (

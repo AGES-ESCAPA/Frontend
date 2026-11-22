@@ -49,29 +49,8 @@
   box-shadow: var(--shadow-glow-primary);
 }
 
-.eyebrow {
-  margin: 0;
-  color: var(--color-info-200);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-.title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-h3);
-  line-height: var(--text-h3--line-height);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.01em;
-}
-
-.description {
-  margin: 0;
+.pageHeader {
+  align-items: center;
   max-width: 36rem;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-1);
-  line-height: var(--text-body-1--line-height);
+  text-align: center;
 }

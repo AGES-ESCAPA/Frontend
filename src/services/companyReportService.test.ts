@@ -102,7 +102,8 @@ describe('companyReportService', () => {
       [403, 'Você não tem permissão para ver o relatório desta empresa.'],
       [502, 'Não foi possível carregar os indicadores da equipe. Tente novamente em instantes.'],
     ])('shows a friendly message for the status %d', async (status, message) => {
-      fetchMock.mockResolvedValueOnce(
+      // Persistente: GETs autenticados reintentam 5xx antes de devolver o status.
+      fetchMock.mockResolvedValue(
         jsonResponse({ status, message: 'Technical message from the server' }, status),
       );
 
@@ -134,9 +135,8 @@ describe('companyReportService', () => {
 
     it('rethrows the abort instead of turning it into a network error', async () => {
       const controller = new AbortController();
-      controller.abort();
       const abortError = new DOMException('Aborted', 'AbortError');
-      fetchMock.mockRejectedValueOnce(abortError);
+      controller.abort(abortError);
 
       await expect(companyReportService.getOverview(controller.signal)).rejects.toBe(abortError);
     });
@@ -197,7 +197,8 @@ describe('companyReportService', () => {
     });
 
     it('uses its own fallback message on an error without body', async () => {
-      fetchMock.mockResolvedValueOnce(new Response(null, { status: 500 }));
+      // Persistente: GETs autenticados reintentam 5xx antes de devolver o status.
+      fetchMock.mockResolvedValue(new Response(null, { status: 500 }));
 
       await expect(
         companyReportService.listEmployeeProgress({ search: '', status: null }),

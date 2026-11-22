@@ -81,7 +81,7 @@ export const mockCourses: Course[] = [
     title: 'Inovação em Destinos Turísticos',
     description:
       'Como criar e gerir destinos turísticos competitivos e inovadores no mercado global',
-    instructor: 'Thamires Magalhães',
+    instructor: 'Thamiris Magalhães',
     progressPercentage: 0,
     durationTime: 840,
     lessonsCount: 32,

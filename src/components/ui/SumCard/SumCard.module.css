@@ -22,9 +22,9 @@
 .value {
   margin: 0;
   color: var(--color-text-primary);
-  font-size: var(--text-h3);
+  font-size: var(--text-h4);
   font-weight: var(--font-weight-bold);
-  line-height: var(--text-h3--line-height);
+  line-height: var(--text-h4--line-height);
 }
 
 .description {
@@ -86,7 +86,7 @@
   }
 
   .value {
-    font-size: var(--text-h4);
-    line-height: var(--text-h4--line-height);
+    font-size: var(--text-h5);
+    line-height: var(--text-h5--line-height);
   }
 }

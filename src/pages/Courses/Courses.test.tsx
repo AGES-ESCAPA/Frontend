@@ -54,7 +54,7 @@ const course: PublicCourseCard = {
   lessonsCount: 38,
   price: 127,
   thumbnailUrl: 'https://cdn.escapa.com/courses/inovacao.jpg',
-  instructor: 'Thamires Magalhães',
+  instructor: 'Thamiris Magalhães',
   ratingAverage: 4.7,
   reviewsCount: 94,
 };
@@ -68,7 +68,7 @@ const companyCourse: CompanyCourse = {
   level: 'AVANCADO',
   durationTime: 840,
   lessonsCount: 38,
-  instructorName: 'Thamires Magalhães',
+  instructorName: 'Thamiris Magalhães',
   rating: 4.7,
   acquiredAt: '2026-10-01',
   employeesWithAccess: 12,
@@ -196,7 +196,7 @@ describe('Courses', () => {
     await waitForCatalog();
 
     expect(screen.getByText('Catálogo')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Cursos em Destaque' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Cursos em Destaque' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Todos os Cursos' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /buscar cursos/i })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: 'Gastronomia' })).toBeInTheDocument();
@@ -206,6 +206,20 @@ describe('Courses', () => {
     expect(screen.getByRole('tablist', { name: 'Categoria' })).toBeInTheDocument();
     expect(screen.getByRole('tablist', { name: 'Nível' })).toBeInTheDocument();
     expect(screen.getByText('0 cursos encontrados')).toBeInTheDocument();
+  });
+
+  it('shows featured courses when the API returns highlighted courses', async () => {
+    getCoursesMock.mockImplementation(async (query) => {
+      if (query?.featured) return pageWithCourse;
+      return emptyPage;
+    });
+
+    renderCourses();
+    await waitForCatalog();
+
+    expect(screen.getByText('Catálogo')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Cursos em Destaque' })).toBeInTheDocument();
+    expect(screen.getAllByText(course.title).length).toBeGreaterThan(0);
   });
 
   it('shows the price on courses the student has not purchased', async () => {

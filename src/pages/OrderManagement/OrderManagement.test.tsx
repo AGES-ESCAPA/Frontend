@@ -9,6 +9,7 @@ import { useAdminOrders } from '@hooks/useAdminOrders';
 import type { UseAdminOrdersResult } from '@hooks/useAdminOrders';
 import type { UseAdminOrderDetailsResult } from '@hooks/useAdminOrderDetails';
 import type { UseAdminOrderStatsResult } from '@hooks/useAdminOrderStats';
+import { adminOrderService } from '@services/adminOrderService';
 import type { AdminOrderDetails, AdminOrderSummary } from '@/types/order';
 import { Ordermanagement } from './OrderManagement';
 
@@ -16,6 +17,16 @@ vi.mock('@hooks/useAdminOrders', () => ({ useAdminOrders: vi.fn() }));
 vi.mock('@hooks/useAdminOrderDetails', () => ({ useAdminOrderDetails: vi.fn() }));
 vi.mock('@hooks/useAdminOrderStats', () => ({ useAdminOrderStats: vi.fn() }));
 vi.mock('@hooks/useAdminCourses', () => ({ useAdminCourses: vi.fn() }));
+vi.mock('@services/adminOrderService', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  adminOrderService: {
+    cancel: vi.fn(),
+    refund: vi.fn(),
+  },
+}));
+
+const cancelMock = vi.mocked(adminOrderService.cancel);
+const refundMock = vi.mocked(adminOrderService.refund);
 
 const useAdminOrdersMock = vi.mocked(useAdminOrders);
 const useAdminOrderDetailsMock = vi.mocked(useAdminOrderDetails);
@@ -97,6 +108,8 @@ const renderPage = () =>
 
 describe('OrderManagement', () => {
   beforeEach(() => {
+    cancelMock.mockReset();
+    refundMock.mockReset();
     useAdminOrdersMock.mockReturnValue({ ...defaultOrdersResult });
     useAdminOrderDetailsMock.mockReturnValue({ ...defaultDetailsResult });
     useAdminOrderStatsMock.mockReturnValue({ ...defaultStatsResult });
@@ -106,6 +119,7 @@ describe('OrderManagement', () => {
       errorMessage: null,
       reload: vi.fn(),
       archiveCourse: vi.fn(),
+      unarchiveCourse: vi.fn(),
     });
   });
 
@@ -130,6 +144,8 @@ describe('OrderManagement', () => {
     const summary = within(screen.getByRole('region', { name: 'Resumo dos pedidos' }));
     expect(summary.getByText(/5\.346,00/)).toBeInTheDocument();
     expect(summary.getByText('18 pedidos ativos')).toBeInTheDocument();
+    expect(summary.getByText('Pedidos Realizados')).toBeInTheDocument();
+    expect(summary.getByText('21')).toBeInTheDocument();
     expect(summary.getByText('18')).toBeInTheDocument();
     expect(summary.getByText('3')).toBeInTheDocument();
   });
@@ -283,5 +299,60 @@ describe('OrderManagement', () => {
     await user.click(screen.getByRole('button', { name: /Ver pedido/i }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('Pedido não encontrado.');
+  });
+
+  it('exposes cancel on approved rows and refund on cancelled rows from the table', () => {
+    useAdminOrdersMock.mockReturnValue({
+      ...defaultOrdersResult,
+      orders: [
+        order,
+        { ...order, id: 'order-2', status: 'CANCELLED', requester: 'Bruno Lima' },
+        { ...order, id: 'order-3', status: 'REFUNDED', requester: 'Carla Dias' },
+      ],
+      totalElements: 3,
+    });
+
+    renderPage();
+
+    expect(screen.getByRole('button', { name: /Cancelar pedido PED-/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Reembolsar pedido PED-/i })).toBeEnabled();
+    expect(screen.getAllByRole('button', { name: /Ver pedido PED-/i })).toHaveLength(3);
+  });
+
+  it('cancels an approved order directly from the table after confirmation', async () => {
+    const user = userEvent.setup();
+    const reload = vi.fn();
+    const reloadStats = vi.fn();
+    useAdminOrdersMock.mockReturnValue({ ...defaultOrdersResult, reload });
+    useAdminOrderStatsMock.mockReturnValue({ ...defaultStatsResult, reload: reloadStats });
+    cancelMock.mockResolvedValue({
+      id: 'order-1',
+      status: 'CANCELLED',
+      statusHistory: [
+        {
+          status: 'APPROVED',
+          changedBy: null,
+          reason: null,
+          createdAt: '2026-08-17T12:00:00',
+        },
+        {
+          status: 'CANCELLED',
+          changedBy: 'admin-1',
+          reason: null,
+          createdAt: '2026-08-18T09:00:00',
+        },
+      ],
+    });
+
+    renderPage();
+    await user.click(screen.getByRole('button', { name: /Cancelar pedido/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Confirmar cancelamento' });
+    await user.click(within(dialog).getByRole('button', { name: 'Confirmar cancelamento' }));
+
+    await waitFor(() => expect(cancelMock).toHaveBeenCalledWith('order-1'));
+    expect(reload).toHaveBeenCalledOnce();
+    expect(reloadStats).toHaveBeenCalledOnce();
+    expect(screen.getByText('Pedido cancelado')).toBeInTheDocument();
   });
 });

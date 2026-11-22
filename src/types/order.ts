@@ -18,7 +18,7 @@ export interface CreateOrderPayload {
   courseId?: string;
   /** Obrigatório em compra de assentos (só empresa). */
   seatsQuantity?: number;
-  paymentMethod: 'CARD';
+  paymentMethod: PaymentMethod;
   installments: number;
 }
 
@@ -92,6 +92,18 @@ export interface AdminOrderStatusChange {
   changedBy: string | null;
   reason: string | null;
   createdAt: string;
+}
+
+/** Resposta de `POST /api/v1/admin/orders/{id}/cancel` e `/refund`. */
+export interface AdminOrderActionResult {
+  id: string;
+  status: AdminOrderStatus;
+  statusHistory: Array<{
+    status: AdminOrderStatus;
+    changedBy: string | null;
+    reason: string | null;
+    createdAt: string;
+  }>;
 }
 
 /** Detalhe de `GET /api/v1/admin/orders/{id}`. */

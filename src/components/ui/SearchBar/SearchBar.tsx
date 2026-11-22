@@ -4,12 +4,16 @@ import styles from './SearchBar.module.css';
 
 export type SearchBarTheme = 'light' | 'dark';
 
+/** `sm` alinha o texto aos itens dos selects da toolbar administrativa (`body-3`). */
+export type SearchBarSize = 'md' | 'sm';
+
 export interface SearchBarProps {
   value: string;
   onChange: (nextValue: string) => void;
   onSearch?: (searchTerm: string) => void;
   placeholder?: string;
   theme?: SearchBarTheme;
+  size?: SearchBarSize;
   'aria-label'?: string;
 }
 
@@ -23,6 +27,7 @@ export const SearchBar = ({
   onSearch,
   placeholder = DEFAULT_PLACEHOLDER,
   theme = 'dark',
+  size = 'md',
   'aria-label': ariaLabel = DEFAULT_ARIA_LABEL,
 }: SearchBarProps) => {
   const timeoutRef = useRef<number | null>(null);
@@ -90,8 +95,9 @@ export const SearchBar = ({
 
   return (
     <div
-      className={`${styles.searchBar} ${styles[theme]}`}
+      className={`${styles.searchBar} ${styles[theme]} ${styles[size]}`}
       data-theme={theme}
+      data-size={size}
       aria-label={ariaLabel}
     >
       <Search className={styles.searchIcon} size={18} strokeWidth={2} aria-hidden="true" />

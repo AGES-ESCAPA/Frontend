@@ -1,0 +1,59 @@
+.banner {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-family-base);
+  font-size: var(--text-body-3);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--text-body-3--line-height);
+  box-shadow: var(--shadow-sm);
+  animation: slide-down var(--transition-base) ease-out;
+}
+
+.offline {
+  color: var(--color-primary-900);
+  background-color: var(--color-warning-100);
+  border-block-end: 1px solid var(--color-warning-300);
+}
+
+.online {
+  color: var(--color-success-500);
+  background-color: var(--color-success-100);
+  border-block-end: 1px solid var(--color-success-300);
+}
+
+.icon {
+  flex-shrink: 0;
+  width: var(--space-5);
+  height: var(--space-5);
+}
+
+.text {
+  margin: 0;
+  text-align: center;
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (width <= 48rem) {
+  .banner {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-body-4);
+  }
+}

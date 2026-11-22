@@ -332,9 +332,12 @@ export const CoursePlayer = () => {
     const showPurchaseUpsell = lesson.isFreeSample && ownsCourse === false && isLessonCompleted;
 
     // Quiz conclui só via submit; sem botão "Marcar como concluída".
+    // Rótulo curto ("Concluir") para caber na barra do player em telas ≤390px;
+    // aria-label mantém o nome acessível completo usado nos testes e leitores de tela.
     const completeButton = !isLessonCompleted && !isQuizLesson && (
       <Button
-        label="Marcar como concluída"
+        label="Concluir"
+        aria-label="Marcar como concluída"
         variant="primary"
         className={`${styles.compactButton} ${styles.completeButton}`}
         icon={<Check size={16} aria-hidden="true" />}

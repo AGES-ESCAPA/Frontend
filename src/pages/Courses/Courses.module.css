@@ -1,35 +1,3 @@
-.pageHeader {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-6);
-  margin-bottom: var(--space-10);
-}
-
-.eyebrow {
-  display: block;
-  margin-bottom: var(--space-2);
-  color: var(--color-info-300);
-  font-size: var(--text-body-4);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-.pageHeader h1 {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-4xl);
-  line-height: var(--leading-tight);
-}
-
-.pageHeader p {
-  max-width: var(--container-lg);
-  margin-top: var(--space-3);
-  color: var(--color-text-muted);
-  font-size: var(--text-body-2);
-}
-
 .adminActions {
   display: flex;
   justify-content: flex-end;
@@ -56,24 +24,6 @@
 
 .section + .section {
   margin-top: var(--space-16);
-}
-
-.catalogEyebrow {
-  margin: 0;
-  color: var(--color-info-200);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-.heading {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-h2);
-  line-height: var(--text-h2--line-height);
-  font-weight: var(--font-weight-bold);
 }
 
 .catalogToolbar {
@@ -304,11 +254,6 @@
 }
 
 @media (width <= 640px) {
-  .heading {
-    font-size: var(--text-h3);
-    line-height: var(--text-h3--line-height);
-  }
-
   .section + .section {
     margin-top: var(--space-12);
   }
@@ -333,14 +278,6 @@
 }
 
 @media (width <= 40rem) {
-  .pageHeader {
-    margin-bottom: var(--space-8);
-  }
-
-  .pageHeader h1 {
-    font-size: var(--text-3xl);
-  }
-
   .courseGrid {
     grid-template-columns: 1fr;
   }

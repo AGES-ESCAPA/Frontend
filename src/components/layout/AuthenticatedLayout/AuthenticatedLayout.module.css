@@ -39,13 +39,14 @@
   padding: 0 var(--space-4);
 }
 
-@media (width <= 40rem) {
+@media (width < 48rem) {
   .main {
     padding: var(--space-5) var(--space-4) var(--space-12);
   }
 
-  /* No mobile do aluno a Sidebar vira drawer; o conteúdo ocupa a largura toda. */
-  .layout:has([data-role='student']) .content {
+  /* Drawer: a Sidebar sai do fluxo; o conteúdo ocupa a largura toda. */
+  .content,
+  .layout:has([data-collapsed='false']) .content {
     width: 100%;
     margin-left: 0;
   }

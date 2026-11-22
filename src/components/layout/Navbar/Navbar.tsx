@@ -100,18 +100,20 @@ export const Navbar = ({
       data-state={state}
       data-collapsible={collapsible}
     >
-      {!isProfile && (
-        <div className={styles.leftGroup}>
-          <a href="/" className={styles.brand} aria-label="ESCAPA Academy, página inicial">
-            <img src={logo} alt="" />
-            <span className={styles.divider} aria-hidden="true" />
-            <span className={styles.brandText}>
-              <span className={styles.context}>Academy</span>
-              <span className={styles.tagline}>Da Pesquisa à Prática</span>
-            </span>
-          </a>
-        </div>
-      )}
+      <div className={styles.leftGroup}>
+        <a href="/" className={styles.brand} aria-label="ESCAPA Academy, página inicial">
+          {!isProfile ? (
+            <>
+              <img src={logo} alt="" />
+              <span className={styles.divider} aria-hidden="true" />
+            </>
+          ) : null}
+          <span className={styles.brandText}>
+            <span className={styles.context}>Academy</span>
+            <span className={styles.tagline}>Da Pesquisa à Prática</span>
+          </span>
+        </a>
+      </div>
 
       {hasMenu && (
         <div className={styles.actions}>

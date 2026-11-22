@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Shapes } from 'lucide-react';
-import { Button, FormField, Panel } from '@components/ui';
+import { Button, Checkbox, FormField, Panel } from '@components/ui';
 import { COURSE_DIFFICULTIES } from '@/types/course';
 import type { CourseFormField } from '@/types/course';
 import { CategoryCombobox } from './CategoryCombobox';
@@ -9,12 +9,14 @@ import styles from './ClassificationCard.module.css';
 export interface ClassificationCardProps {
   category: string;
   difficulty: string;
+  featured: boolean;
   categoryError?: string;
   difficultyError?: string;
   categories: readonly string[];
   isCategoriesLoading?: boolean;
   disabled?: boolean;
   onFieldChange: (field: CourseFormField, value: string) => void;
+  onFeaturedChange: (featured: boolean) => void;
 }
 
 const CATEGORY_ID = 'course-category';
@@ -22,12 +24,14 @@ const CATEGORY_ID = 'course-category';
 const ClassificationCardBase = ({
   category,
   difficulty,
+  featured,
   categoryError,
   difficultyError,
   categories,
   isCategoriesLoading = false,
   disabled = false,
   onFieldChange,
+  onFeaturedChange,
 }: ClassificationCardProps) => (
   <Panel title="Classificação" icon={<Shapes size={22} />} className={styles.panel}>
     <FormField
@@ -71,6 +75,16 @@ const ClassificationCardBase = ({
         ))}
       </div>
     </FormField>
+
+    <div className={styles.featuredRule}>
+      <Checkbox
+        label="Adicionar curso em destaque"
+        hint="Quando publicado, o curso aparece na seção “Cursos em Destaque” do catálogo."
+        checked={featured}
+        disabled={disabled}
+        onChange={(event) => onFeaturedChange(event.target.checked)}
+      />
+    </div>
   </Panel>
 );
 

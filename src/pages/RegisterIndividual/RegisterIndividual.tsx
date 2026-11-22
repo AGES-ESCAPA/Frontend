@@ -3,7 +3,15 @@ import type { FormEvent } from 'react';
 import { ArrowLeft, IdCard, Mail, Phone, User } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Navbar, Footer } from '@components/layout';
-import { Button, FormField, MaskedInput, PasswordInput, TextInput, Toast } from '@components/ui';
+import {
+  Button,
+  FormField,
+  MaskedInput,
+  PageHeader,
+  PasswordInput,
+  TextInput,
+  Toast,
+} from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useToast } from '@hooks/useToast';
 import { AuthServiceError, authService } from '@services/authService';
@@ -186,9 +194,11 @@ export const RegisterIndividual = () => {
             <Link to={authPath('/cadastro', returnTo)} className={styles.back} aria-label="Voltar">
               <ArrowLeft size={18} aria-hidden="true" />
             </Link>
-            <h1 className={styles.title} id="register-individual-title">
-              Cadastro · Aluno individual
-            </h1>
+            <PageHeader
+              title="Cadastro · Aluno individual"
+              titleId="register-individual-title"
+              className={styles.pageHeader}
+            />
           </div>
           <form
             className={styles.form}

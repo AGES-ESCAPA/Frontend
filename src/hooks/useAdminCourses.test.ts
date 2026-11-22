@@ -8,11 +8,13 @@ vi.mock('@services/courseService', () => ({
   courseService: {
     listAdminCourses: vi.fn(),
     archiveCourse: vi.fn(),
+    unarchiveCourse: vi.fn(),
   },
 }));
 
 const listAdminCoursesMock = vi.mocked(courseService.listAdminCourses);
 const archiveCourseMock = vi.mocked(courseService.archiveCourse);
+const unarchiveCourseMock = vi.mocked(courseService.unarchiveCourse);
 
 const apiItem: AdminCourseListItem = {
   id: 'e0000000-0000-4000-e000-000000000001',
@@ -22,12 +24,14 @@ const apiItem: AdminCourseListItem = {
   status: 'PUBLISHED',
   majorVersion: 1,
   minorVersion: 2,
+  instructorName: 'Dra. Mariana',
 };
 
 describe('useAdminCourses', () => {
   beforeEach(() => {
     listAdminCoursesMock.mockReset();
     archiveCourseMock.mockReset();
+    unarchiveCourseMock.mockReset();
   });
 
   it('should map listed courses into table rows', async () => {
@@ -42,9 +46,11 @@ describe('useAdminCourses', () => {
         id: apiItem.id,
         code: 'AE',
         title: apiItem.title,
+        category: 'Hospitalidade',
         price: 249.9,
         status: 'PUBLISHED',
         version: 'v1.2',
+        instructorName: 'Dra. Mariana',
       },
     ]);
   });
@@ -67,7 +73,7 @@ describe('useAdminCourses', () => {
     expect(result.current.courses).toHaveLength(1);
   });
 
-  it('should remove the archived course from the local list', async () => {
+  it('should mark the archived course as ARCHIVED in the local list', async () => {
     listAdminCoursesMock.mockResolvedValue([apiItem]);
     archiveCourseMock.mockResolvedValue(undefined);
 
@@ -79,6 +85,25 @@ describe('useAdminCourses', () => {
     });
 
     expect(archiveCourseMock).toHaveBeenCalledWith(apiItem.id);
-    expect(result.current.courses).toEqual([]);
+    expect(result.current.courses).toEqual([
+      expect.objectContaining({ id: apiItem.id, status: 'ARCHIVED' }),
+    ]);
+  });
+
+  it('should mark the unarchived course as PUBLISHED in the local list', async () => {
+    listAdminCoursesMock.mockResolvedValue([{ ...apiItem, status: 'ARCHIVED' }]);
+    unarchiveCourseMock.mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useAdminCourses());
+    await waitFor(() => expect(result.current.status).toBe('success'));
+
+    await act(async () => {
+      await result.current.unarchiveCourse(apiItem.id);
+    });
+
+    expect(unarchiveCourseMock).toHaveBeenCalledWith(apiItem.id);
+    expect(result.current.courses).toEqual([
+      expect.objectContaining({ id: apiItem.id, status: 'PUBLISHED' }),
+    ]);
   });
 });

@@ -85,7 +85,7 @@ describe('AdminMetrics — integração da US-36', () => {
     renderPage();
     await screen.findByText('68%');
     const navigation = within(
-      screen.getByRole('navigation', { name: 'Navegação do perfil Admin' }),
+      screen.getByRole('navigation', { name: 'Navegação do perfil Administrador' }),
     );
     expect(navigation.getByRole('link', { name: 'Métricas' })).toHaveAttribute(
       'href',
@@ -95,9 +95,7 @@ describe('AdminMetrics — integração da US-36', () => {
       'aria-current',
       'page',
     );
-    expect(navigation.getByRole('link', { name: 'Gestão de Cursos' })).not.toHaveAttribute(
-      'aria-current',
-    );
+    expect(navigation.getByRole('link', { name: 'Cursos' })).not.toHaveAttribute('aria-current');
   });
 
   it('shows five independently labelled skeletons while the overview is pending', () => {

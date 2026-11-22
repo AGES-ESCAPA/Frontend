@@ -44,6 +44,8 @@ export interface CoursePayload {
   title: string;
   category: string | null;
   level: CourseDifficulty | null;
+  /** Quando true, o curso publicado aparece em “Cursos em Destaque”. */
+  featured: boolean;
   description: string | null;
   shortDescription: string | null;
   /** String vazia remove a capa na atualização. */
@@ -62,6 +64,7 @@ export interface CourseDetail {
   title: string;
   category: string | null;
   level: string | null;
+  featured: boolean;
   description: string | null;
   shortDescription: string | null;
   thumbnailUrl: string | null;
@@ -81,6 +84,7 @@ export interface AdminCourseListItem {
   status: CourseStatus;
   majorVersion: number;
   minorVersion: number;
+  instructorName: string | null;
 }
 
 /** Linha pronta para a tabela da Gestão de Cursos. */
@@ -88,9 +92,11 @@ export interface AdminCourseRow {
   id: string;
   code: string;
   title: string;
+  category: string | null;
   price: number;
   status: CourseStatus;
   version: string;
+  instructorName: string | null;
 }
 
 export type LessonType = 'video' | 'text' | 'quiz';
@@ -223,6 +229,7 @@ export interface PublicCoursesQuery {
   title?: string;
   category?: string;
   level?: string;
+  featured?: boolean;
   page?: number;
   size?: number;
 }

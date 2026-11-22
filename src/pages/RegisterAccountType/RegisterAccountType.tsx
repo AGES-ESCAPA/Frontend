@@ -1,7 +1,7 @@
 import { User, Building2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Navbar, Footer } from '@components/layout';
-import { AccountTypeCard } from '@components/ui';
+import { AccountTypeCard, PageHeader } from '@components/ui';
 import { authPath, getAuthReturnTo } from '@utils/authReturnTo';
 import styles from './RegisterAccountType.module.css';
 
@@ -13,12 +13,11 @@ export const RegisterAccountType = () => {
       <Navbar state="register" />
 
       <main className={styles.main}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>Selecione o tipo de cadastro</h1>
-          <p className={styles.subtitle}>
-            Escolha como você deseja se cadastrar para continuar com o processo.
-          </p>
-        </div>
+        <PageHeader
+          className={styles.header}
+          title="Selecione o tipo de cadastro"
+          subtitle="Escolha como você deseja se cadastrar para continuar com o processo."
+        />
 
         <section className={styles.cardsGrid} aria-label="Tipos de cadastro disponíveis">
           <AccountTypeCard

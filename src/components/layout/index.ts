@@ -16,3 +16,4 @@ export type {
 } from './Sidebar';
 export { Navbar } from './Navbar/Navbar';
 export type { NavbarProps, NavbarState, NavbarUser } from './Navbar/Navbar';
+export { ConnectionBanner } from './ConnectionBanner/ConnectionBanner';

@@ -8,7 +8,7 @@ export const SIDEBAR_ICON_SIZE = 20;
 export const SIDEBAR_ROLE_LABELS: Record<SidebarRole, string> = {
   student: 'Aluno',
   company: 'Empresa',
-  admin: 'Admin',
+  admin: 'Administrador',
 };
 
 /**
@@ -58,7 +58,7 @@ export const SIDEBAR_MENU_PRESETS: Record<SidebarRole, SidebarMenuItem[]> = {
   admin: [
     {
       icon: <LayoutDashboard size={SIDEBAR_ICON_SIZE} />,
-      label: 'Gestão de Cursos',
+      label: 'Cursos',
       route: '/admin/cursos',
     },
     {

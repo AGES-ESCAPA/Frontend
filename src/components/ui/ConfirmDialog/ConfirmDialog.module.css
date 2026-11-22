@@ -31,9 +31,17 @@
   width: var(--space-10);
   height: var(--space-10);
   margin-bottom: var(--space-5);
+  border-radius: var(--radius-full);
+}
+
+.iconDanger {
   color: var(--color-error-300);
   background-color: color-mix(in srgb, var(--color-error-400) 28%, transparent);
-  border-radius: var(--radius-full);
+}
+
+.iconSuccess {
+  color: var(--color-success-300);
+  background-color: color-mix(in srgb, var(--color-success-400) 28%, transparent);
 }
 
 .title {
@@ -106,12 +114,25 @@
   border-color: color-mix(in srgb, var(--color-white) 32%, transparent);
 }
 
-.actions .confirmButton {
+.actions .confirmDanger {
   background-color: var(--color-error-300);
   color: var(--color-white);
   border-color: transparent;
 }
 
-.actions .confirmButton:hover:not(:disabled) {
+.actions .confirmDanger:hover:not(:disabled) {
   background-color: var(--color-error-400);
+}
+
+.actions .confirmSuccess {
+  background-color: var(--color-success-400);
+  background-image: none;
+  color: var(--color-white);
+  border-color: transparent;
+}
+
+.actions .confirmSuccess:hover:not(:disabled) {
+  background-color: var(--color-success-300);
+  background-image: none;
+  color: var(--color-primary-900);
 }

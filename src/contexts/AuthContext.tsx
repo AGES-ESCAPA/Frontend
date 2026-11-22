@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { setUnauthorizedHandler } from '@services/api';
 import { AuthServiceError, authService } from '@services/authService';
+import { clearResourceCache } from '@services/resourceCache';
 import type { AuthUser } from '@/types/auth';
 import { AuthContext } from './authContextDefinition';
 import type { AuthContextValue, AuthUserChanges } from './authContextDefinition';
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = useCallback(() => {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);
+    clearResourceCache();
     setExpiresAt(null);
     setUser(null);
   }, []);

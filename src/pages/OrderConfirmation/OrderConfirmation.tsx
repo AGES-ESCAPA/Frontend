@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { CircleCheck } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout } from '@components/layout';
-import { Badge, Button } from '@components/ui';
+import { Badge, Button, PageHeader } from '@components/ui';
 import { useCheckoutLayout } from '@hooks/useCheckoutLayout';
 import type { CheckoutRole } from '@hooks/useCheckoutLayout';
 import { getCourseAccessPath } from '@utils/courseAccess';
@@ -113,10 +113,7 @@ export const OrderConfirmation = () => {
 
   return (
     <AuthenticatedLayout role={role} items={menuItems} user={user} notificationsCount={2}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>Pagamento</p>
-        <h1 className={styles.title}>Compra aprovada!</h1>
-      </header>
+      <PageHeader eyebrow="Pagamento" title="Compra aprovada!" className={styles.header} />
 
       <section className={styles.card} aria-labelledby="order-confirmation-heading">
         <div className={styles.success}>
