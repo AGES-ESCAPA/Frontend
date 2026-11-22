@@ -43,7 +43,7 @@ export const NotFound = () => {
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer variant="compact" />
     </div>
   );
 };
