@@ -127,6 +127,12 @@ const UnderConstruction = lazy(() =>
     default: m.UnderConstruction,
   })),
 );
+
+const NotFound = lazy(() =>
+  import('@pages/NotFound/NotFound').then((m) => ({
+    default: m.NotFound,
+  })),
+);
 const RegisterIndividual = lazy(() =>
   import('@pages/RegisterIndividual/RegisterIndividual').then((m) => ({
     default: m.RegisterIndividual,
@@ -390,8 +396,8 @@ export const AppRouter = () => {
               }
             />
 
-            {/* Qualquer rota ainda sem página cai aqui. */}
-            <Route path="*" element={<UnderConstruction />} />
+            {/* URL inexistente: 404 (rotas futuras conhecidas usam UnderConstruction). */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </AuthProvider>
