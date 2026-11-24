@@ -56,6 +56,25 @@ describe('usePublicCourseDetails', () => {
     expect(result.current.course?.level).toBe('Iniciante');
   });
 
+  it('should fail fast when courseId is empty', async () => {
+    const { result } = renderHook(() => usePublicCourseDetails(''));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+
+    expect(getPublicCourseByIdMock).not.toHaveBeenCalled();
+    expect(result.current.errorMessage).toBe('Curso não encontrado.');
+  });
+
+  it('should use a generic message for non-Error rejections', async () => {
+    getPublicCourseByIdMock.mockRejectedValue('falha');
+
+    const { result } = renderHook(() => usePublicCourseDetails(details.id));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+
+    expect(result.current.errorMessage).toBe('Não foi possível carregar os dados do curso.');
+  });
+
   it('should expose an error when the request fails', async () => {
     getPublicCourseByIdMock.mockRejectedValue(new Error('Curso não encontrado.'));
 

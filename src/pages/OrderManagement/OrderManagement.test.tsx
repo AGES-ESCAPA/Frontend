@@ -355,4 +355,46 @@ describe('OrderManagement', () => {
     expect(reloadStats).toHaveBeenCalledOnce();
     expect(screen.getByText('Pedido cancelado')).toBeInTheDocument();
   });
+
+  it('refunds a cancelled order from the table after confirmation', async () => {
+    const user = userEvent.setup();
+    const reload = vi.fn();
+    const reloadStats = vi.fn();
+    useAdminOrdersMock.mockReturnValue({
+      ...defaultOrdersResult,
+      orders: [{ ...order, status: 'CANCELLED' }],
+      totalElements: 1,
+      reload,
+    });
+    useAdminOrderStatsMock.mockReturnValue({ ...defaultStatsResult, reload: reloadStats });
+    refundMock.mockResolvedValue({
+      id: 'order-1',
+      status: 'REFUNDED',
+      statusHistory: [
+        {
+          status: 'CANCELLED',
+          changedBy: null,
+          reason: null,
+          createdAt: '2026-08-17T12:00:00',
+        },
+        {
+          status: 'REFUNDED',
+          changedBy: 'admin-1',
+          reason: null,
+          createdAt: '2026-08-18T09:00:00',
+        },
+      ],
+    });
+
+    renderPage();
+    await user.click(screen.getByRole('button', { name: /Reembolsar pedido/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Confirmar reembolso' });
+    await user.click(within(dialog).getByRole('button', { name: 'Confirmar reembolso' }));
+
+    await waitFor(() => expect(refundMock).toHaveBeenCalledWith('order-1'));
+    expect(reload).toHaveBeenCalledOnce();
+    expect(reloadStats).toHaveBeenCalledOnce();
+    expect(screen.getByText('Reembolso registrado')).toBeInTheDocument();
+  });
 });

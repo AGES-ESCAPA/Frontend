@@ -1,6 +1,8 @@
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { authService } from '@services/authService';
 import { adminMetricsService } from '@services/adminMetricsService';
+import { courseService } from '@services/courseService';
+import type * as CourseServiceModule from '@services/courseService';
 import type * as AdminMetricsServiceModule from '@services/adminMetricsService';
 import type { UseNotificationsResult } from '@hooks/useNotifications';
 import { zeroAdminMetricsOverview } from '@/test/adminMetricsFixtures';
@@ -38,6 +40,7 @@ vi.mock('@pages/Login/Login', async () => {
   };
 });
 vi.mock('@pages/MyCourses/MyCourses', () => ({ MyCourses: () => <h1>Meus cursos</h1> }));
+vi.mock('@pages/Courses/Courses', () => ({ Courses: () => <h1>Cursos</h1> }));
 vi.mock('@pages/CompanyEmployees/CompanyEmployees', () => ({
   CompanyEmployees: () => <h1>Gestão de Colaboradores</h1>,
 }));
@@ -46,6 +49,13 @@ vi.mock('@pages/AdminCourses/AdminCourses', () => ({
 }));
 vi.mock('@pages/UnderConstruction/UnderConstruction', () => ({
   UnderConstruction: () => <h1>Página em construção</h1>,
+}));
+vi.mock('@services/courseService', async (importOriginal) => ({
+  ...(await importOriginal<typeof CourseServiceModule>()),
+  courseService: {
+    getCourses: vi.fn(),
+    getCourseFilters: vi.fn(),
+  },
 }));
 
 const admin: AuthUser = {
@@ -109,19 +119,15 @@ describe('AppRouter — /admin/metricas', () => {
   });
 
   it.each([
-    ['STUDENT', '/meus-cursos'],
-    ['EMPLOYEE', '/meus-cursos'],
-    ['COMPANY', '/empresa/colaboradores'],
+    ['STUDENT', '/aluno/cursos'],
+    ['EMPLOYEE', '/aluno/cursos'],
+    ['COMPANY', '/empresa/cursos'],
   ] as const)('denies the %s profile and redirects to %s', async (role, destination) => {
     restoreSession({ ...admin, role });
     render(<AppRouter />);
     await waitFor(() => expect(window.location.pathname).toBe(destination));
     expect(adminMetricsService.getOverview).not.toHaveBeenCalled();
-    expect(
-      await screen.findByRole('heading', {
-        name: role === 'COMPANY' ? 'Gestão de Colaboradores' : 'Meus cursos',
-      }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Cursos' })).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Relatórios Gerais & Métricas' }),
     ).not.toBeInTheDocument();
@@ -172,8 +178,8 @@ describe('AppRouter — /empresa/dashboard', () => {
 
   it.each([
     ['ADMIN', '/admin/cursos', 'Gestão de Cursos'],
-    ['STUDENT', '/meus-cursos', 'Meus cursos'],
-    ['EMPLOYEE', '/meus-cursos', 'Meus cursos'],
+    ['STUDENT', '/aluno/cursos', 'Cursos'],
+    ['EMPLOYEE', '/aluno/cursos', 'Cursos'],
   ] as const)('denies the %s profile and redirects to %s', async (role, destination, heading) => {
     restoreSession({ ...company, role });
     render(<AppRouter />);
@@ -182,5 +188,127 @@ describe('AppRouter — /empresa/dashboard', () => {
     expect(
       screen.queryByRole('heading', { name: 'Dashboard de Engajamento' }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('AppRouter — rotas públicas de conta', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+    vi.restoreAllMocks();
+    window.history.replaceState(null, '', '/');
+  });
+
+  it.each([
+    ['/esqueci-minha-senha', 'Esqueci minha senha'],
+    ['/redefinir-senha', 'Redefinir senha'],
+    ['/confirmar-email', 'Confirmar novo e-mail'],
+  ] as const)('renders %s without requiring authentication', async (path, heading) => {
+    window.history.replaceState(null, '', path);
+    render(<AppRouter />);
+
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+    expect(window.location.pathname).toBe(path);
+  });
+});
+
+describe('AppRouter — rotas públicas e 404', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.mocked(courseService.getCourses).mockReset().mockResolvedValue({
+      content: [],
+      pageNumber: 0,
+      pageSize: 10,
+      totalElements: 0,
+      totalPages: 0,
+    });
+    vi.mocked(courseService.getCourseFilters).mockReset().mockResolvedValue({
+      categories: [],
+      levels: [],
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+    vi.restoreAllMocks();
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('renders the home catalog for anonymous visitors', async () => {
+    window.history.replaceState(null, '', '/');
+    render(<AppRouter />);
+
+    expect(
+      await screen.findByRole('navigation', { name: /navegação principal/i }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+    expect(courseService.getCourses).toHaveBeenCalled();
+  });
+
+  it('renders the not-found page for unknown URLs', async () => {
+    window.history.replaceState(null, '', '/url-que-nao-existe');
+    render(<AppRouter />);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Página não encontrada' }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/url-que-nao-existe');
+  });
+});
+
+describe('AppRouter — rotas protegidas', () => {
+  const student: AuthUser = { ...admin, id: 'student-1', role: 'STUDENT' };
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+    vi.restoreAllMocks();
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('renders /admin/cursos for an administrator', async () => {
+    window.history.replaceState(null, '', '/admin/cursos');
+    restoreSession(admin);
+    render(<AppRouter />);
+
+    expect(await screen.findByRole('heading', { name: 'Gestão de Cursos' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/admin/cursos');
+  });
+
+  it('redirects students away from /admin/cursos', async () => {
+    window.history.replaceState(null, '', '/admin/cursos');
+    restoreSession(student);
+    render(<AppRouter />);
+
+    await waitFor(() => expect(window.location.pathname).toBe('/aluno/cursos'));
+    expect(await screen.findByRole('heading', { name: 'Cursos' })).toBeInTheDocument();
+  });
+
+  it('sends anonymous visitors on /meus-cursos to login', async () => {
+    window.history.replaceState(null, '', '/meus-cursos');
+    render(<AppRouter />);
+
+    expect(await screen.findByText('Login: /meus-cursos')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
+  });
+
+  it('shows under construction for authenticated students on unknown /aluno routes', async () => {
+    window.history.replaceState(null, '', '/aluno/certificados');
+    restoreSession(student);
+    render(<AppRouter />);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Página em construção' }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/aluno/certificados');
   });
 });

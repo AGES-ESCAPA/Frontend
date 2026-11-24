@@ -359,4 +359,261 @@ describe('authService', () => {
       );
     });
   });
+
+  describe('registerStudent', () => {
+    const payload = {
+      name: '  Carla Souza  ',
+      cpf: '390.111.222-33',
+      email: '  Carla@Example.COM  ',
+      phone: '(51) 99120-3344',
+      password: 'senha-segura',
+    };
+
+    const successBody = {
+      success: true,
+      data: {
+        accessToken: 'jwt-token',
+        tokenType: 'Bearer',
+        expiresIn: 3600,
+        user: backendUser,
+      },
+    };
+
+    it('POSTs normalized data and returns the student session', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: () => Promise.resolve(successBody),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(authService.registerStudent(payload)).resolves.toEqual({
+        token: 'jwt-token',
+        expiresIn: 3600,
+        user,
+      });
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/auth/register/student');
+      expect(init.method).toBe('POST');
+      expect(JSON.parse(String(init.body))).toEqual({
+        name: 'Carla Souza',
+        cpf: '39011122233',
+        email: 'carla@example.com',
+        phone: '51991203344',
+        password: 'senha-segura',
+      });
+    });
+
+    it('surfaces fieldErrors from a 400 validation response', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 400,
+          json: () => Promise.resolve({ message: 'Invalid CPF, Invalid email' }),
+        }),
+      );
+
+      const error = await authService.registerStudent(payload).catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(AuthServiceError);
+      expect((error as AuthServiceError).status).toBe(400);
+      expect((error as AuthServiceError).fieldErrors).toMatchObject({
+        cpf: expect.any(String),
+        email: expect.any(String),
+      });
+    });
+
+    it('maps a 409 e-mail conflict to fieldErrors', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 409,
+          json: () => Promise.resolve({ message: 'email already registered' }),
+        }),
+      );
+
+      await expect(authService.registerStudent(payload)).rejects.toMatchObject({
+        name: AuthServiceError.name,
+        status: 409,
+        fieldErrors: { email: expect.any(String) },
+      });
+    });
+
+    it('uses the generic 5xx message when the service is unavailable', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 503,
+          json: () => Promise.resolve({ message: 'Service unavailable' }),
+        }),
+      );
+
+      await expect(authService.registerStudent(payload)).rejects.toMatchObject({
+        status: 503,
+        message: 'O serviço está indisponível no momento. Tente novamente mais tarde.',
+      });
+    });
+
+    it('rejects when the success payload does not include a valid session', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 201,
+          json: () => Promise.resolve({ success: true, data: { accessToken: '' } }),
+        }),
+      );
+
+      await expect(authService.registerStudent(payload)).rejects.toMatchObject({
+        name: AuthServiceError.name,
+        message: expect.stringContaining('Não foi possível confirmar sua sessão'),
+      });
+    });
+  });
+
+  describe('password reset', () => {
+    const resetToken = 'token/reset?x=1';
+    const email = '  User@Mail.COM  ';
+
+    const errorResponse = (status: number, message: string) => ({
+      ok: false,
+      status,
+      json: () => Promise.resolve({ status, error: 'Error', message }),
+    });
+
+    it('POSTs the normalized e-mail on requestPasswordReset', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(authService.requestPasswordReset(email)).resolves.toBeUndefined();
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/auth/password-reset/request');
+      expect(init.method).toBe('POST');
+      expect(JSON.parse(String(init.body))).toEqual({ email: 'user@mail.com' });
+    });
+
+    it('throws AuthServiceError when requestPasswordReset fails', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(errorResponse(404, 'User not found')));
+
+      await expect(authService.requestPasswordReset(email)).rejects.toMatchObject({
+        name: AuthServiceError.name,
+        status: 404,
+        message: 'User not found',
+      });
+    });
+
+    it('GETs the reset token and returns the e-mail', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ success: true, data: { email: 'user@mail.com' } }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(authService.getPasswordResetToken(resetToken)).resolves.toEqual({
+        email: 'user@mail.com',
+      });
+
+      expect(fetchMock.mock.calls[0][0]).toContain('/auth/password-reset/token%2Freset%3Fx%3D1');
+    });
+
+    it('rejects an invalid reset link', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(errorResponse(410, 'Reset link expired')));
+
+      await expect(authService.getPasswordResetToken(resetToken)).rejects.toMatchObject({
+        status: 410,
+        message: 'Reset link expired',
+      });
+    });
+
+    it('POSTs the new password on resetPassword', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(authService.resetPassword(resetToken, 'nova-senha')).resolves.toBeUndefined();
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/auth/password-reset/token%2Freset%3Fx%3D1');
+      expect(init.method).toBe('POST');
+      expect(JSON.parse(String(init.body))).toEqual({ password: 'nova-senha' });
+    });
+
+    it('throws AuthServiceError when resetPassword is rejected', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(errorResponse(400, 'Password must be at least 8 characters')),
+      );
+
+      await expect(authService.resetPassword(resetToken, '123')).rejects.toMatchObject({
+        status: 400,
+        message: 'Password must be at least 8 characters',
+      });
+    });
+  });
+
+  describe('email change', () => {
+    const changeToken = 'change/confirm';
+
+    const errorResponse = (status: number, message: string) => ({
+      ok: false,
+      status,
+      json: () => Promise.resolve({ message }),
+    });
+
+    it('GETs the change token and returns the preview', async () => {
+      const preview = {
+        name: 'Carla Souza',
+        currentEmail: 'carla@old.com',
+        newEmail: 'carla@new.com',
+      };
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ success: true, data: preview }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(authService.getEmailChangeToken(changeToken)).resolves.toEqual(preview);
+
+      expect(fetchMock.mock.calls[0][0]).toContain('/auth/email-change/change%2Fconfirm');
+    });
+
+    it('rejects an invalid email-change link', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(errorResponse(404, 'Change token not found')),
+      );
+
+      await expect(authService.getEmailChangeToken(changeToken)).rejects.toMatchObject({
+        status: 404,
+        message: 'Change token not found',
+      });
+    });
+
+    it('POSTs confirm on confirmEmailChange', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(authService.confirmEmailChange(changeToken)).resolves.toBeUndefined();
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/auth/email-change/change%2Fconfirm/confirm');
+      expect(init.method).toBe('POST');
+    });
+
+    it('throws AuthServiceError when confirmEmailChange fails', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(errorResponse(410, 'Confirmation link expired')),
+      );
+
+      await expect(authService.confirmEmailChange(changeToken)).rejects.toMatchObject({
+        status: 410,
+        message: 'Confirmation link expired',
+      });
+    });
+  });
 });

@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, vi } from 'vitest';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { AuthContext } from '@contexts/authContextDefinition';
 import type { AuthContextValue } from '@contexts/authContextDefinition';
 import {
@@ -680,6 +680,141 @@ describe('CourseBuilder', () => {
       expect(publishCourse).toHaveBeenCalledTimes(2);
     });
     expect(addCoursePrerequisite).toHaveBeenCalledTimes(1);
+  });
+
+  it('should show the load error and refetch the course when retrying', async () => {
+    vi.mocked(getCourseById)
+      .mockRejectedValueOnce(new Error('Course not found'))
+      .mockResolvedValueOnce(SAVED_COURSE);
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível carregar os dados deste curso',
+    );
+    expect(screen.getByRole('textbox', { name: /título/i })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: /tentar novamente/i }));
+
+    expect(await screen.findByDisplayValue(SAVED_COURSE.title)).toBeInTheDocument();
+    expect(getCourseById).toHaveBeenCalledTimes(2);
+  });
+
+  it('should toast when the category list cannot be loaded', async () => {
+    vi.mocked(listCourseCategories).mockRejectedValue(new Error('Service Unavailable'));
+    renderBuilder();
+
+    expect(await screen.findByText('Não foi possível carregar as categorias')).toBeInTheDocument();
+    expect(screen.getByText('Service Unavailable')).toBeInTheDocument();
+  });
+
+  it('should toast when saving the draft fails on the API', async () => {
+    vi.mocked(createCourse).mockRejectedValueOnce(new Error('Database unavailable'));
+    renderBuilder();
+
+    await userEvent.type(screen.getByRole('textbox', { name: /título/i }), 'Curso de Recepção');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    expect(await screen.findByText('Não foi possível salvar o curso')).toBeInTheDocument();
+    expect(screen.getByText('Database unavailable')).toBeInTheDocument();
+  });
+
+  it('should show the archived status badge when editing an archived course', async () => {
+    vi.mocked(getCourseById).mockResolvedValue({ ...SAVED_COURSE, status: 'ARCHIVED' });
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+
+    expect(await screen.findByText('Arquivado')).toBeInTheDocument();
+  });
+
+  it('should show the rules error and retry loading them', async () => {
+    vi.mocked(getCourseRules)
+      .mockRejectedValueOnce(new Error('Access denied'))
+      .mockResolvedValueOnce(EMPTY_RULES);
+
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+
+    expect(await screen.findByText('Access denied')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /tentar novamente/i }));
+    expect(await screen.findByText('Nenhuma alteração registrada.')).toBeInTheDocument();
+    expect(getCourseRules).toHaveBeenCalledTimes(2);
+  });
+
+  it('should show the prerequisite search error when the API fails', async () => {
+    vi.mocked(searchCoursePrerequisites).mockRejectedValue(new Error('Search timeout'));
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /buscar cursos para adicionar/i }),
+      'gestão',
+    );
+
+    expect(await screen.findByText('Search timeout', {}, { timeout: 3_000 })).toBeInTheDocument();
+  });
+
+  it('should publish when the form is submitted', async () => {
+    renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+
+    const form = document.querySelector('form');
+    expect(form).toBeTruthy();
+    fireEvent.submit(form as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(publishCourse).toHaveBeenCalled();
+    });
+  });
+
+  it('should dismiss the toast when the user closes the notification', async () => {
+    renderBuilder();
+
+    await userEvent.type(screen.getByRole('textbox', { name: /título/i }), 'Curso de Recepção');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar Rascunho' }));
+
+    expect(await screen.findByText('Rascunho salvo!')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /fechar notificação/i }));
+    expect(screen.queryByText('Rascunho salvo!')).not.toBeInTheDocument();
+  });
+
+  it('should reset progress rules when returning to the new-course route', async () => {
+    const NavigateToNewCourse = () => {
+      const navigate = useNavigate();
+      return (
+        <button type="button" onClick={() => navigate('/admin/cursos/novo')}>
+          Ir para novo curso
+        </button>
+      );
+    };
+
+    render(
+      <AuthContext.Provider value={AUTH_CONTEXT}>
+        <MemoryRouter initialEntries={[`/admin/cursos/${SAVED_COURSE.id}/editar`]}>
+          <NavigateToNewCourse />
+          <Routes>
+            <Route path="/admin/cursos/novo" element={<CourseBuilder />} />
+            <Route path="/admin/cursos/:id/editar" element={<CourseBuilder />} />
+          </Routes>
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+
+    await screen.findByDisplayValue(SAVED_COURSE.title);
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+    const sequentialRule = await screen.findByRole('checkbox', { name: /exigir conclusão/i });
+    await userEvent.click(sequentialRule);
+    expect(sequentialRule).not.toBeChecked();
+    vi.mocked(getCourseRules).mockClear();
+
+    await userEvent.click(screen.getByRole('button', { name: /ir para novo curso/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /regras & pré requisitos/i }));
+
+    expect(
+      await screen.findByText(/Salve o rascunho do curso para configurar as regras/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /exigir conclusão/i })).not.toBeInTheDocument();
   });
 
   it('should send the notify flag when publishing with the checkbox enabled', async () => {

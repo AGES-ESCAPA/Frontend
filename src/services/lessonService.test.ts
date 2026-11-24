@@ -2,9 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LessonPayload } from '@/types/lesson';
 import {
   createLesson,
+  getAdminLesson,
   getStudentLesson,
   reorderModuleLessons,
   StudentLessonError,
+  submitStudentQuiz,
+  updateLesson,
+  uploadLessonFile,
 } from './lessonService';
 
 const COURSE_ID = 'e0000000-0000-4000-e000-000000000005';
@@ -218,6 +222,107 @@ describe('lessonService', () => {
         }),
       ).rejects.toThrow('Unsupported file type: virus.exe');
       expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getAdminLesson', () => {
+    it('should fetch the full lesson for the editing modal', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              id: LESSON_ID,
+              moduleId: MODULE_ID,
+              title: payload.title,
+              type: 'TEXT',
+              url: null,
+              durationMinutes: null,
+              description: 'Texto completo',
+              isFree: false,
+              order: 2,
+              resources: [],
+              quizQuestions: [],
+            },
+          }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const lesson = await getAdminLesson(MODULE_ID, LESSON_ID);
+
+      expect(String(fetchMock.mock.calls[0][0])).toContain(
+        `/admin/modules/${MODULE_ID}/contents/${LESSON_ID}`,
+      );
+      expect(lesson.type).toBe('text');
+      expect(lesson.textContent).toBe('Texto completo');
+    });
+  });
+
+  describe('updateLesson', () => {
+    it('should PUT the lesson using the admin contents endpoint', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: {
+              id: LESSON_ID,
+              moduleId: payload.moduleId,
+              title: 'Título atualizado',
+              type: 'VIDEO',
+              url: payload.videoUrl,
+              durationMinutes: 13,
+              description: payload.description,
+              isFree: true,
+              order: 3,
+              resources: null,
+            },
+          }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const lesson = await updateLesson(LESSON_ID, {
+        ...payload,
+        title: 'Título atualizado',
+      });
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(String(url)).toContain(`/admin/contents/${LESSON_ID}`);
+      expect(init.method).toBe('PUT');
+      expect(lesson.title).toBe('Título atualizado');
+    });
+  });
+
+  describe('uploadLessonFile', () => {
+    it('should upload a file and return its public url', async () => {
+      const file = new File(['conteudo'], 'material.pdf', { type: 'application/pdf' });
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: { url: 'http://localhost:9000/escapa-media/material.pdf' },
+          }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(uploadLessonFile(file)).resolves.toBe(
+        'http://localhost:9000/escapa-media/material.pdf',
+      );
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(init.method).toBe('POST');
+      expect((init.body as FormData).get('file')).toBe(file);
+    });
+
+    it('should surface the API message when the upload is rejected', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ message: 'File too large' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(uploadLessonFile(new File(['x'], 'huge.zip'))).rejects.toThrow('File too large');
     });
   });
 
@@ -445,6 +550,54 @@ describe('lessonService', () => {
       vi.stubGlobal('fetch', fetchMock);
 
       await expect(getStudentLesson(COURSE_ID, LESSON_ID)).rejects.toThrow('Failed to fetch');
+    });
+  });
+
+  describe('submitStudentQuiz', () => {
+    const answers = [
+      { questionId: 'q1', optionId: 'opt-a' },
+      { questionId: 'q2', optionId: 'opt-b' },
+    ];
+
+    it('should POST answers and return the quiz result', async () => {
+      const result = {
+        scorePercent: 80,
+        passed: true,
+        correctCount: 2,
+        totalQuestions: 2,
+      };
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ success: true, data: result }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(submitStudentQuiz(COURSE_ID, LESSON_ID, answers)).resolves.toEqual(result);
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain(`/student/courses/${COURSE_ID}/lessons/${LESSON_ID}/quiz/submit`);
+      expect(init.method).toBe('POST');
+      expect(JSON.parse(String(init.body))).toEqual({ answers });
+    });
+
+    it('should throw StudentLessonError when submit is rejected', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 403,
+          json: () =>
+            Promise.resolve({
+              message: 'Quiz submission is not allowed for this lesson.',
+            }),
+        }),
+      );
+
+      await expect(submitStudentQuiz(COURSE_ID, LESSON_ID, answers)).rejects.toMatchObject({
+        name: StudentLessonError.name,
+        status: 403,
+        message: 'Quiz submission is not allowed for this lesson.',
+      });
     });
   });
 });

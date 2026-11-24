@@ -50,7 +50,7 @@ describe('NotFound', () => {
 
     expect(screen.getByRole('link', { name: 'Ir para a área inicial' })).toHaveAttribute(
       'href',
-      '/empresa/colaboradores',
+      '/empresa/cursos',
     );
     expect(screen.queryByRole('link', { name: 'Entrar' })).not.toBeInTheDocument();
   });

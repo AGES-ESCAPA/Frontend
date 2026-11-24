@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useOptionalAuth } from '@contexts/useAuth';
 import { useAdminUsers } from '@hooks/useAdminUsers';
 import type { UseAdminUsersResult } from '@hooks/useAdminUsers';
 import { adminUserService } from '@services/adminUserService';
@@ -9,6 +10,7 @@ import type { AdminUser, AdminUserDetail } from '@/types/adminUser';
 import { UserManagement } from './UserManagement';
 
 vi.mock('@hooks/useAdminUsers', () => ({ useAdminUsers: vi.fn() }));
+vi.mock('@contexts/useAuth', () => ({ useOptionalAuth: vi.fn(() => null) }));
 vi.mock('@services/adminUserService', () => ({
   adminUserService: {
     list: vi.fn(),
@@ -27,6 +29,7 @@ vi.mock('@services/adminUserService', () => ({
 }));
 
 const useAdminUsersMock = vi.mocked(useAdminUsers);
+const useOptionalAuthMock = vi.mocked(useOptionalAuth);
 const getByIdMock = vi.mocked(adminUserService.getById);
 const updateMock = vi.mocked(adminUserService.update);
 const deactivateMock = vi.mocked(adminUserService.deactivate);
@@ -88,6 +91,7 @@ const studentDetail: AdminUserDetail = {
 
 describe('UserManagement', () => {
   beforeEach(() => {
+    useOptionalAuthMock.mockReturnValue(null);
     useAdminUsersMock.mockReturnValue({ ...defaultResult, reload: vi.fn() });
     getByIdMock.mockReset();
     updateMock.mockReset();
@@ -309,6 +313,86 @@ describe('UserManagement', () => {
     expect(reload).toHaveBeenCalled();
     expect(await screen.findByRole('dialog', { name: 'Detalhe do usuário' })).toBeInTheDocument();
     expect(within(dialog).getByText('Ana Atualizada')).toBeInTheDocument();
+  });
+
+  it('opens the detail modal directly in edit mode from the row action', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Editar usuário Ana Paula Ferreira' }));
+
+    expect(await screen.findByRole('dialog', { name: 'Editar usuário' })).toBeInTheDocument();
+  });
+
+  it('blocks an active user from the table row without opening the detail modal', async () => {
+    const reload = vi.fn();
+    useAdminUsersMock.mockReturnValue({ ...defaultResult, reload });
+    deactivateMock.mockResolvedValue({ ...studentDetail, status: 'INACTIVE' });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: 'Bloquear usuário Ana Paula Ferreira' }));
+
+    const confirm = await screen.findByRole('dialog', { name: 'Bloquear acesso?' });
+    await user.click(within(confirm).getByRole('button', { name: 'Bloquear acesso' }));
+
+    await waitFor(() => expect(deactivateMock).toHaveBeenCalledWith('user-1'));
+    expect(reload).toHaveBeenCalled();
+    expect(screen.queryByRole('dialog', { name: 'Detalhe do usuário' })).not.toBeInTheDocument();
+  });
+
+  it('hides the row block action for the authenticated admin on their own account', () => {
+    useOptionalAuthMock.mockReturnValue({
+      user: {
+        id: 'user-3',
+        name: 'Admin Escapa',
+        email: 'admin@escapa.com',
+        role: 'ADMIN',
+      },
+      isAuthenticated: true,
+      isRestoring: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      updateUser: vi.fn(),
+    });
+
+    renderPage();
+
+    expect(
+      screen.queryByRole('button', { name: 'Bloquear usuário Admin Escapa' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Bloquear usuário Ana Paula Ferreira' }),
+    ).toBeInTheDocument();
+  });
+
+  it('filters users by pending status and paginates back with Anterior', async () => {
+    const user = userEvent.setup();
+    const pendingUsers = Array.from({ length: 11 }, (_, index) => ({
+      id: `pending-${index}`,
+      name: `Pendente ${index + 1}`,
+      email: `pendente${index + 1}@email.com`,
+      userType: 'STUDENT',
+      status: 'PENDING' as const,
+      createdAt: '2026-08-17T12:00:00',
+    }));
+    useAdminUsersMock.mockReturnValue({
+      users: pendingUsers,
+      status: 'success',
+      errorMessage: null,
+      reload: vi.fn(),
+    });
+
+    renderPage();
+
+    await user.selectOptions(screen.getByLabelText('Status'), 'PENDING');
+    expect(screen.getByText('Mostrando 10 de 11 usuários')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Próxima' }));
+    expect(screen.getByText('Pendente 11')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Anterior' }));
+    expect(screen.queryByText('Pendente 11')).not.toBeInTheDocument();
   });
 
   it('blocks the user from the detail modal after destructive confirmation', async () => {

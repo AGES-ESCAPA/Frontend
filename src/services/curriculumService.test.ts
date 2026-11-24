@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getStudentCurriculum, StudentCurriculumError } from './curriculumService';
+import {
+  completeStudentLesson,
+  getStudentCurriculum,
+  StudentCurriculumError,
+} from './curriculumService';
 
 const COURSE_ID = 'e0000000-0000-4000-e000-000000000005';
 
@@ -164,6 +168,37 @@ describe('curriculumService', () => {
       await expect(getStudentCurriculum(COURSE_ID)).rejects.toMatchObject({
         status: 502,
         message: 'Não foi possível carregar o conteúdo do curso.',
+      });
+    });
+  });
+
+  describe('completeStudentLesson', () => {
+    const LESSON_ID = '02000000-0000-4000-9000-000000000182';
+
+    it('should POST lesson completion without returning data', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+      vi.stubGlobal('fetch', fetchMock);
+
+      await expect(completeStudentLesson(COURSE_ID, LESSON_ID)).resolves.toBeUndefined();
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(String(url)).toContain(`/student/courses/${COURSE_ID}/lessons/${LESSON_ID}/complete`);
+      expect(init.method).toBe('POST');
+    });
+
+    it('should throw StudentCurriculumError when completion is rejected', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 409,
+          json: () => Promise.resolve({ message: 'Lesson already completed.' }),
+        }),
+      );
+
+      await expect(completeStudentLesson(COURSE_ID, LESSON_ID)).rejects.toMatchObject({
+        status: 409,
+        message: 'Lesson already completed.',
       });
     });
   });

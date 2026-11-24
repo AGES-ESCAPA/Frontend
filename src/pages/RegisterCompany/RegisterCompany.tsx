@@ -15,6 +15,7 @@ import {
 import { useAuth } from '@contexts/useAuth';
 import { useToast } from '@hooks/useToast';
 import { AuthServiceError, DuplicateRegistrationError, authService } from '@services/authService';
+import { getDefaultRoute } from '@routes/access';
 import { authPath, getAuthReturnTo } from '@utils/authReturnTo';
 import {
   COMPANY_REGISTRATION_INITIAL_VALUES,
@@ -28,8 +29,6 @@ import type {
   CompanyRegistrationValues,
 } from '@/types/auth';
 import styles from './RegisterCompany.module.css';
-
-const COMPANY_PANEL_ROUTE = '/empresa/colaboradores';
 
 const FIELD_ICON_SIZE = 18;
 
@@ -73,7 +72,7 @@ export const RegisterCompany = () => {
     try {
       const session = await authService.registerCompany(buildCompanyRegistrationPayload(values));
       login(session.token, session.user);
-      navigate(COMPANY_PANEL_ROUTE, { replace: true });
+      navigate(getDefaultRoute(session.user.role), { replace: true });
     } catch (error: unknown) {
       if (error instanceof DuplicateRegistrationError && error.field !== null) {
         setErrors({ [error.field]: DUPLICATE_MESSAGES[error.field] });

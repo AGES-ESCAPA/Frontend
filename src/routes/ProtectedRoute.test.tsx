@@ -49,7 +49,7 @@ const renderGuard = (context: AuthContextValue, path: string, allowedRoles: Auth
     <AuthContext.Provider value={context}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route path="/meus-cursos" element={<LocationProbe />} />
+          <Route path="/aluno/cursos" element={<LocationProbe />} />
           <Route
             path="*"
             element={
@@ -80,7 +80,7 @@ describe('ProtectedRoute', () => {
   it('redirects a user without permission to their own default panel', () => {
     renderGuard(buildContext(student), '/admin/pedidos', ['ADMIN']);
 
-    expect(screen.getByText('/meus-cursos|')).toBeInTheDocument();
+    expect(screen.getByText('/aluno/cursos|')).toBeInTheDocument();
   });
 
   it('renders the requested route for a permitted profile', () => {

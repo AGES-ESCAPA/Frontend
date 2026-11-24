@@ -37,6 +37,10 @@ const RenameProbe = () => {
 };
 
 describe('AuthProvider', () => {
+  it('throws when useAuth is used outside AuthProvider', () => {
+    expect(() => renderHook(() => useAuth())).toThrow(/AuthProvider/);
+  });
+
   afterEach(() => {
     localStorage.clear();
     setUnauthorizedHandler(null);
@@ -125,6 +129,53 @@ describe('AuthProvider', () => {
     expect(result.current.isAuthenticated).toBe(false);
     expect(localStorage.getItem('access_token')).toBeNull();
     expect(localStorage.getItem('access_token_expires_at')).toBeNull();
+  });
+
+  it('logs in without persisting expiration when expiresIn is omitted', () => {
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+
+    act(() => result.current.login('session-token', student));
+
+    expect(localStorage.getItem('access_token')).toBe('session-token');
+    expect(localStorage.getItem('access_token_expires_at')).toBeNull();
+    expect(result.current.isAuthenticated).toBe(true);
+  });
+
+  it('clears the session, token and resource cache on logout', async () => {
+    localStorage.setItem('access_token', 'jwt-token');
+    vi.spyOn(authService, 'getCurrentUser').mockResolvedValue(student);
+
+    const LogoutProbe = () => {
+      const { logout } = useAuth();
+      return (
+        <button type="button" onClick={logout}>
+          Sair
+        </button>
+      );
+    };
+
+    render(
+      <AuthProvider>
+        <LogoutProbe />
+      </AuthProvider>,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sair' }));
+
+    expect(localStorage.getItem('access_token')).toBeNull();
+  });
+
+  it('finishes restoring as anonymous when there is no saved token', async () => {
+    const getCurrentUser = vi.spyOn(authService, 'getCurrentUser');
+
+    render(
+      <AuthProvider>
+        <SessionProbe />
+      </AuthProvider>,
+    );
+
+    await screen.findByText('false|false|anonymous');
+    expect(getCurrentUser).not.toHaveBeenCalled();
   });
 
   it('does not restore a session whose persisted lifetime has already elapsed', async () => {

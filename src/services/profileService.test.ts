@@ -48,6 +48,22 @@ describe('profileService', () => {
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer jwt-token');
   });
 
+  it('uses the fallback message when profile loading fails without a body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: () => Promise.resolve({}),
+      }),
+    );
+
+    await expect(profileService.getProfile()).rejects.toMatchObject({
+      status: 503,
+      message: 'Não foi possível carregar seus dados.',
+    });
+  });
+
   it('rejects a response with an unknown profile type', async () => {
     vi.stubGlobal(
       'fetch',

@@ -66,5 +66,36 @@ describe('notificationService', () => {
   it('should link lesson notifications to the classroom', () => {
     expect(getNotificationLink(notification)).toBe('/aluno/cursos/course-1/aulas/lesson-1');
     expect(getNotificationLink({ ...notification, lessonId: null })).toBeNull();
+    expect(getNotificationLink({ ...notification, courseId: null })).toBeNull();
+  });
+
+  it('should use fallback messages when marking notifications fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status: 400, json: () => Promise.resolve({}) })
+        .mockResolvedValueOnce({ ok: false, status: 500, json: () => Promise.resolve({}) }),
+    );
+
+    await expect(markNotificationAsRead('n1')).rejects.toThrow(
+      'Não foi possível marcar a notificação como lida.',
+    );
+    await expect(markAllNotificationsAsRead()).rejects.toThrow(
+      'Não foi possível marcar as notificações como lidas.',
+    );
+  });
+
+  it('should surface list failures with the default message when the API has no body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: () => Promise.resolve({}),
+      }),
+    );
+
+    await expect(listNotifications()).rejects.toThrow('Não foi possível carregar as notificações.');
   });
 });
