@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { courseService } from '@services/courseService';
+import { clearResourceCache } from '@services/resourceCache';
 import { getCompanyAcquiredCourseIds, getCompanyCourses } from '@services/companyCourseService';
 import { getStudentCurriculum } from '@services/curriculumService';
 import { getStudentEnrollments, type StudentCourseCardResponse } from '@services/enrollmentService';
@@ -129,6 +130,8 @@ const waitForCatalog = async () => {
 
 describe('Courses', () => {
   beforeEach(() => {
+    clearResourceCache();
+    sessionStorage.clear();
     getCoursesMock.mockReset().mockResolvedValue(emptyPage);
     getFiltersMock.mockReset().mockResolvedValue(courseFilters);
     getEnrollmentsMock.mockReset().mockResolvedValue(emptyEnrollments);
@@ -495,6 +498,53 @@ describe('Courses', () => {
       /não foi possível carregar os cursos adquiridos/i,
     );
     expect((await screen.findAllByText(/R\$\s*127,00/)).length).toBeGreaterThan(0);
+  });
+
+  it('shows catalog skeletons while the public lists are loading', () => {
+    getCoursesMock.mockImplementation(
+      () =>
+        new Promise(() => {
+          /* pendente */
+        }),
+    );
+
+    renderCourses();
+
+    expect(screen.getByRole('status', { name: /carregando cursos$/i })).toBeInTheDocument();
+  });
+
+  it('retries the whole page when featured and catalog both fail', async () => {
+    getCoursesMock
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(emptyPage)
+      .mockResolvedValueOnce(emptyPage);
+
+    renderCourses();
+
+    expect(
+      await screen.findByRole('heading', { name: /não foi possível carregar os cursos/i }),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /tentar novamente/i }));
+
+    await waitForCatalog();
+    expect(screen.getByText('0 cursos encontrados')).toBeInTheDocument();
+  });
+
+  it('shows acquired-course skeletons for the company profile while loading', () => {
+    getCompanyCourseListMock.mockImplementation(
+      () =>
+        new Promise(() => {
+          /* pendente */
+        }),
+    );
+
+    renderCourses('/empresa/cursos');
+
+    expect(
+      screen.getByRole('status', { name: /carregando cursos adquiridos/i }),
+    ).toBeInTheDocument();
   });
 
   it('does not load the company courses for the student profile', async () => {

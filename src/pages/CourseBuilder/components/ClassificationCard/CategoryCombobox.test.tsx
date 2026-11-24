@@ -94,4 +94,65 @@ describe('CategoryCombobox', () => {
     expect(screen.getByRole('option', { name: 'Marketing' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /criar categoria/i })).not.toBeInTheDocument();
   });
+
+  it('should select an option with the keyboard and close on Escape', async () => {
+    const onChange = vi.fn();
+    render(<ControlledCombobox onChange={onChange} />);
+
+    await userEvent.click(screen.getByRole('combobox'));
+    const searchbox = screen.getByRole('searchbox', { name: /buscar categoria/i });
+    await userEvent.type(searchbox, '{ArrowDown}{ArrowDown}{Enter}');
+
+    expect(onChange).toHaveBeenCalledWith('Marketing');
+    expect(screen.getByRole('combobox')).toHaveTextContent('Marketing');
+    expect(screen.queryByRole('searchbox', { name: /buscar categoria/i })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('combobox'));
+    const reopenedSearch = screen.getByRole('searchbox', { name: /buscar categoria/i });
+    await userEvent.type(reopenedSearch, '{Escape}');
+    expect(screen.queryByRole('searchbox', { name: /buscar categoria/i })).not.toBeInTheDocument();
+  });
+
+  it('should open from the trigger arrow keys', async () => {
+    render(<ControlledCombobox />);
+
+    screen.getByRole('combobox').focus();
+    await userEvent.keyboard('{ArrowDown}');
+
+    expect(screen.getByRole('searchbox', { name: /buscar categoria/i })).toBeInTheDocument();
+  });
+
+  it('should close when clicking outside and show the loading placeholder', async () => {
+    render(
+      <CategoryCombobox
+        id="course-category"
+        value=""
+        categories={[]}
+        isLoading
+        onChange={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('combobox'));
+    expect(screen.getByText('Carregando categorias…')).toBeInTheDocument();
+
+    await userEvent.click(document.body);
+    expect(screen.queryByText('Carregando categorias…')).not.toBeInTheDocument();
+  });
+
+  it('should not open when disabled', async () => {
+    render(
+      <CategoryCombobox
+        id="course-category"
+        value=""
+        categories={CATEGORIES}
+        disabled
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    await userEvent.click(screen.getByRole('combobox'));
+    expect(screen.queryByRole('searchbox', { name: /buscar categoria/i })).not.toBeInTheDocument();
+  });
 });

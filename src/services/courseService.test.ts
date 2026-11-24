@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PublicCoursesPage } from '@/types/course';
-import { courseService, PUBLIC_COURSES_PATH } from './courseService';
+import { CourseRequestError, courseService, PUBLIC_COURSES_PATH } from './courseService';
 
 const page: PublicCoursesPage = {
   content: [
@@ -114,6 +114,41 @@ describe('courseService', () => {
     expect(requestedUrl).toContain('size=100');
   });
 
+  it('should throw CourseRequestError when a public course responds with an error status', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Course not found' }),
+      }),
+    );
+
+    const error = await courseService
+      .getPublicCourseById('missing-course')
+      .catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(CourseRequestError);
+    expect((error as CourseRequestError).status).toBe(404);
+    expect((error as CourseRequestError).message).toBe('Course not found');
+  });
+
+  it('should throw when the public course payload has no data field', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ success: false, message: 'Curso indisponível' }),
+      }),
+    );
+
+    await expect(courseService.getPublicCourseById('course-1')).rejects.toThrow(
+      'Curso indisponível',
+    );
+  });
+
   it('should call GET /api/v1/public/courses/:id and return the payload data', async () => {
     const details = {
       id: 'e0000000-0000-4000-e000-000000000001',
@@ -165,6 +200,139 @@ describe('courseService', () => {
     expect(new Headers(init.headers).get('authorization')).toBeNull();
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Atendimento de Excelencia em Hospedagem');
+  });
+
+  it('should call GET /api/v1/admin/courses/:id and return the course detail', async () => {
+    const courseDetail = {
+      id: 'e0000000-0000-4000-e000-000000000001',
+      title: 'Atendimento de Excelência em Hospedagem',
+      category: 'Hospitalidade',
+      level: 'INICIANTE',
+      featured: false,
+      description: 'Descrição',
+      shortDescription: 'Resumo',
+      thumbnailUrl: null,
+      teaserVideoUrl: null,
+      durationTime: 40,
+      deadline: null,
+      price: 199.9,
+      status: 'DRAFT',
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve({ success: true, data: courseDetail }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await courseService.getCourseById(courseDetail.id);
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain(`/admin/courses/${courseDetail.id}`);
+    expect(result.title).toBe(courseDetail.title);
+  });
+
+  it('should surface the API message when getCourseById is rejected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Course not found' }),
+      }),
+    );
+
+    await expect(courseService.getCourseById('missing')).rejects.toThrow('Course not found');
+  });
+
+  it('should throw when admin categories respond with HTML', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: { get: () => 'text/html' },
+      }),
+    );
+
+    await expect(courseService.listCourseCategories()).rejects.toThrow(
+      'Não foi possível carregar as categorias.',
+    );
+  });
+
+  it('should surface the API message when categories cannot be loaded', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Service Unavailable' }),
+      }),
+    );
+
+    await expect(courseService.listCourseCategories()).rejects.toThrow('Service Unavailable');
+  });
+
+  it('should throw when thumbnail upload succeeds without a url', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ success: true, data: {} }),
+      }),
+    );
+
+    await expect(
+      courseService.uploadCourseThumbnail(new File(['x'], 'capa.png', { type: 'image/png' })),
+    ).rejects.toThrow('Não foi possível enviar a imagem de capa.');
+  });
+
+  it('should throw when listAdminCourses receives a non-json response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: { get: () => 'text/plain' },
+      }),
+    );
+
+    await expect(courseService.listAdminCourses()).rejects.toThrow(
+      'Não foi possível carregar os cursos.',
+    );
+  });
+
+  it('should throw when listAdminCourses returns an error status', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Access denied' }),
+      }),
+    );
+
+    await expect(courseService.listAdminCourses()).rejects.toThrow('Access denied');
+  });
+
+  it('should sort catalog levels using the backend rank', async () => {
+    const multiLevelPage: PublicCoursesPage = {
+      ...page,
+      content: [
+        { ...page.content[0], level: 'AVANCADO' },
+        { ...page.content[0], id: 'e0000000-0000-4000-e000-000000000002', level: 'INTERMEDIARIO' },
+        page.content[0],
+      ],
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve(multiLevelPage),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(courseService.getCourseFilters()).resolves.toEqual({
+      categories: ['Hospitalidade'],
+      levels: ['INICIANTE', 'INTERMEDIARIO', 'AVANCADO'],
+    });
   });
 
   it('should call GET /api/v1/admin/courses/categories and return the registered names', async () => {
@@ -339,6 +507,21 @@ describe('courseService', () => {
     expect(JSON.parse(String(init.body))).toEqual({ notifyEnrolledStudents: true });
   });
 
+  it('should surface the API message when archive is rejected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Course already archived' }),
+      }),
+    );
+
+    await expect(courseService.archiveCourse('course-1')).rejects.toThrow(
+      'Course already archived',
+    );
+  });
+
   it('should call DELETE /api/v1/admin/courses/:id to archive a course', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -352,6 +535,178 @@ describe('courseService', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toContain('/admin/courses/e0000000-0000-4000-e000-000000000003');
     expect(init.method).toBe('DELETE');
+  });
+
+  const courseId = 'e0000000-0000-4000-e000-000000000001';
+  const coursePayload = {
+    title: 'Novo curso',
+    category: 'Hospitalidade',
+    level: 'INICIANTE' as const,
+    featured: false,
+    description: 'Descrição completa',
+    shortDescription: 'Resumo',
+    thumbnailUrl: '',
+    teaserVideoUrl: null,
+    durationTime: 480,
+    deadline: null,
+    price: 199.9,
+    status: 'DRAFT' as const,
+  };
+  const courseDetail = {
+    id: courseId,
+    ...coursePayload,
+    level: 'INICIANTE',
+    thumbnailUrl: null,
+    instructorName: null,
+    majorVersion: 0,
+    minorVersion: 1,
+  };
+
+  it('should call POST /api/v1/admin/courses to create a course', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () => Promise.resolve({ success: true, data: courseDetail }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await courseService.createCourse(coursePayload);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/admin/courses');
+    expect(url).not.toMatch(/\/admin\/courses\/.+/);
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(String(init.body))).toEqual(coursePayload);
+    expect(result.id).toBe(courseId);
+  });
+
+  it('should surface the API message when create is rejected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'title must not be blank' }),
+      }),
+    );
+
+    await expect(courseService.createCourse(coursePayload)).rejects.toThrow(
+      'title must not be blank',
+    );
+  });
+
+  it('should call PUT /api/v1/admin/courses/:id to update a course', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: () =>
+        Promise.resolve({
+          success: true,
+          data: { ...courseDetail, title: 'Título atualizado' },
+        }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await courseService.updateCourse(courseId, {
+      ...coursePayload,
+      title: 'Título atualizado',
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain(`/admin/courses/${courseId}`);
+    expect(init.method).toBe('PUT');
+    expect(result.title).toBe('Título atualizado');
+  });
+
+  it('should surface the API message when update is rejected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Course not found' }),
+      }),
+    );
+
+    await expect(courseService.updateCourse(courseId, coursePayload)).rejects.toThrow(
+      'Course not found',
+    );
+  });
+
+  it('should call POST /api/v1/admin/courses/:id/prerequisites to add a prerequisite', async () => {
+    const prerequisiteId = 'e0000000-0000-4000-e000-000000000002';
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await courseService.addCoursePrerequisite(courseId, prerequisiteId);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain(`/admin/courses/${courseId}/prerequisites`);
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(String(init.body))).toEqual({ prerequisiteCourseId: prerequisiteId });
+  });
+
+  it('should surface the API message when add prerequisite is rejected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Prerequisite would create a cycle' }),
+      }),
+    );
+
+    await expect(
+      courseService.addCoursePrerequisite(courseId, 'e0000000-0000-4000-e000-000000000002'),
+    ).rejects.toThrow('Prerequisite would create a cycle');
+  });
+
+  it('should call DELETE on the prerequisite relationship', async () => {
+    const prerequisiteId = 'e0000000-0000-4000-e000-000000000002';
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await courseService.removeCoursePrerequisite(courseId, prerequisiteId);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain(`/admin/courses/${courseId}/prerequisites/${prerequisiteId}`);
+    expect(init.method).toBe('DELETE');
+  });
+
+  it('should surface the API message when remove prerequisite is rejected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Prerequisite not found' }),
+      }),
+    );
+
+    await expect(courseService.removeCoursePrerequisite(courseId, 'missing-pre')).rejects.toThrow(
+      'Prerequisite not found',
+    );
+  });
+
+  it('should surface the API message when unarchive is rejected', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        headers: { get: () => 'application/json' },
+        json: () => Promise.resolve({ message: 'Course is not archived' }),
+      }),
+    );
+
+    await expect(courseService.unarchiveCourse('course-1')).rejects.toThrow(
+      'Course is not archived',
+    );
   });
 
   it('should call POST /api/v1/admin/courses/:id/unarchive to restore a course', async () => {

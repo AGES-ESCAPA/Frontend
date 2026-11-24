@@ -57,4 +57,51 @@ describe('courseReviewService', () => {
       status: 403,
     });
   });
+
+  it('uses the friendly 404 message when the API has no body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: async () => ({}),
+      }),
+    );
+
+    await expect(rateCourse(COURSE_ID, 3)).rejects.toMatchObject({
+      name: 'CourseReviewError',
+      status: 404,
+      message: 'Curso não encontrado.',
+    });
+  });
+
+  it('falls back to the generic message on unexpected HTTP errors', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        json: async () => ({ message: 'Bad gateway' }),
+      }),
+    );
+
+    await expect(rateCourse(COURSE_ID, 2)).rejects.toMatchObject({
+      status: 502,
+      message: 'Bad gateway',
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 418,
+        json: async () => ({}),
+      }),
+    );
+
+    await expect(rateCourse(COURSE_ID, 5)).rejects.toMatchObject({
+      status: 418,
+      message: 'Não foi possível salvar a avaliação. Tente novamente.',
+    });
+  });
 });

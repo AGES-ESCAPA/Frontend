@@ -15,9 +15,9 @@ const student: AuthUser = {
 };
 
 const profileDestinations: Array<{ role: AuthUser['role']; destination: string }> = [
-  { role: 'STUDENT', destination: '/meus-cursos' },
+  { role: 'STUDENT', destination: '/aluno/cursos' },
   { role: 'EMPLOYEE', destination: '/meus-cursos' },
-  { role: 'COMPANY', destination: '/empresa/colaboradores' },
+  { role: 'COMPANY', destination: '/empresa/cursos' },
   { role: 'ADMIN', destination: '/admin/cursos' },
 ];
 
@@ -184,7 +184,7 @@ describe('Login', () => {
     await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
     expect(login).toHaveBeenCalledTimes(2);
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/meus-cursos'));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/aluno/cursos'));
   });
 
   it('prevents duplicate submissions while the login is in progress', async () => {
@@ -210,7 +210,7 @@ describe('Login', () => {
     expect(login).toHaveBeenCalledTimes(1);
 
     resolveLogin({ token: 'jwt-token', expiresIn: 120, user: student });
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/meus-cursos'));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/aluno/cursos'));
   });
 
   it('sends an already authenticated user to their own panel', async () => {
@@ -219,7 +219,7 @@ describe('Login', () => {
     renderLogin();
 
     await waitFor(() =>
-      expect(screen.getByTestId('location')).toHaveTextContent('/empresa/colaboradores'),
+      expect(screen.getByTestId('location')).toHaveTextContent('/empresa/cursos'),
     );
   });
 });

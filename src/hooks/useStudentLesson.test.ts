@@ -129,6 +129,29 @@ describe('useStudentLesson', () => {
     expect(result.current.errorMessage).toBeNull();
   });
 
+  it('should fail fast when course or lesson id is empty', async () => {
+    const { result } = renderHook(() => useStudentLesson('', ''));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+
+    expect(getStudentLessonMock).not.toHaveBeenCalled();
+    expect(result.current.errorStatus).toBe(404);
+    expect(result.current.errorMessage).toBe('Aula não encontrada.');
+  });
+
+  it('should keep cached content when the API responds with a transient server error', async () => {
+    setCachedResource(resourceCacheKeys.studentLesson(COURSE_ID, LESSON_ID), lesson);
+    getStudentLessonMock.mockRejectedValue(new StudentLessonError(503, 'Indisponível.'));
+
+    const { result } = renderHook(() => useStudentLesson(COURSE_ID, LESSON_ID));
+
+    await waitFor(() => expect(getStudentLessonMock).toHaveBeenCalled());
+
+    expect(result.current.lesson).toEqual(lesson);
+    expect(result.current.status).toBe('success');
+    expect(result.current.errorMessage).toBeNull();
+  });
+
   it('should keep the cached lesson when a network blip happens', async () => {
     setCachedResource(resourceCacheKeys.studentLesson(COURSE_ID, LESSON_ID), lesson);
     getStudentLessonMock.mockRejectedValue(new TypeError('Failed to fetch'));

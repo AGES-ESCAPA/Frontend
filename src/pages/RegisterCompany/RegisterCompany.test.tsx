@@ -134,7 +134,7 @@ describe('RegisterCompany', () => {
     await user.click(screen.getByRole('button', { name: 'Cadastrar' }));
 
     await waitFor(() =>
-      expect(screen.getByTestId('location')).toHaveTextContent('/empresa/colaboradores'),
+      expect(screen.getByTestId('location')).toHaveTextContent('/empresa/cursos'),
     );
     expect(localStorage.getItem('access_token')).toBe('jwt-token');
     expect(registerCompany).toHaveBeenCalledWith({

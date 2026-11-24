@@ -195,6 +195,406 @@ describe('mapPublicCourse', () => {
     expect(onClick).toHaveBeenCalledWith(companyCourse.id);
   });
 
+  it('should keep unknown categories and default unknown levels to basic', () => {
+    expect(mapCourseCategory('Finanças')).toBe('Finanças');
+    expect(mapCourseLevel('Especialista')).toBe('basic');
+    expect(toApiLevel('Especialista')).toBe('Especialista');
+    expect(toDisplayLevel('desconhecido')).toBe('desconhecido');
+  });
+
+  it('should map quiz and text lesson types and deadline-based access', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: course.shortDescription,
+      description: null,
+      category: 'Marketing',
+      level: 'INTERMEDIARIO',
+      durationTime: 120,
+      price: 99,
+      deadline: 90,
+      thumbnailUrl: null,
+      teaserVideoUrl: null,
+      rating: null,
+      reviewsCount: null,
+      studentsCount: null,
+      instructor: null,
+      learningObjectives: [],
+      materials: [],
+      modules: [
+        {
+          id: 'mod-1',
+          title: 'Módulo',
+          order: 1,
+          totalContents: 2,
+          durationMinutes: 30,
+          contents: [
+            {
+              id: 'quiz-1',
+              title: 'Quiz',
+              type: 'QUIZ',
+              order: 1,
+              durationMinutes: 5,
+              isFree: false,
+              url: null,
+            },
+            {
+              id: 'text-1',
+              title: 'Leitura',
+              type: 'TEXTO',
+              order: 2,
+              durationMinutes: 10,
+              isFree: false,
+              url: null,
+            },
+          ],
+        },
+      ],
+    };
+
+    const summary = mapPublicCourseDetailsToSummary(details);
+
+    expect(summary.accessPeriod).toBe('90 dias de acesso');
+    expect(summary.modules[0].lessons.map((item) => item.type)).toEqual(['quiz', 'text']);
+  });
+
+  it('should pick the first lesson URL when there is no free video teaser', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: course.shortDescription,
+      description: '',
+      category: 'Turismo',
+      level: 'INICIANTE',
+      durationTime: 60,
+      price: 49,
+      deadline: null,
+      thumbnailUrl: null,
+      teaserVideoUrl: null,
+      rating: null,
+      reviewsCount: null,
+      studentsCount: null,
+      instructor: null,
+      learningObjectives: [],
+      materials: [],
+      modules: [
+        {
+          id: 'mod-1',
+          title: 'Módulo',
+          order: 1,
+          totalContents: 1,
+          durationMinutes: 10,
+          contents: [
+            {
+              id: 'lesson-locked',
+              title: 'Aula paga',
+              type: 'VIDEO',
+              order: 1,
+              durationMinutes: 10,
+              isFree: false,
+              url: 'https://cdn.escapa.com/paid.mp4',
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(mapPublicCourseDetailsToSummary(details).teaserUrl).toBe(
+      'https://cdn.escapa.com/paid.mp4',
+    );
+  });
+
+  it('should map every known category alias', () => {
+    expect(mapCourseCategory('IA')).toBe('ai');
+    expect(mapCourseCategory('Marketing')).toBe('marketing');
+    expect(mapCourseCategory('Turismo')).toBe('tourism');
+    expect(mapCourseCategory('Inovação')).toBe('innovation');
+  });
+
+  it('should prefer a free video teaser over the first paid lesson URL', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: course.shortDescription,
+      description: '',
+      category: 'Turismo',
+      level: 'INICIANTE',
+      durationTime: 60,
+      price: 49,
+      deadline: null,
+      thumbnailUrl: null,
+      teaserVideoUrl: null,
+      rating: null,
+      reviewsCount: null,
+      studentsCount: null,
+      instructor: null,
+      learningObjectives: [],
+      materials: [],
+      modules: [
+        {
+          id: 'mod-1',
+          title: 'Módulo',
+          order: 1,
+          totalContents: 2,
+          durationMinutes: 10,
+          contents: [
+            {
+              id: 'lesson-paid',
+              title: 'Aula paga',
+              type: 'VIDEO',
+              order: 1,
+              durationMinutes: 5,
+              isFree: false,
+              url: 'https://cdn.escapa.com/paid.mp4',
+            },
+            {
+              id: 'lesson-free',
+              title: 'Amostra grátis',
+              type: 'VIDEO',
+              order: 2,
+              durationMinutes: 5,
+              isFree: true,
+              url: 'https://cdn.escapa.com/free.mp4',
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(mapPublicCourseDetailsToSummary(details).teaserUrl).toBe(
+      'https://cdn.escapa.com/free.mp4',
+    );
+  });
+
+  it('should expose lifetime access, instructor avatar and short description fallback', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: 'Resumo curto',
+      description: null,
+      category: null,
+      level: 'AVANCADO',
+      durationTime: 61,
+      price: null,
+      deadline: null,
+      thumbnailUrl: 'https://cdn.escapa.com/thumb.jpg',
+      teaserVideoUrl: null,
+      rating: null,
+      reviewsCount: null,
+      studentsCount: null,
+      instructor: {
+        id: 'inst-1',
+        name: 'Ana',
+        headline: 'Mentora',
+        bio: 'Bio completa',
+        avatarUrl: 'https://cdn.escapa.com/avatar.png',
+      },
+      learningObjectives: ['Benefício'],
+      materials: [],
+      modules: [],
+    };
+
+    const summary = mapPublicCourseDetailsToSummary(details);
+
+    expect(summary.accessPeriod).toBe('Acesso vitalício');
+    expect(summary.category).toBe('Curso');
+    expect(summary.level).toBe('Avançado');
+    expect(summary.description).toBe('Resumo curto');
+    expect(summary.durationHours).toBe(1);
+    expect(summary.instructor).toMatchObject({
+      name: 'Ana',
+      role: 'Mentora',
+      bio: 'Bio completa',
+      avatarUrl: 'https://cdn.escapa.com/avatar.png',
+    });
+  });
+
+  it('should map english TEXT lesson types to text', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: course.shortDescription,
+      description: '',
+      category: 'Marketing',
+      level: 'INICIANTE',
+      durationTime: 30,
+      price: 10,
+      deadline: 15,
+      thumbnailUrl: null,
+      teaserVideoUrl: null,
+      rating: null,
+      reviewsCount: null,
+      studentsCount: null,
+      instructor: null,
+      learningObjectives: [],
+      materials: [],
+      modules: [
+        {
+          id: 'mod-1',
+          title: 'Módulo',
+          order: 1,
+          totalContents: 1,
+          durationMinutes: 10,
+          contents: [
+            {
+              id: 'text-1',
+              title: 'Leitura',
+              type: 'TEXT',
+              order: 1,
+              durationMinutes: 10,
+              isFree: false,
+              url: null,
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(mapPublicCourseDetailsToSummary(details).modules[0].lessons[0].type).toBe('text');
+  });
+
+  it('should normalize level aliases in every direction', () => {
+    expect(mapCourseLevel('basic')).toBe('basic');
+    expect(mapCourseLevel('intermediate')).toBe('intermediate');
+    expect(mapCourseLevel('advanced')).toBe('advanced');
+    expect(toApiLevel('basic')).toBe('INICIANTE');
+    expect(toApiLevel('intermediate')).toBe('INTERMEDIARIO');
+    expect(toDisplayLevel('AVANCADO')).toBe('Avançado');
+  });
+
+  it('should default lesson flags and pick quiz videos in the teaser search', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: course.shortDescription,
+      description: '',
+      category: 'Turismo',
+      level: 'INICIANTE',
+      durationTime: 30,
+      price: 10,
+      deadline: null,
+      thumbnailUrl: null,
+      teaserVideoUrl: null,
+      rating: null,
+      reviewsCount: null,
+      studentsCount: null,
+      instructor: null,
+      learningObjectives: [],
+      materials: [],
+      modules: [
+        {
+          id: 'mod-1',
+          title: 'Módulo',
+          order: 1,
+          totalContents: 1,
+          durationMinutes: null,
+          contents: [
+            {
+              id: 'quiz-1',
+              title: 'Quiz intro',
+              type: 'QUIZ',
+              order: 1,
+              durationMinutes: null,
+              isFree: undefined as unknown as boolean,
+              url: null,
+            },
+          ],
+        },
+      ],
+    };
+
+    const summary = mapPublicCourseDetailsToSummary(details);
+    expect(summary.teaserUrl).toBe('');
+    expect(summary.modules[0].totalMinutes).toBe(0);
+    expect(summary.modules[0].lessons[0]).toMatchObject({
+      durationMinutes: 0,
+      isFree: false,
+      type: 'quiz',
+    });
+  });
+
+  it('should fall back to the first URL even when it is not a free video', () => {
+    const details: PublicCourseDetails = {
+      id: course.id,
+      title: course.title,
+      shortDescription: course.shortDescription,
+      description: '',
+      category: 'Turismo',
+      level: 'INICIANTE',
+      durationTime: 30,
+      price: 10,
+      deadline: null,
+      thumbnailUrl: null,
+      teaserVideoUrl: null,
+      rating: null,
+      reviewsCount: null,
+      studentsCount: null,
+      instructor: null,
+      learningObjectives: [],
+      materials: [],
+      modules: [
+        {
+          id: 'mod-1',
+          title: 'Módulo',
+          order: 1,
+          totalContents: 1,
+          durationMinutes: 5,
+          contents: [
+            {
+              id: 'quiz-1',
+              title: 'Quiz com vídeo',
+              type: 'QUIZ',
+              order: 1,
+              durationMinutes: 5,
+              isFree: true,
+              url: 'https://cdn.escapa.com/quiz.mp4',
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(mapPublicCourseDetailsToSummary(details).teaserUrl).toBe(
+      'https://cdn.escapa.com/quiz.mp4',
+    );
+  });
+
+  it('should tolerate nullable card fields on public and company courses', () => {
+    const onClick = vi.fn();
+    const publicProps = mapPublicCourseToCardProps(
+      {
+        ...course,
+        thumbnailUrl: null,
+        ratingAverage: null,
+        reviewsCount: null,
+        lessonsCount: null,
+        instructor: null,
+        price: null,
+        durationTime: null,
+      },
+      onClick,
+    );
+
+    expect(publicProps).toMatchObject({
+      imageUrl: '',
+      rating: undefined,
+      reviewsCount: undefined,
+      lessonsCount: 0,
+      instructor: 'ESCAPA',
+      duration: '0min',
+      price: expect.stringMatching(/R\$\s*0/),
+    });
+
+    const companyProps = mapCompanyCourseToCardProps(
+      { ...companyCourse, category: null, level: null, durationTime: null },
+      onClick,
+    );
+
+    expect(companyProps.category).toBe('Curso');
+    expect(companyProps.level).toBe('basic');
+    expect(companyProps.duration).toBe('0min');
+  });
+
   it('should fall back to safe defaults when a company course has missing fields', () => {
     const props = mapCompanyCourseToCardProps(
       {

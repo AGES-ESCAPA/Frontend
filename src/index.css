@@ -311,10 +311,10 @@
 
   /* ── Layout Estrutural ──────────────────────────────────────────*/
   /*
-   * Sidebar aberta = faixa do logo da navbar deslogada até o travessão
+   * Sidebar aberta = faixa do logo da navbar deslogada
    * (padding + logo na altura do brand + gap), mais folga para rótulos
    * longos do menu (ex.: "Perfil da Empresa"). A borda direita da sidebar
-   * substitui o divisor 1px da marca.
+   * segue só abaixo do cabeçalho, sem divisor ao lado da marca.
    * Proporção do escapa_logo.png: 640×169.
    */
   --navbar-brand-logo-height: calc(var(--spacing) * 9); /* 36px */

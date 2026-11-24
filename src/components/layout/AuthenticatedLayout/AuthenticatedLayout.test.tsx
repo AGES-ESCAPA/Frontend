@@ -8,11 +8,29 @@ import { authService } from '@services/authService';
 import type { AuthUser } from '@/types/auth';
 import { AuthenticatedLayout } from './AuthenticatedLayout';
 
+vi.mock('@hooks/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
+  }),
+}));
+
 const student: AuthUser = {
   id: 'b1',
   name: 'Mariana Costa',
   email: 'mariana@email.com',
   role: 'STUDENT',
+};
+
+const employee: AuthUser = {
+  ...student,
+  id: 'e1',
+  role: 'EMPLOYEE',
 };
 
 const LocationProbe = () => {
@@ -55,6 +73,33 @@ describe('AuthenticatedLayout', () => {
   afterEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
+  });
+
+  it('hides the public catalog from the sidebar of a company employee', async () => {
+    localStorage.setItem('access_token', 'jwt-token');
+    vi.spyOn(authService, 'getCurrentUser').mockResolvedValue(employee);
+
+    render(
+      <MemoryRouter initialEntries={['/meus-cursos']}>
+        <AuthProvider>
+          <AuthenticatedLayout
+            role="student"
+            items={[
+              { icon: null, label: 'Cursos', route: '/aluno/cursos' },
+              { icon: null, label: 'Meus Cursos', route: '/meus-cursos', active: true },
+              { icon: null, label: 'Meu Perfil', route: '/meu-perfil' },
+            ]}
+            user={{ name: '', role: '' }}
+          >
+            <p>Conteúdo</p>
+          </AuthenticatedLayout>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('link', { name: 'Meus Cursos' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Meu Perfil' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Cursos' })).not.toBeInTheDocument();
   });
 
   it('ends the session and goes to the login without returnTo when signing out from the sidebar', async () => {

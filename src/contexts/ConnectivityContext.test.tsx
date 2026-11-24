@@ -66,6 +66,53 @@ describe('ConnectivityProvider', () => {
     expect(screen.getByTestId('connection-banner-online')).toBeInTheDocument();
   });
 
+  it('assumes online when used outside the provider', () => {
+    const { result } = renderHook(() => useConnectivity());
+    expect(result.current.isOnline).toBe(true);
+    expect(result.current.showOfflineBanner).toBe(false);
+  });
+
+  it('shows the offline banner on mount when the browser starts offline', () => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      get: () => false,
+    });
+
+    render(
+      <ConnectivityProvider>
+        <ConnectionBanner />
+      </ConnectivityProvider>,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(1_300);
+    });
+
+    expect(screen.getByTestId('connection-banner-offline')).toBeInTheDocument();
+  });
+
+  it('hides the reconnected banner after the timeout', () => {
+    render(
+      <ConnectivityProvider>
+        <ConnectionBanner />
+      </ConnectivityProvider>,
+    );
+
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+      vi.advanceTimersByTime(1_300);
+      window.dispatchEvent(new Event('online'));
+    });
+
+    expect(screen.getByTestId('connection-banner-online')).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(2_400);
+    });
+
+    expect(screen.queryByTestId('connection-banner-online')).toBeNull();
+  });
+
   it('notifies hooks through useNetworkRecovery when the connection returns', () => {
     const onReconnect = vi.fn();
 

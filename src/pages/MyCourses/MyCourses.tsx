@@ -11,6 +11,7 @@ import {
 } from '@components/ui';
 import { AuthenticatedLayout } from '../../components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '../../components/layout/Sidebar/sidebarMenuPresets';
+import { useOptionalAuth } from '@contexts/useAuth';
 import { useNetworkRecovery } from '@contexts/useConnectivity';
 import { getCachedResource, resourceCacheKeys, setCachedResource } from '@services/resourceCache';
 import styles from './MyCourses.module.css';
@@ -32,6 +33,8 @@ const statusByTab: Record<Exclude<TabType, 'Todos'>, EnrollmentStatus> = {
 
 export const MyCourses = () => {
   const navigate = useNavigate();
+  const auth = useOptionalAuth();
+  const isEmployee = auth?.user?.role === 'EMPLOYEE';
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('Todos');
@@ -188,7 +191,9 @@ export const MyCourses = () => {
         <header className={styles.topHeader}>
           <PageHeader
             className={styles.titleSection}
-            eyebrow="Área do Aluno • Meus Cursos"
+            eyebrow={
+              isEmployee ? 'Área do Colaborador • Meus Cursos' : 'Área do Aluno • Meus Cursos'
+            }
             title="Meus Cursos"
             subtitle="Continue de onde você parou"
           />
@@ -223,13 +228,19 @@ export const MyCourses = () => {
         {!error && !isLoading && courses.length === 0 ? (
           <EmptyState
             title="Nenhum curso encontrado"
-            description="Não encontramos nenhum curso com os filtros atuais. Que tal explorar o catálogo?"
+            description={
+              isEmployee
+                ? 'Quando a sua empresa liberar cursos para você, eles aparecerão aqui.'
+                : 'Não encontramos nenhum curso com os filtros atuais. Que tal explorar o catálogo?'
+            }
             action={
-              <Button
-                label="Explorar Catálogo"
-                variant="outlined"
-                onClick={() => navigate('/aluno/cursos')}
-              />
+              isEmployee ? undefined : (
+                <Button
+                  label="Explorar Catálogo"
+                  variant="outlined"
+                  onClick={() => navigate('/aluno/cursos')}
+                />
+              )
             }
           />
         ) : (

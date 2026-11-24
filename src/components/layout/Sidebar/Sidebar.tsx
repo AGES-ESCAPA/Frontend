@@ -294,7 +294,6 @@ export const Sidebar = ({
           <div className={styles.brand}>
             <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
             <img src={escapaIcone} alt="" aria-hidden="true" className={styles.logoIcon} />
-            <span className={styles.brandDivider} aria-hidden="true" />
           </div>
 
           {showCollapseToggle ? (

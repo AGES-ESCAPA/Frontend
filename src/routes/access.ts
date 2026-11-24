@@ -2,14 +2,17 @@ import type { SidebarRole } from '@components/layout';
 import type { UserRole } from '@/types/auth';
 import { PURCHASE_REDIRECT_KEY, safeAuthReturnTo } from '@utils/authReturnTo';
 
+/** Primeira opção do sidebar de cada perfil — destino padrão pós-login. */
 export const getDefaultRoute = (role: UserRole): string => {
   switch (role) {
     case 'ADMIN':
       return '/admin/cursos';
     case 'COMPANY':
-      return '/empresa/colaboradores';
+      return '/empresa/cursos';
     case 'STUDENT':
+      return '/aluno/cursos';
     case 'EMPLOYEE':
+      // Colaborador só consome cursos liberados pela empresa (Meus Cursos).
       return '/meus-cursos';
   }
 };
