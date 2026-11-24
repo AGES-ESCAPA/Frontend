@@ -284,7 +284,7 @@ export const AppRouter = () => {
               <Route
                 path="/aluno/cursos"
                 element={
-                  <ProtectedRoute allowedRoles={['STUDENT', 'EMPLOYEE']}>
+                  <ProtectedRoute allowedRoles={['STUDENT']}>
                     <Courses />
                   </ProtectedRoute>
                 }

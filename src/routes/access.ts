@@ -10,8 +10,10 @@ export const getDefaultRoute = (role: UserRole): string => {
     case 'COMPANY':
       return '/empresa/cursos';
     case 'STUDENT':
-    case 'EMPLOYEE':
       return '/aluno/cursos';
+    case 'EMPLOYEE':
+      // Colaborador só consome cursos liberados pela empresa (Meus Cursos).
+      return '/meus-cursos';
   }
 };
 

@@ -88,7 +88,7 @@ describe('CreatePassword', () => {
     await fillPasswords(user, 'senha-segura');
     await user.click(screen.getByRole('button', { name: 'Criar' }));
 
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/aluno/cursos'));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/meus-cursos'));
     expect(createInvitePassword).toHaveBeenCalledWith(TOKEN, 'senha-segura');
     expect(localStorage.getItem('access_token')).toBe('jwt-token');
   });

@@ -15,8 +15,10 @@ import {
 } from '@/utils/courseRatingPrompt';
 import { AuthenticatedLayout } from '@components/layout/AuthenticatedLayout/AuthenticatedLayout';
 import { SIDEBAR_MENU_PRESETS } from '@components/layout/Sidebar/sidebarMenuPresets';
+import { useOptionalAuth } from '@contexts/useAuth';
 import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
 import { useStudentLesson } from '@/hooks/useStudentLesson';
+import { getDefaultRoute } from '@routes/access';
 import { mockUser } from '@pages/MyCourses/mockCourses';
 import { LessonMenu } from './components/LessonMenu';
 import { LessonQuizPlayer } from './components/LessonQuizPlayer';
@@ -31,6 +33,9 @@ export const CoursePlayer = () => {
   }>();
 
   const navigate = useNavigate();
+  const auth = useOptionalAuth();
+  const isEmployee = auth?.user?.role === 'EMPLOYEE';
+  const otherCoursesPath = auth?.user ? getDefaultRoute(auth.user.role) : '/aluno/cursos';
   const { lesson, status, errorStatus, errorMessage, retry } = useStudentLesson(courseId, lessonId);
   const curriculum = useStudentCurriculum(courseId);
 
@@ -329,7 +334,8 @@ export const CoursePlayer = () => {
       completedLessonIds.has(lessonId) ||
       completedLessonIds.has(lesson.id);
 
-    const showPurchaseUpsell = lesson.isFreeSample && ownsCourse === false && isLessonCompleted;
+    const showPurchaseUpsell =
+      !isEmployee && lesson.isFreeSample && ownsCourse === false && isLessonCompleted;
 
     // Quiz conclui só via submit; sem botão "Marcar como concluída".
     // Rótulo curto ("Concluir") para caber na barra do player em telas ≤390px;
@@ -378,7 +384,7 @@ export const CoursePlayer = () => {
                 courseTitle={courseTitle || lesson.title}
                 isLastLesson={isLastLesson}
                 onEnded={handleVideoEnded}
-                onViewOtherCourses={() => navigate('/aluno/cursos')}
+                onViewOtherCourses={() => navigate(otherCoursesPath)}
                 onViewCertificate={() => {
                   if (certificateCode) {
                     navigate(`/certificados/${certificateCode}`);

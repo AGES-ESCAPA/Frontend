@@ -53,7 +53,13 @@ export const Profile = () => {
 
   const role = resolveProfileRole(user?.role);
   const sidebarRole: SidebarRole = user ? toSidebarRole(user.role) : role;
-  const copy = PAGE_COPY[role];
+  const copy =
+    user?.role === 'EMPLOYEE'
+      ? {
+          ...PAGE_COPY.student,
+          eyebrow: 'Área do Colaborador • Meu Perfil',
+        }
+      : PAGE_COPY[role];
   const menuItems = SIDEBAR_MENU_PRESETS[sidebarRole].map((item) => ({
     ...item,
     active: item.route === PROFILE_ROUTES[role],

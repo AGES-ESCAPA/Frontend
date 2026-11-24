@@ -119,15 +119,15 @@ describe('AppRouter — /admin/metricas', () => {
   });
 
   it.each([
-    ['STUDENT', '/aluno/cursos'],
-    ['EMPLOYEE', '/aluno/cursos'],
-    ['COMPANY', '/empresa/cursos'],
-  ] as const)('denies the %s profile and redirects to %s', async (role, destination) => {
+    ['STUDENT', '/aluno/cursos', 'Cursos'],
+    ['EMPLOYEE', '/meus-cursos', 'Meus cursos'],
+    ['COMPANY', '/empresa/cursos', 'Cursos'],
+  ] as const)('denies the %s profile and redirects to %s', async (role, destination, heading) => {
     restoreSession({ ...admin, role });
     render(<AppRouter />);
     await waitFor(() => expect(window.location.pathname).toBe(destination));
     expect(adminMetricsService.getOverview).not.toHaveBeenCalled();
-    expect(await screen.findByRole('heading', { name: 'Cursos' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Relatórios Gerais & Métricas' }),
     ).not.toBeInTheDocument();
@@ -179,7 +179,7 @@ describe('AppRouter — /empresa/dashboard', () => {
   it.each([
     ['ADMIN', '/admin/cursos', 'Gestão de Cursos'],
     ['STUDENT', '/aluno/cursos', 'Cursos'],
-    ['EMPLOYEE', '/aluno/cursos', 'Cursos'],
+    ['EMPLOYEE', '/meus-cursos', 'Meus cursos'],
   ] as const)('denies the %s profile and redirects to %s', async (role, destination, heading) => {
     restoreSession({ ...company, role });
     render(<AppRouter />);
@@ -291,6 +291,15 @@ describe('AppRouter — rotas protegidas', () => {
 
     await waitFor(() => expect(window.location.pathname).toBe('/aluno/cursos'));
     expect(await screen.findByRole('heading', { name: 'Cursos' })).toBeInTheDocument();
+  });
+
+  it('redirects company employees away from the public student catalog', async () => {
+    window.history.replaceState(null, '', '/aluno/cursos');
+    restoreSession({ ...student, id: 'employee-1', role: 'EMPLOYEE' });
+    render(<AppRouter />);
+
+    await waitFor(() => expect(window.location.pathname).toBe('/meus-cursos'));
+    expect(await screen.findByRole('heading', { name: 'Meus cursos' })).toBeInTheDocument();
   });
 
   it('sends anonymous visitors on /meus-cursos to login', async () => {

@@ -16,7 +16,7 @@ const student: AuthUser = {
 
 const profileDestinations: Array<{ role: AuthUser['role']; destination: string }> = [
   { role: 'STUDENT', destination: '/aluno/cursos' },
-  { role: 'EMPLOYEE', destination: '/aluno/cursos' },
+  { role: 'EMPLOYEE', destination: '/meus-cursos' },
   { role: 'COMPANY', destination: '/empresa/cursos' },
   { role: 'ADMIN', destination: '/admin/cursos' },
 ];

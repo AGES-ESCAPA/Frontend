@@ -1,9 +1,13 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthContext } from '@contexts/authContextDefinition';
+import type { AuthContextValue } from '@contexts/authContextDefinition';
 import { MyCourses } from './MyCourses';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearResourceCache } from '@services/resourceCache';
+import type { UserRole } from '@/types/auth';
 import * as enrollmentService from '../../services/enrollmentService';
 import * as curriculumService from '../../services/curriculumService';
 import type { StudentCourseCardResponse } from '../../services/enrollmentService';
@@ -14,6 +18,18 @@ vi.mock('../../services/enrollmentService', () => ({
 
 vi.mock('../../services/curriculumService', () => ({
   getStudentCurriculum: vi.fn(),
+}));
+
+vi.mock('@hooks/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
+  }),
 }));
 
 const getEnrollmentsMock = vi.mocked(enrollmentService.getStudentEnrollments);
@@ -66,14 +82,30 @@ const LocationProbe = () => {
   return <output data-testid="location">{location.pathname}</output>;
 };
 
-const renderPage = () =>
+const authAs = (role: UserRole): AuthContextValue => ({
+  user: { id: 'user-1', name: 'Mariana Costa', email: 'mariana@email.com', role },
+  isAuthenticated: true,
+  isRestoring: false,
+  login: vi.fn(),
+  logout: vi.fn(),
+  updateUser: vi.fn(),
+});
+
+const withAuth = (role: UserRole, children: ReactNode) => (
+  <AuthContext.Provider value={authAs(role)}>{children}</AuthContext.Provider>
+);
+
+const renderPage = (role: UserRole = 'STUDENT') =>
   render(
-    <MemoryRouter initialEntries={['/meus-cursos']}>
-      <Routes>
-        <Route path="/meus-cursos" element={<MyCourses />} />
-        <Route path="*" element={<LocationProbe />} />
-      </Routes>
-    </MemoryRouter>,
+    withAuth(
+      role,
+      <MemoryRouter initialEntries={['/meus-cursos']}>
+        <Routes>
+          <Route path="/meus-cursos" element={<MyCourses />} />
+          <Route path="*" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    ),
   );
 
 describe('MyCourses', () => {
@@ -257,5 +289,16 @@ describe('MyCourses', () => {
     await user.click(await screen.findByRole('button', { name: 'Explorar Catálogo' }));
 
     expect(await screen.findByTestId('location')).toHaveTextContent('/aluno/cursos');
+  });
+
+  it('explains company assignment instead of catalog when an employee has no courses', async () => {
+    getEnrollmentsMock.mockResolvedValue(buildPage([]));
+    renderPage('EMPLOYEE');
+
+    expect(await screen.findByText('Nenhum curso encontrado')).toBeInTheDocument();
+    expect(
+      screen.getByText('Quando a sua empresa liberar cursos para você, eles aparecerão aqui.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explorar Catálogo' })).not.toBeInTheDocument();
   });
 });

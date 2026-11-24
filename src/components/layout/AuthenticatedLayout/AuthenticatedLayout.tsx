@@ -70,6 +70,11 @@ export const AuthenticatedLayout = ({
         avatarUrl: sessionUser.avatarUrl ?? undefined,
       }
     : user;
+  // Colaborador não compra nem navega no catálogo público — só Meus Cursos / Perfil.
+  const resolvedItems =
+    sessionUser?.role === 'EMPLOYEE'
+      ? items.filter((item) => item.route !== '/aluno/cursos')
+      : items;
   // Sempre encerra a sessão e vai ao login — sidebar e menu do avatar usam o mesmo
   // caminho. Ignora `onLogout` das páginas quando há (ou pode haver) sessão: várias
   // só faziam `location.assign('/')` e mantinham o token. `onLogout` só vale como
@@ -87,7 +92,7 @@ export const AuthenticatedLayout = ({
     <div className={styles.layout}>
       <Sidebar
         role={role}
-        items={items}
+        items={resolvedItems}
         user={resolvedUser}
         roleLabel={sessionUser ? getRoleLabel(sessionUser.role) : SIDEBAR_ROLE_LABELS[role]}
         onLogout={resolvedLogout}
