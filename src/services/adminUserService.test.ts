@@ -66,6 +66,15 @@ describe('adminUserService.list', () => {
     expect((error as AdminUserServiceError).status).toBe(0);
     expect((error as AdminUserServiceError).message).toContain('conexão');
   });
+
+  it('should use the default message when the API returns no message', async () => {
+    authenticatedFetchMock.mockResolvedValue(new Response('not-json', { status: 500 }));
+
+    const error = await adminUserService.list().catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AdminUserServiceError);
+    expect((error as AdminUserServiceError).message).toBe('Não foi possível carregar os usuários.');
+  });
 });
 
 describe('adminUserService.getById', () => {
@@ -99,6 +108,16 @@ describe('adminUserService.getById', () => {
     expect((error as AdminUserServiceError).status).toBe(404);
     expect((error as AdminUserServiceError).message).toBe('User not found');
   });
+
+  it('should report a network failure while loading detail', async () => {
+    authenticatedFetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const error = await adminUserService.getById('user-1').catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AdminUserServiceError);
+    expect((error as AdminUserServiceError).status).toBe(0);
+    expect((error as AdminUserServiceError).message).toContain('detalhe do usuário');
+  });
 });
 
 describe('adminUserService.update', () => {
@@ -119,6 +138,51 @@ describe('adminUserService.update', () => {
     const [url, init] = authenticatedFetchMock.mock.calls[0];
     expect(new URL(String(url)).pathname).toMatch(/\/users\/user-1$/);
     expect(init).toMatchObject({ method: 'PUT' });
+  });
+});
+
+describe('adminUserService.requestEmailChange', () => {
+  beforeEach(() => {
+    authenticatedFetchMock.mockReset();
+  });
+
+  it('should post the new e-mail and return the updated user', async () => {
+    const detail = { ...users[0], email: 'ana.nova@email.com' };
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: detail }));
+
+    const result = await adminUserService.requestEmailChange('user-1', 'ana.nova@email.com');
+
+    expect(result).toEqual(detail);
+    const [url, init] = authenticatedFetchMock.mock.calls[0];
+    expect(new URL(String(url)).pathname).toMatch(/\/users\/user-1\/email-change$/);
+    expect(init).toMatchObject({ method: 'POST' });
+    expect(JSON.parse(String(init?.body))).toEqual({ email: 'ana.nova@email.com' });
+  });
+
+  it('should throw with the API message when the response is not ok', async () => {
+    authenticatedFetchMock.mockResolvedValue(
+      jsonResponse({ status: 409, error: 'Conflict', message: 'Email already in use' }, 409),
+    );
+
+    const error = await adminUserService
+      .requestEmailChange('user-1', 'duplicado@email.com')
+      .catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AdminUserServiceError);
+    expect((error as AdminUserServiceError).status).toBe(409);
+    expect((error as AdminUserServiceError).message).toBe('Email already in use');
+  });
+
+  it('should report a network failure with status 0', async () => {
+    authenticatedFetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const error = await adminUserService
+      .requestEmailChange('user-1', 'ana.nova@email.com')
+      .catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AdminUserServiceError);
+    expect((error as AdminUserServiceError).status).toBe(0);
+    expect((error as AdminUserServiceError).message).toContain('conexão');
   });
 });
 

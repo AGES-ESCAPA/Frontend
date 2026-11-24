@@ -75,4 +75,26 @@ describe('orderCancellationMockService', () => {
     );
     expect(service.listOrders()[0].status).toBe('APPROVED');
   });
+
+  it('rejects actions for missing orders and access records', () => {
+    const service = createOrderCancellationMockService([makeOrder()]);
+
+    expect(() => service.executeAction('missing', 'cancel', 'APPROVED')).toThrow(
+      expect.objectContaining({ status: 404 }),
+    );
+    expect(() => service.getEnrollmentAccess('missing')).toThrow(
+      expect.objectContaining({ status: 404 }),
+    );
+  });
+
+  it('only allows refund after cancellation', () => {
+    const service = createOrderCancellationMockService([makeOrder()]);
+
+    expect(() => service.executeAction('1', 'refund', 'APPROVED')).toThrow(
+      expect.objectContaining({
+        status: 409,
+        message: 'Somente pedidos cancelados podem receber o registro de reembolso.',
+      }),
+    );
+  });
 });

@@ -12,10 +12,9 @@ import {
   hasInvitePasswordErrors,
   validateInvitePassword,
 } from '@utils/invitePassword';
+import { getDefaultRoute } from '@routes/access';
 import type { InvitePasswordErrors, InvitePasswordField, InvitePasswordValues } from '@/types/auth';
 import styles from './CreatePassword.module.css';
-
-const MY_COURSES_ROUTE = '/meus-cursos';
 
 const PASSWORD_PLACEHOLDER = '••••••••';
 
@@ -67,7 +66,7 @@ export const CreatePassword = () => {
     try {
       const session = await authService.createInvitePassword(token, values.password);
       login(session.token, session.user, session.expiresIn);
-      navigate(MY_COURSES_ROUTE, { replace: true });
+      navigate(getDefaultRoute(session.user.role), { replace: true });
     } catch (error: unknown) {
       if (!(error instanceof AuthServiceError)) {
         // O fetch só rejeita sem resposta HTTP: falha de rede.

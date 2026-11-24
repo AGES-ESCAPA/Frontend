@@ -1,9 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthContext } from '@contexts/authContextDefinition';
+import type { AuthContextValue } from '@contexts/authContextDefinition';
 import { MyCourses } from './MyCourses';
-import { beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearResourceCache } from '@services/resourceCache';
+import type { UserRole } from '@/types/auth';
 import * as enrollmentService from '../../services/enrollmentService';
 import * as curriculumService from '../../services/curriculumService';
 import type { StudentCourseCardResponse } from '../../services/enrollmentService';
@@ -14,6 +18,18 @@ vi.mock('../../services/enrollmentService', () => ({
 
 vi.mock('../../services/curriculumService', () => ({
   getStudentCurriculum: vi.fn(),
+}));
+
+vi.mock('@hooks/useNotifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    unreadCount: 0,
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+    markAsRead: vi.fn(),
+    markAllAsRead: vi.fn(),
+  }),
 }));
 
 const getEnrollmentsMock = vi.mocked(enrollmentService.getStudentEnrollments);
@@ -28,6 +44,18 @@ const pendingCourse: StudentCourseCardResponse = {
   enrollmentStatus: 'PENDING',
   lessonsCount: 10,
   progressPercentage: null,
+};
+
+const completedCourse: StudentCourseCardResponse = {
+  courseId: '3',
+  title: 'Curso Concluído',
+  instructor: null,
+  thumbnailUrl: null,
+  durationTime: null,
+  enrollmentStatus: 'COMPLETED',
+  lessonsCount: 8,
+  progressPercentage: 100,
+  certificateCode: 'CERT-123',
 };
 
 const inProgressCourse: StudentCourseCardResponse = {
@@ -54,14 +82,30 @@ const LocationProbe = () => {
   return <output data-testid="location">{location.pathname}</output>;
 };
 
-const renderPage = () =>
+const authAs = (role: UserRole): AuthContextValue => ({
+  user: { id: 'user-1', name: 'Mariana Costa', email: 'mariana@email.com', role },
+  isAuthenticated: true,
+  isRestoring: false,
+  login: vi.fn(),
+  logout: vi.fn(),
+  updateUser: vi.fn(),
+});
+
+const withAuth = (role: UserRole, children: ReactNode) => (
+  <AuthContext.Provider value={authAs(role)}>{children}</AuthContext.Provider>
+);
+
+const renderPage = (role: UserRole = 'STUDENT') =>
   render(
-    <MemoryRouter initialEntries={['/meus-cursos']}>
-      <Routes>
-        <Route path="/meus-cursos" element={<MyCourses />} />
-        <Route path="*" element={<LocationProbe />} />
-      </Routes>
-    </MemoryRouter>,
+    withAuth(
+      role,
+      <MemoryRouter initialEntries={['/meus-cursos']}>
+        <Routes>
+          <Route path="/meus-cursos" element={<MyCourses />} />
+          <Route path="*" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    ),
   );
 
 describe('MyCourses', () => {
@@ -162,6 +206,81 @@ describe('MyCourses', () => {
     expect(await screen.findByText('Nenhum curso encontrado')).toBeInTheDocument();
   });
 
+  it('loads more courses when Carregar mais is clicked', async () => {
+    const user = userEvent.setup();
+    getEnrollmentsMock
+      .mockResolvedValueOnce({
+        content: [inProgressCourse],
+        pageNumber: 0,
+        pageSize: 10,
+        totalPages: 2,
+        totalElements: 11,
+      })
+      .mockResolvedValueOnce({
+        content: [{ ...inProgressCourse, courseId: 'extra-1', title: 'Curso extra' }],
+        pageNumber: 1,
+        pageSize: 10,
+        totalPages: 2,
+        totalElements: 11,
+      });
+
+    renderPage();
+
+    await screen.findByText('Curso em Andamento');
+    await user.click(screen.getByRole('button', { name: 'Carregar mais' }));
+
+    expect(await screen.findByText('Curso extra')).toBeInTheDocument();
+    expect(getEnrollmentsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, size: 10 }),
+    );
+  });
+
+  it('searches courses after debouncing the search input', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup();
+
+    try {
+      renderPage();
+      await screen.findByText('Curso em Andamento');
+
+      await user.type(screen.getByRole('textbox', { name: 'Buscar em meus cursos' }), 'design');
+
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+      });
+
+      await waitFor(() => {
+        expect(getEnrollmentsMock).toHaveBeenLastCalledWith(
+          expect.objectContaining({ query: 'design', page: 0 }),
+        );
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('navigates to the certificate when the student opens a completed course', async () => {
+    const user = userEvent.setup();
+    getEnrollmentsMock.mockResolvedValue(buildPage([completedCourse]));
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Visualizar Certificado' }));
+
+    expect(await screen.findByTestId('location')).toHaveTextContent('/certificados/CERT-123');
+  });
+
+  it('shows completed and in-progress sections when viewing Todos', async () => {
+    getEnrollmentsMock.mockResolvedValue(
+      buildPage([pendingCourse, inProgressCourse, completedCourse]),
+    );
+    renderPage();
+
+    expect(await screen.findByText('Curso em Andamento')).toBeInTheDocument();
+    expect(screen.getByText('Curso Pendente')).toBeInTheDocument();
+    expect(screen.getByText('Curso Concluído')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /^concluídos/i })).toBeInTheDocument();
+  });
+
   it('navigates to the catalog when the empty state action is clicked', async () => {
     const user = userEvent.setup();
     getEnrollmentsMock.mockResolvedValue(buildPage([]));
@@ -170,5 +289,16 @@ describe('MyCourses', () => {
     await user.click(await screen.findByRole('button', { name: 'Explorar Catálogo' }));
 
     expect(await screen.findByTestId('location')).toHaveTextContent('/aluno/cursos');
+  });
+
+  it('explains company assignment instead of catalog when an employee has no courses', async () => {
+    getEnrollmentsMock.mockResolvedValue(buildPage([]));
+    renderPage('EMPLOYEE');
+
+    expect(await screen.findByText('Nenhum curso encontrado')).toBeInTheDocument();
+    expect(
+      screen.getByText('Quando a sua empresa liberar cursos para você, eles aparecerão aqui.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explorar Catálogo' })).not.toBeInTheDocument();
   });
 });

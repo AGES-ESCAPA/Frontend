@@ -103,6 +103,20 @@ describe('CourseDetails', () => {
     useOptionalAuthMock.mockReset().mockReturnValue(null);
   });
 
+  it('should show a loading message while fetching the course', () => {
+    getPublicCourseByIdMock.mockReturnValue(new Promise(() => undefined));
+    renderDetails();
+
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando curso...');
+  });
+
+  it('should show the API error when the course cannot be loaded', async () => {
+    getPublicCourseByIdMock.mockRejectedValue(new Error('Curso indisponível'));
+    renderDetails();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Curso indisponível');
+  });
+
   it('should open the course details from the public API', async () => {
     getPublicCourseByIdMock.mockResolvedValue(details);
     renderDetails();

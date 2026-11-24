@@ -353,4 +353,81 @@ describe('companyEmployeeService', () => {
       });
     });
   });
+
+  describe('employee course assignments', () => {
+    const assignments = [
+      {
+        courseId: 'course-1',
+        title: 'Turismo Rural',
+        category: 'Hospitalidade',
+        assigned: true,
+      },
+    ];
+
+    it('lista os cursos atribuíveis ao colaborador', async () => {
+      fetchMock.mockResolvedValueOnce(response({ success: true, data: assignments }));
+
+      await expect(companyEmployeeService.listEmployeeCourses('employee-1')).resolves.toEqual(
+        assignments,
+      );
+
+      expect(String(fetchMock.mock.calls[0][0])).toContain('/company/employees/employee-1/courses');
+    });
+
+    it('atribui e revoga um curso com allowNullData', async () => {
+      fetchMock
+        .mockResolvedValueOnce(response({ success: true, data: null }))
+        .mockResolvedValueOnce(response({ success: true, data: null }));
+
+      await expect(
+        companyEmployeeService.assignEmployeeCourse('employee-1', 'course-1'),
+      ).resolves.toBeNull();
+      await expect(
+        companyEmployeeService.revokeEmployeeCourse('employee-1', 'course-1'),
+      ).resolves.toBeNull();
+
+      expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST' });
+      expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: 'DELETE' });
+    });
+  });
+
+  it('mapeia 401 com mensagem de sessão inválida', async () => {
+    fetchMock.mockResolvedValueOnce(response({ message: 'Unauthorized' }, 401));
+    await expect(companyEmployeeService.getSeats()).rejects.toMatchObject({
+      status: 401,
+      message: 'Sua sessão não está válida. Entre novamente para continuar.',
+    });
+  });
+
+  it.each([
+    [429, 'Too many', 'Muitas solicitações realizadas. Aguarde um momento e tente novamente.'],
+    [503, 'Down', 'O servidor está indisponível no momento. Tente novamente mais tarde.'],
+  ] as const)(
+    'mapeia HTTP %s na criação com mensagem localizada',
+    async (status, message, expected) => {
+      fetchMock.mockResolvedValueOnce(response({ message }, status));
+      await expect(
+        companyEmployeeService.createEmployee({ name: 'Ana', email: 'ana@empresa.com.br' }),
+      ).rejects.toMatchObject({ status, message: expected });
+    },
+  );
+
+  it('usa mensagem genérica para conflito 409 na criação', async () => {
+    fetchMock.mockResolvedValueOnce(response({ message: 'Unexpected conflict' }, 409));
+    await expect(
+      companyEmployeeService.createEmployee({ name: 'Ana', email: 'ana@empresa.com.br' }),
+    ).rejects.toMatchObject({
+      status: 409,
+      message: 'Este e-mail já está cadastrado ou a solicitação conflita com os dados existentes.',
+    });
+  });
+
+  it('rejeita corpo JSON inválido em respostas de sucesso', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response('not-json', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    await expect(companyEmployeeService.getSeats()).rejects.toMatchObject({
+      message: 'Resposta inválida do servidor.',
+    });
+  });
 });

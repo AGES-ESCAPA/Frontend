@@ -177,6 +177,46 @@ describe('CourseHeader', () => {
     expect(screen.queryByRole('button', { name: 'Acessar curso' })).not.toBeInTheDocument();
   });
 
+  it('does not offer purchase to a company employee without the course', async () => {
+    loadOwnedMock.mockResolvedValue(new Set(['outro-curso']));
+
+    render(
+      withAuth(
+        'EMPLOYEE',
+        <MemoryRouter>
+          <CourseHeader course={featuredCourse} />
+        </MemoryRouter>,
+      ),
+    );
+
+    expect(await screen.findByText('Indisponível para compra')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Comprar curso' })).not.toBeInTheDocument();
+    expect(screen.queryByText(featuredCourse.price)).not.toBeInTheDocument();
+  });
+
+  it('lets a company employee who already has the course open it', async () => {
+    const user = userEvent.setup();
+    loadOwnedMock.mockResolvedValue(new Set([featuredCourse.id]));
+    accessPathMock.mockResolvedValue(`/aluno/cursos/${featuredCourse.id}/aulas/aula-1`);
+
+    render(
+      withAuth(
+        'EMPLOYEE',
+        <MemoryRouter initialEntries={[`/cursos/${featuredCourse.id}`]}>
+          <CourseHeader course={featuredCourse} />
+          <LocationProbe />
+        </MemoryRouter>,
+      ),
+    );
+
+    await user.click(await screen.findByRole('button', { name: 'Acessar curso' }));
+
+    expect(screen.queryByRole('button', { name: 'Comprar curso' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      `/aluno/cursos/${featuredCourse.id}/aulas/aula-1`,
+    );
+  });
+
   it('offers free lessons when every lesson in the course is free', async () => {
     const user = userEvent.setup();
     const freeOnlyCourse: CourseSummary = {

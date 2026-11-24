@@ -285,6 +285,28 @@ describe('adminOrderService.refund', () => {
     authenticatedFetchMock.mockReset();
   });
 
+  it('should post cancel with an optional reason in the body', async () => {
+    const payload = { id: 'order-1', status: 'CANCELLED', statusHistory: [] };
+    authenticatedFetchMock.mockResolvedValue(jsonResponse({ success: true, data: payload }));
+
+    await adminOrderService.cancel('order-1', 'Cliente solicitou');
+
+    expect(JSON.parse(String(authenticatedFetchMock.mock.calls[0][1]?.body))).toEqual({
+      reason: 'Cliente solicitou',
+    });
+  });
+
+  it('should throw a 404 error when refund targets a missing order', async () => {
+    authenticatedFetchMock.mockResolvedValue(
+      jsonResponse({ status: 404, message: 'Order not found' }, 404),
+    );
+
+    const error = await adminOrderService.refund('order-404').catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AdminOrderServiceError);
+    expect((error as AdminOrderServiceError).message).toBe('Pedido não encontrado.');
+  });
+
   it('should post refund and return the updated status', async () => {
     const payload = {
       id: 'order-1',

@@ -133,6 +133,33 @@ describe('CourseModulesBuilder', () => {
     expect(screen.queryByText('Boas-vindas e objetivos do curso')).not.toBeInTheDocument();
   });
 
+  it('should show the API error when module creation fails', async () => {
+    const user = userEvent.setup();
+    const client = createClient();
+    vi.mocked(client.createModule).mockRejectedValue(new Error('Internal Server Error'));
+    renderBuilder(client);
+
+    await user.click(screen.getByRole('button', { name: /adicionar módulo/i }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Internal Server Error');
+    expect(screen.queryByDisplayValue('Novo módulo 3')).not.toBeInTheDocument();
+  });
+
+  it('should restore the previous title when renaming fails', async () => {
+    const user = userEvent.setup();
+    const client = createClient();
+    vi.mocked(client.updateModuleTitle).mockRejectedValue(new Error('Conflict updating module'));
+    renderBuilder(client);
+
+    const titleFields = screen.getAllByLabelText(/título do módulo/i);
+    await user.clear(titleFields[0]);
+    await user.type(titleFields[0], 'Título rejeitado');
+    await user.tab();
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Conflict updating module');
+    expect(screen.getByDisplayValue('Fundamentos do atendimento turístico')).toBeInTheDocument();
+  });
+
   it('should create a new module', async () => {
     const user = userEvent.setup();
     const { client } = renderBuilder();
@@ -641,6 +668,29 @@ describe('CourseModulesBuilder', () => {
       expect(screen.getByRole('status')).toHaveTextContent(/serão notificados/i);
     });
 
+    it('should show the API error when saving lesson edits fails', async () => {
+      const user = userEvent.setup();
+      const updateLesson = vi.fn().mockRejectedValue(new Error('Conflict saving content'));
+      render(
+        <CourseModulesBuilder
+          courseId={COURSE_ID}
+          initialModules={createModules()}
+          client={createClient()}
+          createLesson={createLessonMock()}
+          getLesson={vi.fn().mockResolvedValue(savedTextLesson)}
+          updateLesson={updateLesson}
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+      await user.click(
+        screen.getByRole('button', { name: 'Editar aula Mapa da jornada do cliente' }),
+      );
+      await user.click(screen.getByRole('button', { name: /salvar alterações/i }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Conflict saving content');
+    });
+
     it('should show the error when the lesson cannot be loaded', async () => {
       const user = userEvent.setup();
       const getLesson = vi.fn().mockRejectedValue(new Error('Content not found'));
@@ -660,6 +710,122 @@ describe('CourseModulesBuilder', () => {
 
       expect(await screen.findByRole('status')).toHaveTextContent('Content not found');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should reject a blank module title on blur', async () => {
+    const user = userEvent.setup();
+    const { client } = renderBuilder();
+
+    const titleFields = screen.getAllByLabelText(/título do módulo/i);
+    await user.clear(titleFields[0]);
+    await user.tab();
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'O título do módulo não pode ficar em branco.',
+    );
+    expect(client.updateModuleTitle).not.toHaveBeenCalled();
+  });
+
+  it('should save the module title when Enter is pressed in the field', async () => {
+    const user = userEvent.setup();
+    const { client } = renderBuilder();
+    const titleFields = screen.getAllByLabelText(/título do módulo/i);
+
+    await user.clear(titleFields[0]);
+    await user.type(titleFields[0], 'Fundamentos com Enter');
+    fireEvent.keyDown(titleFields[0], { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(client.updateModuleTitle).toHaveBeenCalledWith(
+        FIRST_MODULE_ID,
+        'Fundamentos com Enter',
+      );
+    });
+  });
+
+  it('should show a generic error when module creation fails without a message', async () => {
+    const client = createClient();
+    vi.mocked(client.createModule).mockRejectedValue('offline');
+    renderBuilder(client);
+
+    await userEvent.click(screen.getByRole('button', { name: /adicionar módulo/i }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Não foi possível criar o módulo.');
+  });
+
+  it('should show the error when lesson creation fails', async () => {
+    const user = userEvent.setup();
+    const createLesson = vi.fn().mockRejectedValue(new Error('Video quota exceeded'));
+    renderBuilder(createClient(), createLesson);
+
+    await user.click(screen.getByRole('button', { name: /expandir módulo 1/i }));
+    await user.click(screen.getByRole('button', { name: /adicionar aula ao módulo 1/i }));
+    await user.type(screen.getByLabelText(/título da aula/i), 'Aula extra');
+    await user.type(screen.getByLabelText(/url do vídeo/i), 'https://youtube.com/watch?v=1');
+    await user.type(screen.getByLabelText(/duração/i), '100');
+    await user.click(screen.getByRole('button', { name: /salvar aula/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Video quota exceeded');
+  });
+
+  it('should not reorder when a module is dropped onto itself', async () => {
+    const { client } = renderBuilder();
+    const moduleCards = screen.getAllByRole('listitem');
+
+    fireEvent.dragStart(moduleCards[0]);
+    fireEvent.dragOver(moduleCards[0]);
+    fireEvent.drop(moduleCards[0]);
+    fireEvent.dragEnd(moduleCards[0]);
+
+    expect(client.reorderModules).not.toHaveBeenCalled();
+  });
+
+  describe('published course copy', () => {
+    const renderPublished = () =>
+      render(
+        <CourseModulesBuilder
+          courseId={COURSE_ID}
+          initialModules={createModules()}
+          client={createClient()}
+          coursePublished
+        />,
+      );
+
+    it('should explain that students keep the published module until republish on delete', async () => {
+      renderPublished();
+      await userEvent.click(screen.getByRole('button', { name: /excluir módulo 1/i }));
+
+      const dialog = screen.getByRole('dialog', { name: /excluir módulo\?/i });
+      expect(dialog).toHaveTextContent(/continuam vendo ele e as aulas publicadas/i);
+    });
+
+    it('should append the republication notice after renaming a module', async () => {
+      const user = userEvent.setup();
+      const client = createClient();
+      render(
+        <CourseModulesBuilder
+          courseId={COURSE_ID}
+          initialModules={createModules()}
+          client={client}
+          coursePublished
+        />,
+      );
+      const titleFields = screen.getAllByLabelText(/título do módulo/i);
+
+      await user.clear(titleFields[0]);
+      await user.type(titleFields[0], 'Módulo republicado');
+      fireEvent.blur(titleFields[0]);
+
+      await waitFor(() => {
+        expect(client.updateModuleTitle).toHaveBeenCalledWith(
+          FIRST_MODULE_ID,
+          'Módulo republicado',
+        );
+      });
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        /Os alunos veem essa alteração quando você publicar o curso/i,
+      );
     });
   });
 });

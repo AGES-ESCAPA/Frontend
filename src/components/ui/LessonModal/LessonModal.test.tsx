@@ -200,6 +200,89 @@ describe('LessonModal', () => {
     expect(screen.queryByLabelText(/título do material 2/i)).not.toBeInTheDocument();
   });
 
+  // ── Quiz editor ──────────────────────────────────────────────────
+  it('should add, edit and remove quiz questions and options', async () => {
+    const { onSubmit } = renderModal();
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Quiz' }));
+    await userEvent.type(
+      screen.getByPlaceholderText('Digite a pergunta...'),
+      'Qual é a capital do Brasil?',
+    );
+
+    const optionInputs = screen.getAllByPlaceholderText(/alternativa/i);
+    await userEvent.type(optionInputs[0], 'Brasília');
+    await userEvent.type(optionInputs[1], 'São Paulo');
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Marcar alternativa 2 como correta' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Alternativa' }));
+    const optionsAfterAdd = screen.getAllByPlaceholderText(/alternativa/i);
+    await userEvent.type(optionsAfterAdd[2], 'Rio de Janeiro');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Adicionar pergunta' }));
+    expect(screen.getByText('Pergunta 2')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remover pergunta 2' }));
+    expect(screen.queryByText('Pergunta 2')).not.toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText(/título da aula/i), 'Quiz de geografia');
+    await userEvent.click(screen.getByRole('button', { name: /salvar aula/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    const payload = onSubmit.mock.calls[0][0];
+    expect(payload.type).toBe('quiz');
+    expect(payload.quizQuestions).toHaveLength(1);
+    expect(payload.quizQuestions[0].prompt).toBe('Qual é a capital do Brasil?');
+    expect(payload.quizQuestions[0].options).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ text: 'Brasília', correct: false }),
+        expect.objectContaining({ text: 'São Paulo', correct: true }),
+        expect.objectContaining({ text: 'Rio de Janeiro', correct: false }),
+      ]),
+    );
+  });
+
+  it('should type duration digits through the masked duration field', async () => {
+    renderModal();
+
+    const durationInput = screen.getByLabelText(/duração/i);
+    durationInput.focus();
+    await userEvent.keyboard('1240');
+
+    expect(durationInput).toHaveValue('12:40');
+  });
+
+  it('should upload a complementary file resource', async () => {
+    const file = new File(['conteudo'], 'apostila.pdf', { type: 'application/pdf' });
+    const { onSubmit } = renderModal();
+
+    await userEvent.type(screen.getByLabelText(/título da aula/i), 'Aula com arquivo');
+    await userEvent.type(screen.getByLabelText(/url do vídeo/i), 'https://youtube.com/watch?v=1');
+    const durationInput = screen.getByLabelText(/duração/i);
+    durationInput.focus();
+    await userEvent.keyboard('1240');
+    await userEvent.click(screen.getByRole('button', { name: /adicionar arquivo/i }));
+    await userEvent.type(screen.getByLabelText(/título do material 1/i), 'Apostila');
+    await userEvent.upload(screen.getByLabelText(/selecionar arquivo 1/i), file);
+    expect(screen.getByText('apostila.pdf')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /salvar aula/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    const payload = onSubmit.mock.calls[0][0];
+    expect(payload.resources[0]).toEqual(
+      expect.objectContaining({
+        type: 'file',
+        title: 'Apostila',
+      }),
+    );
+    expect(payload.uploads).toEqual([
+      expect.objectContaining({
+        resourceId: payload.resources[0].id,
+        file,
+      }),
+    ]);
+  });
+
   // ── Cancelamento ─────────────────────────────────────────────────
   it('should close the modal without saving when cancelling', async () => {
     const { onSubmit, onOpenChange } = renderModal();

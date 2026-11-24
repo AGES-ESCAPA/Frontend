@@ -28,8 +28,11 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
   const isFreeOnly = lessons.length > 0 && freeLessonCount === lessons.length;
 
   const isAuthenticated = auth?.isAuthenticated ?? Boolean(localStorage.getItem('access_token'));
-  const isLearner = auth?.user?.role === 'STUDENT' || auth?.user?.role === 'EMPLOYEE';
+  const isEmployee = auth?.user?.role === 'EMPLOYEE';
+  const isLearner = auth?.user?.role === 'STUDENT' || isEmployee;
   const isCompany = auth?.user?.role === 'COMPANY';
+  // Colaborador só consome cursos liberados pela empresa — sem compra no catálogo.
+  const canPurchase = !isEmployee;
   // Aluno que já tem o curso entra nele, em vez de ver a oferta de compra de novo.
   const ownership = useCourseOwnership(
     course.id,
@@ -40,6 +43,7 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
   // Empresa dona do curso vê o selo "Adquirido" no lugar do preço e da compra.
   const isCompanyOwned = isCompany && isOwned;
   const isCheckingOwnership = ownership.status === 'loading';
+  const isEmployeeUnavailable = isEmployee && !isOwned && !isCheckingOwnership;
 
   const handleAccess = async () => {
     navigate(await getCourseAccessPath(course.id));
@@ -79,10 +83,14 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
       return;
     }
 
+    if (isEmployeeUnavailable) return;
+
     if (isFreeOnly) {
       handleViewFreeLessons();
       return;
     }
+
+    if (!canPurchase) return;
 
     handlePurchase();
   };
@@ -148,9 +156,11 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
               ? 'Aulas grátis'
               : isCompanyOwned
                 ? 'Curso adquirido'
-                : isOwned
-                  ? 'Acessar curso'
-                  : 'Comprar curso'
+                : isEmployeeUnavailable
+                  ? 'Curso indisponível'
+                  : isOwned
+                    ? 'Acessar curso'
+                    : 'Comprar curso'
           }
         >
           {course.thumbnailUrl ? (
@@ -165,6 +175,18 @@ export const CourseHeader: FC<CourseHeaderProps> = ({ course, onViewFreeLessons 
           <div className={styles.purchaseBody}>
             {isCompanyOwned ? (
               <span className={styles.acquiredTag}>Adquirido</span>
+            ) : isEmployee ? (
+              isEmployeeUnavailable ? (
+                <span className={styles.acquiredTag}>Indisponível para compra</span>
+              ) : (
+                <Button
+                  label="Acessar curso"
+                  variant="primary"
+                  fullWidth
+                  disabled={isCheckingOwnership || !isOwned}
+                  onClick={handleCta}
+                />
+              )
             ) : (
               <>
                 <div className={styles.priceBlock}>

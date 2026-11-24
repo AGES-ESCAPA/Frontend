@@ -12,6 +12,7 @@ import {
   StudentCurriculumError,
 } from '@services/curriculumService';
 import { getStudentEnrollments } from '@services/enrollmentService';
+import { submitStudentQuiz, type QuizSubmitResult } from '@services/lessonService';
 import { clearResourceCache } from '@services/resourceCache';
 import { CoursePlayer } from './CoursePlayer';
 
@@ -35,7 +36,14 @@ vi.mock('@services/enrollmentService', () => ({
   }),
 }));
 
+vi.mock('@services/lessonService', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  submitStudentQuiz: vi.fn(),
+}));
+
 const getStudentEnrollmentsMock = vi.mocked(getStudentEnrollments);
+
+const submitStudentQuizMock = vi.mocked(submitStudentQuiz);
 
 const emptyEnrollments = {
   content: [] as never[],
@@ -180,6 +188,7 @@ describe('CoursePlayer', () => {
     completeStudentLessonMock.mockReset();
     getStudentEnrollmentsMock.mockReset();
     getStudentEnrollmentsMock.mockResolvedValue(emptyEnrollments);
+    submitStudentQuizMock.mockReset();
     // Por padrão o menu fica carregando; os testes do menu definem a resposta.
     getStudentCurriculumMock.mockReturnValue(new Promise<StudentCurriculum>(() => {}));
   });
@@ -953,6 +962,84 @@ describe('CoursePlayer', () => {
           screen.queryByText('Gostou da aula? Garanta o curso completo agora'),
         ).not.toBeInTheDocument(),
       );
+    });
+  });
+
+  describe('quiz lessons', () => {
+    const quizLesson: Lesson = {
+      ...lesson,
+      title: 'Quiz de fixação',
+      type: 'quiz',
+      videoUrl: null,
+      studentQuizQuestions: [
+        {
+          id: 'q1',
+          prompt: 'Qual é a capital do Brasil?',
+          options: [
+            { id: 'o1', text: 'Brasília' },
+            { id: 'o2', text: 'Rio de Janeiro' },
+          ],
+        },
+      ],
+      minQuizPassPercentage: 70,
+    };
+
+    const passedResult: QuizSubmitResult = {
+      passed: true,
+      scorePercent: 100,
+      correctCount: 1,
+      totalQuestions: 1,
+    };
+
+    it('shows the already completed hint without submitting again', async () => {
+      const completedQuizCurriculum: StudentCurriculum = {
+        ...curriculum,
+        modules: [
+          {
+            ...curriculum.modules[0],
+            lessons: [{ ...curriculum.modules[0].lessons[0], status: 'COMPLETED' }],
+          },
+        ],
+      };
+
+      getStudentCurriculumMock.mockResolvedValue(completedQuizCurriculum);
+      mockSuccessfulLesson(quizLesson);
+
+      renderCoursePlayer();
+
+      expect(await screen.findByRole('region', { name: 'Quiz da aula' })).toBeInTheDocument();
+      expect(screen.getByText(/você já concluiu este quiz/i)).toBeInTheDocument();
+      expect(submitStudentQuizMock).not.toHaveBeenCalled();
+    });
+
+    it('renders the real quiz player, submits answers and refreshes the curriculum', async () => {
+      const user = userEvent.setup();
+
+      getStudentCurriculumMock.mockResolvedValue(curriculum);
+      submitStudentQuizMock.mockResolvedValue(passedResult);
+      mockSuccessfulLesson(quizLesson);
+
+      renderCoursePlayer();
+
+      expect(await screen.findByRole('region', { name: 'Quiz da aula' })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'Marcar como concluída' }),
+      ).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('radio', { name: /brasília/i }));
+      await user.click(screen.getByRole('button', { name: /enviar respostas/i }));
+
+      await waitFor(() =>
+        expect(screen.getByRole('region', { name: 'Resultado do quiz' })).toHaveTextContent(
+          /quiz concluído/i,
+        ),
+      );
+
+      expect(submitStudentQuizMock).toHaveBeenCalledWith(COURSE_ID, LESSON_ID, [
+        { questionId: 'q1', optionId: 'o1' },
+      ]);
+
+      await waitFor(() => expect(getStudentCurriculumMock).toHaveBeenCalledTimes(2));
     });
   });
 });

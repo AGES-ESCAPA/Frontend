@@ -19,6 +19,9 @@ export default defineConfig({
     // Permite usar describe/it/expect sem importar explicitamente
     globals: true,
 
+    // Evita corrida na gravação do relatório v8 no Windows (caminho com "!").
+    fileParallelism: false,
+
     // Configurações de cobertura de código
     coverage: {
       provider: 'v8',
@@ -40,6 +43,7 @@ export default defineConfig({
         'src/data/courses.ts',
         'src/data/courseNavigation.ts',
         'src/pages/MyCourses/mockCourses.ts',
+        'src/pages/AdminMetrics/mockCourseMetrics.ts',
       ],
     },
   },

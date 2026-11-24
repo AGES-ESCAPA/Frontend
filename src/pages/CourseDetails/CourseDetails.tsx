@@ -23,6 +23,7 @@ const getLayoutRole = (role: UserRole | undefined): SidebarRole => {
 const getCatalogPath = (role: UserRole | undefined): string => {
   if (role === 'COMPANY') return '/empresa/cursos';
   if (role === 'ADMIN') return '/admin/cursos';
+  if (role === 'EMPLOYEE') return '/meus-cursos';
   return '/aluno/cursos';
 };
 

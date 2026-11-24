@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
 import {
@@ -10,9 +10,11 @@ import {
   PageHeader,
   SearchBar,
 } from '@components/ui';
+import { useOptionalAuth } from '@contexts/useAuth';
 import { useCourseFilters } from '@hooks/useCourseFilters';
 import { useCompanyCourses } from '@hooks/useCompanyCourses';
 import { usePublicCourses } from '@hooks/usePublicCourses';
+import { getDefaultRoute } from '@routes/access';
 import type { CompanyCourse, PublicCourseCard } from '@/types/course';
 import { getCourseAccessPath } from '@utils/courseAccess';
 import {
@@ -68,6 +70,7 @@ export interface CoursesProps {
 export const Courses = ({ layoutRole }: CoursesProps = {}) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const auth = useOptionalAuth();
   const role = layoutRole ?? getRoleFromPathname(pathname);
   const isStudent = role === 'student';
   const isCompany = role === 'company';
@@ -177,6 +180,11 @@ export const Courses = ({ layoutRole }: CoursesProps = {}) => {
       {...mapCompanyCourseToCardProps(companyCourse, handleCourseClick)}
     />
   );
+
+  // Colaborador não usa catálogo público (exceto como fundo inerte do detalhe).
+  if (!layoutRole && auth?.user?.role === 'EMPLOYEE') {
+    return <Navigate to={getDefaultRoute('EMPLOYEE')} replace />;
+  }
 
   return (
     <AuthenticatedLayout role={role} items={courseItems} user={currentUser} notificationsCount={2}>
