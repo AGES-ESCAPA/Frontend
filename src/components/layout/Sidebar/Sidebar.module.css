@@ -24,13 +24,13 @@
     transform var(--transition-base);
 }
 
-/* ── Topo: logo + travessão (sem a borda azul do restante da sidebar) ─ */
+/* ── Topo: logo (sem a borda azul do restante da sidebar) ─ */
 .header {
   display: flex;
   align-items: center;
   flex-shrink: 0;
   height: var(--header-height);
-  /* Cobre a borda azul da casca só nesta faixa; o travessão assume o risco. */
+  /* Cobre a borda azul da casca só nesta faixa, para não separar a logo do Academy. */
   position: relative;
   z-index: 1;
   box-sizing: content-box;
@@ -83,14 +83,6 @@
   flex-shrink: 0;
   object-fit: contain;
   object-position: left center;
-}
-
-.brandDivider {
-  flex-shrink: 0;
-  width: 1px;
-  height: var(--navbar-brand-logo-height);
-  margin-left: auto;
-  background-color: var(--color-text-muted);
 }
 
 /* Marca reduzida, exibida no lugar do logo quando a sidebar está recolhida. */
@@ -253,7 +245,6 @@
   justify-content: center;
 }
 
-.collapsed .brandDivider,
 .collapsed .userInfo,
 .collapsed .logo {
   display: none;
