@@ -8,13 +8,13 @@ const defaultProps = {
   durationTime: '',
   deadline: '',
   price: '',
-  onFieldChange: vi.fn<[CourseFormField, string]>(),
+  onFieldChange: vi.fn<(field: CourseFormField, value: string) => void>(),
 };
 
 describe('MetricsCard', () => {
   it('forwards duration, deadline and masked price changes', async () => {
     const user = userEvent.setup();
-    const onFieldChange = vi.fn<[CourseFormField, string]>();
+    const onFieldChange = vi.fn<(field: CourseFormField, value: string) => void>();
 
     render(<MetricsCard {...defaultProps} onFieldChange={onFieldChange} />);
 

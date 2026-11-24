@@ -6,13 +6,13 @@ import { DescriptionCard } from './DescriptionCard';
 
 const defaultProps = {
   description: '',
-  onFieldChange: vi.fn<[CourseFormField, string]>(),
+  onFieldChange: vi.fn<(field: CourseFormField, value: string) => void>(),
 };
 
 describe('DescriptionCard', () => {
   it('forwards description edits from the textarea', async () => {
     const user = userEvent.setup();
-    const onFieldChange = vi.fn<[CourseFormField, string]>();
+    const onFieldChange = vi.fn<(field: CourseFormField, value: string) => void>();
 
     render(<DescriptionCard {...defaultProps} onFieldChange={onFieldChange} />);
 
@@ -22,11 +22,11 @@ describe('DescriptionCard', () => {
 
   it('wraps the selected text when a toolbar action is used', async () => {
     const user = userEvent.setup();
-    const onFieldChange = vi.fn<[CourseFormField, string]>();
+    const onFieldChange = vi.fn<(field: CourseFormField, value: string) => void>();
 
     render(<DescriptionCard description="trecho" onFieldChange={onFieldChange} />);
 
-    const textarea = screen.getByLabelText(/descrição completa/i);
+    const textarea = screen.getByLabelText(/descrição completa/i) as HTMLTextAreaElement;
     textarea.setSelectionRange(0, 6);
     await user.click(screen.getByRole('button', { name: 'Negrito' }));
 
@@ -40,11 +40,11 @@ describe('DescriptionCard', () => {
     ['Código', 'fn', '`fn`'],
   ])('wraps selection with %s', async (toolName, selected, expected) => {
     const user = userEvent.setup();
-    const onFieldChange = vi.fn<[CourseFormField, string]>();
+    const onFieldChange = vi.fn<(field: CourseFormField, value: string) => void>();
 
     render(<DescriptionCard description={selected} onFieldChange={onFieldChange} />);
 
-    const textarea = screen.getByLabelText(/descrição completa/i);
+    const textarea = screen.getByLabelText(/descrição completa/i) as HTMLTextAreaElement;
     textarea.setSelectionRange(0, selected.length);
     await user.click(screen.getByRole('button', { name: toolName }));
 
@@ -52,7 +52,7 @@ describe('DescriptionCard', () => {
   });
 
   it('does not apply toolbar actions when disabled', async () => {
-    const onFieldChange = vi.fn<[CourseFormField, string]>();
+    const onFieldChange = vi.fn<(field: CourseFormField, value: string) => void>();
 
     render(<DescriptionCard description="trecho" disabled onFieldChange={onFieldChange} />);
 

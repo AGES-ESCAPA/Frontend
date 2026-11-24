@@ -29,6 +29,6 @@ describe('ProgressRulesCard', () => {
     await user.type(percentInput, '150');
 
     const percentCalls = onChange.mock.calls.filter((call) => call[0] === 'minQuizPassPercentage');
-    expect(percentCalls.at(-1)).toEqual(['minQuizPassPercentage', 100]);
+    expect(percentCalls[percentCalls.length - 1]).toEqual(['minQuizPassPercentage', 100]);
   });
 });

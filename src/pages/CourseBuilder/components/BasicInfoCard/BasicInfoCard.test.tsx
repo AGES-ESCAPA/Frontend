@@ -17,14 +17,14 @@ const defaultProps = {
   teaserVideoUrl: '',
   shortDescription: '',
   thumbnailUrl: '',
-  onFieldChange: vi.fn<[CourseFormField, string]>(),
+  onFieldChange: vi.fn<(field: CourseFormField, value: string) => void>(),
   onCoverUploadingChange: vi.fn(),
 };
 
 describe('BasicInfoCard', () => {
   it('forwards field changes from the text inputs', async () => {
     const user = userEvent.setup();
-    const onFieldChange = vi.fn<[CourseFormField, string]>();
+    const onFieldChange = vi.fn<(field: CourseFormField, value: string) => void>();
 
     render(<BasicInfoCard {...defaultProps} onFieldChange={onFieldChange} />);
 
@@ -40,7 +40,7 @@ describe('BasicInfoCard', () => {
 
   it('forwards thumbnail updates from the cover field', async () => {
     const user = userEvent.setup();
-    const onFieldChange = vi.fn<[CourseFormField, string]>();
+    const onFieldChange = vi.fn<(field: CourseFormField, value: string) => void>();
 
     render(<BasicInfoCard {...defaultProps} onFieldChange={onFieldChange} />);
 

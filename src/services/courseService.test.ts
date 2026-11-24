@@ -541,7 +541,7 @@ describe('courseService', () => {
   const coursePayload = {
     title: 'Novo curso',
     category: 'Hospitalidade',
-    level: 'Iniciante' as const,
+    level: 'INICIANTE' as const,
     featured: false,
     description: 'Descrição completa',
     shortDescription: 'Resumo',

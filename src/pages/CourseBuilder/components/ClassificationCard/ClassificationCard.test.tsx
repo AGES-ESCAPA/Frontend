@@ -23,14 +23,14 @@ const defaultProps = {
   difficulty: '',
   featured: false,
   categories: ['Design & UX', 'Hospitalidade'],
-  onFieldChange: vi.fn<[CourseFormField, string]>(),
+  onFieldChange: vi.fn<(field: CourseFormField, value: string) => void>(),
   onFeaturedChange: vi.fn(),
 };
 
 describe('ClassificationCard', () => {
   it('forwards category, difficulty and featured changes', async () => {
     const user = userEvent.setup();
-    const onFieldChange = vi.fn<[CourseFormField, string]>();
+    const onFieldChange = vi.fn<(field: CourseFormField, value: string) => void>();
     const onFeaturedChange = vi.fn();
 
     render(
