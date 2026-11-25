@@ -52,7 +52,7 @@ describe('ConfirmEmailChange', () => {
     renderConfirmEmailChange();
 
     expect(screen.getByRole('heading', { name: 'Confirmar novo e-mail' })).toBeInTheDocument();
-    expect(screen.getByText('Validando o link…')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Validando o link' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Confirmar novo e-mail' })).not.toBeInTheDocument();
   });
 

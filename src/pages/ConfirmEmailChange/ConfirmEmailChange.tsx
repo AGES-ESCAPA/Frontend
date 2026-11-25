@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, PageHeader, Toast } from '@components/ui';
+import { Button, ListSkeleton, PageHeader, Toast } from '@components/ui';
 import { AuthServiceError, authService } from '@services/authService';
 import styles from '@pages/CreatePassword/CreatePassword.module.css';
 
@@ -116,13 +116,15 @@ export const ConfirmEmailChange = () => {
   } else {
     content = (
       <>
-        <p className={styles.subtitle} role={loadStatus === 'loading' ? 'status' : undefined}>
-          {loadStatus === 'loading'
-            ? 'Validando o link…'
-            : details
+        {loadStatus === 'loading' ? (
+          <ListSkeleton label="Validando o link" rows={3} />
+        ) : (
+          <p className={styles.subtitle}>
+            {details
               ? `Olá, ${details.name}. Confirme a alteração de ${details.currentEmail} para ${details.newEmail}.`
               : null}
-        </p>
+          </p>
+        )}
         {loadStatus === 'ready' && details ? (
           <section className={styles.card} aria-labelledby="confirm-email-title">
             <Button

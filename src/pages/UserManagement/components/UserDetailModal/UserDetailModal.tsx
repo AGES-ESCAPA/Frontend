@@ -7,6 +7,7 @@ import {
   ConfirmDialog,
   FormField,
   MaskedInput,
+  FieldsSkeleton,
   Modal,
   TextInput,
 } from '@components/ui';
@@ -462,9 +463,7 @@ export const UserDetailModal = ({
         footer={mode === 'edit' ? editFooter : viewFooter}
       >
         {loadStatus === 'loading' || loadStatus === 'idle' ? (
-          <p className={styles.loading} role="status">
-            Carregando dados do cadastro…
-          </p>
+          <FieldsSkeleton label="Carregando dados do cadastro" />
         ) : null}
 
         {loadStatus === 'error' ? (

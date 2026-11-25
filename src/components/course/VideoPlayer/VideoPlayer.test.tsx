@@ -138,7 +138,7 @@ describe('VideoPlayer', () => {
     it('shows loading before the metadata is loaded', () => {
       renderPlayer();
 
-      expect(screen.getByText('Carregando...')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Carregando vídeo' })).toBeInTheDocument();
     });
 
     it('shows the play overlay after the metadata is loaded', () => {
@@ -248,7 +248,7 @@ describe('VideoPlayer', () => {
     it('does not show the native video loading state over Vimeo', () => {
       renderPlayer({ src: VIMEO_URL });
 
-      expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: 'Carregando vídeo' })).not.toBeInTheDocument();
     });
 
     it('renders the custom PlayerControls once the Vimeo player is ready', async () => {
@@ -340,7 +340,7 @@ describe('VideoPlayer', () => {
 
       expect(secondVideo).toHaveAttribute('src', SECOND_MP4_URL);
 
-      expect(screen.getByText('Carregando...')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Carregando vídeo' })).toBeInTheDocument();
     });
   });
 
@@ -621,7 +621,7 @@ describe('VideoPlayer', () => {
       renderPlayer({ ...actions, src: '' });
 
       expect(screen.getByText('Vídeo indisponível')).toBeInTheDocument();
-      expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: 'Carregando vídeo' })).not.toBeInTheDocument();
       expect(screen.queryByLabelText(TITLE)).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Anterior' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Próxima' })).toBeInTheDocument();
@@ -700,7 +700,7 @@ describe('VideoPlayer', () => {
       expect(screen.getByText('Aula concluída')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Assistir novamente' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Reproduzir vídeo' })).not.toBeInTheDocument();
-      expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: 'Carregando vídeo' })).not.toBeInTheDocument();
       expect(screen.getByLabelText(TITLE).className).toMatch(/mediaCovered/);
     });
 

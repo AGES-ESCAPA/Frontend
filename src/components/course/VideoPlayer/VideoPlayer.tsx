@@ -2,7 +2,7 @@ import VimeoPlayer from '@vimeo/player';
 import { Check, Play, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState, type FC, type KeyboardEvent, type ReactNode } from 'react';
 
-import { Button } from '@components/ui';
+import { Button, Skeleton } from '@components/ui';
 import { toVimeoEmbedUrl } from '@utils/vimeo';
 import { resolveLessonPlaybackPosition, writeLessonPlayback } from '@utils/lessonPlayback';
 import { CourseCompletionMessage } from '../CourseCompletionMessage/CourseCompletionMessage';
@@ -603,9 +603,9 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
           )}
 
           {isLoading && !isVimeo && !showLessonCompleted && (
-            <p className={styles.loading} role="status">
-              Carregando...
-            </p>
+            <div className={styles.loading} role="status" aria-label="Carregando vídeo">
+              <Skeleton className={styles.loadingBone} />
+            </div>
           )}
 
           {showControls && (

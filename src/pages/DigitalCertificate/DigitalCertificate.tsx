@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Download, Share2 } from 'lucide-react';
-import { Button, CourseCard, EmptyState, Toast } from '@components/ui';
+import { Button, CourseCard, EmptyState, Skeleton, Toast } from '@components/ui';
 import {
   AuthenticatedLayout,
   Navbar,
@@ -137,9 +137,20 @@ export const DigitalCertificate = () => {
   const content = (
     <div className={`${styles.page} ${showAuthenticatedLayout ? styles.pageAuthenticated : ''}`}>
       {status === 'loading' && (
-        <p className={styles.loading} role="status">
-          Carregando certificado...
-        </p>
+        <div
+          className={styles.skeletonLayout}
+          role="status"
+          aria-busy="true"
+          aria-label="Carregando certificado"
+        >
+          <Skeleton className={styles.certificateBone} />
+          <div className={styles.sidebarSkeleton} aria-hidden="true">
+            <Skeleton className={styles.skeletonTitle} />
+            <Skeleton className={styles.skeletonLine} />
+            <Skeleton className={styles.skeletonLineShort} />
+            <Skeleton className={styles.sidebarCardBone} />
+          </div>
+        </div>
       )}
 
       {status === 'error' && (

@@ -35,3 +35,57 @@
   gap: var(--space-3);
   margin-top: var(--space-10);
 }
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skeletonHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(12rem, 0.8fr);
+  gap: var(--space-6);
+}
+
+.skeletonCopy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeletonTitle {
+  width: 70%;
+  height: var(--text-h4);
+}
+
+.skeletonLine {
+  width: 100%;
+  height: var(--text-body-2);
+}
+
+.skeletonLineShort {
+  width: 55%;
+  height: var(--text-body-2);
+}
+
+.skeletonCover,
+.skeletonVideo {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+}
+
+.skeletonCover {
+  aspect-ratio: 4 / 3;
+}
+
+.skeletonVideo {
+  aspect-ratio: 16 / 9;
+}
+
+@media (width < 48rem) {
+  .skeletonHero {
+    grid-template-columns: 1fr;
+  }
+}

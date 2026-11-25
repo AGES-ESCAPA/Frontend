@@ -4,6 +4,7 @@ import { Mail, User } from 'lucide-react';
 import { isValidEmail } from '@utils/validators';
 import type { EmployeeCourseAssignment } from '@services/companyEmployeeService';
 import { Button } from '../Button';
+import { ListSkeleton } from '../Skeleton/Skeleton';
 import { Checkbox } from '../Checkbox';
 import { FilterTabs } from '../FilterTabs';
 import { FormField } from '../FormField';
@@ -354,11 +355,7 @@ export const EmployeeFormModal = ({
             Marque os cursos da empresa que este colaborador pode acessar. Ao cadastrar um
             colaborador, todos os cursos da empresa são liberados por padrão.
           </p>
-          {coursesLoading ? (
-            <p className={styles.coursesStatus} role="status">
-              Carregando cursos...
-            </p>
-          ) : null}
+          {coursesLoading ? <ListSkeleton label="Carregando cursos" rows={4} /> : null}
           {coursesError ? (
             <p className={styles.coursesError} role="alert">
               {coursesError}

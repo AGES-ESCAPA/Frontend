@@ -19,7 +19,7 @@ export interface SumCardProps {
   /** Número ou texto de destaque do cartão. */
   value: ReactNode;
   /** Linha de apoio abaixo do valor. */
-  description?: string;
+  description?: ReactNode;
   /** Variação do indicador em relação a um período anterior. */
   trend?: SumCardTrend;
   className?: string;

@@ -165,8 +165,10 @@ describe('OrderManagement', () => {
 
     renderPage();
 
-    const summary = within(screen.getByRole('region', { name: 'Resumo dos pedidos' }));
-    expect(summary.getByText('— pedidos ativos')).toBeInTheDocument();
+    const summaryRegion = screen.getByRole('region', { name: 'Resumo dos pedidos' });
+    const summary = within(summaryRegion);
+    expect(summary.getByText('pedidos ativos')).toBeInTheDocument();
+    expect(summaryRegion.querySelector('[data-skeleton]')).toBeInTheDocument();
     expect(summary.queryByText(/5\.346,00/)).not.toBeInTheDocument();
   });
 
@@ -175,7 +177,7 @@ describe('OrderManagement', () => {
 
     renderPage();
 
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando pedidos');
+    expect(screen.getByRole('status', { name: 'Carregando pedidos' })).toBeInTheDocument();
   });
 
   it('shows the empty-list message when there are no orders', () => {

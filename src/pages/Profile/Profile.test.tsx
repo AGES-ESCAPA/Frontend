@@ -105,7 +105,7 @@ describe('Profile', () => {
     getProfileMock.mockResolvedValue(studentProfile);
     renderPage(studentUser);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando seus dados...');
+    expect(screen.getByRole('status', { name: 'Carregando seus dados' })).toBeInTheDocument();
     expect(await screen.findByLabelText(/Nome Completo/)).toHaveValue('Mariana Costa');
     expect(screen.getByRole('heading', { level: 1, name: 'Meu Perfil' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Zona de Perigo' })).toBeInTheDocument();

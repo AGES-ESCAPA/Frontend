@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AuthenticatedLayout } from '@components/layout';
-import { Button, OrderSummary, PageHeader, Toast } from '@components/ui';
+import { Button, OrderSummary, PageHeader, Skeleton, Toast } from '@components/ui';
 import type { OrderBuyer, OrderItem } from '@components/ui';
 import { useCheckoutCourse } from '@hooks/useCheckoutCourse';
 import { useCheckoutLayout } from '@hooks/useCheckoutLayout';
@@ -180,9 +180,22 @@ export const Checkout = ({ kind = 'course', summary, onConfirm }: CheckoutProps)
 
       {status === 'loading' && (
         <div className={`${styles.grid} ${styles.withSummary}`}>
-          <p className={styles.status} role="status">
-            Carregando os dados da compra...
-          </p>
+          <div
+            className={styles.paymentSkeleton}
+            role="status"
+            aria-busy="true"
+            aria-label="Carregando os dados da compra"
+          >
+            <div className={styles.methodRow} aria-hidden="true">
+              <Skeleton className={styles.methodBone} />
+              <Skeleton className={styles.methodBone} />
+              <Skeleton className={styles.methodBone} />
+            </div>
+            <Skeleton className={styles.fieldBone} />
+            <Skeleton className={styles.fieldBone} />
+            <Skeleton className={styles.fieldBoneShort} />
+            <Skeleton className={styles.payBone} />
+          </div>
 
           <aside className={styles.summary} aria-label="Resumo do pedido">
             {summary ?? <OrderSummary status="loading" />}
