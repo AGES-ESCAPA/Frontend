@@ -68,8 +68,8 @@ export const Footer = ({
     <footer className={`${styles.footer} ${styles.full}`} aria-label="Rodapé institucional">
       <div className={styles.fullContent}>
         <section className={styles.brandSection} aria-label="Sobre a Escapa">
-          <img src={escapaLogo} alt="ESCAPA Academy" className={styles.logo} />
-          <p className={styles.brandName}>ESCAPA Academy</p>
+          <img src={escapaLogo} alt="ESCAPA" className={styles.logo} />
+          <p className={styles.brandName}>ACADEMY</p>
           <p className={styles.brandKicker}>Da Pesquisa à Prática</p>
         </section>
 
