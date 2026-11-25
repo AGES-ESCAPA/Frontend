@@ -122,7 +122,7 @@ describe('CompanyEmployees', () => {
 
     expect(screen.getByText('Ana Paula Ferreira')).toBeInTheDocument();
 
-    expect(screen.getByText('Atualizando colaboradores...')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Atualizando colaboradores' })).toBeInTheDocument();
 
     expect(screen.getByText('Página 1 de 2')).toBeInTheDocument();
 

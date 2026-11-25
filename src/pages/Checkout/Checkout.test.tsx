@@ -202,7 +202,9 @@ describe('Checkout', () => {
   it('should display the loading state while fetching the course', async () => {
     renderCheckout();
 
-    expect(screen.getByText('Carregando os dados da compra...')).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Carregando os dados da compra' }),
+    ).toBeInTheDocument();
 
     expect(
       await screen.findByRole('button', {

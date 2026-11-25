@@ -45,11 +45,53 @@
   padding-bottom: 0;
 }
 
-.loading {
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-2);
-  line-height: var(--text-body-2--line-height);
-  text-align: center;
+.skeletonLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.25fr) minmax(0, 1fr);
+  gap: var(--space-6) var(--space-20);
+  width: min(100%, 72rem);
+  margin: 0 auto;
+}
+
+.certificateBone {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 939 / 725;
+  border-radius: var(--radius-lg);
+}
+
+.sidebarSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skeletonTitle {
+  width: 70%;
+  height: var(--text-h5);
+}
+
+.skeletonLine {
+  width: 100%;
+  height: var(--text-body-2);
+}
+
+.skeletonLineShort {
+  width: 55%;
+  height: var(--text-body-2);
+}
+
+.sidebarCardBone {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+}
+
+@media (width < 64rem) {
+  .skeletonLayout {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Proporção do protótipo: certificado com 939px e coluna lateral com 413px. */

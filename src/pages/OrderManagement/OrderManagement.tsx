@@ -10,6 +10,8 @@ import {
   Button,
   ConfirmDialog,
   EMPTY_FILTERS,
+  FieldsSkeleton,
+  InlineSkeleton,
   Modal,
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
@@ -21,8 +23,10 @@ import {
   PAYMENT_METHOD_LABELS,
   STATUS_VARIANTS,
   SearchBar,
+  StatSkeleton,
   SumCard,
   Table,
+  TableSkeleton,
   Toast,
 } from '@components/ui';
 import type { OrderFiltersValue, OrderRow, TableColumn } from '@components/ui';
@@ -359,25 +363,61 @@ export const Ordermanagement = () => {
       <section className={styles.stats} aria-label="Resumo dos pedidos">
         <SumCard
           label="Receita aprovada"
-          value={statsReady ? formatCurrency(stats.approvedRevenue) : '—'}
-          description={`${statsReady ? stats.approvedCount : '—'} pedidos ativos`}
+          value={
+            statsReady ? (
+              formatCurrency(stats.approvedRevenue)
+            ) : statsStatus === 'loading' ? (
+              <StatSkeleton />
+            ) : (
+              '—'
+            )
+          }
+          description={
+            statsReady ? (
+              `${stats.approvedCount} pedidos ativos`
+            ) : statsStatus === 'loading' ? (
+              <>
+                <InlineSkeleton /> pedidos ativos
+              </>
+            ) : (
+              '— pedidos ativos'
+            )
+          }
         />
 
         <SumCard
           label="Pedidos Realizados"
-          value={statsReady ? stats.approvedCount + stats.cancelledOrRefundedCount : '—'}
+          value={
+            statsReady ? (
+              stats.approvedCount + stats.cancelledOrRefundedCount
+            ) : statsStatus === 'loading' ? (
+              <StatSkeleton />
+            ) : (
+              '—'
+            )
+          }
           description="Total de pedidos feitos"
         />
 
         <SumCard
           label="Pedidos Aprovados"
-          value={statsReady ? stats.approvedCount : '—'}
+          value={
+            statsReady ? stats.approvedCount : statsStatus === 'loading' ? <StatSkeleton /> : '—'
+          }
           description="Acesso liberado automaticamente"
         />
 
         <SumCard
           label="Cancelados / reembolsados"
-          value={statsReady ? stats.cancelledOrRefundedCount : '—'}
+          value={
+            statsReady ? (
+              stats.cancelledOrRefundedCount
+            ) : statsStatus === 'loading' ? (
+              <StatSkeleton />
+            ) : (
+              '—'
+            )
+          }
           description="Acesso revogado"
         />
       </section>
@@ -414,9 +454,7 @@ export const Ordermanagement = () => {
             <Button variant="primary" label="Tentar novamente" onClick={handleReload} />
           </div>
         ) : status === 'loading' ? (
-          <p className={styles.loading} role="status">
-            Carregando pedidos…
-          </p>
+          <TableSkeleton label="Carregando pedidos" columns={6} />
         ) : (
           <Table
             columns={columns}
@@ -468,7 +506,7 @@ export const Ordermanagement = () => {
             title="Detalhe do pedido"
             size="sm"
           >
-            <p role="status">Carregando pedido…</p>
+            <FieldsSkeleton label="Carregando pedido" rows={5} />
           </Modal>
         ) : detailStatus === 'error' ? (
           <Modal

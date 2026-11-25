@@ -5,7 +5,7 @@ import { ArrowLeft, GitBranch, Info, Layers } from 'lucide-react';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarUser } from '@components/layout';
 import { CourseModulesBuilder } from '@components/course';
-import { Badge, Button, PageHeader, Toast, type BadgeVariant } from '@components/ui';
+import { Badge, Button, PageHeader, Skeleton, Toast, type BadgeVariant } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useCourseForm } from '@hooks/useCourseForm';
 import { useToast } from '@hooks/useToast';
@@ -88,6 +88,32 @@ const toVersionLog = (rules: CourseRules): CourseVersionLogEntry[] =>
     description: entry.description,
     author: entry.changedBy?.trim() || 'Sistema',
   }));
+
+const BuilderPanelSkeleton = ({ lines }: { lines: number }) => (
+  <div className={styles.skeletonCard} aria-hidden="true">
+    <Skeleton className={styles.skeletonTitle} />
+    {Array.from({ length: lines }, (_, index) => (
+      <Skeleton
+        key={index}
+        className={index === lines - 1 ? styles.skeletonLineShort : styles.skeletonLine}
+      />
+    ))}
+  </div>
+);
+
+const BuilderSkeleton = ({ label, panels }: { label: string; panels: number[] }) => (
+  <div
+    className={panels.length > 1 ? styles.skeletonGrid : styles.skeletonStack}
+    role="status"
+    aria-busy="true"
+    aria-label={label}
+  >
+    {panels.map((lines, index) => (
+      <BuilderPanelSkeleton key={index} lines={lines} />
+    ))}
+  </div>
+);
+
 export const CourseBuilder = () => {
   const { id: courseId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -586,14 +612,10 @@ export const CourseBuilder = () => {
   );
 
   const prerequisiteSearchStatus =
-    prerequisiteQuery.trim() === ''
+    prerequisiteQuery.trim() === '' || isSearchingPrerequisites
       ? null
       : (prerequisiteSearchError ??
-        (isSearchingPrerequisites
-          ? 'Buscando cursos…'
-          : availablePrerequisiteSuggestions.length === 0
-            ? 'Nenhum curso encontrado.'
-            : null));
+        (availablePrerequisiteSuggestions.length === 0 ? 'Nenhum curso encontrado.' : null));
 
   const isRulesDisabled = isFormDisabled;
 
@@ -664,12 +686,10 @@ export const CourseBuilder = () => {
 
           <Tabs.Content value="basics">
             {isLoading ? (
-              <p className={styles.loading} role="status">
-                Carregando os dados do curso…
-              </p>
+              <BuilderSkeleton label="Carregando os dados do curso" panels={[5, 4, 4, 4]} />
             ) : null}
 
-            {loadError ? (
+            {!isLoading && loadError ? (
               <div className={styles.loadError} role="alert">
                 <p>
                   Não foi possível carregar os dados deste curso. Para evitar sobrescrever o
@@ -685,58 +705,60 @@ export const CourseBuilder = () => {
               </div>
             ) : null}
 
-            <form
-              className={styles.grid}
-              noValidate
-              onSubmit={(event) => {
-                event.preventDefault();
-                void handleSave('PUBLISHED');
-              }}
-            >
-              <BasicInfoCard
-                title={values.title}
-                teaserVideoUrl={values.teaserVideoUrl}
-                shortDescription={values.shortDescription}
-                thumbnailUrl={values.thumbnailUrl}
-                titleError={errors.title}
-                teaserVideoUrlError={errors.teaserVideoUrl}
-                shortDescriptionError={errors.shortDescription}
-                disabled={isFormDisabled}
-                onFieldChange={changeField}
-                onCoverUploadingChange={handleCoverUploadingChange}
-              />
+            {!isLoading ? (
+              <form
+                className={styles.grid}
+                noValidate
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleSave('PUBLISHED');
+                }}
+              >
+                <BasicInfoCard
+                  title={values.title}
+                  teaserVideoUrl={values.teaserVideoUrl}
+                  shortDescription={values.shortDescription}
+                  thumbnailUrl={values.thumbnailUrl}
+                  titleError={errors.title}
+                  teaserVideoUrlError={errors.teaserVideoUrl}
+                  shortDescriptionError={errors.shortDescription}
+                  disabled={isFormDisabled}
+                  onFieldChange={changeField}
+                  onCoverUploadingChange={handleCoverUploadingChange}
+                />
 
-              <ClassificationCard
-                category={values.category}
-                difficulty={values.difficulty}
-                featured={featured}
-                categoryError={errors.category}
-                difficultyError={errors.difficulty}
-                categories={categories}
-                isCategoriesLoading={isCategoriesLoading}
-                disabled={isFormDisabled}
-                onFieldChange={changeField}
-                onFeaturedChange={setFeatured}
-              />
+                <ClassificationCard
+                  category={values.category}
+                  difficulty={values.difficulty}
+                  featured={featured}
+                  categoryError={errors.category}
+                  difficultyError={errors.difficulty}
+                  categories={categories}
+                  isCategoriesLoading={isCategoriesLoading}
+                  disabled={isFormDisabled}
+                  onFieldChange={changeField}
+                  onFeaturedChange={setFeatured}
+                />
 
-              <DescriptionCard
-                description={values.description}
-                descriptionError={errors.description}
-                disabled={isFormDisabled}
-                onFieldChange={changeField}
-              />
+                <DescriptionCard
+                  description={values.description}
+                  descriptionError={errors.description}
+                  disabled={isFormDisabled}
+                  onFieldChange={changeField}
+                />
 
-              <MetricsCard
-                durationTime={values.durationTime}
-                deadline={values.deadline}
-                price={values.price}
-                durationTimeError={errors.durationTime}
-                deadlineError={errors.deadline}
-                priceError={errors.price}
-                disabled={isFormDisabled}
-                onFieldChange={changeField}
-              />
-            </form>
+                <MetricsCard
+                  durationTime={values.durationTime}
+                  deadline={values.deadline}
+                  price={values.price}
+                  durationTimeError={errors.durationTime}
+                  deadlineError={errors.deadline}
+                  priceError={errors.price}
+                  disabled={isFormDisabled}
+                  onFieldChange={changeField}
+                />
+              </form>
+            ) : null}
           </Tabs.Content>
 
           {/* Montado mesmo inativo: o CourseModulesBuilder guarda localmente o que
@@ -749,9 +771,7 @@ export const CourseBuilder = () => {
             ) : null}
 
             {courseId !== undefined && isModulesLoading ? (
-              <p className={styles.loading} role="status">
-                Carregando a estrutura de conteúdo…
-              </p>
+              <BuilderSkeleton label="Carregando a estrutura de conteúdo" panels={[6]} />
             ) : null}
 
             {courseId !== undefined && !isModulesLoading && modulesError !== null ? (
@@ -784,9 +804,7 @@ export const CourseBuilder = () => {
             ) : null}
 
             {courseId !== undefined && isRulesLoading ? (
-              <p className={styles.loading} role="status">
-                Carregando regras e histórico de versões…
-              </p>
+              <BuilderSkeleton label="Carregando regras e histórico de versões" panels={[5, 6]} />
             ) : null}
 
             {courseId !== undefined && !isRulesLoading && rulesError !== null ? (
@@ -826,6 +844,7 @@ export const CourseBuilder = () => {
                   suggestions={availablePrerequisiteSuggestions}
                   query={prerequisiteQuery}
                   searchStatus={prerequisiteSearchStatus}
+                  isSearching={prerequisiteQuery.trim() !== '' && isSearchingPrerequisites}
                   disabled={isRulesDisabled}
                   onQueryChange={setPrerequisiteQuery}
                   onAdd={handleAddPrerequisite}

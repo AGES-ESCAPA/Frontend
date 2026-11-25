@@ -7,12 +7,16 @@ import {
   Badge,
   Button,
   ConfirmDialog,
+  InlineSkeleton,
   PageHeader,
   ProgressBar,
   SearchBar,
+  Skeleton,
+  StatSkeleton,
   SumCard,
   Table,
   TableFilter,
+  TableSkeleton,
   Toast,
 } from '@components/ui';
 import type {
@@ -328,17 +332,25 @@ export const AdminCourses = () => {
             <section className={styles.stats} aria-label="Resumo do catálogo">
               <SumCard
                 label="Total de Cursos"
-                value={status === 'loading' ? '—' : totalCount}
+                value={status === 'loading' ? <StatSkeleton /> : totalCount}
                 description="Catálogo completo ativo"
               />
               <SumCard
                 label="Cursos Publicados"
-                value={status === 'loading' ? '—' : publishedCount}
-                description={`${draftCount} em rascunho`}
+                value={status === 'loading' ? <StatSkeleton /> : publishedCount}
+                description={
+                  status === 'loading' ? (
+                    <>
+                      <InlineSkeleton /> em rascunho
+                    </>
+                  ) : (
+                    `${draftCount} em rascunho`
+                  )
+                }
               />
               <SumCard
                 label="Média de Preço"
-                value={status === 'loading' ? '—' : formatTicketAverage(averagePrice)}
+                value={status === 'loading' ? <StatSkeleton /> : formatTicketAverage(averagePrice)}
                 description="Ticket médio"
               />
             </section>
@@ -372,23 +384,28 @@ export const AdminCourses = () => {
                 </div>
               </div>
 
-              <div className={styles.progressRow}>
-                <p className={styles.progressLabel}>
-                  {publishedCount}/{totalCount} publicados
-                </p>
-                <div className={styles.progressBar}>
-                  <ProgressBar
-                    value={publishedCount}
-                    max={totalCount}
-                    aria-label={`${publishedCount} de ${totalCount} cursos publicados`}
-                  />
+              {status === 'loading' ? (
+                <div className={styles.progressRow} aria-hidden="true">
+                  <Skeleton className={styles.progressLabelBone} />
+                  <Skeleton className={styles.progressBarBone} />
                 </div>
-              </div>
+              ) : (
+                <div className={styles.progressRow}>
+                  <p className={styles.progressLabel}>
+                    {publishedCount}/{totalCount} publicados
+                  </p>
+                  <div className={styles.progressBar}>
+                    <ProgressBar
+                      value={publishedCount}
+                      max={totalCount}
+                      aria-label={`${publishedCount} de ${totalCount} cursos publicados`}
+                    />
+                  </div>
+                </div>
+              )}
 
               {status === 'loading' ? (
-                <p className={styles.loading} role="status">
-                  Carregando cursos…
-                </p>
+                <TableSkeleton label="Carregando cursos" />
               ) : (
                 <Table
                   columns={columns}

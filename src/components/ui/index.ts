@@ -39,6 +39,16 @@ export type { ModalAppearance, ModalProps, ModalSize } from './Modal';
 export { ModuleNavSection } from './ModuleNavSection';
 export type { ModuleNavLesson, ModuleNavSectionProps } from './ModuleNavSection';
 export { SearchBar } from './SearchBar';
+export {
+  FieldsSkeleton,
+  InlineSkeleton,
+  ListSkeleton,
+  PageSkeleton,
+  Skeleton,
+  StatSkeleton,
+  TableSkeleton,
+} from './Skeleton/Skeleton';
+export type { SkeletonProps } from './Skeleton/Skeleton';
 export type { SearchBarProps, SearchBarTheme } from './SearchBar';
 export { Switch } from './Switch';
 export type { SwitchProps } from './Switch';

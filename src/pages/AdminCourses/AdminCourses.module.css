@@ -179,11 +179,16 @@
   }
 }
 
-.loading {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--text-body-3);
-  line-height: var(--text-body-3--line-height);
+.progressLabelBone {
+  width: 8rem;
+  height: var(--text-body-3);
+}
+
+.progressBarBone {
+  flex: 1 1 auto;
+  max-width: var(--container-xs);
+  height: var(--space-2);
+  border-radius: var(--radius-full, 9999px);
 }
 
 .errorState {

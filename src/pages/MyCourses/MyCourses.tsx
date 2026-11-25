@@ -5,6 +5,7 @@ import {
   FilterTabs,
   PageHeader,
   SearchBar,
+  Skeleton,
   StudentCourseCard,
   EmptyState,
   Button,
@@ -22,6 +23,26 @@ import type { EnrollmentStatus } from '../../components/ui/StudentCourseCard';
 import { getStudentCurriculum } from '../../services/curriculumService';
 
 export type TabType = 'Todos' | 'Em andamento' | 'Aguardando' | 'Concluídos' | 'Expirados';
+
+const StudentCourseSkeleton = () => (
+  <div className={styles.skeletonCard} aria-hidden="true">
+    <Skeleton className={styles.skeletonImage} />
+    <div className={styles.skeletonBody}>
+      <Skeleton className={styles.skeletonTitle} />
+      <Skeleton className={styles.skeletonLine} />
+      <Skeleton className={styles.skeletonLineShort} />
+      <Skeleton className={styles.skeletonProgress} />
+    </div>
+  </div>
+);
+
+const CourseGridSkeleton = ({ count }: { count: number }) => (
+  <div className={styles.courseGrid} role="status" aria-busy="true" aria-label="Carregando cursos">
+    {Array.from({ length: count }, (_, index) => (
+      <StudentCourseSkeleton key={index} />
+    ))}
+  </div>
+);
 
 const tabOptions: TabType[] = ['Todos', 'Em andamento', 'Aguardando', 'Concluídos', 'Expirados'];
 const statusByTab: Record<Exclude<TabType, 'Todos'>, EnrollmentStatus> = {
@@ -245,7 +266,9 @@ export const MyCourses = () => {
           />
         ) : (
           <div className={styles.coursesContainer}>
-            {activeTab === 'Todos' ? (
+            {isLoading && courses.length === 0 ? (
+              <CourseGridSkeleton count={6} />
+            ) : activeTab === 'Todos' ? (
               <>
                 {inProgressCourses.length > 0 && (
                   <section className={styles.courseSection}>
@@ -291,11 +314,7 @@ export const MyCourses = () => {
               <section className={styles.courseSection}>{renderCourseGrid(courses)}</section>
             )}
 
-            {isLoading && (
-              <div className={styles.loadingContainer}>
-                <p>Carregando cursos...</p>
-              </div>
-            )}
+            {isLoading && courses.length > 0 ? <CourseGridSkeleton count={3} /> : null}
 
             {hasMore && !isLoading && (
               <div className={styles.loadMoreContainer}>

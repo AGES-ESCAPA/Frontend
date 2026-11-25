@@ -107,7 +107,7 @@ describe('CourseDetails', () => {
     getPublicCourseByIdMock.mockReturnValue(new Promise(() => undefined));
     renderDetails();
 
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando curso...');
+    expect(screen.getByRole('status', { name: 'Carregando curso' })).toBeInTheDocument();
   });
 
   it('should show the API error when the course cannot be loaded', async () => {

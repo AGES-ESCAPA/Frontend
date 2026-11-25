@@ -139,10 +139,48 @@
   margin-left: var(--space-2);
 }
 
-.loadingContainer {
-  text-align: center;
-  padding: var(--space-8);
-  color: var(--color-text-muted);
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-raised);
+}
+
+.skeletonImage {
+  width: 100%;
+  height: auto;
+  aspect-ratio: var(--course-card-image-ratio);
+  border-radius: 0;
+}
+
+.skeletonBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.skeletonTitle {
+  width: 72%;
+  height: var(--text-h6);
+}
+
+.skeletonLine {
+  width: 100%;
+  height: var(--text-body-3);
+}
+
+.skeletonLineShort {
+  width: 58%;
+  height: var(--text-body-3);
+}
+
+.skeletonProgress {
+  width: 100%;
+  height: var(--space-2);
+  border-radius: var(--radius-full, 9999px);
 }
 
 .loadMoreContainer {

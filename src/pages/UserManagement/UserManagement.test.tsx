@@ -139,9 +139,10 @@ describe('UserManagement', () => {
 
     renderPage();
 
-    const summary = within(screen.getByRole('region', { name: 'Resumo dos usuários' }));
-    expect(summary.getAllByText('—')).toHaveLength(5);
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando usuários');
+    const summary = screen.getByRole('region', { name: 'Resumo dos usuários' });
+    expect(summary.querySelectorAll('[data-skeleton]')).toHaveLength(5);
+    expect(within(summary).queryByText('—')).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Carregando usuários' })).toBeInTheDocument();
   });
 
   it('shows the empty-list message when there are no users', () => {
