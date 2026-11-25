@@ -8,8 +8,8 @@ describe('Footer', () => {
     );
 
     expect(screen.getByRole('contentinfo', { name: /rodapé institucional/i })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /ESCAPA Academy/i })).toBeInTheDocument();
-    expect(screen.getByText('ESCAPA Academy')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /ESCAPA/i })).toBeInTheDocument();
+    expect(screen.getByText('ACADEMY')).toBeInTheDocument();
     expect(screen.getByText('Da Pesquisa à Prática')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /plataforma/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /empresa/i })).toBeInTheDocument();
