@@ -3,7 +3,15 @@ import type { FormEvent } from 'react';
 import { Mail } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, FormField, PageHeader, PasswordInput, TextInput, Toast } from '@components/ui';
+import {
+  Button,
+  FormField,
+  PageHeader,
+  PageSkeleton,
+  PasswordInput,
+  TextInput,
+  Toast,
+} from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { AuthServiceError, authService } from '@services/authService';
 import { getDefaultRoute, getPostLoginDestination } from '@routes/access';
@@ -29,8 +37,7 @@ export const Login = () => {
     navigate(location.pathname + location.search, { replace: true, state: null });
   }, [location.pathname, location.search, location.state, navigate]);
 
-  if (isRestoring)
-    return <div className={styles.page} role="status" aria-label="Restaurando sessão" />;
+  if (isRestoring) return <PageSkeleton label="Restaurando sessão" />;
   if (user && !hasStartedLogin.current) return <Navigate to={getDefaultRoute(user.role)} replace />;
 
   const returnTo = getAuthReturnTo(location.state, location.search);

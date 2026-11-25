@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@contexts/AuthContext';
 import { ConnectivityProvider } from '@contexts/ConnectivityContext';
 import { ConnectionBanner } from '@components/layout/ConnectionBanner/ConnectionBanner';
+import { PageSkeleton } from '@components/ui';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RegistrationFeedback } from '@routes/RegistrationFeedback';
 
@@ -164,26 +165,6 @@ const ConfirmEmailChange = lazy(() =>
     default: m.ConfirmEmailChange,
   })),
 );
-// ─── Fallback de Carregamento ─────────────────────────────────────────────────
-
-const PageLoader = () => (
-  <div
-    style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: 'var(--color-accent)',
-      fontFamily: 'var(--font-serif)',
-      fontSize: 'var(--text-2xl)',
-    }}
-    role="status"
-    aria-label="Carregando página"
-  >
-    escapa!
-  </div>
-);
-
 // ─── Rotas ────────────────────────────────────────────────────────────────────
 
 /**
@@ -202,7 +183,7 @@ export const AppRouter = () => {
         <AuthProvider>
           <ConnectionBanner />
           <RegistrationFeedback />
-          <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={<PageSkeleton label="Carregando página" />}>
             <Routes>
               {/* Rotas Públicas */}
               <Route path="/" element={<Home />} />

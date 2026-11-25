@@ -13,6 +13,7 @@ import {
   PageHeader,
   ProgressBar,
   SearchBar,
+  Skeleton,
   SumCard,
   Toast,
 } from '@components/ui';
@@ -544,9 +545,13 @@ export const CompanyEmployees = () => {
           {showEmployeesTable ? (
             <div className={styles.tableWrapper}>
               {isLoadingEmployees ? (
-                <span role="status" className={styles.loadingIndicator}>
-                  Atualizando colaboradores...
-                </span>
+                <div
+                  role="status"
+                  aria-label="Atualizando colaboradores"
+                  className={styles.loadingIndicator}
+                >
+                  <Skeleton className={styles.refreshBone} />
+                </div>
               ) : null}
               <EmployeeTable
                 employees={rows}

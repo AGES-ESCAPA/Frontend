@@ -20,10 +20,30 @@
   color: var(--color-info-200);
 }
 
-.status {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-body-2);
+.skeletonCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background-color: var(--color-primary-800);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-2xl);
+}
+
+.skeletonTitle {
+  width: 42%;
+  height: var(--text-h5);
+}
+
+.skeletonField {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: var(--radius-lg);
+}
+
+.skeletonLineShort {
+  width: 55%;
+  height: var(--text-body-2);
 }
 
 .error {

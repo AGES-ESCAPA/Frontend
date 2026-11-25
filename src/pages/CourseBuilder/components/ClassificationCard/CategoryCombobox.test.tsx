@@ -134,10 +134,10 @@ describe('CategoryCombobox', () => {
     );
 
     await userEvent.click(screen.getByRole('combobox'));
-    expect(screen.getByText('Carregando categorias…')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Carregando categorias' })).toBeInTheDocument();
 
     await userEvent.click(document.body);
-    expect(screen.queryByText('Carregando categorias…')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'Carregando categorias' })).not.toBeInTheDocument();
   });
 
   it('should not open when disabled', async () => {

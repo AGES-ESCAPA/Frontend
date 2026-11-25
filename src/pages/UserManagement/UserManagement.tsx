@@ -19,9 +19,11 @@ import {
   ConfirmDialog,
   PageHeader,
   SearchBar,
+  StatSkeleton,
   SumCard,
   Table,
   TableFilter,
+  TableSkeleton,
 } from '@components/ui';
 import type {
   BadgeVariant,
@@ -341,27 +343,33 @@ export const UserManagement = () => {
       <section className={styles.stats} aria-label="Resumo dos usuários">
         <SumCard
           label="Usuários cadastrados"
-          value={statsReady ? totalRegistered : '—'}
+          value={status === 'loading' ? <StatSkeleton /> : statsReady ? totalRegistered : '—'}
           description="incluindo todos os perfis"
         />
         <SumCard
           label="Alunos"
-          value={statsReady ? countByType('STUDENT') : '—'}
+          value={
+            status === 'loading' ? <StatSkeleton /> : statsReady ? countByType('STUDENT') : '—'
+          }
           description="pessoas físicas avulsas"
         />
         <SumCard
           label="Colaboradores"
-          value={statsReady ? countByType('EMPLOYEE') : '—'}
+          value={
+            status === 'loading' ? <StatSkeleton /> : statsReady ? countByType('EMPLOYEE') : '—'
+          }
           description="vinculados a empresas"
         />
         <SumCard
           label="Empresas"
-          value={statsReady ? countByType('COMPANY') : '—'}
+          value={
+            status === 'loading' ? <StatSkeleton /> : statsReady ? countByType('COMPANY') : '—'
+          }
           description="contas corporativas"
         />
         <SumCard
           label="Admins"
-          value={statsReady ? countByType('ADMIN') : '—'}
+          value={status === 'loading' ? <StatSkeleton /> : statsReady ? countByType('ADMIN') : '—'}
           description="equipe da plataforma"
         />
       </section>
@@ -396,9 +404,7 @@ export const UserManagement = () => {
             <Button variant="primary" label="Tentar novamente" onClick={reload} />
           </div>
         ) : status === 'loading' ? (
-          <p className={styles.loading} role="status">
-            Carregando usuários…
-          </p>
+          <TableSkeleton label="Carregando usuários" columns={6} />
         ) : (
           <Table
             columns={columns}

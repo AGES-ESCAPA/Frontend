@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout, SIDEBAR_MENU_PRESETS } from '@components/layout';
 import type { SidebarRole, SidebarUser } from '@components/layout';
-import { Button, PageHeader, Toast } from '@components/ui';
+import { Button, PageHeader, Skeleton, Toast } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useProfile } from '@hooks/useProfile';
 import { useToast } from '@hooks/useToast';
@@ -38,6 +38,20 @@ const PAGE_COPY: Record<SidebarRole, { eyebrow?: string; title: string; subtitle
 
 /** Usado só até a sessão carregar; depois a casca mostra o usuário logado. */
 const FALLBACK_USER: SidebarUser = { name: '', role: '', email: '' };
+
+const ProfileSkeleton = () => (
+  <div className={styles.cards} role="status" aria-busy="true" aria-label="Carregando seus dados">
+    {[0, 1].map((card) => (
+      <div key={card} className={styles.skeletonCard} aria-hidden="true">
+        <Skeleton className={styles.skeletonTitle} />
+        <Skeleton className={styles.skeletonField} />
+        <Skeleton className={styles.skeletonField} />
+        <Skeleton className={styles.skeletonField} />
+        <Skeleton className={styles.skeletonLineShort} />
+      </div>
+    ))}
+  </div>
+);
 
 const resolveProfileRole = (userRole: string | undefined): SidebarRole => {
   if (userRole === 'COMPANY') return 'company';
@@ -84,11 +98,7 @@ export const Profile = () => {
         className={styles.header}
       />
 
-      {status === 'loading' ? (
-        <p className={styles.status} role="status">
-          Carregando seus dados...
-        </p>
-      ) : null}
+      {status === 'loading' ? <ProfileSkeleton /> : null}
 
       {status === 'error' ? (
         <section className={styles.error} role="alert">

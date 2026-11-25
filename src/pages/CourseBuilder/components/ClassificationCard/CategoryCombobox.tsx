@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { ChevronDown, Plus, Search } from 'lucide-react';
+import { ListSkeleton } from '@components/ui';
 import styles from './CategoryCombobox.module.css';
 
 export interface CategoryComboboxProps {
@@ -273,7 +274,11 @@ export const CategoryCombobox = ({
 
             {showEmpty ? (
               <li className={styles.empty} role="presentation">
-                {isLoading ? 'Carregando categorias…' : 'Nenhuma categoria cadastrada'}
+                {isLoading ? (
+                  <ListSkeleton label="Carregando categorias" rows={3} />
+                ) : (
+                  'Nenhuma categoria cadastrada'
+                )}
               </li>
             ) : null}
           </ul>

@@ -1,5 +1,5 @@
 import { Search, Workflow, X } from 'lucide-react';
-import { Panel } from '@components/ui';
+import { ListSkeleton, Panel } from '@components/ui';
 import type { CoursePrerequisiteOption } from '@/types/course';
 import styles from './PrerequisiteCoursesCard.module.css';
 
@@ -8,8 +8,10 @@ export interface PrerequisiteCoursesCardProps {
   /** Resultados da busca na API, já sem o próprio curso. */
   suggestions: CoursePrerequisiteOption[];
   query: string;
-  /** Mensagem de busca em andamento, lista vazia ou falha. Omitida quando há sugestões. */
+  /** Mensagem de lista vazia ou falha. Omitida quando há sugestões. */
   searchStatus?: string | null;
+  /** Busca em andamento: mostra o skeleton no lugar da mensagem. */
+  isSearching?: boolean;
   disabled?: boolean;
   onQueryChange: (query: string) => void;
   onAdd: (course: CoursePrerequisiteOption) => void;
@@ -21,6 +23,7 @@ export const PrerequisiteCoursesCard = ({
   suggestions,
   query,
   searchStatus = null,
+  isSearching = false,
   disabled = false,
   onQueryChange,
   onAdd,
@@ -68,7 +71,9 @@ export const PrerequisiteCoursesCard = ({
           />
         </div>
 
-        {searchStatus && visibleSuggestions.length === 0 ? (
+        {isSearching && visibleSuggestions.length === 0 ? (
+          <ListSkeleton label="Buscando cursos" rows={3} />
+        ) : searchStatus && visibleSuggestions.length === 0 ? (
           <p className={styles.searchStatus} role="status">
             {searchStatus}
           </p>

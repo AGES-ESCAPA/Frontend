@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Footer, Navbar } from '@components/layout';
-import { Button, FormField, PageHeader, PasswordInput, Toast } from '@components/ui';
+import { Button, FormField, PageHeader, PasswordInput, Skeleton, Toast } from '@components/ui';
 import { useAuth } from '@contexts/useAuth';
 import { useAccountInvite } from '@hooks/useAccountInvite';
 import type { AccountInviteErrorStatus } from '@hooks/useAccountInvite';
@@ -122,7 +122,7 @@ export const CreatePassword = () => {
       <>
         {invite === null ? (
           <p className={styles.subtitle} role="status" aria-label="Carregando convite">
-            &nbsp;
+            <Skeleton className={styles.inviteBone} />
           </p>
         ) : (
           <p className={styles.subtitle}>

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { SidebarRole } from '@components/layout';
+import { Skeleton } from '@components/ui';
 import { CourseDetailModal } from '@components/course/CourseDetailModal/CourseDetailModal';
 import { CourseHeader } from '@components/course/CourseHeader/CourseHeader';
 import { CourseInstructor } from '@components/course/CourseInstructor/CourseInstructor';
@@ -98,9 +99,26 @@ export const CourseDetails = () => {
       </div>
       <CourseDetailModal onClose={handleClose}>
         {status === 'loading' && (
-          <p className={styles.status} role="status">
-            Carregando curso...
-          </p>
+          <div
+            className={styles.skeleton}
+            role="status"
+            aria-busy="true"
+            aria-label="Carregando curso"
+          >
+            <div className={styles.skeletonHero} aria-hidden="true">
+              <div className={styles.skeletonCopy}>
+                <Skeleton className={styles.skeletonTitle} />
+                <Skeleton className={styles.skeletonLine} />
+                <Skeleton className={styles.skeletonLine} />
+                <Skeleton className={styles.skeletonLineShort} />
+              </div>
+              <Skeleton className={styles.skeletonCover} />
+            </div>
+            <Skeleton className={styles.skeletonVideo} />
+            <Skeleton className={styles.skeletonLine} />
+            <Skeleton className={styles.skeletonLine} />
+            <Skeleton className={styles.skeletonLineShort} />
+          </div>
         )}
 
         {status === 'error' && (

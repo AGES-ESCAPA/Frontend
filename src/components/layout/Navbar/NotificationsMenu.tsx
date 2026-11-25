@@ -2,6 +2,7 @@ import { Bell } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Link } from 'react-router-dom';
 import type { UserNotification } from '@/types/notification';
+import { ListSkeleton } from '@components/ui';
 import { getNotificationLink } from '@services/notificationService';
 import navbarStyles from './Navbar.module.css';
 import styles from './NotificationsMenu.module.css';
@@ -87,10 +88,17 @@ export const NotificationsMenu = ({
           </div>
 
           {items.length === 0 ? (
-            <p className={styles.emptyState} role="status">
-              {error ??
-                (isLoading ? 'Carregando notificações...' : 'Nenhuma notificação por aqui.')}
-            </p>
+            isLoading && !error ? (
+              <ListSkeleton
+                label="Carregando notificações"
+                rows={3}
+                className={styles.emptyState}
+              />
+            ) : (
+              <p className={styles.emptyState} role="status">
+                {error ?? 'Nenhuma notificação por aqui.'}
+              </p>
+            )
           ) : (
             <div className={styles.list}>
               {items.map((notification) => {

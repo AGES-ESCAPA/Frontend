@@ -395,8 +395,10 @@ describe('CourseBuilder', () => {
   it('should keep the fields disabled while the stored course is loading', async () => {
     renderBuilder(`/admin/cursos/${SAVED_COURSE.id}/editar`);
 
-    expect(screen.getByRole('status')).toHaveTextContent(/carregando os dados do curso/i);
-    expect(screen.getByRole('textbox', { name: /título/i })).toBeDisabled();
+    expect(
+      screen.getByRole('status', { name: 'Carregando os dados do curso' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /título/i })).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByRole('textbox', { name: /título/i })).toBeEnabled();
