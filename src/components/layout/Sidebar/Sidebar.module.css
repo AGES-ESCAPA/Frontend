@@ -217,15 +217,21 @@
   padding-right: var(--space-2);
 }
 
+/* A navbar mede --header-height com border-box. O header aberto usa content-box;
+   no recolhido, padding vertical saía dessa conta e a base ficava ~17px abaixo. */
 .collapsed .header {
-  flex-direction: column;
+  box-sizing: border-box;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
-  height: auto;
+  width: auto;
+  align-self: stretch;
+  height: var(--header-height);
   min-height: var(--header-height);
+  max-height: var(--header-height);
   margin-right: 0;
-  padding: var(--space-2);
-  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  gap: 0;
 }
 
 .collapsed .brand {
@@ -233,8 +239,17 @@
   gap: 0;
 }
 
+/* O botão sai da faixa do header para não esticá-la além da navbar. */
 .collapsed .collapseToggle {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 50%;
   margin-left: 0;
+  transform: translateX(-50%);
+}
+
+.collapsed .header:has(.collapseToggle) + .nav {
+  padding-top: calc(var(--space-2) + var(--space-8) + var(--space-3));
 }
 
 .collapsed .footer {
@@ -252,6 +267,9 @@
 
 .collapsed .logoIcon {
   display: block;
+  width: var(--space-8);
+  height: var(--space-8);
+  object-fit: contain;
 }
 
 .sidebar[data-auto-responsive='true'][data-pinned='false']:not(.collapsed) {
